@@ -59,3 +59,38 @@ std::time_t Vault::BitwardenTime(std::string time) {
 
     return t;
 }
+
+std::string Vault::getBitwardenTime() {
+    auto now = std::chrono::system_clock::now();
+    auto now_seconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - now_seconds).count();
+
+    std::time_t t = std::chrono::system_clock::to_time_t(now_seconds);
+    std::tm utc_tm = *gmtime(&t);
+
+    std::ostringstream oss;
+    oss << std::put_time(&utc_tm, "%Y-%m-%dT%H:%M:%S");
+    oss << "." << std::setfill('0') << std::setw(2) << (ms / 10);
+    oss << "Z";
+
+    return oss.str();
+}
+
+std::string Vault::getUUID() {
+    std::array<uint8_t, 16> bytes;
+    if (!RAND_bytes(bytes.data(), bytes.size())) {
+        spdlog::info("Failed to generate random UUID");
+        throw std::runtime_error("Failed to generate random UUID");
+    }
+
+    bytes[6] = (bytes[6] & 0x0F) | 0x40;
+    bytes[8] = (bytes[8] & 0x3F) | 0x80;
+
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < 16; ++i) {
+        oss << std::setw(2) << static_cast<int>(bytes[i]);
+        if (i == 3 || i == 5 || i == 7 || i == 9) oss << "-";
+    }
+    return oss.str();
+}

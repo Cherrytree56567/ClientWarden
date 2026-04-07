@@ -19,8 +19,11 @@ bool Vault::login(std::string& password) {
     }
 
     if (!storage.exists("vault.json")) {
-        sync();
+        return false;
     }
+
+    std::string Vault = storage.read("vault.json");
+    vaultData = nlohmann::json::parse(Vault);
 
     unlock(password);
 
@@ -39,13 +42,6 @@ bool Vault::login(std::string& password) {
     }
 
     return true;
-}
-
-std::string toHex(const std::vector<uint8_t>& data) {
-    std::ostringstream oss;
-    for (uint8_t byte : data)
-        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
-    return oss.str();
 }
 
 Errors Vault::FirstTimeLogin(std::string& password, std::string& email) {
@@ -84,14 +80,23 @@ void Vault::unlock(std::string& password) {
     OPENSSL_cleanse(password.data(), password.size());
     password.clear();
 
-    std::string protectedKey = vaultData["profile"]["key"];
+    getMainKeys();
+    
+    auto [itemEncKey, itemMacKey] = getKeysFromCipher(vaultData["ciphers"][1]["key"]);
 
-    std::vector<uint8_t> decryptedProtectedKey = InternalDecrypt(protectedKey, internalKey, internalKey);
+    spdlog::info("{}", decryptItem(vaultData["ciphers"][1]["name"], itemEncKey, itemMacKey));
 
-    encKey = std::vector<uint8_t>(decryptedProtectedKey.begin(), decryptedProtectedKey.begin() + 32);
-    macKey = std::vector<uint8_t>(decryptedProtectedKey.begin() + 32, decryptedProtectedKey.end());
+    Login login;
+    login.loginName = "NewLogin";
+    login.username = "MozUser1";
+    login.password = "MozPassword";
+    login.totp = "JDHD78GU67GF67";
+    login.notes = "Some Notes";
+    login.customFields.push_back({CustomFieldType::Text, "YSS", "Yes"});
+    login.websites.push_back("https://mozilla.com");
+    login.websites.push_back("https://mozilla.us");
 
-    OPENSSL_cleanse(decryptedProtectedKey.data(), decryptedProtectedKey.size());
+    createLogin(login);
 }
 
 void Vault::sync() {
@@ -120,16 +125,7 @@ void Vault::sync() {
     if (!storage.exists("vault.json")) {
         storage.write("vault.json", body.dump(4));
         vaultData = body;
-        std::string protectedKey = vaultData["profile"]["key"];
-
-        std::vector<uint8_t> decryptedProtectedKey = InternalDecrypt(protectedKey, internalKey, internalKey);
-
-        encKey = std::vector<uint8_t>(decryptedProtectedKey.begin(), decryptedProtectedKey.begin() + 32);
-        macKey = std::vector<uint8_t>(decryptedProtectedKey.begin() + 32, decryptedProtectedKey.end());
-
-        OPENSSL_cleanse(decryptedProtectedKey.data(), decryptedProtectedKey.size());
-
-        spdlog::info("encKey: {}, macKey: {}", toHex(encKey), toHex(macKey));
+        getMainKeys();
         return;
     }
 
@@ -205,12 +201,16 @@ void Vault::sync() {
                     break;
                 }
             } else if (onlineTime < localTime) {
+                /*
+                 * Since the Local Version is newer
+                 * we need to update the online one
+                */
                 for (const auto& cipher : vaultData["ciphers"]) {
                     if (!cipher.contains("id")) {
                         continue;
                     }
                     if (cipher["id"] == localId) {
-                        updateItem(cipher);
+                        InternalUpdateItem(cipher); // TODO: Use Update Item
                         break;
                     }
                 }

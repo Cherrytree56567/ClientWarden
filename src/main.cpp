@@ -4,7 +4,8 @@
 int main() {
     Vault vault;
 
-    // TODO: ADD YOUR EMAIL AND PASSWORD HERE TO BUILD AS AN STD::STRING
+    std::string password = "S4perM93N877&^A";
+    std::string email = "60bn0ip1w@mozmail.com";
 
     if (!vault.login(password)) {
         Errors result = vault.FirstTimeLogin(password, email);
