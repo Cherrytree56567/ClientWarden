@@ -7,21 +7,19 @@ int main() {
     std::string password = "S4perM93N877&^A";
     std::string email = "60bn0ip1w@mozmail.com";
 
-    if (!vault.login(password)) {
-        Errors result = vault.FirstTimeLogin(password, email);
+    AuthState result = vault.Login(password, email);
 
-        if (result == Errors::NeedsOTP) {
-            std::string otp;
-            std::cout << "OTP: ";
-            std::cin >> otp;
-            vault.FirstTimeLoginOTP(otp);
-        } else if (result == Errors::NeedsNewDevice) {
-            std::string newDevice;
-            std::cout << "New Device Code: ";
-            std::cin >> newDevice;
-            vault.FirstTimeLoginDeviceVerify(newDevice);
-        }
+    if (result == AuthState::NeedsTOTP) {
+        std::string otp;
+        std::cout << "OTP: ";
+        std::cin >> otp;
+        vault.submitTOTP(otp);
+    } else if (result == AuthState::NeedsEmailVerification) {
+        std::string newDevice;
+        std::cout << "New Device Code: ";
+        std::cin >> newDevice;
+        vault.submitDeviceVerify(newDevice);
     }
 
-    vault.sync();
+    //vault.sync();
 }

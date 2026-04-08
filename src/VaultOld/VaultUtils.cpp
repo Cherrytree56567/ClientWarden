@@ -76,7 +76,21 @@ std::string Vault::getBitwardenTime() {
     return oss.str();
 }
 
-std::string Vault::uniqueGuid() {
-    boost::uuids::uuid guid = boost::uuids::random_generator()(); 
-    return boost::lexical_cast<std::string>(guid);
+std::string Vault::getUUID() {
+    std::array<uint8_t, 16> bytes;
+    if (!RAND_bytes(bytes.data(), bytes.size())) {
+        spdlog::error("Failed to generate random UUID");
+        throw std::runtime_error("Failed to generate random UUID");
+    }
+
+    bytes[6] = (bytes[6] & 0x0F) | 0x40;
+    bytes[8] = (bytes[8] & 0x3F) | 0x80;
+
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < 16; ++i) {
+        oss << std::setw(2) << static_cast<int>(bytes[i]);
+        if (i == 3 || i == 5 || i == 7 || i == 9) oss << "-";
+    }
+    return oss.str();
 }

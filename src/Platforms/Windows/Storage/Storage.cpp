@@ -87,14 +87,14 @@ void Storage::write(std::filesystem::path file, std::string data) {
 
     std::ofstream f(nFile, std::ios::binary);
     if (!f) {
-        spdlog::info("Failed to open file for writing: {}", nFile.string());
+        spdlog::error("Failed to open file for writing: {}", nFile.string());
         throw std::runtime_error("Failed to open file for writing");
     }
 
     f.write(data.data(), data.size());
 
     if (!f) {
-        spdlog::info("Failed to write file: {}", nFile.string());
+        spdlog::error("Failed to write file: {}", nFile.string());
         throw std::runtime_error("Failed to write file");
     }
 }

@@ -1,179 +1,188 @@
 #include "Vault.h"
 
-nlohmann::json Vault::InternalNewItem(nlohmann::json encryptedData) {
-    httplib::Client client("https://vault.bitwarden.com");
+NetworkState Vault::preLogin(std::string& email) {
+    httplib::Client client(vaultURL);
 
     httplib::Headers headers = {
-        { "authorization", "Bearer " + jsonData["accessString"].get<std::string>() },
         { "Content-Type", "application/json" },
         { "bitwarden-client-name", "web" },
         { "bitwarden-client-version", "2026.3.0" },
     };
 
-    auto res = client.Post("/api/ciphers", headers, encryptedData.dump(), "application/json");
+    auto res = client.Post("/identity/accounts/prelogin", headers, "{\"email\":\"" + email + "\"}", "application/json");
 
     if (!res) {
-        spdlog::error("newItem request failed");
-        throw std::runtime_error("newItem request failed");
+        spdlog::error("preLogin request failed");
+        return NetworkState::Failed;
     }
     if (res->status != 200) {
-        spdlog::error("newItem failed: {}", res->status);
-        throw std::runtime_error("newItem failed: " + std::to_string(res->status));
+        spdlog::error("preLogin failed: {}", res->status);
+        return NetworkState::Failed;
     }
 
     auto body = nlohmann::json::parse(res->body);
-    return body;
+    authData["kdfIterations"] = body["kdfIterations"];
+    authData["salt"] = body["salt"];
+    authData["email"] = email;
+
+    return NetworkState::Success;
 }
 
-nlohmann::json Vault::InternalUpdateItem(nlohmann::json encryptedData) {
-    if (!encryptedData.contains("id")) {
-        return nlohmann::json();
-    }
-    httplib::Client client("https://vault.bitwarden.com");
+AuthState Vault::getToken() {
+    httplib::Client client(vaultURL);
 
-    httplib::Headers headers = {
-        { "authorization", "Bearer " + jsonData["accessString"].get<std::string>() },
-        { "Content-Type", "application/json" },
+    client.set_default_headers({
+        { "Accept", "application/json" },
+        { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
         { "bitwarden-client-name", "web" },
         { "bitwarden-client-version", "2026.3.0" },
-    };
+    });
 
-    auto res = client.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, encryptedData.dump(), "application/json");
+    httplib::Params data;
+    data.emplace("grant_type", "password");
+    data.emplace("username", authData["email"]);
+    data.emplace("password", masterPasswordHash);
+    data.emplace("scope", "api offline_access");
+    data.emplace("client_id", "web");
+    data.emplace("deviceType", "10");
+    data.emplace("deviceIdentifier", uniqueGuid());
+    data.emplace("deviceName", "firefox");
+    
+    auto res = client.Post("/identity/connect/token", data);
+
+    if (res->status == 400) {
+        auto body = nlohmann::json::parse(res->body);
+        if (body["error_description"] == "Two factor required.") {
+            spdlog::warn("Needs Two Factor Auth.");
+            return AuthState::NeedsTOTP;
+        } else if (body["error_description"] == "New device verification required") {
+            spdlog::warn("Needs New Device Verification.");
+            return AuthState::NeedsEmailVerification;
+        }
+    }
 
     if (!res) {
-        spdlog::error("updateItem request failed");
-        throw std::runtime_error("updateItem request failed");
+        spdlog::error("getToken request failed");
+        return AuthState::Failed;
     }
     if (res->status != 200) {
-        spdlog::error("updateItem failed: {}", res->status);
-        throw std::runtime_error("updateItem failed: " + std::to_string(res->status));
+        spdlog::error("getToken failed: {}", res->status);
+        return AuthState::Failed;
     }
 
     auto body = nlohmann::json::parse(res->body);
-    return body;
+    authData["accessString"] = body["access_token"];
+    authData["refreshToken"] = body["refresh_token"];
+    authData["expiresIn"] = body["expires_in"];
+
+    std::time_t now = std::time(nullptr) + authData["expiresIn"].get<int>();
+    std::tm* localTime = std::localtime(&now);
+
+    std::ostringstream oss;
+    oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+    authData["needsRefreshTime"] = oss.str();
+
+    storage.write("data.json", authData.dump(2));
+
+    return AuthState::Authenticated;
 }
 
-void Vault::InternalDeleteItem(std::string uuid) {
-    httplib::Client client("https://vault.bitwarden.com");
+AuthState Vault::getTokenWTotp(std::string& totp) {
+    httplib::Client client(vaultURL);
 
-    httplib::Headers headers = {
-        { "authorization", "Bearer " + jsonData["accessString"].get<std::string>() },
-        { "Content-Type", "application/json" },
+    client.set_default_headers({
+        { "Accept", "application/json" },
+        { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
         { "bitwarden-client-name", "web" },
         { "bitwarden-client-version", "2026.3.0" },
-    };
+    });
 
-    auto res = client.Delete("/api/ciphers/" + uuid, headers);
-
-    if (!res) {
-        spdlog::error("deleteItem request failed");
-        throw std::runtime_error("deleteItem request failed");
-    }
-    if (res->status != 200) {
-        spdlog::error("deleteItem failed: {}", res->status);
-        throw std::runtime_error("deleteItem failed: " + std::to_string(res->status));
-    }
-}
-
-nlohmann::json Vault::InternalAddAttachment(std::string uuid, std::string encryptedFileContents, std::string encryptedFileName) {
-    spdlog::error("Unsupported: Add Attachment");
-    return nlohmann::json();
-}
-
-void Vault::InternalRemoveAttachment(std::string uuid, std::string attachmentID) {
-    spdlog::error("Unsupported: Remove Attachment");
-}
-
-std::string Vault::InternalDownloadAttachment(std::string uuid, std::string attachmentID) {
-    spdlog::error("Unsupported: Download Attachment");
-    return "";
-}
-
-nlohmann::json Vault::InternalCreateFolder(std::string encryptedFolderName) {
-    httplib::Client client("https://vault.bitwarden.com");
-
-    httplib::Headers headers = {
-        { "authorization", "Bearer " + jsonData["accessString"].get<std::string>() },
-        { "Content-Type", "application/json" },
-        { "bitwarden-client-name", "web" },
-        { "bitwarden-client-version", "2026.3.0" },
-    };
-
-    auto res = client.Post("/api/folders", headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
+    httplib::Params data;
+    data.emplace("grant_type", "password");
+    data.emplace("username", authData["email"]);
+    data.emplace("password", masterPasswordHash);
+    data.emplace("scope", "api offline_access");
+    data.emplace("client_id", "web");
+    data.emplace("deviceType", "10");
+    data.emplace("deviceIdentifier", uniqueGuid());
+    data.emplace("deviceName", "firefox");
+    data.emplace("twoFactorToken", totp);
+    data.emplace("twoFactorProvider", "0");
+    data.emplace("twoFactorRemember", "0");
+    
+    auto res = client.Post("/identity/connect/token", data);
 
     if (!res) {
-        spdlog::error("createFolder request failed");
-        throw std::runtime_error("createFolder request failed");
+        spdlog::error("getToken request failed");
+        return AuthState::Failed;
     }
     if (res->status != 200) {
-        spdlog::error("createFolder failed: {}", res->status);
-        throw std::runtime_error("createFolder failed: " + std::to_string(res->status));
+        spdlog::error("getToken failed: {}", res->status);
+        return AuthState::Failed;
     }
 
     auto body = nlohmann::json::parse(res->body);
-    return body;
+    authData["accessString"] = body["access_token"];
+    authData["refreshToken"] = body["refresh_token"];
+    authData["expiresIn"] = body["expires_in"];
+
+    std::time_t now = std::time(nullptr) + authData["expiresIn"].get<int>();
+    std::tm* localTime = std::localtime(&now);
+
+    std::ostringstream oss;
+    oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+    authData["needsRefreshTime"] = oss.str();
+
+    storage.write("data.json", authData.dump(2));
+
+    return AuthState::Authenticated;
 }
 
-nlohmann::json Vault::InternalRenameFolder(std::string folderUUID, std::string encryptedFolderName) {
-    httplib::Client client("https://vault.bitwarden.com");
+AuthState Vault::getTokenWDeviceVerify(std::string& code) {
+    httplib::Client client(vaultURL);
 
-    httplib::Headers headers = {
-        { "authorization", "Bearer " + jsonData["accessString"].get<std::string>() },
-        { "Content-Type", "application/json" },
+    client.set_default_headers({
+        { "Accept", "application/json" },
+        { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
         { "bitwarden-client-name", "web" },
         { "bitwarden-client-version", "2026.3.0" },
-    };
+    });
 
-    auto res = client.Put("/api/folders/" + folderUUID, headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
+    httplib::Params data;
+    data.emplace("grant_type", "password");
+    data.emplace("username", authData["email"]);
+    data.emplace("password", masterPasswordHash);
+    data.emplace("scope", "api offline_access");
+    data.emplace("client_id", "web");
+    data.emplace("deviceType", "10");
+    data.emplace("deviceIdentifier", uniqueGuid());
+    data.emplace("deviceName", "firefox");
+    data.emplace("newDeviceOtp", code);
+    
+    auto res = client.Post("/identity/connect/token", data);
 
     if (!res) {
-        spdlog::error("renameFolder request failed");
-        throw std::runtime_error("renameFolder request failed");
+        spdlog::error("getToken request failed");
+        return AuthState::Failed;
     }
     if (res->status != 200) {
-        spdlog::error("renameFolder failed: {}", res->status);
-        throw std::runtime_error("renameFolder failed: " + std::to_string(res->status));
+        spdlog::error("getToken failed: {}", res->status);
+        return AuthState::Failed;
     }
 
     auto body = nlohmann::json::parse(res->body);
-    return body;
-}
+    authData["accessString"] = body["access_token"];
+    authData["refreshToken"] = body["refresh_token"];
+    authData["expiresIn"] = body["expires_in"];
 
-void Vault::InternalDeleteFolder(std::string folderUUID) {
-    httplib::Client client("https://vault.bitwarden.com");
+    std::time_t now = std::time(nullptr) + authData["expiresIn"].get<int>();
+    std::tm* localTime = std::localtime(&now);
 
-    httplib::Headers headers = {
-        { "authorization", "Bearer " + jsonData["accessString"].get<std::string>() },
-        { "Content-Type", "application/json" },
-        { "bitwarden-client-name", "web" },
-        { "bitwarden-client-version", "2026.3.0" },
-    };
+    std::ostringstream oss;
+    oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+    authData["needsRefreshTime"] = oss.str();
 
-    auto res = client.Delete("/api/folders/" + folderUUID, headers);
+    storage.write("data.json", authData.dump(2));
 
-    if (!res) {
-        spdlog::error("deleteFolder request failed");
-        throw std::runtime_error("deleteFolder request failed");
-    }
-    if (res->status != 200) {
-        spdlog::error("deleteFolder failed: {}", res->status);
-        throw std::runtime_error("deleteFolder failed: " + std::to_string(res->status));
-    }
-}
-
-std::vector<uint8_t> Vault::InternalDownloadIcon(std::string url) {
-    httplib::Client client("https://icons.bitwarden.com");
-
-    auto res = client.Get("/" + url + "/icon.png");
-
-    if (!res) {
-        spdlog::error("downloadIcon request failed");
-        throw std::runtime_error("downloadIcon request failed");
-    }
-    if (res->status != 200) {
-        spdlog::error("downloadIcon failed: {}", res->status);
-        throw std::runtime_error("downloadIcon failed: " + std::to_string(res->status));
-    }
-
-    return std::vector<uint8_t>(res->body.begin(), res->body.end());
+    return AuthState::Authenticated;
 }

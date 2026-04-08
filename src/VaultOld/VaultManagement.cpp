@@ -88,7 +88,9 @@ void Vault::createLogin(Login& details) {
     data["edit"] = true;
     data["favorite"] = false;
     data["fields"] = nlohmann::json::array();
-    
+    for (auto& fieldData : fields) {
+        data["fields"].push_back(fieldData);
+    }
     data["folderId"] = nullptr;
     data["id"] = getUUID();
     data["identity"] = nullptr;
@@ -98,7 +100,7 @@ void Vault::createLogin(Login& details) {
     data["key"] = InternalEncrypt(mainKey, encKey, macKey);
     OPENSSL_cleanse(mainKey.data(), mainKey.size());
 
-    data["login"] = nlohmann::json::array();
+    data["login"] = nlohmann::json::object();
 
     data["login"]["autofillOnPageLoad"] = nullptr;
     data["login"]["fido2Credentials"] = nullptr;
@@ -107,6 +109,7 @@ void Vault::createLogin(Login& details) {
     data["login"]["totp"] = totp;
     data["login"]["uri"] = uri;
     data["login"]["uris"] = nlohmann::json::array();
+    
     for (auto& uriData : uris) {
         data["login"]["uris"].push_back(uriData);
     }
@@ -118,7 +121,7 @@ void Vault::createLogin(Login& details) {
     data["organizationId"] = nullptr;
     data["organizationUseTotp"] = false;
     data["passwordHistory"] = nullptr;
-    data["permissions"] = nlohmann::json::array();
+    data["permissions"] = nlohmann::json::object();
     data["permissions"]["delete"] = true;
     data["permissions"]["restore"] = true;
     data["reprompt"] = 1;
@@ -147,4 +150,8 @@ void Vault::createLogin(Login& details) {
         OPENSSL_cleanse(s2.data(), s2.size());
     }
     details.customFields.clear();
+
+    vaultData["ciphers"].push_back(data);
+    storage.write("vault.json", vaultData.dump(4));
+    spdlog::info("{}", vaultData.dump(4));
 }
