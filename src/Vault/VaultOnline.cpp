@@ -16,7 +16,7 @@ NetworkState Vault::preLogin(std::string& email) {
         return NetworkState::Failed;
     }
     if (res->status != 200) {
-        spdlog::error("preLogin failed: {}", res->status);
+        spdlog::error("preLogin failed: {}, {}", res->status, res->body);
         return NetworkState::Failed;
     }
 
@@ -185,4 +185,203 @@ AuthState Vault::getTokenWDeviceVerify(std::string& code) {
     storage.write("data.json", authData.dump(2));
 
     return AuthState::Authenticated;
+}
+
+bool Vault::checkConnectivity() {
+    httplib::Client client(apiURL);
+    client.set_connection_timeout(1);
+    auto res = client.Get("/alive");
+    return res && res->status == 200;
+}
+
+bool Vault::checkAccessTokenValidity() {
+    httplib::Client client(apiURL);
+    client.set_connection_timeout(3);
+    
+    httplib::Headers headers = {
+        {"Authorization", "Bearer " + authData["accessString"].get<std::string>()}
+    };
+    
+    auto res = client.Get("/api/accounts/profile", headers);
+    return res && res->status != 401;
+}
+
+std::expected<nlohmann::json, NetworkState> Vault::OnlineNewItem(nlohmann::json encryptedData) {
+    httplib::Client client(vaultURL);
+
+    httplib::Headers headers = {
+        { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+        { "Content-Type", "application/json" },
+        { "bitwarden-client-name", "web" },
+        { "bitwarden-client-version", "2026.3.0" },
+    };
+
+    auto res = client.Post("/api/ciphers", headers, encryptedData.dump(), "application/json");
+
+    if (!res) {
+        spdlog::error("newItem request failed");
+        return std::unexpected(NetworkState::Failed);
+    }
+    if (res->status != 200) {
+        spdlog::error("newItem failed: {}", res->status);
+        return std::unexpected(NetworkState::Failed);
+    }
+
+    auto body = nlohmann::json::parse(res->body);
+    return body;
+}
+
+std::expected<nlohmann::json, NetworkState> Vault::OnlineUpdateItem(nlohmann::json encryptedData) {
+    if (!encryptedData.contains("id")) {
+        return nlohmann::json();
+    }
+    httplib::Client client(vaultURL);
+
+    httplib::Headers headers = {
+        { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+        { "Content-Type", "application/json" },
+        { "bitwarden-client-name", "web" },
+        { "bitwarden-client-version", "2026.3.0" },
+    };
+
+    auto res = client.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, encryptedData.dump(), "application/json");
+
+    if (!res) {
+        spdlog::error("updateItem request failed");
+        return std::unexpected(NetworkState::Failed);
+    }
+    if (res->status != 200) {
+        spdlog::error("updateItem failed: {}", res->status);
+        return std::unexpected(NetworkState::Failed);
+    }
+
+    auto body = nlohmann::json::parse(res->body);
+    return body;
+}
+
+NetworkState Vault::OnlineDeleteItem(std::string uuid) {
+    httplib::Client client(vaultURL);
+
+    httplib::Headers headers = {
+        { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+        { "Content-Type", "application/json" },
+        { "bitwarden-client-name", "web" },
+        { "bitwarden-client-version", "2026.3.0" },
+    };
+
+    auto res = client.Delete("/api/ciphers/" + uuid, headers);
+
+    if (!res) {
+        spdlog::error("deleteItem request failed");
+        return NetworkState::Failed;
+    }
+    if (res->status != 200) {
+        spdlog::error("deleteItem failed: {}", res->status);
+        return NetworkState::Failed;
+    }
+    return NetworkState::Success;
+}
+
+std::expected<nlohmann::json, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string encryptedFileContents, std::string encryptedFileName) {
+    spdlog::error("Unsupported: Add Attachment");
+    return std::unexpected(NetworkState::NotImpl);
+}
+
+NetworkState Vault::OnlineRemoveAttachment(std::string uuid, std::string attachmentID) {
+    spdlog::error("Unsupported: Remove Attachment");
+    return NetworkState::NotImpl;
+}
+
+std::expected<std::string, NetworkState> Vault::OnlineDownloadAttachment(std::string uuid, std::string attachmentID) {
+    spdlog::error("Unsupported: Download Attachment");
+    return std::unexpected(NetworkState::NotImpl);
+}
+
+std::expected<nlohmann::json, NetworkState> Vault::OnlineCreateFolder(std::string encryptedFolderName) {
+    httplib::Client client(vaultURL);
+
+    httplib::Headers headers = {
+        { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+        { "Content-Type", "application/json" },
+        { "bitwarden-client-name", "web" },
+        { "bitwarden-client-version", "2026.3.0" },
+    };
+
+    auto res = client.Post("/api/folders", headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
+
+    if (!res) {
+        spdlog::error("createFolder request failed");
+        return std::unexpected(NetworkState::Failed);
+    }
+    if (res->status != 200) {
+        spdlog::error("createFolder failed: {}", res->status);
+        return std::unexpected(NetworkState::Failed);
+    }
+
+    auto body = nlohmann::json::parse(res->body);
+    return body;
+}
+
+std::expected<nlohmann::json, NetworkState> Vault::OnlineRenameFolder(std::string folderUUID, std::string encryptedFolderName) {
+    httplib::Client client(vaultURL);
+
+    httplib::Headers headers = {
+        { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+        { "Content-Type", "application/json" },
+        { "bitwarden-client-name", "web" },
+        { "bitwarden-client-version", "2026.3.0" },
+    };
+
+    auto res = client.Put("/api/folders/" + folderUUID, headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
+
+    if (!res) {
+        spdlog::error("renameFolder request failed");
+        return std::unexpected(NetworkState::Failed);
+    }
+    if (res->status != 200) {
+        spdlog::error("renameFolder failed: {}", res->status);
+        return std::unexpected(NetworkState::Failed);
+    }
+
+    auto body = nlohmann::json::parse(res->body);
+    return body;
+}
+
+NetworkState Vault::OnlineDeleteFolder(std::string folderUUID) {
+    httplib::Client client(vaultURL);
+
+    httplib::Headers headers = {
+        { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+        { "Content-Type", "application/json" },
+        { "bitwarden-client-name", "web" },
+        { "bitwarden-client-version", "2026.3.0" },
+    };
+
+    auto res = client.Delete("/api/folders/" + folderUUID, headers);
+
+    if (!res) {
+        spdlog::error("deleteFolder request failed");
+        return NetworkState::Failed;
+    }
+    if (res->status != 200) {
+        spdlog::error("deleteFolder failed: {}", res->status);
+        return NetworkState::Failed;
+    }
+}
+
+std::expected<std::vector<uint8_t>, NetworkState> Vault::OnlineDownloadIcon(std::string url) {
+    httplib::Client client(iconURL);
+
+    auto res = client.Get("/" + url + "/icon.png");
+
+    if (!res) {
+        spdlog::error("downloadIcon request failed");
+        return std::unexpected(NetworkState::Failed);
+    }
+    if (res->status != 200) {
+        spdlog::error("downloadIcon failed: {}", res->status);
+        return std::unexpected(NetworkState::Failed);
+    }
+
+    return std::vector<uint8_t>(res->body.begin(), res->body.end());
 }

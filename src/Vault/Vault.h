@@ -1,22 +1,23 @@
 #pragma once
-#include "Storage/Storage.h"
-#include <string>
-#include <spdlog/spdlog.h>
 #include <httplib.h>
-#include <nlohmann/json.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/lexical_cast.hpp>
 #include <openssl/evp.h>
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
 #include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/hmac.h>
 #include <openssl/kdf.h>
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+#include <spdlog/spdlog.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
+#include <nlohmann/json.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <string>
+#include <expected>
+#include "Storage/Storage.h"
 
 enum class AuthState {
     NeedsTOTP,
@@ -27,7 +28,27 @@ enum class AuthState {
 
 enum class NetworkState {
     Success,
-    Failed
+    Failed,
+    NotImpl,
+    InvalidAccessToken
+};
+
+enum CustomFieldType {
+    Text,
+    Hidden,
+    Checkbox,
+    Linked
+};
+
+struct LoginDetails {
+    std::string loginName;
+    std::string folderUUID;
+    std::string username;
+    std::string password;
+    std::string totp;
+    std::vector<std::string> websites;
+    std::string notes;
+    std::vector<std::tuple<CustomFieldType, std::string, std::string>> customFields;
 };
 
 /*
@@ -38,37 +59,77 @@ enum class NetworkState {
  * Get InternalKey and masterPasswordHash
  * Full Sync
  * Get macKey and encKey
- * load Refresh Thread
  * 
  * On Unlock:
- * load data.json and vault.json
  * Get InternalKey and masterPasswordHash
  * Get macKey and encKey
- * load Refresh Thread
  * 
  * On Startup:
- * Check if data.json and vault.json exists
- *  - If not, its the first time
- * Check if accessToken is active
- *  - If not, its the first time
- * Unlock
+ * run hasStoredSession
+ *  - If false, its the first time
+ *  - If true, then 
+ *    - load data.json and vault.json
+ *    - run Unlock
+ * Load refresh Thread
  * 
  * On Lock:
  *  - Clean encKey and macKey and masterPasswordHash and internalKey
+ * 
+ * Timeline:
+ * Implement create, modify, delete, restore, perm del item
+ * Implement Get, Create, Rename, Delete Folder
+ * Implement Get All Items, Items By UUID, Search Item, Get Items by Folder, Get Favorites
+ * Implement Get Card, Identity, SSHKey, Login, Note
+ * Implement Get Password History
+ * Implement Copy to Clipboard
+ * Implement Generate Password
 */
 class Vault {
 public:
     Vault();
+    ~Vault();
 
     AuthState Login(std::string& email, std::string& password);
     AuthState submitTOTP(std::string& totp);
     AuthState submitDeviceVerify(std::string& code);
+    NetworkState postLogin();
+
+    void Unlock(std::string& password);
+
+    bool hasStoredSession();
+    void loadFiles();
+
+    NetworkState Sync();
+
+    void startRefreshThread();
+    void stopRefreshThread();
+
+    void CreateLogin(LoginDetails& details);
+    void ModifyLogin(std::string uuid, LoginDetails& details);
 
 private:
     NetworkState preLogin(std::string& email);
     AuthState getToken();
     AuthState getTokenWTotp(std::string& totp);
     AuthState getTokenWDeviceVerify(std::string& code);
+    bool checkConnectivity();
+    bool checkAccessTokenValidity();
+
+    /*
+     * These internal functions do not encrypt anything, and
+     * data sent to these functions must be encrypted with the
+     * exception of uuids
+    */
+    std::expected<nlohmann::json, NetworkState> OnlineNewItem(nlohmann::json encryptedData);
+    std::expected<nlohmann::json, NetworkState> OnlineUpdateItem(nlohmann::json encryptedData);
+    NetworkState OnlineDeleteItem(std::string uuid);
+    std::expected<nlohmann::json, NetworkState> OnlineAddAttachment(std::string uuid, std::string encryptedFileContents, std::string encryptedFileName);
+    NetworkState OnlineRemoveAttachment(std::string uuid, std::string attachmentID);
+    std::expected<std::string, NetworkState> OnlineDownloadAttachment(std::string uuid, std::string attachmentID);
+    std::expected<nlohmann::json, NetworkState> OnlineCreateFolder(std::string encryptedFolderName);
+    std::expected<nlohmann::json, NetworkState> OnlineRenameFolder(std::string folderUUID, std::string encryptedFolderName);
+    NetworkState OnlineDeleteFolder(std::string folderUUID);
+    std::expected<std::vector<uint8_t>, NetworkState> OnlineDownloadIcon(std::string url);
 
     std::vector<uint8_t> makeKey(const std::string& password, const std::string& salt, int iterations);
     std::string cipherString(int encryptionType, const std::string& iv, const std::string& ct, const std::string& mac);
@@ -81,6 +142,13 @@ private:
     std::pair<std::vector<uint8_t>, std::vector<uint8_t>> generateEncMacKeys();
     std::string getUriChecksum(std::string& uri);
     std::string Encrypt(std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
+    void getMainKeys();
+    std::pair<std::vector<uint8_t>, std::vector<uint8_t>> getKeysFromCipher(std::string mainKey);
+    std::string decryptItem(std::string item, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);
+
+    void refreshLoop();
+    void refreshToken();
+    bool needsRefresh();
 
     std::string b64Encode(const std::vector<uint8_t>& data); // Claude Func
     std::vector<uint8_t> b64Decode(const std::string& data); // Claude Func
@@ -96,7 +164,14 @@ private:
     std::vector<uint8_t> encKey;
     std::vector<uint8_t> macKey;
 
+    std::thread refreshThread;
+    std::atomic<bool> shouldRefresh { false };
+
     nlohmann::json authData;
+    nlohmann::json vaultData;
     Storage storage;
     std::string vaultURL;
+    std::string mainURL;
+    std::string apiURL;
+    std::string iconURL;
 };
