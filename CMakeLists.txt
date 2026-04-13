@@ -11,7 +11,7 @@ find_package(Boost REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
-add_executable(clientwarden src/main.cpp src/Vault/Vault.cpp src/Vault/VaultOnline.cpp src/Vault/VaultUtils.cpp src/Vault/VaultLogin.cpp src/Vault/VaultCrypto.cpp src/Vault/VaultRefresh.cpp src/Vault/VaultManagement.cpp)
+add_executable(clientwarden src/main.cpp src/Vault/Vault.cpp src/Vault/VaultOnline.cpp src/Vault/VaultLogin.cpp src/Vault/VaultCrypto.cpp src/Vault/VaultRefresh.cpp src/Vault/VaultUtils/VaultUtils.cpp src/Vault/LoginItem/LoginItem.cpp)
 
 if (WIN32)
     target_include_directories(clientwarden PRIVATE src/Platforms/Windows)

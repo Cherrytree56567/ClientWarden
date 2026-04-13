@@ -1,55 +1,17 @@
 #pragma once
 #include <httplib.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
 #include <openssl/kdf.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <spdlog/spdlog.h>
 #include <openssl/crypto.h>
-#include <openssl/buffer.h>
 #include <nlohmann/json.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/uuid/uuid_generators.hpp>
 #include <string>
 #include <expected>
 #include "Storage/Storage.h"
-
-enum class AuthState {
-    NeedsTOTP,
-    NeedsEmailVerification,
-    Authenticated,
-    Failed
-};
-
-enum class NetworkState {
-    Success,
-    Failed,
-    NotImpl,
-    InvalidAccessToken
-};
-
-enum CustomFieldType {
-    Text,
-    Hidden,
-    Checkbox,
-    Linked
-};
-
-struct LoginDetails {
-    std::string loginName;
-    std::string folderUUID;
-    std::string username;
-    std::string password;
-    std::string totp;
-    std::vector<std::string> websites;
-    std::string notes;
-    std::vector<std::tuple<CustomFieldType, std::string, std::string>> customFields;
-};
+#include "CommonVault.h"
+#include "VaultUtils/VaultUtils.h"
 
 /*
  * On First Time:
@@ -104,10 +66,7 @@ public:
     void startRefreshThread();
     void stopRefreshThread();
 
-    void CreateLogin(LoginDetails& details);
-    void ModifyLogin(std::string uuid, LoginDetails& details);
-
-private:
+public:
     NetworkState preLogin(std::string& email);
     AuthState getToken();
     AuthState getTokenWTotp(std::string& totp);
@@ -140,8 +99,9 @@ private:
     std::string InternalEncrypt(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
     std::vector<uint8_t> hkdfStretch(const std::string& info);
     std::pair<std::vector<uint8_t>, std::vector<uint8_t>> generateEncMacKeys();
-    std::string getUriChecksum(std::string& uri);
-    std::string Encrypt(std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
+    std::string getUriChecksum(std::string& uri, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);
+    std::string Encrypt(std::string str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
+    std::string Decrypt(std::string str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
     void getMainKeys();
     std::pair<std::vector<uint8_t>, std::vector<uint8_t>> getKeysFromCipher(std::string mainKey);
     std::string decryptItem(std::string item, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);
@@ -149,12 +109,6 @@ private:
     void refreshLoop();
     void refreshToken();
     bool needsRefresh();
-
-    std::string b64Encode(const std::vector<uint8_t>& data); // Claude Func
-    std::vector<uint8_t> b64Decode(const std::string& data); // Claude Func
-    std::time_t BitwardenTime(std::string time);
-    std::string getBitwardenTime();
-    std::string uniqueGuid();
 
     /*
      * SECRET DATA

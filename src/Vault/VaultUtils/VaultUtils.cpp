@@ -1,6 +1,6 @@
-#include "Vault.h"
+#include "VaultUtils.h"
 
-std::string Vault::b64Encode(const std::vector<uint8_t>& data) {
+std::string b64Encode(const std::vector<uint8_t>& data) {
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO* mem = BIO_new(BIO_s_mem());
     BIO_push(b64, mem);
@@ -15,7 +15,7 @@ std::string Vault::b64Encode(const std::vector<uint8_t>& data) {
     return result;
 }
 
-std::vector<uint8_t> Vault::b64Decode(const std::string& data) {
+std::vector<uint8_t> b64Decode(const std::string& data) {
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO* mem = BIO_new_mem_buf(data.data(), data.size());
     BIO_push(b64, mem);
@@ -28,7 +28,7 @@ std::vector<uint8_t> Vault::b64Decode(const std::string& data) {
     return result;
 }
 
-std::time_t Vault::BitwardenTime(std::string time) {
+std::time_t BitwardenTime(std::string time) {
     std::tm tmStruct = {};
     double fractional = 0.0;
 
@@ -60,7 +60,7 @@ std::time_t Vault::BitwardenTime(std::string time) {
     return t;
 }
 
-std::string Vault::getBitwardenTime() {
+std::string getBitwardenTime() {
     auto now = std::chrono::system_clock::now();
     auto now_seconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - now_seconds).count();
@@ -76,7 +76,7 @@ std::string Vault::getBitwardenTime() {
     return oss.str();
 }
 
-std::string Vault::uniqueGuid() {
+std::string uniqueGuid() {
     boost::uuids::uuid guid = boost::uuids::random_generator()(); 
     return boost::lexical_cast<std::string>(guid);
 }

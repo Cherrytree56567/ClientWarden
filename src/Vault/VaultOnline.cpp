@@ -367,6 +367,7 @@ NetworkState Vault::OnlineDeleteFolder(std::string folderUUID) {
         spdlog::error("deleteFolder failed: {}", res->status);
         return NetworkState::Failed;
     }
+    return NetworkState::Success;
 }
 
 std::expected<std::vector<uint8_t>, NetworkState> Vault::OnlineDownloadIcon(std::string url) {

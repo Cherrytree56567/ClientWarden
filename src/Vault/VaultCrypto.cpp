@@ -162,13 +162,13 @@ std::vector<uint8_t> Vault::InternalDecrypt(const std::string& str, const std::v
 
     if (!macsEqual(macKey, mac, cmac)) {
         spdlog::error("invalid mac");
-        throw std::runtime_error("invalid mac");
+        return std::vector<uint8_t>();
     }
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
         spdlog::error("failed to create cipher context");
-        throw std::runtime_error("failed to create cipher context");
+        return std::vector<uint8_t>();
     }
 
     EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data());
@@ -194,7 +194,7 @@ std::string Vault::InternalEncrypt(const std::vector<uint8_t>& pt, const std::ve
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
         spdlog::error("failed to create cipher context");
-        throw std::runtime_error("failed to create cipher context");
+        return "";
     }
 
     EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data());
@@ -276,22 +276,22 @@ std::string Vault::decryptItem(std::string item, std::vector<uint8_t> itemEncKey
 }
 
 std::pair<std::vector<uint8_t>, std::vector<uint8_t>> Vault::generateEncMacKeys() {
-    std::vector<uint8_t> encKey(32);
-    std::vector<uint8_t> macKey(32);
+    std::vector<uint8_t> itemEncKey(32);
+    std::vector<uint8_t> itemMacKey(32);
 
-    if (!RAND_bytes(encKey.data(), 32)) {
+    if (!RAND_bytes(itemEncKey.data(), 32)) {
         spdlog::info("Failed to generate encKey");
-        throw std::runtime_error("Failed to generate encKey");
+        return { itemEncKey, itemMacKey };
     }
-    if (!RAND_bytes(macKey.data(), 32)) {
+    if (!RAND_bytes(itemMacKey.data(), 32)) {
         spdlog::info("Failed to generate macKey");
-        throw std::runtime_error("Failed to generate macKey");
+        return { itemEncKey, itemMacKey };
     }
 
-    return { encKey, macKey };
+    return { itemEncKey, itemMacKey };
 }
 
-std::string Vault::getUriChecksum(std::string& uri) {
+std::string Vault::getUriChecksum(std::string& uri, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey) {
     std::vector<uint8_t> hash(SHA256_DIGEST_LENGTH);
     SHA256(
         reinterpret_cast<const uint8_t*>(uri.data()),
@@ -299,13 +299,21 @@ std::string Vault::getUriChecksum(std::string& uri) {
         hash.data()
     );
 
-    return InternalEncrypt(hash, encKey, macKey);
+    return Encrypt(b64Encode(hash), itemEncKey, itemMacKey);
 }
 
-std::string Vault::Encrypt(std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& ItemmacKey) {
+std::string Vault::Encrypt(std::string str, const std::vector<uint8_t>& itemEncKey, const std::vector<uint8_t>& itemMacKey) {
     std::vector<uint8_t> item(str.begin(), str.end());
-    std::string enc = InternalEncrypt(item, key, ItemmacKey);
+    std::string enc = InternalEncrypt(item, itemEncKey, itemMacKey);
     OPENSSL_cleanse(item.data(), item.size());
 
     return enc;
+}
+
+std::string Vault::Decrypt(std::string str, const std::vector<uint8_t>& itemEncKey, const std::vector<uint8_t>& itemMacKey) {
+    std::vector<uint8_t> dec = InternalDecrypt(str, itemEncKey, itemMacKey);
+    std::string decStr(dec.begin(), dec.end());
+    OPENSSL_cleanse(dec.data(), dec.size());
+
+    return decStr;
 }

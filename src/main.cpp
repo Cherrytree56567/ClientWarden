@@ -1,11 +1,12 @@
 #include <iostream>
 #include "Vault/Vault.h"
+#include "Vault/LoginItem/LoginItem.h"
 
 int main() {
     Vault vault;
 
-    std::string password = "S4perM93N877&^A";
-    std::string email = "60bn0ip1w@mozmail.com";
+    std::string password = "";
+    std::string email = "";
 
     if (!vault.hasStoredSession()) {
         AuthState result = vault.Login(email, password);
@@ -32,11 +33,21 @@ int main() {
     vault.startRefreshThread();
     vault.Sync();
 
-    LoginDetails login;
-    login.username = "tester@example.com";
-    login.password = "ATesterPa55w0rd";
-    login.loginName = "Ter";
-    login.websites.push_back("example.com");
-    login.customFields.push_back({CustomFieldType::Checkbox, "Good", "true"});
-    vault.CreateLogin(login);
+    LoginItem login(vault);
+    std::string Name = "TestLogin";
+    std::string Username = "TesterPassword";
+    std::string Password = "TesterPassword";
+    std::string TOTP = "JS78TYH688G67G78";
+    std::string Notes = "Cool Notes ig";
+    std::string Website = "exam.com";
+    std::string FieldName = "Cool";
+    std::string FieldVal = "true";
+    login.SetName(Name)
+         .SetUsername(Username)
+         .SetPassword(Password)
+         .SetTotp(TOTP)
+         .SetNotes(Notes)
+         .AddField(CustomFieldType::Checkbox, FieldName, FieldVal)
+         .AddWebsite(Website)
+         .Commit();
 }
