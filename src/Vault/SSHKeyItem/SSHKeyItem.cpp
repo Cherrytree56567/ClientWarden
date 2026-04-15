@@ -1,7 +1,7 @@
-#include "LoginItem.h"
+#include "SSHKeyItem.h"
 
 namespace ClientWarden::Vault {
-    LoginItem::LoginItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
+    SSHKeyItem::SSHKeyItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -24,16 +24,16 @@ namespace ClientWarden::Vault {
         }
         init = false;
         if (data.contains("type")) {
-            if (data["type"].get<int>() == 1) {
+            if (data["type"].get<int>() == 5) {
                 init = true;
             }
         }
-        if (!data.contains("login")) {
+        if (!data.contains("sshKey")) {
             init = false;
         }
     }
 
-    LoginItem::LoginItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
+    SSHKeyItem::SSHKeyItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
         auto keys = localVault.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;
@@ -55,44 +55,37 @@ namespace ClientWarden::Vault {
         mainKey.insert(mainKey.end(), itemMacKey.begin(), itemMacKey.end());
         data["key"] = localVault.InternalEncrypt(mainKey, localVault.encKey, localVault.macKey);
         OPENSSL_cleanse(mainKey.data(), mainKey.size());
-        data["login"] = nlohmann::json::object();
-        data["login"]["autofillOnPageLoad"] = nullptr;
-        data["login"]["fido2Credentials"] = nullptr;
-        data["login"]["password"] = nullptr;
-        data["login"]["passwordRevisionDate"] = nullptr;
-        data["login"]["totp"] = nullptr;
-        data["login"]["uri"] = nullptr;
-        data["login"]["uris"] = nlohmann::json::array();
-        data["login"]["username"] = nullptr;
+        data["login"] = nullptr;
         data["name"] = localVault.Encrypt("", itemEncKey, itemMacKey);
         data["notes"] = nullptr;
         data["object"] = "cipherDetails";
         data["organizationId"] = nullptr;
-        data["organizationUseTotp"] = nullptr;
-        data["passwordHistory"] = nlohmann::json::array();
+        data["organizationUseTotp"] = false;
+        data["passwordHistory"] = nullptr;
         data["permissions"] = nlohmann::json::object();
         data["permissions"]["delete"] = true;
         data["permissions"]["restore"] = true;
         data["reprompt"] = 0;
         data["revisionDate"] = nullptr;
         data["secureNote"] = nullptr;
-        data["sshKey"] = nullptr;
-        data["type"] = 1;
+        data["sshKey"] = nlohmann::json::object();
+        data["sshKey"]["keyFingerprint"] = nullptr;
+        data["sshKey"]["privateKey"] = nullptr;
+        data["sshKey"]["publicKey"] = nullptr;
+        data["type"] = 5;
         data["viewPassword"] = true;
 
-        fieldData["Fields"] = nlohmann::json::array();
+        fieldData["PrivateKey"] = nullptr;
+        fieldData["PublicKey"] = nullptr;
+        fieldData["KeyFingerprint"] = nullptr;
         fieldData["Name"] = localVault.Encrypt("", itemEncKey, itemMacKey);
         fieldData["Notes"] = nullptr;
-        fieldData["Password"] = nullptr;
-        fieldData["PasswordHistory"] = nullptr;
-        fieldData["PasswordRevisionDate"] = nullptr;
-        fieldData["Uris"] = nlohmann::json::array();
-        fieldData["Username"] = nullptr;
+        fieldData["Fields"] = nlohmann::json::array();
 
         init = true;
     }
 
-    LoginItem::~LoginItem() {
+    SSHKeyItem::~SSHKeyItem() {
         /*
         * TODO: Destruct
         */
@@ -102,7 +95,7 @@ namespace ClientWarden::Vault {
         itemMacKey.clear();
     }
 
-    LoginItem& LoginItem::SetName(std::string& name) {
+    SSHKeyItem& SSHKeyItem::SetName(std::string& name) {
         if (!init) return *this;
         fieldData["Name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
         data["name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
@@ -111,34 +104,34 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    LoginItem& LoginItem::SetUsername(std::string& username) {
+    SSHKeyItem& SSHKeyItem::SetFingerprint(std::string& fingerprint) {
         if (!init) return *this;
-        fieldData["Username"] = localVault.Encrypt(username, itemEncKey, itemMacKey);
-        data["login"]["username"] = localVault.Encrypt(username, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(username.data(), username.size());
-        username.clear();
+        fieldData["KeyFingerprint"] = localVault.Encrypt(fingerprint, itemEncKey, itemMacKey);
+        data["sshKey"]["keyFingerprint"] = localVault.Encrypt(fingerprint, itemEncKey, itemMacKey);
+        OPENSSL_cleanse(fingerprint.data(), fingerprint.size());
+        fingerprint.clear();
         return *this;
     }
 
-    LoginItem& LoginItem::SetPassword(std::string& password) {
+    SSHKeyItem& SSHKeyItem::SetPrivateKey(std::string& privateKey) {
         if (!init) return *this;
-        fieldData["Password"] = localVault.Encrypt(password, itemEncKey, itemMacKey);
-        data["login"]["password"] = localVault.Encrypt(password, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(password.data(), password.size());
-        password.clear();
+        fieldData["PrivateKey"] = localVault.Encrypt(privateKey, itemEncKey, itemMacKey);
+        data["sshKey"]["privateKey"] = localVault.Encrypt(privateKey, itemEncKey, itemMacKey);
+        OPENSSL_cleanse(privateKey.data(), privateKey.size());
+        privateKey.clear();
         return *this;
     }
 
-    LoginItem& LoginItem::SetTotp(std::string& totp) {
+    SSHKeyItem& SSHKeyItem::SetPublicKey(std::string& publicKey) {
         if (!init) return *this;
-        fieldData["Totp"] = localVault.Encrypt(totp, itemEncKey, itemMacKey);
-        data["login"]["totp"] = localVault.Encrypt(totp, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(totp.data(), totp.size());
-        totp.clear();
+        fieldData["PublicKey"] = localVault.Encrypt(publicKey, itemEncKey, itemMacKey);
+        data["sshKey"]["publicKey"] = localVault.Encrypt(publicKey, itemEncKey, itemMacKey);
+        OPENSSL_cleanse(publicKey.data(), publicKey.size());
+        publicKey.clear();
         return *this;
     }
 
-    LoginItem& LoginItem::SetNotes(std::string& notes) {
+    SSHKeyItem& SSHKeyItem::SetNotes(std::string& notes) {
         if (!init) return *this;
         fieldData["Notes"] = localVault.Encrypt(notes, itemEncKey, itemMacKey);
         data["notes"] = localVault.Encrypt(notes, itemEncKey, itemMacKey);
@@ -147,80 +140,19 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    LoginItem& LoginItem::SetFolder(std::string folderUUID) {
+    SSHKeyItem& SSHKeyItem::SetFolder(std::string folderUUID) {
         if (!init) return *this;
         data["folderId"] = folderUUID;
         return *this;
     }
 
-    LoginItem& LoginItem::RemoveFolder() {
+    SSHKeyItem& SSHKeyItem::RemoveFolder() {
         if (!init) return *this;
         data["folderId"] = nullptr;
         return *this;
     }
 
-    LoginItem& LoginItem::AddWebsite(std::string& website) {
-        if (!init) return *this;
-        nlohmann::json uriData;
-        uriData["match"] = nullptr;
-        uriData["uri"] = localVault.Encrypt(website, itemEncKey, itemMacKey);
-        uriData["uriChecksum"] = localVault.getUriChecksum(website, itemEncKey, itemMacKey);
-
-        nlohmann::json dataUriField;
-        dataUriField["Uri"] = localVault.Encrypt(website, itemEncKey, itemMacKey);
-        dataUriField["UriChecksum"] = localVault.getUriChecksum(website, itemEncKey, itemMacKey);
-
-        fieldData["Uris"].push_back(dataUriField);
-        data["login"]["uris"].push_back(uriData);
-        OPENSSL_cleanse(website.data(), website.size());
-        website.clear();
-        return *this;
-    }
-
-    LoginItem& LoginItem::RemoveWebsite(std::string& website) {
-        if (!init) return *this;
-        std::string decUri = localVault.Decrypt(data["login"]["uri"], itemEncKey, itemMacKey);
-        if (decUri == website) {
-            data["login"]["uri"] = nullptr;
-        }
-
-        OPENSSL_cleanse(decUri.data(), decUri.size());
-        decUri.clear();
-
-        auto& uris = data["login"]["uris"];
-        for (auto it = uris.begin(); it != uris.end(); ++it) {
-            std::string decWeb = localVault.Decrypt((*it)["uri"], itemEncKey, itemMacKey);
-            if (decWeb == website) {
-                OPENSSL_cleanse(decWeb.data(), decWeb.size());
-                decWeb.clear();
-                uris.erase(it);
-                break;
-            }
-
-            OPENSSL_cleanse(decWeb.data(), decWeb.size());
-            decWeb.clear();
-        }
-
-        auto& urisField = fieldData["Uris"];
-        for (auto it = urisField.begin(); it != urisField.end(); ++it) {
-            std::string decWeb = localVault.Decrypt((*it)["Uri"], itemEncKey, itemMacKey);
-            if (decWeb == website) {
-                OPENSSL_cleanse(decWeb.data(), decWeb.size());
-                decWeb.clear();
-                urisField.erase(it);
-                break;
-            }
-
-            OPENSSL_cleanse(decWeb.data(), decWeb.size());
-            decWeb.clear();
-        }
-
-        OPENSSL_cleanse(website.data(), website.size());
-        website.clear();
-        return *this;
-    }
-
-    LoginItem& LoginItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
+    SSHKeyItem& SSHKeyItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return *this;
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
@@ -273,7 +205,7 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    LoginItem& LoginItem::RemoveField(std::string& name) {
+    SSHKeyItem& SSHKeyItem::RemoveField(std::string& name) {
         if (!init) return *this;
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
@@ -308,7 +240,42 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    void LoginItem::Commit() {
+    SSHKeyItem& SSHKeyItem::SetFavorite(bool val) {
+        if (!init) return *this;
+        data["favorite"] = val;
+        return *this;
+    }
+
+    SSHKeyItem& SSHKeyItem::SetReprompt(bool val) {
+        if (!init) return *this;
+        if (val) {
+            data["reprompt"] = 1;
+        } else {
+            data["reprompt"] = 0;
+        }
+        return *this;
+    }
+
+    SSHKeyItem& SSHKeyItem::GetFavorite(bool& val) {
+        if (!init) return *this;
+        if (!data.contains("favorite")) return *this;
+        val = data["favorite"];
+        return *this;
+    }
+
+    SSHKeyItem& SSHKeyItem::GetReprompt(bool& val) {
+        if (!init) return *this;
+        if (!data.contains("reprompt")) return *this;
+        if (data["reprompt"].get<int>() == 1) {
+            val = true;
+        }
+        if (data["reprompt"].get<int>() == 0) {
+            val = false;
+        }
+        return *this;
+    }
+
+    void SSHKeyItem::Commit() {
         if (!init) return;
         OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
         itemEncKey.clear();
@@ -341,7 +308,7 @@ namespace ClientWarden::Vault {
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
     }
 
-    void LoginItem::Delete() {
+    void SSHKeyItem::Delete() {
         if (!init) return;
         if (!isBeingCreated) {
             OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
@@ -366,17 +333,7 @@ namespace ClientWarden::Vault {
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
     }
 
-    void LoginItem::Close() {
-        if (!init) return;
-        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-        itemEncKey.clear();
-        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-        itemMacKey.clear();
-
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-    }
-
-    void LoginItem::Bin() {
+    void SSHKeyItem::Bin() {
         if (!init) return;
         OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
         itemEncKey.clear();
@@ -410,59 +367,59 @@ namespace ClientWarden::Vault {
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
     }
 
-    LoginItem& LoginItem::GetName(std::string& name) {
+    void SSHKeyItem::Close() {
+        if (!init) return;
+        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
+        itemEncKey.clear();
+        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
+        itemMacKey.clear();
+
+        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+    }
+
+    SSHKeyItem& SSHKeyItem::GetName(std::string& name) {
         if (!init) return *this;
         if (!data.contains("name")) return *this;
         name = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
         return *this;
     }
 
-    LoginItem& LoginItem::GetUsername(std::string& username) {
+    SSHKeyItem& SSHKeyItem::GetFingerprint(std::string& fingerprint) {
         if (!init) return *this;
-        if (!data["login"].contains("username")) return *this;
-        username = localVault.Decrypt(data["login"]["username"], itemEncKey, itemMacKey);
+        if (!data["sshKey"].contains("keyFingerprint")) return *this;
+        fingerprint = localVault.Decrypt(data["sshKey"]["keyFingerprint"], itemEncKey, itemMacKey);
         return *this;
     }
 
-    LoginItem& LoginItem::GetPassword(std::string& password) {
+    SSHKeyItem& SSHKeyItem::GetPrivateKey(std::string& privateKey) {
         if (!init) return *this;
-        if (!data["login"].contains("password")) return *this;
-        password = localVault.Decrypt(data["login"]["password"], itemEncKey, itemMacKey);
+        if (!data["sshKey"].contains("privateKey")) return *this;
+        privateKey = localVault.Decrypt(data["sshKey"]["privateKey"], itemEncKey, itemMacKey);
         return *this;
     }
 
-    LoginItem& LoginItem::GetTotp(std::string& totp) {
+    SSHKeyItem& SSHKeyItem::GetPublicKey(std::string& publicKey) {
         if (!init) return *this;
-        if (!data["login"].contains("totp")) return *this;
-        totp = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
+        if (!data["sshKey"].contains("publicKey")) return *this;
+        publicKey = localVault.Decrypt(data["sshKey"]["publicKey"], itemEncKey, itemMacKey);
         return *this;
     }
-
-    LoginItem& LoginItem::GetNotes(std::string& notes) {
+    
+    SSHKeyItem& SSHKeyItem::GetNotes(std::string& notes) {
         if (!init) return *this;
         if (!data.contains("notes")) return *this;
         notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
         return *this;
     }
 
-    LoginItem& LoginItem::GetFolder(std::string& folder) {
+    SSHKeyItem& SSHKeyItem::GetFolder(std::string& folder) {
         if (!init) return *this;
         if (!data.contains("folderId")) return *this;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
         return *this;
     }
 
-    LoginItem& LoginItem::GetWebsites(std::vector<std::string>& websites) {
-        if (!init) return *this;
-        if (!data["login"].contains("uris")) return *this;
-        websites.clear();
-        for (auto& uri : data["login"]["uris"]) {
-            websites.push_back(localVault.Decrypt(uri["uri"], itemEncKey, itemMacKey));
-        }
-        return *this;
-    }
-
-    LoginItem& LoginItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
+    SSHKeyItem& SSHKeyItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
         if (!init) return *this;
         if (!data.contains("fields")) return *this;
         fields.clear();
@@ -476,57 +433,6 @@ namespace ClientWarden::Vault {
             }
             std::string name = localVault.Decrypt(f["name"], itemEncKey, itemMacKey);
             fields.emplace_back(type, std::move(name), std::move(value));
-        }
-        return *this;
-    }
-
-    LoginItem& LoginItem::GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value) {
-        if (!init) return *this;
-        if (!data["login"].contains("passwordRevisionDate")) return *this;
-        if (!data.contains("passwordHistory")) return *this;
-        if (!data["login"]["passwordRevisionDate"].is_null()) {
-            for (auto& revHist : data["passwordHistory"]) {
-                if (!revHist.contains("lastUsedDate")) continue;
-                if (!revHist.contains("password")) continue;
-                std::time_t revTime = BitwardenTime(revHist["lastUsedDate"]);
-                std::string password = localVault.Decrypt(revHist["password"], itemEncKey, itemMacKey);
-                value.emplace_back(std::move(revTime), std::move(password));
-            }
-        }
-        return *this;
-    }
-
-    LoginItem& LoginItem::SetFavorite(bool val) {
-        if (!init) return *this;
-        data["favorite"] = val;
-        return *this;
-    }
-
-    LoginItem& LoginItem::SetReprompt(bool val) {
-        if (!init) return *this;
-        if (val) {
-            data["reprompt"] = 1;
-        } else {
-            data["reprompt"] = 0;
-        }
-        return *this;
-    }
-
-    LoginItem& LoginItem::GetFavorite(bool& val) {
-        if (!init) return *this;
-        if (!data.contains("favorite")) return *this;
-        val = data["favorite"];
-        return *this;
-    }
-
-    LoginItem& LoginItem::GetReprompt(bool& val) {
-        if (!init) return *this;
-        if (!data.contains("reprompt")) return *this;
-        if (data["reprompt"].get<int>() == 1) {
-            val = true;
-        }
-        if (data["reprompt"].get<int>() == 0) {
-            val = false;
         }
         return *this;
     }

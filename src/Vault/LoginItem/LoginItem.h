@@ -6,31 +6,51 @@
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
 
-class LoginItem {
-public:
-    LoginItem(Vault& vault, std::string uuid); // Existing Item
-    LoginItem(Vault& vault); // New Item
-    ~LoginItem();
+namespace ClientWarden::Vault {
+    class LoginItem {
+    public:
+        LoginItem(Vault& vault, std::string uuid); // Existing Item
+        LoginItem(Vault& vault); // New Item
+        ~LoginItem();
 
-    LoginItem& SetName(std::string& name);
-    LoginItem& SetUsername(std::string& username);
-    LoginItem& SetPassword(std::string& password);
-    LoginItem& SetTotp(std::string& totp);
-    LoginItem& SetNotes(std::string& notes);
-    LoginItem& SetFolder(std::string folder);
-    LoginItem& RemoveFolder();
-    LoginItem& AddWebsite(std::string& website);
-    LoginItem& RemoveWebsite(std::string& website);
-    LoginItem& AddField(CustomFieldType field, std::string& name, std::string& value);
-    LoginItem& RemoveField(std::string& name);
+        LoginItem& SetName(std::string& name);
+        LoginItem& SetUsername(std::string& username);
+        LoginItem& SetPassword(std::string& password);
+        LoginItem& SetTotp(std::string& totp);
+        LoginItem& SetNotes(std::string& notes);
+        LoginItem& SetFolder(std::string folder);
+        LoginItem& RemoveFolder();
+        LoginItem& AddWebsite(std::string& website);
+        LoginItem& RemoveWebsite(std::string& website);
+        LoginItem& AddField(CustomFieldType field, std::string& name, std::string& value);
+        LoginItem& RemoveField(std::string& name);
 
-    void Commit();
-    void Delete();
-private:
-    bool isBeingCreated;
-    nlohmann::json data;
-    nlohmann::json fieldData;
-    std::vector<uint8_t> itemEncKey;
-    std::vector<uint8_t> itemMacKey;
-    Vault& localVault;
-};
+        LoginItem& GetName(std::string& name);
+        LoginItem& GetUsername(std::string& username);
+        LoginItem& GetPassword(std::string& password);
+        LoginItem& GetTotp(std::string& totp);
+        LoginItem& GetNotes(std::string& notes);
+        LoginItem& GetFolder(std::string& folder);
+        LoginItem& GetWebsites(std::vector<std::string>& website);
+        LoginItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
+        LoginItem& GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value);
+        
+        LoginItem& SetFavorite(bool val);
+        LoginItem& SetReprompt(bool val);
+        LoginItem& GetFavorite(bool& val);
+        LoginItem& GetReprompt(bool& val);
+
+        void Commit();
+        void Delete();
+        void Bin();
+        void Close();
+    private:
+        bool isBeingCreated;
+        bool init;
+        nlohmann::json data;
+        nlohmann::json fieldData;
+        std::vector<uint8_t> itemEncKey;
+        std::vector<uint8_t> itemMacKey;
+        Vault& localVault;
+    };
+}

@@ -11,8 +11,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
-std::string b64Encode(const std::vector<uint8_t>& data); // Claude Func
-std::vector<uint8_t> b64Decode(const std::string& data); // Claude Func
-std::time_t BitwardenTime(std::string time);
-std::string getBitwardenTime();
-std::string uniqueGuid();
+namespace ClientWarden::Vault {
+    std::string b64Encode(const std::vector<uint8_t>& data); // Claude Func
+    std::vector<uint8_t> b64Decode(const std::string& data); // Claude Func
+    std::time_t BitwardenTime(std::string time);
+    std::string getBitwardenTime();
+    std::string uniqueGuid();
+}

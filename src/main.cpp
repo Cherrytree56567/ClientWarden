@@ -1,29 +1,32 @@
 #include <iostream>
 #include "Vault/Vault.h"
 #include "Vault/LoginItem/LoginItem.h"
+#include "Vault/CardItem/CardItem.h"
+#include "Vault/NoteItem/NoteItem.h"
+#include "Vault/IdentityItem/IdentityItem.h"
+#include "Vault/SSHKeyItem/SSHKeyItem.h"
+#include "Vault/Folder/Folder.h"
+#include "Vault/CipherQuery/CipherQuery.h"
 
 int main() {
-    Vault vault;
-
-    std::string password = "";
-    std::string email = "";
+    ClientWarden::Vault::Vault vault;
 
     if (!vault.hasStoredSession()) {
-        AuthState result = vault.Login(email, password);
+        ClientWarden::Vault::AuthState result = vault.Login(email, password);
 
-        if (result == AuthState::NeedsTOTP) {
+        if (result == ClientWarden::Vault::AuthState::NeedsTOTP) {
             std::string otp;
             std::cout << "OTP: ";
             std::cin >> otp;
             vault.submitTOTP(otp);
-        } else if (result == AuthState::NeedsEmailVerification) {
+        } else if (result == ClientWarden::Vault::AuthState::NeedsEmailVerification) {
             std::string newDevice;
             std::cout << "New Device Code: ";
             std::cin >> newDevice;
             vault.submitDeviceVerify(newDevice);
         }
 
-        if (vault.postLogin() != NetworkState::Success) {
+        if (vault.postLogin() != ClientWarden::Vault::NetworkState::Success) {
             spdlog::info("Failed to login");
         }
     } else {
@@ -33,21 +36,16 @@ int main() {
     vault.startRefreshThread();
     vault.Sync();
 
-    LoginItem login(vault);
-    std::string Name = "TestLogin";
-    std::string Username = "TesterPassword";
-    std::string Password = "TesterPassword";
-    std::string TOTP = "JS78TYH688G67G78";
-    std::string Notes = "Cool Notes ig";
-    std::string Website = "exam.com";
-    std::string FieldName = "Cool";
-    std::string FieldVal = "true";
-    login.SetName(Name)
-         .SetUsername(Username)
-         .SetPassword(Password)
-         .SetTotp(TOTP)
-         .SetNotes(Notes)
-         .AddField(CustomFieldType::Checkbox, FieldName, FieldVal)
-         .AddWebsite(Website)
-         .Commit();
+    ClientWarden::Vault::CipherQuery query(vault);
+    std::vector<std::string> ids = query.FilterByUnbinned()
+         .FilterByType(ClientWarden::Vault::CipherType::SSHKey)
+         .FilterNameByRegex("^(?=.*S)(?=.*i).*")
+         .Get();
+    
+    for (auto& id : ids) {
+        ClientWarden::Vault::SSHKeyItem ssh(vault, id);
+        std::string name;
+        ssh.GetName(name).Close();
+        spdlog::info("KEY: {}", name);
+    }
 }
