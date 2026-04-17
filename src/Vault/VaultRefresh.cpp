@@ -20,7 +20,7 @@ namespace ClientWarden::Vault {
         boost::uuids::uuid guid = boost::uuids::random_generator()(); 
         std::string uniqueDeviceGuid = boost::lexical_cast<std::string>(guid);
 
-        httplib::Client client("https://vault.bitwarden.com");
+        httplib::Client client(vaultURL);
 
         client.set_default_headers({
             { "Accept", "application/json" },

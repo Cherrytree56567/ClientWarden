@@ -1,0 +1,7 @@
+[requires]
+botan/3.11.1
+[generators]
+CMakeDeps
+CMakeToolchain
+[layout]
+cmake_layout

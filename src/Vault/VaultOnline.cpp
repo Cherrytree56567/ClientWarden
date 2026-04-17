@@ -23,7 +23,7 @@ namespace ClientWarden::Vault {
 
         auto body = nlohmann::json::parse(res->body);
         authData["kdfIterations"] = body["kdfIterations"];
-        authData["salt"] = body["salt"];
+        authData["salt"] = email;
         authData["email"] = email;
 
         return NetworkState::Success;

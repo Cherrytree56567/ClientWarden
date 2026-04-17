@@ -13,6 +13,9 @@
 int main() {
     ClientWarden::Vault::Vault vault;
 
+    std::string password = "TestUser12345";
+    std::string email = "a@a.com";
+
     if (!vault.hasStoredSession()) {
         ClientWarden::Vault::AuthState result = vault.Login(email, password);
 
@@ -37,6 +40,14 @@ int main() {
 
     vault.startRefreshThread();
     vault.Sync();
+
+    std::string name = "Test";
+    ClientWarden::Vault::TOTPCode code;
+
+    ClientWarden::Vault::LoginItem login(vault, "96832e0c-1eeb-4aa4-8e04-0b37693d4302");
+    login.GetTotp(code).Close();
+
+    spdlog::info("Code: {}", code.code);
 
     /*ClientWarden::UI::UI ui;
     ui.Run();*/

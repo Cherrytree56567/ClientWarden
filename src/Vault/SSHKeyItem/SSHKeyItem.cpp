@@ -14,12 +14,21 @@ namespace ClientWarden::Vault {
             }
         }
         if (data.contains("data")) {
-            fieldData = nlohmann::json::parse(data["data"].get<std::string>());
+            if (data["data"].is_string()) {
+                fieldData = nlohmann::json::parse(data["data"].get<std::string>());
+            } else {
+                fieldData = data["data"];
+            }
         }
         if (data.contains("key")) {
-            auto keys = localVault.getKeysFromCipher(data["key"]);
-            itemEncKey = keys.first;
-            itemMacKey = keys.second;
+            if (data["key"].is_null()) {
+                itemEncKey = localVault.encKey;
+                itemMacKey = localVault.macKey;
+            } else  {
+                auto keys = localVault.getKeysFromCipher(data["key"]);
+                itemEncKey = keys.first;
+                itemMacKey = keys.second;
+            }
         } else {
             init = false;
         }

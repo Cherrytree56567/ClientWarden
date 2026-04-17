@@ -1,12 +1,21 @@
 #pragma once
+#include <botan/hash.h>
+#include <botan/otp.h>
+#include <boost/url.hpp>
+#include <botan/base32.h>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 #include "../CommonVault.h"
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
 
 namespace ClientWarden::Vault {
+    struct TOTPCode {
+        std::string code;
+        std::time_t remaining;
+    };
+
     class LoginItem {
     public:
         LoginItem(Vault& vault, std::string uuid); // Existing Item
@@ -28,7 +37,7 @@ namespace ClientWarden::Vault {
         LoginItem& GetName(std::string& name);
         LoginItem& GetUsername(std::string& username);
         LoginItem& GetPassword(std::string& password);
-        LoginItem& GetTotp(std::string& totp);
+        LoginItem& GetTotp(TOTPCode& totp);
         LoginItem& GetNotes(std::string& notes);
         LoginItem& GetFolder(std::string& folder);
         LoginItem& GetWebsites(std::vector<std::string>& website);

@@ -4,10 +4,6 @@ namespace ClientWarden::Vault {
     Vault::Vault() {
         spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
         logger = spdlog::stdout_color_mt("ClientWarden::Vault");
-        vaultURL = "https://vault.bitwarden.com";
-        mainURL = "https://bitwarden.com";
-        apiURL = "https://api.bitwarden.com";
-        iconURL = "https://icons.bitwarden.com";
     }
 
     Vault::~Vault() {
@@ -54,7 +50,7 @@ namespace ClientWarden::Vault {
             return NetworkState::InvalidAccessToken;
         }
 
-        httplib::Client client("https://vault.bitwarden.com");
+        httplib::Client client(vaultURL);
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },

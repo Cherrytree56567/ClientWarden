@@ -14,12 +14,21 @@ namespace ClientWarden::Vault {
             }
         }
         if (data.contains("data")) {
-            fieldData = nlohmann::json::parse(data["data"].get<std::string>());
+            if (data["data"].is_string()) {
+                fieldData = nlohmann::json::parse(data["data"].get<std::string>());
+            } else {
+                fieldData = data["data"];
+            }
         }
         if (data.contains("key")) {
-            auto keys = localVault.getKeysFromCipher(data["key"]);
-            itemEncKey = keys.first;
-            itemMacKey = keys.second;
+            if (data["key"].is_null()) {
+                itemEncKey = localVault.encKey;
+                itemMacKey = localVault.macKey;
+            } else  {
+                auto keys = localVault.getKeysFromCipher(data["key"]);
+                itemEncKey = keys.first;
+                itemMacKey = keys.second;
+            }
         } else {
             init = false;
         }
@@ -318,7 +327,7 @@ namespace ClientWarden::Vault {
         itemMacKey.clear();
 
         data["revisionDate"] = getBitwardenTime();
-        data["data"] = fieldData.dump();
+        data["data"] = (std::string)fieldData.dump();
         if (isBeingCreated) {
             auto hr = localVault.OnlineNewItem(data);
             if (!hr) {
@@ -387,7 +396,7 @@ namespace ClientWarden::Vault {
 
         data["revisionDate"] = getBitwardenTime();
         data["deletedDate"] = getBitwardenTime();
-        data["data"] = fieldData.dump();
+        data["data"] = (std::string)fieldData.dump();
         if (isBeingCreated) {
             auto hr = localVault.OnlineNewItem(data);
             if (!hr) {
@@ -433,10 +442,67 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    LoginItem& LoginItem::GetTotp(std::string& totp) {
+    LoginItem& LoginItem::GetTotp(TOTPCode& totp) {
         if (!init) return *this;
         if (!data["login"].contains("totp")) return *this;
-        totp = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
+
+        std::string totpURI = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
+
+        boost::urls::url_view uri(totpURI);
+
+        auto params = uri.params();
+        
+        std::string secret;
+        std::string algo;
+        int digits;
+        int period;
+
+        for (auto p : params) {
+            if (p.key == "secret") {
+                secret = p.value;
+            } else if (p.key == "algorithm") {
+                algo = p.value;
+            } else if (p.key == "digits") {
+                digits = std::stoi(p.value);
+            } else if (p.key == "period") {
+                period = std::stoi(p.value);
+            }
+        }
+
+        OPENSSL_cleanse(totpURI.data(), totpURI.size());
+
+        Botan::secure_vector<uint8_t> secureSecret = Botan::base32_decode(secret);
+
+        //OPENSSL_cleanse(secret.data(), secret.size());
+
+        if (algo == "sha256" || algo == "SHA256") {
+            algo = "SHA-256";
+        } else if (algo == "sha512" || algo == "SHA512") {
+            algo = "SHA-512";
+        } else {
+            algo = "SHA-1";
+        }
+
+        if (digits > 8 || digits < 6) {
+            digits = 6;
+        }
+
+        logger->info("Secret: {}, Algo: {}, Digits: {}, Period: {}", secret, algo, digits, period);
+
+        Botan::TOTP totpCode(secureSecret.data(), secureSecret.size(), algo, digits, period);
+
+        uint32_t code = totpCode.generate_totp(std::chrono::system_clock::now());
+
+        std::time_t now = std::time(nullptr);
+
+        std::time_t currentStep = (now / period) * period;
+        std::time_t nextRefresh = currentStep + period;
+
+        std::ostringstream oss;
+        oss << std::setw(digits) << std::setfill('0') << code;
+        totp.code = oss.str();
+        totp.remaining = nextRefresh;
+
         return *this;
     }
 

@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${vcpkgRoot}/x64-windows/include"
+                "${vcpkgRoot}/x64-windows/include",
+                "D:/vcpkg/installed/x64-windows/include/botan-3"
             ],
             "defines": [
                 "_DEBUG",
