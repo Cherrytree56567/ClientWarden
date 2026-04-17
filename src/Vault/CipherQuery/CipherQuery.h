@@ -1,6 +1,4 @@
 #pragma once
-
-#pragma once
 #include <string>
 #include <vector>
 #include <regex>
@@ -31,5 +29,6 @@ namespace ClientWarden::Vault {
         bool init;
         std::vector<nlohmann::json> ciphers;
         Vault& localVault;
+        std::shared_ptr<spdlog::logger> logger;
     };
 }

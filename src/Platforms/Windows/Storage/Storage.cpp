@@ -35,6 +35,24 @@ Storage::Storage() {
     std::filesystem::create_directory(path);
 }
 
+Storage::Storage(std::string) {
+    spdlog::set_pattern("[%H:%M:%S] [ClientWarden::Windows::Storage] [%^---%L---%$] [thread %t] %v");
+
+    char buffer[MAX_PATH];
+    DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+
+    if (len == 0) {
+        spdlog::info("Failed to get executable path");
+        return;
+    }
+
+    std::filesystem::path Bufpath(buffer);
+
+    path = Bufpath.parent_path();
+
+    path.append("ClientWarden");
+}
+
 std::string Storage::read(std::filesystem::path file) {
     std::filesystem::path nFile = path / file;
     if (!std::filesystem::exists(nFile)) {

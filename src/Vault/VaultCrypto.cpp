@@ -33,7 +33,7 @@ namespace ClientWarden::Vault {
         );
 
         if (result != 1) {
-            spdlog::error("PBKDF2 failed");
+            logger->error("PBKDF2 failed");
             throw std::runtime_error("PBKDF2 failed");
         }
 
@@ -68,7 +68,7 @@ namespace ClientWarden::Vault {
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
-            spdlog::error("Failed to create cipher context");
+            logger->error("Failed to create cipher context");
             throw std::runtime_error("Failed to create cipher context");
         }
 
@@ -120,7 +120,7 @@ namespace ClientWarden::Vault {
     */
     std::vector<uint8_t> Vault::InternalDecrypt(const std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey) {
         if (str[0] != '2') {
-            spdlog::error("Implement {} decryption", std::string(1, str[0]));
+            logger->error("Implement {} decryption", std::string(1, str[0]));
             throw std::runtime_error("Implement " + std::string(1, str[0]) + " decryption");
         }
 
@@ -142,7 +142,7 @@ namespace ClientWarden::Vault {
 
         auto parts = split(rest, '|', 3);
         if (parts.size() != 3) {
-            spdlog::error("invalid cipher string format");
+            logger->error("invalid cipher string format");
             throw std::runtime_error("invalid cipher string format");
         }
 
@@ -162,13 +162,13 @@ namespace ClientWarden::Vault {
             cmac.data(), &len);
 
         if (!macsEqual(macKey, mac, cmac)) {
-            spdlog::error("invalid mac");
+            logger->error("invalid mac");
             return std::vector<uint8_t>();
         }
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
-            spdlog::error("failed to create cipher context");
+            logger->error("failed to create cipher context");
             return std::vector<uint8_t>();
         }
 
@@ -194,7 +194,7 @@ namespace ClientWarden::Vault {
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
-            spdlog::error("failed to create cipher context");
+            logger->error("failed to create cipher context");
             return "";
         }
 
@@ -281,11 +281,11 @@ namespace ClientWarden::Vault {
         std::vector<uint8_t> itemMacKey(32);
 
         if (!RAND_bytes(itemEncKey.data(), 32)) {
-            spdlog::info("Failed to generate encKey");
+            logger->info("Failed to generate encKey");
             return { itemEncKey, itemMacKey };
         }
         if (!RAND_bytes(itemMacKey.data(), 32)) {
-            spdlog::info("Failed to generate macKey");
+            logger->info("Failed to generate macKey");
             return { itemEncKey, itemMacKey };
         }
 

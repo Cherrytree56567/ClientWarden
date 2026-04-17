@@ -24,5 +24,6 @@ namespace ClientWarden::Vault {
         bool init;
         nlohmann::json data;
         Vault& localVault;
+        std::shared_ptr<spdlog::logger> logger;
     };
 }

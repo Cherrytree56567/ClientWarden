@@ -2,6 +2,7 @@
 
 namespace ClientWarden::Vault {
     CipherQuery::CipherQuery(Vault& vault) : localVault(vault) {
+        logger = spdlog::stdout_color_mt("ClientWarden::Vault::CipherQuery");
         for (auto& cip : localVault.vaultData["ciphers"]) {
             ciphers.push_back(cip);
         }

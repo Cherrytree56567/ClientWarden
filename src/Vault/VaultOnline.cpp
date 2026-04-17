@@ -13,11 +13,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/identity/accounts/prelogin", headers, "{\"email\":\"" + email + "\"}", "application/json");
 
         if (!res) {
-            spdlog::error("preLogin request failed");
+            logger->error("preLogin request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("preLogin failed: {}, {}", res->status, res->body);
+            logger->error("preLogin failed: {}, {}", res->status, res->body);
             return NetworkState::Failed;
         }
 
@@ -54,20 +54,20 @@ namespace ClientWarden::Vault {
         if (res->status == 400) {
             auto body = nlohmann::json::parse(res->body);
             if (body["error_description"] == "Two factor required.") {
-                spdlog::warn("Needs Two Factor Auth.");
+                logger->warn("Needs Two Factor Auth.");
                 return AuthState::NeedsTOTP;
             } else if (body["error_description"] == "New device verification required") {
-                spdlog::warn("Needs New Device Verification.");
+                logger->warn("Needs New Device Verification.");
                 return AuthState::NeedsEmailVerification;
             }
         }
 
         if (!res) {
-            spdlog::error("getToken request failed");
+            logger->error("getToken request failed");
             return AuthState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("getToken failed: {}", res->status);
+            logger->error("getToken failed: {}", res->status);
             return AuthState::Failed;
         }
 
@@ -114,11 +114,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/identity/connect/token", data);
 
         if (!res) {
-            spdlog::error("getToken request failed");
+            logger->error("getToken request failed");
             return AuthState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("getToken failed: {}", res->status);
+            logger->error("getToken failed: {}", res->status);
             return AuthState::Failed;
         }
 
@@ -163,11 +163,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/identity/connect/token", data);
 
         if (!res) {
-            spdlog::error("getToken request failed");
+            logger->error("getToken request failed");
             return AuthState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("getToken failed: {}", res->status);
+            logger->error("getToken failed: {}", res->status);
             return AuthState::Failed;
         }
 
@@ -220,11 +220,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/api/ciphers", headers, encryptedData.dump(), "application/json");
 
         if (!res) {
-            spdlog::error("newItem request failed");
+            logger->error("newItem request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
-            spdlog::error("newItem failed: {}", res->status);
+            logger->error("newItem failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
 
@@ -248,11 +248,11 @@ namespace ClientWarden::Vault {
         auto res = client.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, encryptedData.dump(), "application/json");
 
         if (!res) {
-            spdlog::error("updateItem request failed");
+            logger->error("updateItem request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
-            spdlog::error("updateItem failed: {}", res->status);
+            logger->error("updateItem failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
 
@@ -273,11 +273,11 @@ namespace ClientWarden::Vault {
         auto res = client.Delete("/api/ciphers/" + uuid, headers);
 
         if (!res) {
-            spdlog::error("deleteItem request failed");
+            logger->error("deleteItem request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("deleteItem failed: {}", res->status);
+            logger->error("deleteItem failed: {}", res->status);
             return NetworkState::Failed;
         }
         return NetworkState::Success;
@@ -293,28 +293,28 @@ namespace ClientWarden::Vault {
         };
         auto res = client.Put("/api/ciphers/" + uuid + "/delete", headers, "", "application/json");
         if (!res) {
-            spdlog::error("softDeleteItem request failed");
+            logger->error("softDeleteItem request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("softDeleteItem failed: {}", res->status);
+            logger->error("softDeleteItem failed: {}", res->status);
             return NetworkState::Failed;
         }
         return NetworkState::Success;
     }
 
     std::expected<nlohmann::json, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string encryptedFileContents, std::string encryptedFileName) {
-        spdlog::error("Unsupported: Add Attachment");
+        logger->error("Unsupported: Add Attachment");
         return std::unexpected(NetworkState::NotImpl);
     }
 
     NetworkState Vault::OnlineRemoveAttachment(std::string uuid, std::string attachmentID) {
-        spdlog::error("Unsupported: Remove Attachment");
+        logger->error("Unsupported: Remove Attachment");
         return NetworkState::NotImpl;
     }
 
     std::expected<std::string, NetworkState> Vault::OnlineDownloadAttachment(std::string uuid, std::string attachmentID) {
-        spdlog::error("Unsupported: Download Attachment");
+        logger->error("Unsupported: Download Attachment");
         return std::unexpected(NetworkState::NotImpl);
     }
 
@@ -331,11 +331,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/api/folders", headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
 
         if (!res) {
-            spdlog::error("createFolder request failed");
+            logger->error("createFolder request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
-            spdlog::error("createFolder failed: {}", res->status);
+            logger->error("createFolder failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
 
@@ -356,11 +356,11 @@ namespace ClientWarden::Vault {
         auto res = client.Put("/api/folders/" + folderUUID, headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
 
         if (!res) {
-            spdlog::error("renameFolder request failed");
+            logger->error("renameFolder request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
-            spdlog::error("renameFolder failed: {}", res->status);
+            logger->error("renameFolder failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
 
@@ -381,11 +381,11 @@ namespace ClientWarden::Vault {
         auto res = client.Delete("/api/folders/" + folderUUID, headers);
 
         if (!res) {
-            spdlog::error("deleteFolder request failed");
+            logger->error("deleteFolder request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("deleteFolder failed: {}", res->status);
+            logger->error("deleteFolder failed: {}", res->status);
             return NetworkState::Failed;
         }
         return NetworkState::Success;
@@ -397,11 +397,11 @@ namespace ClientWarden::Vault {
         auto res = client.Get("/" + url + "/icon.png");
 
         if (!res) {
-            spdlog::error("downloadIcon request failed");
+            logger->error("downloadIcon request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
-            spdlog::error("downloadIcon failed: {}", res->status);
+            logger->error("downloadIcon failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
 

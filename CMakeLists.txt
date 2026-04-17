@@ -11,11 +11,13 @@ find_package(Boost REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
-add_executable(clientwarden src/main.cpp src/Vault/Vault.cpp src/Vault/VaultOnline.cpp src/Vault/VaultLogin.cpp src/Vault/VaultCrypto.cpp src/Vault/VaultRefresh.cpp src/Vault/VaultUtils/VaultUtils.cpp src/Vault/LoginItem/LoginItem.cpp src/Vault/CardItem/CardItem.cpp src/Vault/NoteItem/NoteItem.cpp src/Vault/IdentityItem/IdentityItem.cpp src/Vault/Folder/Folder.cpp src/Vault/SSHKeyItem/SSHKeyItem.cpp src/Vault/CipherQuery/CipherQuery.cpp)
+add_executable(clientwarden src/main.cpp src/Vault/Vault.cpp src/Vault/VaultOnline.cpp src/Vault/VaultLogin.cpp src/Vault/VaultCrypto.cpp src/Vault/VaultRefresh.cpp src/Vault/VaultUtils/VaultUtils.cpp src/Vault/LoginItem/LoginItem.cpp src/Vault/CardItem/CardItem.cpp src/Vault/NoteItem/NoteItem.cpp src/Vault/IdentityItem/IdentityItem.cpp src/Vault/Folder/Folder.cpp src/Vault/SSHKeyItem/SSHKeyItem.cpp src/Vault/CipherQuery/CipherQuery.cpp src/Vault/PasswordGenerator/PasswordGenerator.cpp)
 
 if (WIN32)
-    target_include_directories(clientwarden PRIVATE src/Platforms/Windows)
-    target_sources(clientwarden PRIVATE src/Platforms/Windows/Storage/Storage.cpp)
+    target_include_directories(clientwarden PRIVATE src/Platforms/Windows vendor/imgui vendor/imgui/backends)
+    target_sources(clientwarden PRIVATE src/Platforms/Windows/Storage/Storage.cpp src/Platforms/Windows/UI/UI.cpp src/Platforms/Windows/UI/AcrylicCompositor.cpp
+                                        vendor/imgui/imgui_draw.cpp vendor/imgui/imgui_tables.cpp vendor/imgui/imgui_widgets.cpp vendor/imgui/imgui.cpp vendor/imgui/misc/cpp/imgui_stdlib.cpp
+                                        vendor/imgui/backends/imgui_impl_dx11.cpp vendor/imgui/backends/imgui_impl_win32.cpp)
 endif()
 
 if(MSVC)

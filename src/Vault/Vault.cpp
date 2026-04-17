@@ -2,7 +2,8 @@
 
 namespace ClientWarden::Vault {
     Vault::Vault() {
-        spdlog::set_pattern("[%H:%M:%S] [ClientWarden::Vault] [%^---%L---%$] [thread %t] %v");
+        spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
+        logger = spdlog::stdout_color_mt("ClientWarden::Vault");
         vaultURL = "https://vault.bitwarden.com";
         mainURL = "https://bitwarden.com";
         apiURL = "https://api.bitwarden.com";
@@ -45,11 +46,11 @@ namespace ClientWarden::Vault {
     */
     NetworkState Vault::Sync() {
         if (!checkConnectivity()) {
-            spdlog::warn("No Internet");
+            logger->warn("No Internet");
             return NetworkState::Failed;
         }
         if (!checkAccessTokenValidity()) {
-            spdlog::warn("Invalid Access Token");
+            logger->warn("Invalid Access Token");
             return NetworkState::InvalidAccessToken;
         }
 
@@ -65,11 +66,11 @@ namespace ClientWarden::Vault {
         auto res = client.Get("/api/sync", headers);
 
         if (!res) {
-            spdlog::error("sync request failed");
+            logger->error("sync request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
-            spdlog::error("sync failed: {}", res->status);
+            logger->error("sync failed: {}", res->status);
             return NetworkState::Failed;
         }
 
@@ -97,7 +98,7 @@ namespace ClientWarden::Vault {
         for (auto it = deletedFolders.begin(); it != deletedFolders.end();) {
             auto hr = OnlineDeleteFolder(it->get<std::string>());
             if (hr != NetworkState::Success) {
-                spdlog::warn("Failed to Delete Online Folder");
+                logger->warn("Failed to Delete Online Folder");
                 return hr;
             }
             it = deletedFolders.erase(it);
@@ -138,7 +139,7 @@ namespace ClientWarden::Vault {
                     */
                     auto hr = OnlineRenameFolder(folder["id"], folder["name"]);
                     if (!hr) {
-                        spdlog::warn("Failed to Update Online Folder");
+                        logger->warn("Failed to Update Online Folder");
                         return hr.error();
                     }
                     continue;
@@ -197,7 +198,7 @@ namespace ClientWarden::Vault {
         for (auto it = deletedCiphers.begin(); it != deletedCiphers.end();) {
             auto hr = OnlineDeleteItem(it->get<std::string>());
             if (hr != NetworkState::Success) {
-                spdlog::warn("Failed to Delete Online Item");
+                logger->warn("Failed to Delete Online Item");
                 return hr;
             }
             it = deletedCiphers.erase(it);
@@ -220,7 +221,7 @@ namespace ClientWarden::Vault {
                     */
                     auto hr = OnlineNewItem(cipher);
                     if (!hr) {
-                        spdlog::warn("Failed to Create Online Item");
+                        logger->warn("Failed to Create Online Item");
                         return hr.error();
                     }
                     cipher["createdOffline"] = false;
@@ -253,7 +254,7 @@ namespace ClientWarden::Vault {
                     */
                     auto hr = OnlineUpdateItem(cipher);
                     if (!hr) {
-                        spdlog::warn("Failed to Create Online Item");
+                        logger->warn("Failed to Create Online Item");
                         return hr.error();
                     }
                     continue;

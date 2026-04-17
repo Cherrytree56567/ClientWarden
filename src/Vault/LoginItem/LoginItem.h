@@ -52,5 +52,6 @@ namespace ClientWarden::Vault {
         std::vector<uint8_t> itemEncKey;
         std::vector<uint8_t> itemMacKey;
         Vault& localVault;
+        std::shared_ptr<spdlog::logger> logger;
     };
 }

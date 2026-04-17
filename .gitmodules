@@ -1,0 +1,6 @@
+[submodule "vendor/imgui"]
+	path = vendor/imgui
+	url = https://github.com/Cherrytree56567/imgui
+[submodule "vendor/imgui2"]
+	path = vendor/imgui2
+	url = https://github.com/Cherrytree56567/imgui

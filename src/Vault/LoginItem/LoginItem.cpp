@@ -2,6 +2,7 @@
 
 namespace ClientWarden::Vault {
     LoginItem::LoginItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
+        logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -34,6 +35,7 @@ namespace ClientWarden::Vault {
     }
 
     LoginItem::LoginItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
+        logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
         auto keys = localVault.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;

@@ -7,6 +7,8 @@
 #include "Vault/SSHKeyItem/SSHKeyItem.h"
 #include "Vault/Folder/Folder.h"
 #include "Vault/CipherQuery/CipherQuery.h"
+#include "Vault/PasswordGenerator/PasswordGenerator.h"
+#include "UI/UI.h"
 
 int main() {
     ClientWarden::Vault::Vault vault;
@@ -36,16 +38,6 @@ int main() {
     vault.startRefreshThread();
     vault.Sync();
 
-    ClientWarden::Vault::CipherQuery query(vault);
-    std::vector<std::string> ids = query.FilterByUnbinned()
-         .FilterByType(ClientWarden::Vault::CipherType::SSHKey)
-         .FilterNameByRegex("^(?=.*S)(?=.*i).*")
-         .Get();
-    
-    for (auto& id : ids) {
-        ClientWarden::Vault::SSHKeyItem ssh(vault, id);
-        std::string name;
-        ssh.GetName(name).Close();
-        spdlog::info("KEY: {}", name);
-    }
+    /*ClientWarden::UI::UI ui;
+    ui.Run();*/
 }

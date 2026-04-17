@@ -5,6 +5,7 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <openssl/crypto.h>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -45,7 +46,7 @@ namespace ClientWarden::Vault {
     * Implement Get Card, Identity, SSHKey, Login, Note - Done
     * Implement Get Password History - Done
     * Implement Copy to Clipboard - To be impl'd in UI
-    * Implement Generate Password
+    * Implement Generate Password - Done
     */
     class Vault {
     public:
@@ -130,5 +131,6 @@ namespace ClientWarden::Vault {
         std::string mainURL;
         std::string apiURL;
         std::string iconURL;
+        std::shared_ptr<spdlog::logger> logger;
     };
 }

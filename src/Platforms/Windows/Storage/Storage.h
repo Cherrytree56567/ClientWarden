@@ -10,6 +10,7 @@
 class Storage {
 public:
     Storage();
+    Storage(std::string); // Local Path
 
     std::string read(std::filesystem::path file);
     std::vector<uint8_t> readBinary(std::filesystem::path file);

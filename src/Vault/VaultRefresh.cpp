@@ -37,11 +37,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/identity/connect/token", data);
 
         if (!res) {
-            spdlog::error("getToken request failed");
+            logger->error("getToken request failed");
             throw std::runtime_error("getToken request failed");
         }
         if (res->status != 200) {
-            spdlog::error("getToken failed: {}", res->status);
+            logger->error("getToken failed: {}", res->status);
             throw std::runtime_error("getToken failed: " + std::to_string(res->status));
         }
 
@@ -61,7 +61,7 @@ namespace ClientWarden::Vault {
 
     void Vault::refreshLoop() {
         while (shouldRefresh) {
-            spdlog::info("Checking Refresh");
+            logger->info("Checking Refresh");
             if (needsRefresh()) {
                 refreshToken();
             }
