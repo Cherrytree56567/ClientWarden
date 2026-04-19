@@ -564,6 +564,16 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
+    LoginItem& LoginItem::GetPasskeyCreationDate(std::time_t& value) {
+        if (!init) return *this;
+        if (!data["login"].contains("fido2Credentials")) return *this;
+        if (data["login"]["fido2Credentials"].is_null()) return *this;
+        if (!data["login"]["fido2Credentials"].contains("creationDate")) return *this;
+        if (data["login"]["fido2Credentials"]["creationDate"].is_null()) return *this;
+        value = BitwardenTime(data["login"]["fido2Credentials"]["creationDate"].get<std::string>());
+        return *this;
+    }
+
     LoginItem& LoginItem::SetFavorite(bool val) {
         if (!init) return *this;
         data["favorite"] = val;

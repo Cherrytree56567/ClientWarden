@@ -4,6 +4,10 @@ namespace ClientWarden::Vault {
     Vault::Vault() {
         spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
         logger = spdlog::stdout_color_mt("ClientWarden::Vault");
+        vaultURL = "https://vwprod-457fe78y7u.tail24588b.ts.net";
+        mainURL = "https://vwprod-457fe78y7u.tail24588b.ts.net";
+        apiURL = "https://vwprod-457fe78y7u.tail24588b.ts.net";
+        iconURL = "https://icons.bitwarden.com";
     }
 
     Vault::~Vault() {

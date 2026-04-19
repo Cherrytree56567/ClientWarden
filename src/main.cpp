@@ -13,10 +13,15 @@
 int main() {
     ClientWarden::Vault::Vault vault;
 
-    std::string password = "TestUser12345";
-    std::string email = "a@a.com";
+    std::string password;
+    std::string email;
+
+    ClientWarden::UI::UI ui;
+    ui.Start();
+    while(true) {}
 
     if (!vault.hasStoredSession()) {
+        ui.login(email, password);
         ClientWarden::Vault::AuthState result = vault.Login(email, password);
 
         if (result == ClientWarden::Vault::AuthState::NeedsTOTP) {
@@ -35,6 +40,7 @@ int main() {
             spdlog::info("Failed to login");
         }
     } else {
+        ui.unlock(password);
         vault.Unlock(password);
     }
 
@@ -49,6 +55,5 @@ int main() {
 
     spdlog::info("Code: {}", code.code);
 
-    /*ClientWarden::UI::UI ui;
-    ui.Run();*/
+    ui.Stop();
 }
