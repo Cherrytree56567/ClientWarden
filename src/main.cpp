@@ -18,7 +18,6 @@ int main() {
 
     ClientWarden::UI::UI ui;
     ui.Start();
-    while(true) {}
 
     if (!vault.hasStoredSession()) {
         ui.login(email, password);
@@ -55,5 +54,9 @@ int main() {
 
     spdlog::info("Code: {}", code.code);
 
+    vault.stopRefreshThread();
+    vault.Lock();
     ui.Stop();
+
+    while(true) {}
 }

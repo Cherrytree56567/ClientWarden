@@ -1,5 +1,6 @@
 #pragma once
 #include <spdlog/spdlog.h>
+#include <openssl/crypto.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include "Storage/Storage.h"
 

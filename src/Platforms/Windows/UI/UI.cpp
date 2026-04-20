@@ -135,7 +135,7 @@ namespace ClientWarden::UI {
                 drawList->AddText(SansBoldSmall, 36.0f, ImVec2(width + 50.f, vp->Size.y * 0.25), IM_COL32(255, 255, 255, 178), "Welcome to");
                 drawList->AddText(SansBold, 58.0f, ImVec2(width + 50.f, vp->Size.y * 0.25 + 40), IM_COL32(255, 255, 255, 255), "Clientwarden");
 
-                ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 112));
+                ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 117));
 
                 ImGui::PushFont(Inter);
 
@@ -148,7 +148,7 @@ namespace ClientWarden::UI {
                 ImGui::PopStyleVar(2);
                 ImGui::PopStyleColor(2);
 
-                ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 162));
+                ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 167));
 
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
                 ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.f, 1.f, 1.f, .1f));
@@ -168,7 +168,7 @@ namespace ClientWarden::UI {
                     isLogin = false;
                 }
 
-                ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 212));
+                ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 217));
 
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.f, 1.f, 1.f, .1f));
@@ -269,7 +269,31 @@ namespace ClientWarden::UI {
 
                 ImGui::End();
             } else if (true) {
+                ImGuiViewport* vp = ImGui::GetMainViewport();
+                ImDrawList* drawList = ImGui::GetForegroundDrawList();
+
+                float width = vp->Size.x * 0.17;
+
+                ImGui::SetNextWindowPos({vp->Pos.x - 1, vp->Pos.y -1});
+                ImGui::SetNextWindowSize(ImVec2(width, vp->Size.y + 2));
+
+                ImGui::SetNextWindowBgAlpha(0.5f);
                 
+                ImGui::Begin("Sidebar",
+                    nullptr,
+                    ImGuiWindowFlags_NoDecoration |
+                    ImGuiWindowFlags_NoMove |
+                    ImGuiWindowFlags_NoResize |
+                    ImGuiWindowFlags_NoBringToFrontOnFocus
+                );
+
+                ImGui::PushFont(Inter);
+
+                drawList->AddText(SansBold, 24.0f, ImVec2(25.f, 25.f), IM_COL32(255, 255, 255, 255), "ClientWarden");
+
+                ImGui::PopFont();
+
+                ImGui::End();
             }
 
             ImGui::Render();

@@ -64,6 +64,18 @@ namespace ClientWarden::Vault {
         return checkAccessTokenValidity();
     }
 
+    void Vault::Lock() {
+        OPENSSL_cleanse(internalKey.data(), internalKey.size());
+        OPENSSL_cleanse(masterPasswordHash.data(), masterPasswordHash.size());
+        OPENSSL_cleanse(encKey.data(), encKey.size());
+        OPENSSL_cleanse(macKey.data(), macKey.size());
+
+        internalKey.clear();
+        masterPasswordHash.clear();
+        encKey.clear();
+        macKey.clear();
+    }
+
     void Vault::loadFiles() {
         authData = nlohmann::json::parse(storage.read("data.json"));
         vaultData = nlohmann::json::parse(storage.read("vault.json"));

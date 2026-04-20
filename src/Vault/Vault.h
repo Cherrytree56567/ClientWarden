@@ -59,6 +59,7 @@ namespace ClientWarden::Vault {
         NetworkState postLogin();
 
         void Unlock(std::string& password);
+        void Lock();
 
         bool hasStoredSession();
         void loadFiles();
