@@ -14,7 +14,7 @@ namespace ClientWarden::UI {
         void Stop();
 
         void login(std::string& email, std::string& password);
-        void unlock(std::string& password);
+        void unlock(std::string& password, std::string name);
     private:
         std::atomic<bool> run;
         std::thread uiThread;
@@ -31,6 +31,8 @@ namespace ClientWarden::UI {
         std::mutex unlockMutex;
         std::condition_variable unlockCV;
         std::string* UnlockPassword = nullptr;
+
+        std::string name;
 
         Storage storage;
         std::shared_ptr<spdlog::logger> logger;

@@ -46,8 +46,8 @@ namespace ClientWarden::UI {
         AcrylicCompositor::AcrylicEffectParameter param;
         param.blurAmount = 90;
         param.saturationAmount = 1;
-        param.tintColor = D2D1::ColorF((2.0f / 255.0f), (6.0f / 255.0f), (24.0f / 255.0f), 0.57f);
-        param.fallbackColor = D2D1::ColorF((2.0f / 255.0f), (6.0f / 255.0f), (24.0f / 255.0f), 0.57f);
+        param.tintColor = D2D1::ColorF((24.f / 255.f), (24.f / 255.f), (37.f / 255.f), 1.f);
+        param.fallbackColor = D2D1::ColorF((24.f / 255.f), (24.f / 255.f), (37.f / 255.f), 1.f);
 
         compositor->SetAcrylicEffect(hwnd, AcrylicCompositor::BACKDROP_SOURCE_HOSTBACKDROP, param);
 
@@ -132,15 +132,15 @@ namespace ClientWarden::UI {
                     ImGuiWindowFlags_NoBackground 
                 );
 
-                drawList->AddText(SansBoldSmall, 36.0f, ImVec2(width + 50.f, vp->Size.y * 0.25), IM_COL32(255, 255, 255, 178), "Welcome to");
-                drawList->AddText(SansBold, 58.0f, ImVec2(width + 50.f, vp->Size.y * 0.25 + 40), IM_COL32(255, 255, 255, 255), "Clientwarden");
+                drawList->AddText(SansBoldSmall, 36.0f, ImVec2(width + 50.f, vp->Size.y * 0.25), IM_COL32(180, 190, 254, 255), "Welcome to");
+                drawList->AddText(SansBold, 58.0f, ImVec2(width + 50.f, vp->Size.y * 0.25 + 40), IM_COL32(205, 214, 244, 255), "Clientwarden");
 
                 ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 117));
 
                 ImGui::PushFont(Inter);
 
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.f, 1.f, 1.f, .1f));
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4((69.f / 255.f), (71.f / 255.f), (90.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
                 ImGui::SetNextItemWidth(250.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 10.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
@@ -150,8 +150,8 @@ namespace ClientWarden::UI {
 
                 ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 167));
 
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.f, 1.f, 1.f, .1f));
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4((69.f / 255.f), (71.f / 255.f), (90.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
                 ImGui::SetNextItemWidth(250.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 10.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
@@ -170,9 +170,9 @@ namespace ClientWarden::UI {
 
                 ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 217));
 
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
-                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.f, 1.f, 1.f, .1f));
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 1.f, 1.f, .0f));
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4((69.f / 255.f), (71.f / 255.f), (90.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16.0f, 7.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
                 if (ImGui::Button("Login")) {
@@ -198,7 +198,7 @@ namespace ClientWarden::UI {
                 ImGui::SetNextWindowPos({vp->Pos.x - 1, vp->Pos.y -1});
                 ImGui::SetNextWindowSize(ImVec2(width, vp->Size.y + 2));
 
-                ImGui::SetNextWindowBgAlpha(0.5f);
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4((17.0f / 255.0f), (17.0f / 255.0f), (27.0f / 255.0f), 1.f));
                 
                 ImGui::Begin("Sidebar",
                     nullptr,
@@ -209,6 +209,10 @@ namespace ClientWarden::UI {
                 );
 
                 ImGui::End();
+
+                ImGui::PopStyleColor();
+
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4((24.f / 255.f), (24.f / 255.f), (37.f / 255.f), 1.f));
 
                 ImGui::SetNextWindowPos(ImVec2(width, 0));
                 ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -222,15 +226,15 @@ namespace ClientWarden::UI {
                     ImGuiWindowFlags_NoBackground 
                 );
 
-                drawList->AddText(SansBoldSmall, 36.0f, ImVec2(width + 50.f, vp->Size.y * 0.25), IM_COL32(255, 255, 255, 178), "Welcome to");
-                drawList->AddText(SansBold, 58.0f, ImVec2(width + 50.f, vp->Size.y * 0.25 + 40), IM_COL32(255, 255, 255, 255), "Clientwarden");
+                drawList->AddText(SansBoldSmall, 36.0f, ImVec2(width + 50.f, vp->Size.y * 0.25), IM_COL32(180, 190, 254, 255), "Welcome to");
+                drawList->AddText(SansBold, 58.0f, ImVec2(width + 50.f, vp->Size.y * 0.25 + 40), IM_COL32(205, 214, 244, 255), "Clientwarden");
 
                 ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 112));
 
                 ImGui::PushFont(Inter);
 
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.f, 1.f, 1.f, .1f));
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4((69.f / 255.f), (71.f / 255.f), (90.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
                 ImGui::SetNextItemWidth(250.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 10.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
@@ -249,9 +253,9 @@ namespace ClientWarden::UI {
 
                 ImGui::SetCursorScreenPos(ImVec2(width + 50.f, vp->Size.y * 0.25 + 162));
 
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, .12f));
-                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.f, 1.f, 1.f, .1f));
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 1.f, 1.f, .0f));
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4((69.f / 255.f), (71.f / 255.f), (90.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16.0f, 7.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
                 if (ImGui::Button("Unlock")) {
@@ -268,6 +272,8 @@ namespace ClientWarden::UI {
                 ImGui::PopFont();
 
                 ImGui::End();
+
+                ImGui::PopStyleColor();
             } else if (true) {
                 ImGuiViewport* vp = ImGui::GetMainViewport();
                 ImDrawList* drawList = ImGui::GetForegroundDrawList();
@@ -277,7 +283,7 @@ namespace ClientWarden::UI {
                 ImGui::SetNextWindowPos({vp->Pos.x - 1, vp->Pos.y -1});
                 ImGui::SetNextWindowSize(ImVec2(width, vp->Size.y + 2));
 
-                ImGui::SetNextWindowBgAlpha(0.5f);
+                ImGui::SetNextWindowBgAlpha(0.9f);
                 
                 ImGui::Begin("Sidebar",
                     nullptr,
@@ -289,7 +295,25 @@ namespace ClientWarden::UI {
 
                 ImGui::PushFont(Inter);
 
-                drawList->AddText(SansBold, 24.0f, ImVec2(25.f, 25.f), IM_COL32(255, 255, 255, 255), "ClientWarden");
+                drawList->AddText(SansBold, 20.0f, ImVec2(15.f, 15.f), IM_COL32(205, 214, 244, 255), name.c_str());
+
+                ImGui::SetCursorScreenPos(ImVec2(width - 50.f, 10.f));
+
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), .0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4((49.f / 255.f), (50.f / 255.f), (68.f / 255.f), 1.f));
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16.0f, 7.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, .0f);
+                if (ImGui::Button("˅")) {
+                    {
+                        std::lock_guard<std::mutex> lock(unlockMutex);
+                        unlockDone = true;
+                    }
+                    unlockCV.notify_one();
+                    isUnlock = false;
+                }
+                ImGui::PopStyleVar(2);
+                ImGui::PopStyleColor(3);
 
                 ImGui::PopFont();
 
@@ -330,12 +354,14 @@ namespace ClientWarden::UI {
         loginCV.wait(lock, [this] { return loginDone; });
     }
 
-    void UI::unlock(std::string& password) {
+    void UI::unlock(std::string& password, std::string name) {
         isUnlock = true;
         unlockDone = false;
         this->UnlockPassword = &password;
 
         std::unique_lock<std::mutex> lock(unlockMutex);
         unlockCV.wait(lock, [this] { return unlockDone; });
+
+        this->name = name;
     }
 }

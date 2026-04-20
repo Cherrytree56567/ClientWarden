@@ -69,6 +69,8 @@ namespace ClientWarden::Vault {
         void startRefreshThread();
         void stopRefreshThread();
 
+        std::string GetName();
+
     public:
         NetworkState preLogin(std::string& email);
         AuthState getToken();

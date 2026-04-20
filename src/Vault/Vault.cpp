@@ -14,6 +14,10 @@ namespace ClientWarden::Vault {
         stopRefreshThread();
     }
 
+    std::string Vault::GetName() {
+        return vaultData["profile"]["name"];
+    }
+
     /*
     * If an item is added locally, then it will have
     * a createdOffline Flag.

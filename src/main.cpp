@@ -39,7 +39,7 @@ int main() {
             spdlog::info("Failed to login");
         }
     } else {
-        ui.unlock(password);
+        ui.unlock(password, vault.GetName());
         vault.Unlock(password);
     }
 
