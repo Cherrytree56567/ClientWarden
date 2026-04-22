@@ -1,0 +1,9 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass Unlock : Microsoft.UI.Xaml.Controls.Page
+    {
+        Unlock();
+        Int32 MyProperty;
+    }
+}

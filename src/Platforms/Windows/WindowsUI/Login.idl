@@ -1,0 +1,9 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass Login : Microsoft.UI.Xaml.Controls.Page
+    {
+        Login();
+        Int32 MyProperty;
+    }
+}

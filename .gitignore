@@ -11,3 +11,7 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 build
+.vs
+Generated Files
+packages
+x64
