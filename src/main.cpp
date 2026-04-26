@@ -8,7 +8,6 @@
 #include "Vault/Folder/Folder.h"
 #include "Vault/CipherQuery/CipherQuery.h"
 #include "Vault/PasswordGenerator/PasswordGenerator.h"
-#include "UI/UI.h"
 
 int main() {
     ClientWarden::Vault::Vault vault;
@@ -16,11 +15,11 @@ int main() {
     std::string password;
     std::string email;
 
-    ClientWarden::UI::UI ui;
-    ui.Start();
+    //ClientWarden::UI::UI ui;
+    //ui.Start();
 
     if (!vault.hasStoredSession()) {
-        ui.login(email, password);
+        //ui.login(email, password);
         ClientWarden::Vault::AuthState result = vault.Login(email, password);
 
         if (result == ClientWarden::Vault::AuthState::NeedsTOTP) {
@@ -39,7 +38,7 @@ int main() {
             spdlog::info("Failed to login");
         }
     } else {
-        ui.unlock(password, vault.GetName());
+        //ui.unlock(password, vault.GetName());
         vault.Unlock(password);
     }
 
@@ -56,7 +55,7 @@ int main() {
 
     vault.stopRefreshThread();
     vault.Lock();
-    ui.Stop();
+    //ui.Stop();
 
     while(true) {}
 }

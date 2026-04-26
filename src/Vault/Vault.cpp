@@ -14,6 +14,11 @@ namespace ClientWarden::Vault {
         stopRefreshThread();
     }
 
+    Vault& Vault::Instance() {
+        static Vault inst;
+        return inst;
+    }
+
     std::string Vault::GetName() {
         return vaultData["profile"]["name"];
     }

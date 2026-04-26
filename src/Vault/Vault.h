@@ -6,6 +6,7 @@
 #include <openssl/rand.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <openssl/crypto.h>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -52,6 +53,8 @@ namespace ClientWarden::Vault {
     public:
         Vault();
         ~Vault();
+
+        static Vault& Instance();
 
         AuthState Login(std::string& email, std::string& password);
         AuthState submitTOTP(std::string& totp);

@@ -4,6 +4,5 @@ namespace WindowsUI
     runtimeclass Vault : Microsoft.UI.Xaml.Controls.Page
     {
         Vault();
-        Int32 MyProperty;
     }
 }

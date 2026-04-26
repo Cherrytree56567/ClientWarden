@@ -16,10 +16,11 @@ namespace winrt::WindowsUI::implementation
         ExtendsContentIntoTitleBar(true);
 
         winrt::Microsoft::UI::Windowing::AppWindow appWindow = this->AppWindow();
+        //appWindow.Resize({ 400, 560 });
         appWindow.Resize({ 1000, 620 });
 
         winrt::Microsoft::UI::Windowing::OverlappedPresenter presenter = appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>();
-        presenter.IsResizable(false);
+        presenter.IsResizable(true);
     }
 
     int32_t MainWindow::MyProperty()

@@ -1,0 +1,13 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass VaultItem : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        VaultItem();
+        Microsoft.UI.Xaml.Media.ImageSource Logo;
+        String Title;
+        String Detail;
+        event Microsoft.UI.Xaml.RoutedEventHandler Click;
+        String itemID;
+    }
+}

@@ -163,6 +163,7 @@ namespace ClientWarden::Vault {
 
         if (!macsEqual(macKey, mac, cmac)) {
             logger->error("invalid mac");
+            throw std::runtime_error("invalid mac");
             return std::vector<uint8_t>();
         }
 
@@ -180,7 +181,12 @@ namespace ClientWarden::Vault {
         EVP_DecryptUpdate(ctx, pt.data(), reinterpret_cast<int*>(&len), ct.data(), ct.size());
         pt_len += len;
 
-        EVP_DecryptFinal_ex(ctx, pt.data() + pt_len, (int*)&len);
+        if (EVP_DecryptFinal_ex(ctx, pt.data() + pt_len, (int*)&len) <= 0) {
+            EVP_CIPHER_CTX_free(ctx);
+            logger->error("invalid mac");
+            throw std::runtime_error("invalid mac");
+        }
+        
         pt_len += len;
 
         EVP_CIPHER_CTX_free(ctx);

@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WindowsUI.VaultItem"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:WindowsUI"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="12, 0, 12, 0">
+        <Button Background="Transparent"
+                BorderThickness="0"
+                Padding="12, 12, 12, 12"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Click="Button_Click">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                <Border CornerRadius="4">
+                    <Image Source="ms-appx:///Assets/profile1.png"
+                           Width="32"
+                           x:Name="LoginIcon"/>
+                </Border>
+                <Grid Margin="12, 0, 0, 0">
+                    <TextBlock Text="Test Website"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               x:Name="LoginName"/>
+                    <TextBlock Text="email@website.com"
+                               FontSize="10"
+                               VerticalAlignment="Bottom"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               x:Name="LoginDetail"/>
+                </Grid>
+            </StackPanel>
+        </Button>
+    </Grid>
+</UserControl>

@@ -14,13 +14,12 @@
                         IsBackButtonVisible="Collapsed"
                         IsPaneToggleButtonVisible="True"
                         OpenPaneLength="220"
-                        Loaded="NavigationView_Loaded"
                         x:Name="NavView"
                         PaneTitle="Clientwarden">
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="All Items" x:Name="AllItems">
                     <NavigationViewItem.Icon>
-                        <BitmapIcon UriSource="ms-appx:///Assets/logo.png"
+                        <BitmapIcon UriSource="ms-appx:///Assets/Logo.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
@@ -95,9 +94,14 @@
                 <Grid Grid.Column="0">
                     <Border BorderThickness="1, 0, 1, 0"
                             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}">
-                        <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
                             <Grid VerticalAlignment="Top"
-                                  Margin="12">
+                                  Margin="12"
+                                  Grid.Row="0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -114,31 +118,16 @@
                                     <FontIcon Glyph="&#xE710;" FontSize="16"/>
                                 </Button>
                             </Grid>
-                            <Grid Padding="12, 0, 12, 12">
-                                <Button Background="Transparent"
-                                        BorderThickness="0"
-                                        Padding="12, 12, 12, 12"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch">
-                                    <StackPanel Orientation="Horizontal"
-                                                HorizontalAlignment="Left">
-                                        <Border CornerRadius="4">
-                                            <Image Source="/Assets/profile1.png"
-                                                   Width="32"/>
-                                        </Border>
-                                        <Grid Margin="12, 0, 0, 0">
-                                            <TextBlock Text="Test Website"
-                                                       FontWeight="Bold"
-                                                       FontSize="14"/>
-                                            <TextBlock Text="email@website.com"
-                                                       FontSize="10"
-                                                       VerticalAlignment="Bottom"
-                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-                        </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          Grid.Row="1">
+                                <StackPanel>
+                                    <local:VaultItem Logo="ms-appx:///Assets/profile1.png"
+                                                     Title="Test Website"
+                                                     Detail="test@website.com"
+                                                     Click="VaultItem_Click"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
                 </Grid>
 
@@ -176,7 +165,7 @@
                             </Grid.ColumnDefinitions>
                             <Border CornerRadius="4"
                                     Grid.Column="0">
-                                <Image Source="/Assets/profile1.png"
+                                <Image Source="ms-appx:///Assets/profile1.png"
                                        Width="42"/>
                             </Border>
                             <StackPanel Orientation="Vertical"
@@ -198,132 +187,22 @@
                             </Grid>
                         </Grid>
                         <Border BorderThickness="0, 0, 0, 1"
-                                Padding="0, 24, 0, 0"
+                                Padding="0, 32, 0, 0"
                                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"/>
-                        <Button Margin="0, 16, 0, 0"
-                                Padding="0"
-                                Background="Transparent"
-                                CornerRadius="6"
-                                BorderThickness="0"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Stretch">
-                            <Border Background="{ThemeResource ControlFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="Username" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                        <TextBlock Text="email@website.com"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </Button>
-                        <Button Margin="0, 8, 0, 0"
-                                Padding="0"
-                                Background="Transparent"
-                                CornerRadius="6"
-                                BorderThickness="0"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Stretch">
-                            <Border Background="{ThemeResource ControlFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="Password" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                        <TextBlock Text="Password123"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Margin="-10"
-                                            Padding="16">
-                                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_eye_show_24_regular.png"
-                                                    ShowAsMonochrome="True"
-                                                    Width="20"/>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </Button>
-                        <Button Margin="0, 8, 0, 0"
-                                Padding="0"
-                                Background="Transparent"
-                                CornerRadius="6"
-                                BorderThickness="0"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Stretch">
-                            <Border Background="{ThemeResource ControlFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="TOTP" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                        <TextBlock Text="132 432"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                    <Grid Grid.Column="1"
-                                          Width="24"
-                                          Height="24">
-                                        <ProgressRing IsIndeterminate="False"
-                                                      Minimum="0"
-                                                      Maximum="30"
-                                                      Value="12"
-                                                      Width="24"
-                                                      Height="24"/>
-                                        <TextBlock Text="15"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="10"/>
-                                    </Grid>
-                                </Grid>
-                            </Border>
-                        </Button>
-                        <UserControl Margin="0, 8, 0, 0">
-                            <Border Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="Website" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   Padding="0, 0, 0, 4"/>
-                                        <TextBlock Text="website.com"
-                                                   FontSize="14"/>
-                                        <TextBlock Text="example.com"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </UserControl>
+                        <local:GenericField Title="Username"
+                                            Value="test@website.com"/>
+                        <local:PasswordField Title="Password"
+                                             Value="TestPassword"/>
+                        <local:TOTPField Title="TOTP"
+                                         Value="453 673"
+                                         Time="25"/>
+                        <local:WebsiteField Title="Websites">
+                            <local:WebsiteField.Value>
+                                <TextBlock Text="a@a.com"/>
+                                <TextBlock Text="a@a.com"/>
+                            </local:WebsiteField.Value>
+                        </local:WebsiteField>
+                        
                         <Border BorderThickness="0, 0, 0, 1"
                                 Padding="0, 8, 0, 0"
                                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"/>
@@ -349,89 +228,10 @@
                         <Border BorderThickness="0, 0, 0, 1"
                                 Padding="0, 8, 0, 0"
                                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"/>
-                        <UserControl Margin="0, 8, 0, 0">
-                            <Border Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="Text Field 1" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   Padding="0, 0, 0, 4"/>
-                                        <TextBlock TextWrapping="WrapWholeWords" 
-                                                   Text="Some Text ig"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </UserControl>
-                        <UserControl Margin="0, 8, 0, 0">
-                            <Border Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="Hidden Field 1" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   Padding="0, 0, 0, 4"/>
-                                        <TextBlock TextWrapping="WrapWholeWords" 
-                                                   Text="Some Text ig"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Margin="-10"
-                                            Padding="16">
-                                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_eye_show_24_regular.png"
-                                                    ShowAsMonochrome="True"
-                                                    Width="20"/>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </UserControl>
-                        <UserControl Margin="0, 0, 0, 0">
-                            <Border Padding="10, 0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" 
-                                                Spacing="2"
-                                                Orientation="Horizontal">
-                                        <CheckBox Content="Checkbox 1"
-                                                  VerticalAlignment="Center"
-                                                  VerticalContentAlignment="Center"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </UserControl>
-                        <UserControl Margin="0, 8, 0, 0">
-                            <Border Padding="10, 8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBlock Text="Linked Field 1" 
-                                                   FontSize="11"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   Padding="0, 0, 0, 4"/>
-                                        <TextBlock TextWrapping="WrapWholeWords" 
-                                                   Text="Username"
-                                                   FontSize="14"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </UserControl>
+                        <local:TextField Title="Text Field 1" Value="Some Text"/>
+                        <local:HiddenField Title="Hidden Field 24" Value="Some Hidden Text"/>
+                        <local:CheckboxField Title="Some Checkbox" Value="False"/>
+                        <local:LinkedField Title="Linked Field 9" Value="Username"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

@@ -12,18 +12,13 @@ using namespace Microsoft::UI::Xaml;
 
 namespace winrt::WindowsUI::implementation
 {
-    int32_t Vault::MyProperty()
+    void Vault::NavigationView_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
-        throw hresult_not_implemented();
+        NavView().SelectedItem(NavView().MenuItems().GetAt(0));
     }
 
-    void Vault::MyProperty(int32_t /* value */)
+    void Vault::VaultItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
-        throw hresult_not_implemented();
-    }
-}
 
-void winrt::WindowsUI::implementation::Vault::NavigationView_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
-{
-    NavView().SelectedItem(AllItems());
+    }
 }

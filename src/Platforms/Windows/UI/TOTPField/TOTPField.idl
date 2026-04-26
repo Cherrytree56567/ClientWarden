@@ -1,0 +1,12 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass TOTPField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        TOTPField();
+        Int32 Time;
+        String Title;
+        String Value;
+        event Microsoft.UI.Xaml.RoutedEventHandler Clipboard;
+    }
+}

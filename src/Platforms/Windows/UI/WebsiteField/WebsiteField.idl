@@ -1,0 +1,10 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass WebsiteField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        WebsiteField();
+        String Title;
+        Microsoft.UI.Xaml.Controls.UIElementCollection Value;
+    }
+}

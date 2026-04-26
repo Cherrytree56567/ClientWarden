@@ -1,0 +1,10 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass LinkedField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        LinkedField();
+        String Title;
+        String Value;
+    }
+}

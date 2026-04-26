@@ -1,0 +1,10 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass CheckboxField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        CheckboxField();
+        String Title;
+        Boolean Value;
+    }
+}

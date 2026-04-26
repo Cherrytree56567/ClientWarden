@@ -1,0 +1,24 @@
+#pragma once
+#include "Vault/Vault.h"
+#include "Login.g.h"
+
+namespace winrt::WindowsUI::implementation
+{
+    struct Login : LoginT<Login>
+    {
+        Login()
+        {
+            // Xaml objects should not call InitializeComponent during construction.
+            // See https://github.com/microsoft/cppwinrt/tree/master/nuget#initializecomponent
+        }
+
+        void LoginButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+    };
+}
+
+namespace winrt::WindowsUI::factory_implementation
+{
+    struct Login : LoginT<Login, implementation::Login>
+    {
+    };
+}

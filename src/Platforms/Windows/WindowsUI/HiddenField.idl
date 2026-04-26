@@ -1,0 +1,11 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass HiddenField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        HiddenField();
+        String Title;
+        String Value;
+        event Microsoft.UI.Xaml.RoutedEventHandler ShowHide;
+    }
+}
