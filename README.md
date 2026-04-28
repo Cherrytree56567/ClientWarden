@@ -1,5 +1,5 @@
 # ClientWarden
-A Secure and Well Designed Alternative to the Desktop Bitwarden Client. Clientwarden uses WinUI for the Windows UI instead of Electron for efficiency and uses Botan for TOTP Codes, which will soon also be used for `secure_vector`'s and `secure_allocator`'s.
+A Secure and Well Designed Alternative to the Desktop Bitwarden Client. Clientwarden uses WinUI for the Windows UI instead of Electron for efficiency and uses Botan for TOTP Codes, which will soon also be used for `secure_vector`'s and `secure_allocator`'s. Currently only Logins are clickable in the Clientwarden UI and only Username, Password's and Websites are able to be displayed.
 <img width="700" height="420" alt="image" src="https://github.com/user-attachments/assets/08a522ed-f4d3-4474-b52a-02db2e2fd51d" />
 
 ## Building
