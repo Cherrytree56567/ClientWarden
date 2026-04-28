@@ -1,6 +1,14 @@
 #pragma once
-
+#include "Vault/CipherQuery/CipherQuery.h"
+#include "Vault/LoginItem/LoginItem.h"
+#include "Vault/NoteItem/NoteItem.h"
+#include "Vault/IdentityItem/IdentityItem.h"
+#include "Vault/CardItem/CardItem.h"
+#include "Vault/SSHKeyItem/SSHKeyItem.h"
 #include "VaultUI.g.h"
+#include "VaultItem/VaultItem.xaml.h"
+#include "GenericField/GenericField.xaml.h"
+#include "PasswordField/PasswordField.xaml.h"
 
 namespace winrt::WindowsUI::implementation
 {
@@ -17,6 +25,7 @@ namespace winrt::WindowsUI::implementation
 
         void NavigationView_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void VaultItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void LoginPasswordItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
     };
 }
 

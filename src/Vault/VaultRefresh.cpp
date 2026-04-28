@@ -38,11 +38,11 @@ namespace ClientWarden::Vault {
 
         if (!res) {
             logger->error("getToken request failed");
-            throw std::runtime_error("getToken request failed");
+            return;
         }
         if (res->status != 200) {
             logger->error("getToken failed: {}", res->status);
-            throw std::runtime_error("getToken failed: " + std::to_string(res->status));
+            return;
         }
 
         auto body = nlohmann::json::parse(res->body);

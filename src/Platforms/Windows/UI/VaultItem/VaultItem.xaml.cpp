@@ -52,6 +52,14 @@ namespace winrt::WindowsUI::implementation
         idItem = value;
     }
 
+    winrt::hstring VaultItem::itemType() {
+        return idItemType;
+    }
+
+    void VaultItem::itemType(winrt::hstring const& value) {
+        idItemType = value;
+    }
+
     void VaultItem::Button_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         m_clickEvent(*this, e);
     }

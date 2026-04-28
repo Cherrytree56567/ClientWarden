@@ -394,6 +394,12 @@ namespace ClientWarden::Vault {
     std::expected<std::vector<uint8_t>, NetworkState> Vault::OnlineDownloadIcon(std::string url) {
         httplib::Client client(iconURL);
 
+        if (url.starts_with("https://")) {
+            url = url.substr(8);
+        } else if (url.starts_with("http://")) {
+            url = url.substr(7);
+        }
+
         auto res = client.Get("/" + url + "/icon.png");
 
         if (!res) {

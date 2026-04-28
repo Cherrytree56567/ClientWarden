@@ -114,6 +114,7 @@ namespace ClientWarden::Vault {
         void getMainKeys();
         std::pair<std::vector<uint8_t>, std::vector<uint8_t>> getKeysFromCipher(std::string mainKey);
         std::string decryptItem(std::string item, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);
+        std::string downloadIcon(std::string url);
 
         void refreshLoop();
         void refreshToken();

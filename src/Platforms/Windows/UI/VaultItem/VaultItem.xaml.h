@@ -27,10 +27,14 @@ namespace winrt::WindowsUI::implementation
         winrt::hstring itemID();
         void itemID(winrt::hstring const& value);
 
+        winrt::hstring itemType();
+        void itemType(winrt::hstring const& value);
+
         void Button_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
     private:
         winrt::event<Microsoft::UI::Xaml::RoutedEventHandler> m_clickEvent;
         winrt::hstring idItem;
+        winrt::hstring idItemType;
     };
 }
 

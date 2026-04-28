@@ -4,10 +4,10 @@ namespace ClientWarden::Vault {
     Vault::Vault() {
         spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
         logger = spdlog::stdout_color_mt("ClientWarden::Vault");
-        vaultURL = "https://vwprod-457fe78y7u.tail24588b.ts.net";
-        mainURL = "https://vwprod-457fe78y7u.tail24588b.ts.net";
-        apiURL = "https://vwprod-457fe78y7u.tail24588b.ts.net";
-        iconURL = "https://icons.bitwarden.com";
+        vaultURL = "https://vault.bitwarden.com";
+        mainURL = "https://bitwarden.com";
+        apiURL = "https://api.bitwarden.com";
+        iconURL = "https://icons.bitwarden.net";
     }
 
     Vault::~Vault() {
@@ -21,6 +21,23 @@ namespace ClientWarden::Vault {
 
     std::string Vault::GetName() {
         return vaultData["profile"]["name"];
+    }
+
+    std::string Vault::downloadIcon(std::string url) {
+        std::vector<uint8_t> urlVec(url.begin(), url.end());
+        std::string b64Url = b64Encode(urlVec)  + ".png";
+        if (!storage.exists(b64Url)) {
+            auto iconDl = OnlineDownloadIcon(url);
+            if (!iconDl) {
+                logger->error("Failed to download icon");
+                return "";
+            }
+            std::vector<uint8_t> iconCont = iconDl.value();
+            storage.write(b64Url, iconCont);
+            return (storage.path / std::filesystem::path(b64Url)).string();
+        } else {
+            return (storage.path / std::filesystem::path(b64Url)).string();
+        }
     }
 
     /*

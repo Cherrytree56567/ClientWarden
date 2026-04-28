@@ -1,8 +1,0 @@
-namespace WindowsUI
-{
-    [default_interface]
-    runtimeclass Vault : Microsoft.UI.Xaml.Controls.Page
-    {
-        Vault();
-    }
-}

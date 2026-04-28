@@ -24,6 +24,8 @@ namespace winrt::WindowsUI::implementation
         winrt::event_token ShowHide(Microsoft::UI::Xaml::RoutedEventHandler const& handler);
         void ShowHide(winrt::event_token const& token);
 
+        winrt::Microsoft::UI::Xaml::Controls::BitmapIcon GetShowHideImage();
+
         void Button_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void Button_Click_1(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
     private:

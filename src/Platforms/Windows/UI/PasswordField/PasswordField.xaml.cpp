@@ -49,6 +49,15 @@ namespace winrt::WindowsUI::implementation
     }
 
     void PasswordField::Button_Click_1(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        if (ShowHideImage().UriSource().RawUri() == L"ms-appx:///Assets/ic_fluent_eye_show_24_regular.png") {
+            ShowHideImage().UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_eye_hide_24_regular.png"));
+        } else {
+            ShowHideImage().UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_eye_show_24_regular.png"));
+        }
         m_showhideEvent(*this, e);
+    }
+
+    winrt::Microsoft::UI::Xaml::Controls::BitmapIcon PasswordField::GetShowHideImage() {
+        return ShowHideImage();
     }
 }

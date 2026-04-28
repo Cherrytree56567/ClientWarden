@@ -2,7 +2,9 @@
 
 namespace ClientWarden::Vault {
     NoteItem::NoteItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::NoteItem");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::NoteItem");
+        }
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -41,7 +43,9 @@ namespace ClientWarden::Vault {
     }
 
     NoteItem::NoteItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::NoteItem");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::NoteItem");
+        }
         auto keys = localVault.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;

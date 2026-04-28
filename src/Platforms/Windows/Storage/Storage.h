@@ -19,6 +19,6 @@ public:
     void remove(std::filesystem::path file);
     void rename(std::filesystem::path file, std::string name);
     bool exists(std::filesystem::path file);
-private:
+public:
     std::filesystem::path path;
 };

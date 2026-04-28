@@ -2,7 +2,9 @@
 
 namespace ClientWarden::Vault {
     SSHKeyItem::SSHKeyItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");
+        }
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -44,7 +46,9 @@ namespace ClientWarden::Vault {
     }
 
     SSHKeyItem::SSHKeyItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");
+        }
         auto keys = localVault.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;

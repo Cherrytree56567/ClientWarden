@@ -137,7 +137,7 @@ if (WIN32)
 endif()
 
 if(MSVC)
-    target_compile_options(clientwarden PRIVATE /std:c++latest /GR-)
+    target_compile_options(clientwarden PRIVATE /std:c++latest /GR- /EHa)
 endif()
 
 target_link_libraries(clientwarden OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan)

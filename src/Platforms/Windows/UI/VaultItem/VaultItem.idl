@@ -9,5 +9,6 @@ namespace WindowsUI
         String Detail;
         event Microsoft.UI.Xaml.RoutedEventHandler Click;
         String itemID;
+        String itemType;
     }
 }

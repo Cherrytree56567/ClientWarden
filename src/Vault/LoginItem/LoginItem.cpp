@@ -2,7 +2,9 @@
 
 namespace ClientWarden::Vault {
     LoginItem::LoginItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
+        }
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -44,7 +46,9 @@ namespace ClientWarden::Vault {
     }
 
     LoginItem::LoginItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
+        }
         auto keys = localVault.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;
@@ -431,6 +435,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetUsername(std::string& username) {
         if (!init) return *this;
         if (!data["login"].contains("username")) return *this;
+        if (data["login"]["username"].is_null()) return *this;
         username = localVault.Decrypt(data["login"]["username"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -438,6 +443,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetPassword(std::string& password) {
         if (!init) return *this;
         if (!data["login"].contains("password")) return *this;
+        if (data["login"]["password"].is_null()) return *this;
         password = localVault.Decrypt(data["login"]["password"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -445,63 +451,74 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetTotp(TOTPCode& totp) {
         if (!init) return *this;
         if (!data["login"].contains("totp")) return *this;
+        if (data["login"]["totp"].is_null()) return *this;
 
-        std::string totpURI = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
+        try {
+            std::string totpURI = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
 
-        boost::urls::url_view uri(totpURI);
+            boost::urls::url_view uri(totpURI);
 
-        auto params = uri.params();
-        
-        std::string secret;
-        std::string algo;
-        int digits;
-        int period;
+            auto params = uri.params();
+            
+            std::string secret = "";
+            std::string algo = "";
+            int digits = 0;
+            int period = 0;
 
-        for (auto p : params) {
-            if (p.key == "secret") {
-                secret = p.value;
-            } else if (p.key == "algorithm") {
-                algo = p.value;
-            } else if (p.key == "digits") {
-                digits = std::stoi(p.value);
-            } else if (p.key == "period") {
-                period = std::stoi(p.value);
+            for (auto p : params) {
+                if (p.key == "secret") {
+                    secret = p.value;
+                } else if (p.key == "algorithm") {
+                    algo = p.value;
+                } else if (p.key == "digits") {
+                    digits = std::stoi(p.value);
+                } else if (p.key == "period") {
+                    period = std::stoi(p.value);
+                }
             }
+
+            if (secret == "" || algo == "" || digits == 0 || period == 0) {
+                secret = totpURI;
+                algo = "sha256";
+                digits = 6;
+                period = 30;
+            }
+
+            OPENSSL_cleanse(totpURI.data(), totpURI.size());
+
+            Botan::secure_vector<uint8_t> secureSecret = Botan::base32_decode(secret);
+
+            OPENSSL_cleanse(secret.data(), secret.size());
+
+            if (algo == "sha256" || algo == "SHA256") {
+                algo = "SHA-256";
+            } else if (algo == "sha512" || algo == "SHA512") {
+                algo = "SHA-512";
+            } else {
+                algo = "SHA-1";
+            }
+
+            if (digits > 8 || digits < 6) {
+                digits = 6;
+            }
+
+            Botan::TOTP totpCode(secureSecret.data(), secureSecret.size(), algo, digits, period);
+
+            uint32_t code = totpCode.generate_totp(std::chrono::system_clock::now());
+
+            std::time_t now = std::time(nullptr);
+
+            std::time_t currentStep = (now / period) * period;
+            std::time_t nextRefresh = currentStep + period;
+
+            std::ostringstream oss;
+            oss << std::setw(digits) << std::setfill('0') << code;
+            totp.code = oss.str();
+            totp.remaining = nextRefresh;
+        } catch (...) {
+            spdlog::info("Failed to get TOTP");
+            return *this;
         }
-
-        OPENSSL_cleanse(totpURI.data(), totpURI.size());
-
-        Botan::secure_vector<uint8_t> secureSecret = Botan::base32_decode(secret);
-
-        //OPENSSL_cleanse(secret.data(), secret.size());
-
-        if (algo == "sha256" || algo == "SHA256") {
-            algo = "SHA-256";
-        } else if (algo == "sha512" || algo == "SHA512") {
-            algo = "SHA-512";
-        } else {
-            algo = "SHA-1";
-        }
-
-        if (digits > 8 || digits < 6) {
-            digits = 6;
-        }
-
-        logger->info("Secret: {}, Algo: {}, Digits: {}, Period: {}", secret, algo, digits, period);
-
-        Botan::TOTP totpCode(secureSecret.data(), secureSecret.size(), algo, digits, period);
-
-        uint32_t code = totpCode.generate_totp(std::chrono::system_clock::now());
-
-        std::time_t now = std::time(nullptr);
-
-        std::time_t currentStep = (now / period) * period;
-        std::time_t nextRefresh = currentStep + period;
-
-        std::ostringstream oss;
-        oss << std::setw(digits) << std::setfill('0') << code;
-        totp.code = oss.str();
-        totp.remaining = nextRefresh;
 
         return *this;
     }
