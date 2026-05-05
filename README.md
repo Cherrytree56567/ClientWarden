@@ -70,12 +70,12 @@ Anyways, here are some reasons to use Clientwarden:
 
 ### Built With
 
-* [![Conan Center](https://img.shields.io/conan/v/botan)](https://conan.io/center/recipes/botan)
-* [![Conan Center](https://img.shields.io/conan/v/spdlog)](https://conan.io/center/recipes/spdlog)
-* [![Conan Center](https://img.shields.io/conan/v/openssl)](https://conan.io/center/recipes/openssl)
-* [![Conan Center](https://img.shields.io/conan/v/nlohmann_json)](https://conan.io/center/recipes/nlohmann_json)
-* [![Conan Center](https://img.shields.io/conan/v/cpp-httplib)](https://conan.io/center/recipes/cpp-httplib)
-* [![Conan Center](https://img.shields.io/conan/v/boost)](https://conan.io/center/recipes/boost)
+* Botan - [![Conan Center](https://img.shields.io/conan/v/botan)](https://conan.io/center/recipes/botan)
+* SPDLog - [![Conan Center](https://img.shields.io/conan/v/spdlog)](https://conan.io/center/recipes/spdlog)
+* OpenSSL - [![Conan Center](https://img.shields.io/conan/v/openssl)](https://conan.io/center/recipes/openssl)
+* Nlohmann JSON - [![Conan Center](https://img.shields.io/conan/v/nlohmann_json)](https://conan.io/center/recipes/nlohmann_json)
+* CPP HTTPLib - [![Conan Center](https://img.shields.io/conan/v/cpp-httplib)](https://conan.io/center/recipes/cpp-httplib)
+* Boost - [![Conan Center](https://img.shields.io/conan/v/boost)](https://conan.io/center/recipes/boost)
 
 <!-- GETTING STARTED -->
 ## Getting Started
