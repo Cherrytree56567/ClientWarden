@@ -7,7 +7,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <!--<a href="https://github.com/othneildrew/Best-README-Template">
+  <!--<a href="https://github.com/Cherrytree56567/ClientWarden">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>-->
 
@@ -17,11 +17,9 @@
     A Secure and Well Designed Alternative to the Desktop Bitwarden Client. Clientwarden uses WinUI for the Windows UI instead of Electron for efficiency and uses Botan for TOTP Codes, which will soon also be used for `secure_vector`'s and `secure_allocator`'s. Currently only Logins are clickable in the Clientwarden UI and only Username, Password's and Websites are able to be displayed.
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
+    <a href="https://github.com/Cherrytree56567/ClientWarden/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    &middot;
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/Cherrytree56567/ClientWarden/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
 
@@ -139,7 +137,7 @@ Before Building, make sure you have conan and vcpkg installed.
 - [ ] Add Support for Windows Hello
 - [ ] Official Release
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -178,3 +176,16 @@ Thanks to:
 
 * [Fluent Icons](https://fluenticons.co/outlined/)
 * [Readme Template](https://github.com/othneildrew/Best-README-Template)
+[contributors-shield]: https://img.shields.io/github/contributors/Cherrytree56567/ClientWarden.svg?style=for-the-badge
+[contributors-url]: https://github.com/Cherrytree56567/ClientWarden/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Cherrytree56567/ClientWarden.svg?style=for-the-badge
+[forks-url]: https://github.com/Cherrytree56567/ClientWarden/network/members
+[stars-shield]: https://img.shields.io/github/stars/Cherrytree56567/ClientWarden.svg?style=for-the-badge
+[stars-url]: https://github.com/Cherrytree56567/ClientWarden/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Cherrytree56567/ClientWarden.svg?style=for-the-badge
+[issues-url]: https://github.com/Cherrytree56567/ClientWarden/issues
+[license-shield]: https://img.shields.io/github/license/Cherrytree56567/ClientWarden.svg?style=for-the-badge
+[license-url]: https://github.com/Cherrytree56567/ClientWarden/blob/master/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://linkedin.com/in/Cherrytree56567
+[product-screenshot]: images/screenshot.png
