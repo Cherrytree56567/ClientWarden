@@ -195,4 +195,4 @@ Thanks to:
 [issues-url]: https://github.com/Cherrytree56567/ClientWarden/issues
 [license-shield]: https://img.shields.io/github/license/Cherrytree56567/ClientWarden.svg?style=for-the-badge
 [license-url]: https://github.com/Cherrytree56567/ClientWarden/blob/master/LICENSE
-[product-screenshot]: images/screenshot.png
+[product-screenshot]: https://github.com/user-attachments/assets/08a522ed-f4d3-4474-b52a-02db2e2fd51d
