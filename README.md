@@ -61,7 +61,7 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Cherrytree56567/ClientWarden)
 
-While the Bitwarden Web Client looks ok, the desktop Bitwarden Client doesn't look very good and uses lots of memory, mainly due to electron. There are different Password Managers like 1Pass which do use Electron, but have an appealing UI. My main inspiration is 1Password because it looks the best out of all the major (non Open Source) Password Managers (LastPass, Bitwarden and 1Pass).
+While the Bitwarden Web Client looks ok, the desktop Bitwarden Client doesn't look very good and uses lots of memory, mainly due to electron. There are different Password Managers like 1Pass which do use Electron, but have an appealing UI. My main inspiration is 1Password because it looks the best out of all the major (non Open Source) Password Managers (LastPass, Bitwarden and 1Pass). The main goal is to make an effecient, safe and appealing Password Manager based on Bitwarden.
 
 Anyways, here are some reasons to use Clientwarden:
 * Clientwarden uses WinUI to blend in with Windows and look as good as possible
