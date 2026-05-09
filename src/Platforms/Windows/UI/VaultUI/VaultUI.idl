@@ -4,5 +4,6 @@ namespace WindowsUI
     runtimeclass VaultUI : Microsoft.UI.Xaml.Controls.Page
     {
         VaultUI();
+        void StopTOTPThread();
     }
 }

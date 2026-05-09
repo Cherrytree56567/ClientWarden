@@ -5,6 +5,7 @@ namespace ClientWarden::Vault {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
         }
+        if (!localVault.vaultData.contains("ciphers") || localVault.vaultData["ciphers"].is_null()) return;
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -128,6 +129,7 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::SetUsername(std::string& username) {
         if (!init) return *this;
+        if (!data.contains("login") || !data["login"].is_object()) return *this;
         fieldData["Username"] = localVault.Encrypt(username, itemEncKey, itemMacKey);
         data["login"]["username"] = localVault.Encrypt(username, itemEncKey, itemMacKey);
         OPENSSL_cleanse(username.data(), username.size());
@@ -137,6 +139,7 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::SetPassword(std::string& password) {
         if (!init) return *this;
+        if (!data.contains("login") || !data["login"].is_object()) return *this;
         fieldData["Password"] = localVault.Encrypt(password, itemEncKey, itemMacKey);
         data["login"]["password"] = localVault.Encrypt(password, itemEncKey, itemMacKey);
         OPENSSL_cleanse(password.data(), password.size());
@@ -146,6 +149,7 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::SetTotp(std::string& totp) {
         if (!init) return *this;
+        if (!data.contains("login") || !data["login"].is_object()) return *this;
         fieldData["Totp"] = localVault.Encrypt(totp, itemEncKey, itemMacKey);
         data["login"]["totp"] = localVault.Encrypt(totp, itemEncKey, itemMacKey);
         OPENSSL_cleanse(totp.data(), totp.size());
@@ -176,6 +180,7 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::AddWebsite(std::string& website) {
         if (!init) return *this;
+        if (!data.contains("login") || !data["login"].is_object()) return *this;
         nlohmann::json uriData;
         uriData["match"] = nullptr;
         uriData["uri"] = localVault.Encrypt(website, itemEncKey, itemMacKey);
@@ -194,13 +199,17 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::RemoveWebsite(std::string& website) {
         if (!init) return *this;
-        std::string decUri = localVault.Decrypt(data["login"]["uri"], itemEncKey, itemMacKey);
-        if (decUri == website) {
-            data["login"]["uri"] = nullptr;
-        }
+        if (!data.contains("login") || !data["login"].is_object()) return *this;
+        if (!data["login"].contains("uri") || !data["login"].contains("uris")) return *this;
+        if (data["login"]["uri"].is_string())  {
+            std::string decUri = localVault.Decrypt(data["login"]["uri"], itemEncKey, itemMacKey);
+            if (decUri == website) {
+                data["login"]["uri"] = nullptr;
+            }
 
-        OPENSSL_cleanse(decUri.data(), decUri.size());
-        decUri.clear();
+            OPENSSL_cleanse(decUri.data(), decUri.size());
+            decUri.clear();
+        }
 
         auto& uris = data["login"]["uris"];
         for (auto it = uris.begin(); it != uris.end(); ++it) {
@@ -237,6 +246,10 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
         if (field == CustomFieldType::Text) {
@@ -290,6 +303,10 @@ namespace ClientWarden::Vault {
 
     LoginItem& LoginItem::RemoveField(std::string& name) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
             std::string decName = localVault.Decrypt((*it)["name"], itemEncKey, itemMacKey);
@@ -428,30 +445,45 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetName(std::string& name) {
         if (!init) return *this;
         if (!data.contains("name")) return *this;
+        if (!data["name"].is_string()) return *this;
         name = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
         return *this;
     }
 
     LoginItem& LoginItem::GetUsername(std::string& username) {
         if (!init) return *this;
+        if (!data["login"].is_object()) return *this;
         if (!data["login"].contains("username")) return *this;
-        if (data["login"]["username"].is_null()) return *this;
+        if (!data["login"]["username"].is_string()) return *this;
         username = localVault.Decrypt(data["login"]["username"], itemEncKey, itemMacKey);
         return *this;
     }
 
     LoginItem& LoginItem::GetPassword(std::string& password) {
         if (!init) return *this;
+        if (!data["login"].is_object()) return *this;
         if (!data["login"].contains("password")) return *this;
-        if (data["login"]["password"].is_null()) return *this;
+        if (!data["login"]["password"].is_string()) return *this;
         password = localVault.Decrypt(data["login"]["password"], itemEncKey, itemMacKey);
+        return *this;
+    }
+
+    LoginItem& LoginItem::GetTotpSecret(std::string& totp) {
+        if (!init) return *this;
+        if (!data["login"].is_object()) return *this;
+        if (!data["login"].contains("totp")) return *this;
+        if (!data["login"]["totp"].is_string()) return *this;
+
+        totp = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
+
         return *this;
     }
 
     LoginItem& LoginItem::GetTotp(TOTPCode& totp) {
         if (!init) return *this;
+        if (!data["login"].is_object()) return *this;
         if (!data["login"].contains("totp")) return *this;
-        if (data["login"]["totp"].is_null()) return *this;
+        if (!data["login"]["totp"].is_string()) return *this;
 
         try {
             std::string totpURI = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
@@ -479,7 +511,6 @@ namespace ClientWarden::Vault {
 
             if (secret == "" || algo == "" || digits == 0 || period == 0) {
                 secret = totpURI;
-                algo = "sha256";
                 digits = 6;
                 period = 30;
             }
@@ -526,6 +557,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetNotes(std::string& notes) {
         if (!init) return *this;
         if (!data.contains("notes")) return *this;
+        if (!data["notes"].is_string()) return *this;
         notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -533,6 +565,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetFolder(std::string& folder) {
         if (!init) return *this;
         if (!data.contains("folderId")) return *this;
+        if (!data["folderId"].is_string()) return *this;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
         return *this;
     }
@@ -540,6 +573,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetWebsites(std::vector<std::string>& websites) {
         if (!init) return *this;
         if (!data["login"].contains("uris")) return *this;
+        if (!data["login"]["uris"].is_array()) return *this;
         websites.clear();
         for (auto& uri : data["login"]["uris"]) {
             websites.push_back(localVault.Decrypt(uri["uri"], itemEncKey, itemMacKey));
@@ -550,6 +584,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
         if (!init) return *this;
         if (!data.contains("fields")) return *this;
+        if (!data["fields"].is_array()) return *this;
         fields.clear();
         for (auto& f : data["fields"]) {
             CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());
@@ -569,6 +604,7 @@ namespace ClientWarden::Vault {
         if (!init) return *this;
         if (!data["login"].contains("passwordRevisionDate")) return *this;
         if (!data.contains("passwordHistory")) return *this;
+        if (data["passwordHistory"].is_null()) return *this;
         if (!data["login"]["passwordRevisionDate"].is_null()) {
             for (auto& revHist : data["passwordHistory"]) {
                 if (!revHist.contains("lastUsedDate")) continue;
@@ -610,6 +646,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetFavorite(bool& val) {
         if (!init) return *this;
         if (!data.contains("favorite")) return *this;
+        if (!data["favorite"].is_boolean()) return *this;
         val = data["favorite"];
         return *this;
     }
@@ -617,6 +654,7 @@ namespace ClientWarden::Vault {
     LoginItem& LoginItem::GetReprompt(bool& val) {
         if (!init) return *this;
         if (!data.contains("reprompt")) return *this;
+        if (!data["reprompt"].is_number()) return *this;
         if (data["reprompt"].get<int>() == 1) {
             val = true;
         }

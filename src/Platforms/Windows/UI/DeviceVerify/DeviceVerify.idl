@@ -1,0 +1,8 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass DeviceVerify : Microsoft.UI.Xaml.Controls.Page
+    {
+        DeviceVerify();
+    }
+}

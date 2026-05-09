@@ -4,6 +4,7 @@
 #include "VaultUI/VaultUI.xaml.h"
 #include "Login/Login.xaml.h"
 #include "Unlock/Unlock.xaml.h"
+#include "DeviceVerify/DeviceVerify.xaml.h"
 
 namespace winrt::WindowsUI::implementation
 {
@@ -14,6 +15,7 @@ namespace winrt::WindowsUI::implementation
         void Grid_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void OnWindowClosing(winrt::Microsoft::UI::Windowing::AppWindow const&, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs const& args);
         
+        void deviceVerifySwitch();
         void postAuth();
         
         static MainWindow* mwstatic;

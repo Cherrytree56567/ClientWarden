@@ -1,0 +1,11 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass HiddenEditField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        HiddenEditField();
+        String Title;
+        String Value;
+        event Microsoft.UI.Xaml.RoutedEventHandler DeleteField;
+    }
+}

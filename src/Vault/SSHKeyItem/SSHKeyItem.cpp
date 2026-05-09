@@ -5,6 +5,7 @@ namespace ClientWarden::Vault {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");
         }
+        if (!localVault.vaultData.contains("ciphers") || localVault.vaultData["ciphers"].is_null()) return;
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -121,6 +122,7 @@ namespace ClientWarden::Vault {
 
     SSHKeyItem& SSHKeyItem::SetFingerprint(std::string& fingerprint) {
         if (!init) return *this;
+        if (!data.contains("sshKey") || !data["sshKey"].is_object()) return *this;
         fieldData["KeyFingerprint"] = localVault.Encrypt(fingerprint, itemEncKey, itemMacKey);
         data["sshKey"]["keyFingerprint"] = localVault.Encrypt(fingerprint, itemEncKey, itemMacKey);
         OPENSSL_cleanse(fingerprint.data(), fingerprint.size());
@@ -130,6 +132,7 @@ namespace ClientWarden::Vault {
 
     SSHKeyItem& SSHKeyItem::SetPrivateKey(std::string& privateKey) {
         if (!init) return *this;
+        if (!data.contains("sshKey") || !data["sshKey"].is_object()) return *this;
         fieldData["PrivateKey"] = localVault.Encrypt(privateKey, itemEncKey, itemMacKey);
         data["sshKey"]["privateKey"] = localVault.Encrypt(privateKey, itemEncKey, itemMacKey);
         OPENSSL_cleanse(privateKey.data(), privateKey.size());
@@ -139,6 +142,7 @@ namespace ClientWarden::Vault {
 
     SSHKeyItem& SSHKeyItem::SetPublicKey(std::string& publicKey) {
         if (!init) return *this;
+        if (!data.contains("sshKey") || !data["sshKey"].is_object()) return *this;
         fieldData["PublicKey"] = localVault.Encrypt(publicKey, itemEncKey, itemMacKey);
         data["sshKey"]["publicKey"] = localVault.Encrypt(publicKey, itemEncKey, itemMacKey);
         OPENSSL_cleanse(publicKey.data(), publicKey.size());
@@ -169,6 +173,10 @@ namespace ClientWarden::Vault {
 
     SSHKeyItem& SSHKeyItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
         if (field == CustomFieldType::Text) {
@@ -222,6 +230,10 @@ namespace ClientWarden::Vault {
 
     SSHKeyItem& SSHKeyItem::RemoveField(std::string& name) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
             std::string decName = localVault.Decrypt((*it)["name"], itemEncKey, itemMacKey);
@@ -274,6 +286,7 @@ namespace ClientWarden::Vault {
     SSHKeyItem& SSHKeyItem::GetFavorite(bool& val) {
         if (!init) return *this;
         if (!data.contains("favorite")) return *this;
+        if (!data["favorite"].is_boolean()) return *this;
         val = data["favorite"];
         return *this;
     }
@@ -281,6 +294,7 @@ namespace ClientWarden::Vault {
     SSHKeyItem& SSHKeyItem::GetReprompt(bool& val) {
         if (!init) return *this;
         if (!data.contains("reprompt")) return *this;
+        if (!data["reprompt"].is_number()) return *this;
         if (data["reprompt"].get<int>() == 1) {
             val = true;
         }
@@ -395,27 +409,34 @@ namespace ClientWarden::Vault {
     SSHKeyItem& SSHKeyItem::GetName(std::string& name) {
         if (!init) return *this;
         if (!data.contains("name")) return *this;
+        if (!data["name"].is_string()) return *this;
         name = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
         return *this;
     }
 
     SSHKeyItem& SSHKeyItem::GetFingerprint(std::string& fingerprint) {
         if (!init) return *this;
+        if (!data["sshKey"].is_object()) return *this;
         if (!data["sshKey"].contains("keyFingerprint")) return *this;
+        if (!data["sshKey"]["keyFingerprint"].is_string()) return *this;
         fingerprint = localVault.Decrypt(data["sshKey"]["keyFingerprint"], itemEncKey, itemMacKey);
         return *this;
     }
 
     SSHKeyItem& SSHKeyItem::GetPrivateKey(std::string& privateKey) {
         if (!init) return *this;
+        if (!data["sshKey"].is_object()) return *this;
         if (!data["sshKey"].contains("privateKey")) return *this;
+        if (!data["sshKey"]["privateKey"].is_string()) return *this;
         privateKey = localVault.Decrypt(data["sshKey"]["privateKey"], itemEncKey, itemMacKey);
         return *this;
     }
 
     SSHKeyItem& SSHKeyItem::GetPublicKey(std::string& publicKey) {
         if (!init) return *this;
+        if (!data["sshKey"].is_object()) return *this;
         if (!data["sshKey"].contains("publicKey")) return *this;
+        if (!data["sshKey"]["publicKey"].is_string()) return *this;
         publicKey = localVault.Decrypt(data["sshKey"]["publicKey"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -423,6 +444,7 @@ namespace ClientWarden::Vault {
     SSHKeyItem& SSHKeyItem::GetNotes(std::string& notes) {
         if (!init) return *this;
         if (!data.contains("notes")) return *this;
+        if (!data["notes"].is_string()) return *this;
         notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -430,6 +452,7 @@ namespace ClientWarden::Vault {
     SSHKeyItem& SSHKeyItem::GetFolder(std::string& folder) {
         if (!init) return *this;
         if (!data.contains("folderId")) return *this;
+        if (!data["folderId"].is_string()) return *this;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
         return *this;
     }
@@ -437,6 +460,7 @@ namespace ClientWarden::Vault {
     SSHKeyItem& SSHKeyItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
         if (!init) return *this;
         if (!data.contains("fields")) return *this;
+        if (!data["fields"].is_array()) return *this;
         fields.clear();
         for (auto& f : data["fields"]) {
             CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());

@@ -42,34 +42,50 @@ if (WIN32)
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/App"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/CheckboxField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/CheckboxEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/GenericField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/GenericEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/LinkedField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/LinkedEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/Login"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/MainWindow"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/PasswordField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/PasswordEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/TextField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/TextEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/TOTPField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/Unlock"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/VaultUI"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/VaultItem"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/DeviceVerify"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/WebsiteEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/WebsiteField")
     target_sources(clientwarden PRIVATE src/Platforms/Windows/Storage/Storage.cpp
                                 src/Platforms/Windows/UI/app.manifest
                                 src/Platforms/Windows/UI/App/App.xaml src/Platforms/Windows/UI/App/App.xaml.cpp src/Platforms/Windows/UI/App/App.xaml.h
                                 src/Platforms/Windows/UI/Login/Login.xaml src/Platforms/Windows/UI/Login/Login.xaml.cpp src/Platforms/Windows/UI/Login/Login.xaml.h src/Platforms/Windows/UI/Login/Login.idl
+                                src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.xaml src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.xaml.cpp src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.xaml.h src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.idl
                                 src/Platforms/Windows/UI/Unlock/Unlock.xaml src/Platforms/Windows/UI/Unlock/Unlock.xaml.cpp src/Platforms/Windows/UI/Unlock/Unlock.xaml.h src/Platforms/Windows/UI/Unlock/Unlock.idl
-                                src/Platforms/Windows/UI/VaultUI/VaultUI.xaml src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.cpp src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.h src/Platforms/Windows/UI/VaultUI/VaultUI.idl
+                                src/Platforms/Windows/UI/VaultUI/VaultUI.xaml src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.cpp src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.Copy.cpp src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.h src/Platforms/Windows/UI/VaultUI/VaultUI.idl
                                 src/Platforms/Windows/UI/VaultItem/VaultItem.xaml src/Platforms/Windows/UI/VaultItem/VaultItem.xaml.cpp src/Platforms/Windows/UI/VaultItem/VaultItem.xaml.h src/Platforms/Windows/UI/VaultItem/VaultItem.idl
                                 src/Platforms/Windows/UI/MainWindow/MainWindow.xaml src/Platforms/Windows/UI/MainWindow/MainWindow.xaml.cpp src/Platforms/Windows/UI/MainWindow/MainWindow.xaml.h src/Platforms/Windows/UI/MainWindow/MainWindow.idl
                                 src/Platforms/Windows/UI/GenericField/GenericField.xaml src/Platforms/Windows/UI/GenericField/GenericField.xaml.cpp src/Platforms/Windows/UI/GenericField/GenericField.xaml.h src/Platforms/Windows/UI/GenericField/GenericField.idl
+                                src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml.cpp src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml.h src/Platforms/Windows/UI/GenericEditField/GenericEditField.idl
                                 src/Platforms/Windows/UI/PasswordField/PasswordField.xaml src/Platforms/Windows/UI/PasswordField/PasswordField.xaml.cpp src/Platforms/Windows/UI/PasswordField/PasswordField.xaml.h src/Platforms/Windows/UI/PasswordField/PasswordField.idl
+                                src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml.cpp src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml.h src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.idl
                                 src/Platforms/Windows/UI/TOTPField/TOTPField.xaml src/Platforms/Windows/UI/TOTPField/TOTPField.xaml.cpp src/Platforms/Windows/UI/TOTPField/TOTPField.xaml.h src/Platforms/Windows/UI/TOTPField/TOTPField.idl
                                 src/Platforms/Windows/UI/TextField/TextField.xaml src/Platforms/Windows/UI/TextField/TextField.xaml.cpp src/Platforms/Windows/UI/TextField/TextField.xaml.h src/Platforms/Windows/UI/TextField/TextField.idl
+                                src/Platforms/Windows/UI/TextEditField/TextEditField.xaml src/Platforms/Windows/UI/TextEditField/TextEditField.xaml.cpp src/Platforms/Windows/UI/TextEditField/TextEditField.xaml.h src/Platforms/Windows/UI/TextEditField/TextEditField.idl
                                 src/Platforms/Windows/UI/CheckboxField/CheckboxField.xaml src/Platforms/Windows/UI/CheckboxField/CheckboxField.xaml.cpp src/Platforms/Windows/UI/CheckboxField/CheckboxField.xaml.h src/Platforms/Windows/UI/CheckboxField/CheckboxField.idl
+                                src/Platforms/Windows/UI/CheckboxEditField/CheckboxEditField.xaml src/Platforms/Windows/UI/CheckboxEditField/CheckboxEditField.xaml.cpp src/Platforms/Windows/UI/CheckboxEditField/CheckboxEditField.xaml.h src/Platforms/Windows/UI/CheckboxEditField/CheckboxEditField.idl
                                 src/Platforms/Windows/UI/HiddenField/HiddenField.xaml src/Platforms/Windows/UI/HiddenField/HiddenField.xaml.cpp src/Platforms/Windows/UI/HiddenField/HiddenField.xaml.h src/Platforms/Windows/UI/HiddenField/HiddenField.idl
+                                src/Platforms/Windows/UI/HiddenEditField/HiddenEditField.xaml src/Platforms/Windows/UI/HiddenEditField/HiddenEditField.xaml.cpp src/Platforms/Windows/UI/HiddenEditField/HiddenEditField.xaml.h src/Platforms/Windows/UI/HiddenEditField/HiddenEditField.idl
                                 src/Platforms/Windows/UI/LinkedField/LinkedField.xaml src/Platforms/Windows/UI/LinkedField/LinkedField.xaml.cpp src/Platforms/Windows/UI/LinkedField/LinkedField.xaml.h src/Platforms/Windows/UI/LinkedField/LinkedField.idl
-                                src/Platforms/Windows/UI/WebsiteField/WebsiteField.xaml src/Platforms/Windows/UI/WebsiteField/WebsiteField.xaml.cpp src/Platforms/Windows/UI/WebsiteField/WebsiteField.xaml.h src/Platforms/Windows/UI/WebsiteField/WebsiteField.idl)
+                                src/Platforms/Windows/UI/LinkedEditField/LinkedEditField.xaml src/Platforms/Windows/UI/LinkedEditField/LinkedEditField.xaml.cpp src/Platforms/Windows/UI/LinkedEditField/LinkedEditField.xaml.h src/Platforms/Windows/UI/LinkedEditField/LinkedEditField.idl
+                                src/Platforms/Windows/UI/WebsiteField/WebsiteField.xaml src/Platforms/Windows/UI/WebsiteField/WebsiteField.xaml.cpp src/Platforms/Windows/UI/WebsiteField/WebsiteField.xaml.h src/Platforms/Windows/UI/WebsiteField/WebsiteField.idl
+                                src/Platforms/Windows/UI/WebsiteEditField/WebsiteEditField.xaml src/Platforms/Windows/UI/WebsiteEditField/WebsiteEditField.xaml.cpp src/Platforms/Windows/UI/WebsiteEditField/WebsiteEditField.xaml.h src/Platforms/Windows/UI/WebsiteEditField/WebsiteEditField.idl)
     set_property(
         SOURCE src/Platforms/Windows/UI/App/App.xaml
         PROPERTY VS_XAML_TYPE

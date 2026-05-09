@@ -164,6 +164,9 @@ namespace ClientWarden::Vault {
                 continue;
             }
 
+            /*
+             * Secret Data
+            */
             auto [itemEncKey, itemMacKey] = localVault.getKeysFromCipher((*it)["key"].get<std::string>());
 
             std::string name = localVault.Decrypt((*it)["name"].get<std::string>(), itemEncKey, itemMacKey);

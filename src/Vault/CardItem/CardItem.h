@@ -28,6 +28,9 @@ namespace ClientWarden::Vault {
         CardItem& SetFavorite(bool val);
         CardItem& SetReprompt(bool val);
 
+        /*
+         * Secret Data
+        */
         CardItem& GetName(std::string& name);
         CardItem& GetBrand(std::string& brand);
         CardItem& GetCardholderName(std::string& cardholderName);
@@ -46,12 +49,16 @@ namespace ClientWarden::Vault {
         void Bin();
         void Close();
     private:
+        /*
+         * Secret Data
+        */
+        std::vector<uint8_t> itemEncKey;
+        std::vector<uint8_t> itemMacKey;
+
         bool isBeingCreated;
         bool init;
         nlohmann::json data;
         nlohmann::json fieldData;
-        std::vector<uint8_t> itemEncKey;
-        std::vector<uint8_t> itemMacKey;
         Vault& localVault;
         inline static std::shared_ptr<spdlog::logger> logger = nullptr;
     };

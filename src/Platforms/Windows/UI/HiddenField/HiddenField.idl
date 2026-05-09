@@ -7,5 +7,6 @@ namespace WindowsUI
         String Title;
         String Value;
         event Microsoft.UI.Xaml.RoutedEventHandler ShowHide;
+        Microsoft.UI.Xaml.Controls.BitmapIcon GetShowHideImage();
     }
 }

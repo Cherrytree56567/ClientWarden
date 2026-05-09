@@ -38,6 +38,7 @@ namespace ClientWarden::Vault {
         LoginItem& GetUsername(std::string& username);
         LoginItem& GetPassword(std::string& password);
         LoginItem& GetTotp(TOTPCode& totp);
+        LoginItem& GetTotpSecret(std::string& totp);
         LoginItem& GetNotes(std::string& notes);
         LoginItem& GetFolder(std::string& folder);
         LoginItem& GetWebsites(std::vector<std::string>& website);
@@ -55,12 +56,16 @@ namespace ClientWarden::Vault {
         void Bin();
         void Close();
     private:
+        /*
+         * Secret Data
+        */
+        std::vector<uint8_t> itemEncKey;
+        std::vector<uint8_t> itemMacKey;
+
         bool isBeingCreated;
         bool init;
         nlohmann::json data;
         nlohmann::json fieldData;
-        std::vector<uint8_t> itemEncKey;
-        std::vector<uint8_t> itemMacKey;
         Vault& localVault;
         inline static std::shared_ptr<spdlog::logger> logger = nullptr;
     };

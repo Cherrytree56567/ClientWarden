@@ -5,9 +5,10 @@ namespace ClientWarden::Vault {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
         }
+        if (!localVault.vaultData.contains("ciphers") || localVault.vaultData["ciphers"].is_null()) return;
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
-            if (!cipher.contains("id")) {
+            if (!cipher.contains("id") || cipher["id"].is_null()) {
                 continue;
             }
             if (cipher["id"].get<std::string>() == uuid) {
@@ -35,7 +36,7 @@ namespace ClientWarden::Vault {
             init = false;
         }
         init = false;
-        if (data.contains("type")) {
+        if (data.contains("type") || data["type"].is_number()) {
             if (data["type"].get<int>() == 3) {
                 init = true;
             }
@@ -127,6 +128,7 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::SetBrand(std::string& brand) {
         if (!init) return *this;
+        if (!data.contains("card") || !data["card"].is_object()) return *this;
         fieldData["Brand"] = localVault.Encrypt(brand, itemEncKey, itemMacKey);
         data["card"]["brand"] = localVault.Encrypt(brand, itemEncKey, itemMacKey);
         OPENSSL_cleanse(brand.data(), brand.size());
@@ -136,6 +138,7 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::SetCardholderName(std::string& cardholderName) {
         if (!init) return *this;
+        if (!data.contains("card") || !data["card"].is_object()) return *this;
         fieldData["CardholderName"] = localVault.Encrypt(cardholderName, itemEncKey, itemMacKey);
         data["card"]["cardholderName"] = localVault.Encrypt(cardholderName, itemEncKey, itemMacKey);
         OPENSSL_cleanse(cardholderName.data(), cardholderName.size());
@@ -145,6 +148,7 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::SetCode(std::string& code) {
         if (!init) return *this;
+        if (!data.contains("card") || !data["card"].is_object()) return *this;
         fieldData["Code"] = localVault.Encrypt(code, itemEncKey, itemMacKey);
         data["card"]["code"] = localVault.Encrypt(code, itemEncKey, itemMacKey);
         OPENSSL_cleanse(code.data(), code.size());
@@ -154,6 +158,7 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::SetExpMonth(std::string& expMonth) {
         if (!init) return *this;
+        if (!data.contains("card") || !data["card"].is_object()) return *this;
         fieldData["ExpMonth"] = localVault.Encrypt(expMonth, itemEncKey, itemMacKey);
         data["card"]["expMonth"] = localVault.Encrypt(expMonth, itemEncKey, itemMacKey);
         OPENSSL_cleanse(expMonth.data(), expMonth.size());
@@ -163,6 +168,7 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::SetExpYear(std::string& expYear) {
         if (!init) return *this;
+        if (!data.contains("card") || !data["card"].is_object()) return *this;
         fieldData["ExpYear"] = localVault.Encrypt(expYear, itemEncKey, itemMacKey);
         data["card"]["expYear"] = localVault.Encrypt(expYear, itemEncKey, itemMacKey);
         OPENSSL_cleanse(expYear.data(), expYear.size());
@@ -172,6 +178,7 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::SetNumber(std::string& number) {
         if (!init) return *this;
+        if (!data.contains("card") || !data["card"].is_object()) return *this;
         fieldData["Number"] = localVault.Encrypt(number, itemEncKey, itemMacKey);
         data["card"]["number"] = localVault.Encrypt(number, itemEncKey, itemMacKey);
         OPENSSL_cleanse(number.data(), number.size());
@@ -202,6 +209,10 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
         if (field == CustomFieldType::Text) {
@@ -255,6 +266,10 @@ namespace ClientWarden::Vault {
 
     CardItem& CardItem::RemoveField(std::string& name) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
             std::string decName = localVault.Decrypt((*it)["name"], itemEncKey, itemMacKey);
@@ -307,6 +322,7 @@ namespace ClientWarden::Vault {
     CardItem& CardItem::GetFavorite(bool& val) {
         if (!init) return *this;
         if (!data.contains("favorite")) return *this;
+        if (data["favorite"].is_null()) return *this;
         val = data["favorite"];
         return *this;
     }
@@ -314,6 +330,7 @@ namespace ClientWarden::Vault {
     CardItem& CardItem::GetReprompt(bool& val) {
         if (!init) return *this;
         if (!data.contains("reprompt")) return *this;
+        if (!data["reprompt"].is_number()) return *this;
         if (data["reprompt"].get<int>() == 1) {
             val = true;
         }
@@ -428,48 +445,61 @@ namespace ClientWarden::Vault {
     CardItem& CardItem::GetName(std::string& name) {
         if (!init) return *this;
         if (!data.contains("name")) return *this;
+        if (!data["name"].is_string()) return *this;
         name = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
         return *this;
     }
 
     CardItem& CardItem::GetBrand(std::string& brand) {
         if (!init) return *this;
+        if (!data["card"].is_object()) return *this;
         if (!data["card"].contains("brand")) return *this;
+        if (!data["card"]["brand"].is_string()) return *this;
         brand = localVault.Decrypt(data["card"]["brand"], itemEncKey, itemMacKey);
         return *this;
     }
 
     CardItem& CardItem::GetCardholderName(std::string& cardholderName) {
         if (!init) return *this;
+        if (!data["card"].is_object()) return *this;
         if (!data["card"].contains("cardholderName")) return *this;
+        if (!data["card"]["cardholderName"].is_string()) return *this;
         cardholderName = localVault.Decrypt(data["card"]["cardholderName"], itemEncKey, itemMacKey);
         return *this;
     }
 
     CardItem& CardItem::GetCode(std::string& code) {
         if (!init) return *this;
+        if (!data["card"].is_object()) return *this;
         if (!data["card"].contains("code")) return *this;
+        if (!data["card"]["code"].is_string()) return *this;
         code = localVault.Decrypt(data["card"]["code"], itemEncKey, itemMacKey);
         return *this;
     }
 
     CardItem& CardItem::GetExpMonth(std::string& expMonth) {
         if (!init) return *this;
+        if (!data["card"].is_object()) return *this;
         if (!data["card"].contains("expMonth")) return *this;
+        if (!data["card"]["expMonth"].is_string()) return *this;
         expMonth = localVault.Decrypt(data["card"]["expMonth"], itemEncKey, itemMacKey);
         return *this;
     }
 
     CardItem& CardItem::GetExpYear(std::string& expYear) {
         if (!init) return *this;
+        if (!data["card"].is_object()) return *this;
         if (!data["card"].contains("expYear")) return *this;
+        if (!data["card"]["expYear"].is_string()) return *this;
         expYear = localVault.Decrypt(data["card"]["expYear"], itemEncKey, itemMacKey);
         return *this;
     }
 
     CardItem& CardItem::GetNumber(std::string& number) {
         if (!init) return *this;
+        if (!data["card"].is_object()) return *this;
         if (!data["card"].contains("number")) return *this;
+        if (!data["card"]["number"].is_string()) return *this;
         number = localVault.Decrypt(data["card"]["number"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -477,6 +507,7 @@ namespace ClientWarden::Vault {
     CardItem& CardItem::GetNotes(std::string& notes) {
         if (!init) return *this;
         if (!data.contains("notes")) return *this;
+        if (!data["notes"].is_string()) return *this;
         notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -484,6 +515,7 @@ namespace ClientWarden::Vault {
     CardItem& CardItem::GetFolder(std::string& folder) {
         if (!init) return *this;
         if (!data.contains("folderId")) return *this;
+        if (!data["folderId"].is_string()) return *this;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
         return *this;
     }
@@ -491,6 +523,7 @@ namespace ClientWarden::Vault {
     CardItem& CardItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
         if (!init) return *this;
         if (!data.contains("fields")) return *this;
+        if (!data["fields"].is_array()) return *this;
         fields.clear();
         for (auto& f : data["fields"]) {
             CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());

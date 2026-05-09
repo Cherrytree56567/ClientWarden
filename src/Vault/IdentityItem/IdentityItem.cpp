@@ -5,6 +5,7 @@ namespace ClientWarden::Vault {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::IdentityItem");
         }
+        if (!localVault.vaultData.contains("ciphers") || localVault.vaultData["ciphers"].is_null()) return;
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -151,6 +152,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetAddress1(std::string& address1) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Address1"] = localVault.Encrypt(address1, itemEncKey, itemMacKey);
         data["identity"]["address1"] = localVault.Encrypt(address1, itemEncKey, itemMacKey);
         OPENSSL_cleanse(address1.data(), address1.size());
@@ -160,6 +162,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetAddress2(std::string& address2) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Address2"] = localVault.Encrypt(address2, itemEncKey, itemMacKey);
         data["identity"]["address2"] = localVault.Encrypt(address2, itemEncKey, itemMacKey);
         OPENSSL_cleanse(address2.data(), address2.size());
@@ -169,6 +172,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetAddress3(std::string& address3) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Address3"] = localVault.Encrypt(address3, itemEncKey, itemMacKey);
         data["identity"]["address3"] = localVault.Encrypt(address3, itemEncKey, itemMacKey);
         OPENSSL_cleanse(address3.data(), address3.size());
@@ -178,6 +182,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetCity(std::string& city) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["City"] = localVault.Encrypt(city, itemEncKey, itemMacKey);
         data["identity"]["city"] = localVault.Encrypt(city, itemEncKey, itemMacKey);
         OPENSSL_cleanse(city.data(), city.size());
@@ -187,6 +192,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetCompany(std::string& company) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Company"] = localVault.Encrypt(company, itemEncKey, itemMacKey);
         data["identity"]["company"] = localVault.Encrypt(company, itemEncKey, itemMacKey);
         OPENSSL_cleanse(company.data(), company.size());
@@ -196,6 +202,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetCountry(std::string& country) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Country"] = localVault.Encrypt(country, itemEncKey, itemMacKey);
         data["identity"]["country"] = localVault.Encrypt(country, itemEncKey, itemMacKey);
         OPENSSL_cleanse(country.data(), country.size());
@@ -205,6 +212,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetEmail(std::string& email) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Email"] = localVault.Encrypt(email, itemEncKey, itemMacKey);
         data["identity"]["email"] = localVault.Encrypt(email, itemEncKey, itemMacKey);
         OPENSSL_cleanse(email.data(), email.size());
@@ -214,6 +222,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetFirstName(std::string& firstName) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["FirstName"] = localVault.Encrypt(firstName, itemEncKey, itemMacKey);
         data["identity"]["firstName"] = localVault.Encrypt(firstName, itemEncKey, itemMacKey);
         OPENSSL_cleanse(firstName.data(), firstName.size());
@@ -223,6 +232,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetLastName(std::string& lastName) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["LastName"] = localVault.Encrypt(lastName, itemEncKey, itemMacKey);
         data["identity"]["lastName"] = localVault.Encrypt(lastName, itemEncKey, itemMacKey);
         OPENSSL_cleanse(lastName.data(), lastName.size());
@@ -232,6 +242,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetLicenceNumber(std::string& licenceNumber) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["LicenseNumber"] = localVault.Encrypt(licenceNumber, itemEncKey, itemMacKey);
         data["identity"]["licenseNumber"] = localVault.Encrypt(licenceNumber, itemEncKey, itemMacKey);
         OPENSSL_cleanse(licenceNumber.data(), licenceNumber.size());
@@ -241,6 +252,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetMiddleName(std::string& middleName) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["MiddleName"] = localVault.Encrypt(middleName, itemEncKey, itemMacKey);
         data["identity"]["middleName"] = localVault.Encrypt(middleName, itemEncKey, itemMacKey);
         OPENSSL_cleanse(middleName.data(), middleName.size());
@@ -250,6 +262,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetPassportNumber(std::string& passportNumber) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["PassportNumber"] = localVault.Encrypt(passportNumber, itemEncKey, itemMacKey);
         data["identity"]["passportNumber"] = localVault.Encrypt(passportNumber, itemEncKey, itemMacKey);
         OPENSSL_cleanse(passportNumber.data(), passportNumber.size());
@@ -259,6 +272,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetPhone(std::string& phone) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Phone"] = localVault.Encrypt(phone, itemEncKey, itemMacKey);
         data["identity"]["phone"] = localVault.Encrypt(phone, itemEncKey, itemMacKey);
         OPENSSL_cleanse(phone.data(), phone.size());
@@ -268,6 +282,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetPostalCode(std::string& postalCode) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["PostalCode"] = localVault.Encrypt(postalCode, itemEncKey, itemMacKey);
         data["identity"]["postalCode"] = localVault.Encrypt(postalCode, itemEncKey, itemMacKey);
         OPENSSL_cleanse(postalCode.data(), postalCode.size());
@@ -277,6 +292,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetSSN(std::string& ssn) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["SSN"] = localVault.Encrypt(ssn, itemEncKey, itemMacKey);
         data["identity"]["ssn"] = localVault.Encrypt(ssn, itemEncKey, itemMacKey);
         OPENSSL_cleanse(ssn.data(), ssn.size());
@@ -286,6 +302,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetState(std::string& state) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["State"] = localVault.Encrypt(state, itemEncKey, itemMacKey);
         data["identity"]["state"] = localVault.Encrypt(state, itemEncKey, itemMacKey);
         OPENSSL_cleanse(state.data(), state.size());
@@ -295,6 +312,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetTitle(std::string& title) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Title"] = localVault.Encrypt(title, itemEncKey, itemMacKey);
         data["identity"]["title"] = localVault.Encrypt(title, itemEncKey, itemMacKey);
         OPENSSL_cleanse(title.data(), title.size());
@@ -304,6 +322,7 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::SetUsername(std::string& username) {
         if (!init) return *this;
+        if (!data.contains("identity") || !data["identity"].is_object()) return *this;
         fieldData["Username"] = localVault.Encrypt(username, itemEncKey, itemMacKey);
         data["identity"]["username"] = localVault.Encrypt(username, itemEncKey, itemMacKey);
         OPENSSL_cleanse(username.data(), username.size());
@@ -334,6 +353,10 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
         if (field == CustomFieldType::Text) {
@@ -387,6 +410,10 @@ namespace ClientWarden::Vault {
 
     IdentityItem& IdentityItem::RemoveField(std::string& name) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
             std::string decName = localVault.Decrypt((*it)["name"], itemEncKey, itemMacKey);
@@ -525,132 +552,169 @@ namespace ClientWarden::Vault {
     IdentityItem& IdentityItem::GetName(std::string& address1) {
         if (!init) return *this;
         if (!data.contains("name")) return *this;
+        if (!data["name"].is_string()) return *this;
         address1 = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetAddress1(std::string& address2) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("address1")) return *this;
+        if (!data["identity"]["address1"].is_string()) return *this;
         address2 = localVault.Decrypt(data["identity"]["address1"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetAddress2(std::string& address3) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("address2")) return *this;
+        if (!data["identity"]["address2"].is_string()) return *this;
         address3 = localVault.Decrypt(data["identity"]["address2"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetAddress3(std::string& city) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("address3")) return *this;
+        if (!data["identity"]["address3"].is_string()) return *this;
         city = localVault.Decrypt(data["identity"]["address3"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetCity(std::string& city) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("city")) return *this;
+        if (!data["identity"]["city"].is_string()) return *this;
         city = localVault.Decrypt(data["identity"]["city"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetCompany(std::string& company) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("company")) return *this;
+        if (!data["identity"]["company"].is_string()) return *this;
         company = localVault.Decrypt(data["identity"]["company"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetCountry(std::string& country) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("country")) return *this;
+        if (!data["identity"]["country"].is_string()) return *this;
         country = localVault.Decrypt(data["identity"]["country"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetEmail(std::string& email) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("email")) return *this;
+        if (!data["identity"]["email"].is_string()) return *this;
         email = localVault.Decrypt(data["identity"]["email"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetFirstName(std::string& firstName) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("firstName")) return *this;
+        if (!data["identity"]["firstName"].is_string()) return *this;
         firstName = localVault.Decrypt(data["identity"]["firstName"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetLastName(std::string& lastName) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("lastName")) return *this;
+        if (!data["identity"]["lastName"].is_string()) return *this;
         lastName = localVault.Decrypt(data["identity"]["lastName"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetLicenceNumber(std::string& licenseNumber) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("licenseNumber")) return *this;
+        if (!data["identity"]["licenseNumber"].is_string()) return *this;
         licenseNumber = localVault.Decrypt(data["identity"]["licenseNumber"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetMiddleName(std::string& middleName) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("middleName")) return *this;
+        if (!data["identity"]["middleName"].is_string()) return *this;
         middleName = localVault.Decrypt(data["identity"]["middleName"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetPassportNumber(std::string& passportNumber) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("passportNumber")) return *this;
+        if (!data["identity"]["passportNumber"].is_string()) return *this;
         passportNumber = localVault.Decrypt(data["identity"]["passportNumber"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetPhone(std::string& phone) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("phone")) return *this;
+        if (!data["identity"]["phone"].is_string()) return *this;
         phone = localVault.Decrypt(data["identity"]["phone"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetPostalCode(std::string& postalCode) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("postalCode")) return *this;
+        if (!data["identity"]["postalCode"].is_string()) return *this;
         postalCode = localVault.Decrypt(data["identity"]["postalCode"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetSSN(std::string& ssn) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("ssn")) return *this;
+        if (!data["identity"]["ssn"].is_string()) return *this;
         ssn = localVault.Decrypt(data["identity"]["ssn"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetState(std::string& state) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("state")) return *this;
+        if (!data["identity"]["state"].is_string()) return *this;
         state = localVault.Decrypt(data["identity"]["state"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetTitle(std::string& title) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("title")) return *this;
+        if (!data["identity"]["title"].is_string()) return *this;
         title = localVault.Decrypt(data["identity"]["title"], itemEncKey, itemMacKey);
         return *this;
     }
 
     IdentityItem& IdentityItem::GetUsername(std::string& username) {
         if (!init) return *this;
+        if (!data["identity"].is_object()) return *this;
         if (!data["identity"].contains("username")) return *this;
+        if (!data["identity"]["username"].is_string()) return *this;
         username = localVault.Decrypt(data["identity"]["username"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -658,6 +722,7 @@ namespace ClientWarden::Vault {
     IdentityItem& IdentityItem::GetNotes(std::string& notes) {
         if (!init) return *this;
         if (!data.contains("notes")) return *this;
+        if (!data["notes"].is_string()) return *this;
         notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -665,6 +730,7 @@ namespace ClientWarden::Vault {
     IdentityItem& IdentityItem::GetFolder(std::string& folder) {
         if (!init) return *this;
         if (!data.contains("folderId")) return *this;
+        if (!data["folderId"].is_string()) return *this;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
         return *this;
     }
@@ -672,6 +738,7 @@ namespace ClientWarden::Vault {
     IdentityItem& IdentityItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
         if (!init) return *this;
         if (!data.contains("fields")) return *this;
+        if (!data["fields"].is_array()) return *this;
         fields.clear();
         for (auto& f : data["fields"]) {
             CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());
@@ -706,13 +773,14 @@ namespace ClientWarden::Vault {
     IdentityItem& IdentityItem::GetFavorite(bool& val) {
         if (!init) return *this;
         if (!data.contains("favorite")) return *this;
+        if (!data["favorite"].is_boolean()) return *this;
         val = data["favorite"];
         return *this;
     }
 
     IdentityItem& IdentityItem::GetReprompt(bool& val) {
         if (!init) return *this;
-        if (!data.contains("reprompt")) return *this;
+        if (!data["reprompt"].is_number()) return *this;
         if (data["reprompt"].get<int>() == 1) {
             val = true;
         }

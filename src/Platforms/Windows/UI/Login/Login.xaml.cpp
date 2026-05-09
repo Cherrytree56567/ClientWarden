@@ -4,6 +4,9 @@
 #include "Login.g.cpp"
 #endif
 #include "MainWindow/MainWindow.xaml.h"
+#include <Microsoft.UI.Xaml.Window.h>
+
+#include <windows.h>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -23,16 +26,14 @@ namespace winrt::WindowsUI::implementation
 
         ClientWarden::Vault::AuthState result = vault.Login(email, password);
 
+        auto mainWindow = winrt::WindowsUI::implementation::MainWindow::mwstatic;
+
         if (result == ClientWarden::Vault::AuthState::NeedsTOTP) {
-            std::string otp;
-            std::cout << "OTP: ";
-            std::cin >> otp;
-            vault.submitTOTP(otp);
+            FieldError().Text(L"TOTP Not Supported");
+            return;
         } else if (result == ClientWarden::Vault::AuthState::NeedsEmailVerification) {
-            std::string newDevice;
-            std::cout << "New Device Code: ";
-            std::cin >> newDevice;
-            vault.submitDeviceVerify(newDevice);
+            mainWindow->deviceVerifySwitch();
+            return;
         } else if (result != ClientWarden::Vault::AuthState::Authenticated) {
             FieldError().Text(L"Wrong email or password!");
             return;
@@ -43,7 +44,6 @@ namespace winrt::WindowsUI::implementation
             FieldError().Text(L"Wrong email or password!");
         }
 
-        auto mainWindow = winrt::WindowsUI::implementation::MainWindow::mwstatic;
         mainWindow->postAuth();
     }
 }

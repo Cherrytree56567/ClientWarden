@@ -42,7 +42,7 @@
                 <NavigationViewItemHeader Content="Types"/>
                 <NavigationViewItem Content="Login" x:Name="Login">
                     <NavigationViewItem.Icon>
-                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_contact_card_24_regular.png"
+                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_globe_24_filled.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
@@ -54,7 +54,7 @@
                 </NavigationViewItem>
                 <NavigationViewItem Content="Identity" x:Name="Identity">
                     <NavigationViewItem.Icon>
-                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_share_screen_person_24_regular.png"
+                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_contact_card_24_regular.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
@@ -135,21 +135,44 @@
                         <CommandBar IsOpen="False"
                                     DefaultLabelPosition="Right"
                                     Margin="0, 0, -12, 0">
-                            <AppBarButton Label="Edit">
+                            <AppBarButton Label="Edit"
+                                          Click="SidebarEdit_Click"
+                                          x:Name="EditButton">
                                 <AppBarButton.Icon>
                                     <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_edit_24_regular.png"
                                                 ShowAsMonochrome="True"/>
                                 </AppBarButton.Icon>
                             </AppBarButton>
-                            <AppBarButton Label="Duplicate">
+                            <AppBarButton Label="Duplicate"
+                                          x:Name="DuplicateButton">
                                 <AppBarButton.Icon>
                                     <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_document_copy_24_regular.png"
                                                 ShowAsMonochrome="True"/>
                                 </AppBarButton.Icon>
                             </AppBarButton>
-                            <AppBarButton Label="Delete">
+                            <AppBarButton Label="Delete"
+                                          Click="Delete_Click"
+                                          x:Name="DeleteButton">
                                 <AppBarButton.Icon>
                                     <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_delete_24_regular.png"
+                                                ShowAsMonochrome="True"/>
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="Save"
+                                          Visibility="Collapsed"
+                                          Click="SidebarSave_Click"
+                                          x:Name="SaveButton">
+                                <AppBarButton.Icon>
+                                    <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_save_24_regular.png"
+                                                ShowAsMonochrome="True"/>
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="Cancel"
+                                          Visibility="Collapsed"
+                                          Click="SidebarCancel_Click"
+                                          x:Name="CancelButton">
+                                <AppBarButton.Icon>
+                                    <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_subtract_circle_24_regular.png"
                                                 ShowAsMonochrome="True"/>
                                 </AppBarButton.Icon>
                             </AppBarButton>
@@ -173,6 +196,11 @@
                                            FontWeight="Bold"
                                            FontSize="24"
                                            x:Name="SidebarTitle"/>
+                                <TextBox Text="Test Website"
+                                         FontWeight="Bold"
+                                         FontSize="24"
+                                         Visibility="Collapsed"
+                                         x:Name="SidebarTitleBox"/>
                                 <TextBlock Text="Login"
                                            FontSize="10"
                                            VerticalAlignment="Bottom"
@@ -185,7 +213,9 @@
                                   Grid.Column="2">
                                 <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_star_24_regular.png"
                                             ShowAsMonochrome="True"
-                                            Width="20"/>
+                                            Width="20"
+                                            x:Name="SidebarFav"
+                                            Tapped="Favorite_Click"/>
                             </Grid>
                         </Grid>
                         <Border BorderThickness="0, 0, 0, 1"
@@ -204,15 +234,20 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Spacing="2">
+                                    <StackPanel Grid.Column="0" Spacing="2" x:Name="SidebarNotesParent">
                                         <TextBlock Text="Notes" 
                                                    FontSize="11"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                    Padding="0, 0, 0, 4"/>
                                         <TextBlock TextWrapping="WrapWholeWords" 
-                                                   Text="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
+                                                   Text=""
                                                    FontSize="14"
                                                    x:Name="SidebarNotes"/>
+                                        <TextBox TextWrapping="Wrap" 
+                                                 Text=""
+                                                 FontSize="14"
+                                                 Visibility="Collapsed"
+                                                 x:Name="SidebarNotesEdit"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -220,15 +255,38 @@
                         <Border BorderThickness="0, 0, 0, 1"
                                 Padding="0, 8, 0, 0"
                                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                        <Button x:Name="AddButton"
+                                Width="24"
+                                Height="24"
+                                Padding="0"
+                                Margin="0, 6, 0, 0"
+                                HorizontalAlignment="Right"
+                                Visibility="Collapsed">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel>
+                                        <ComboBox x:Name="FieldsDropdown" SelectionChanged="FieldsDropdown_SelectionChanged">
+                                            <ComboBoxItem Content="Text"/>
+                                            <ComboBoxItem Content="Hidden"/>
+                                            <ComboBoxItem Content="Checkbox"/>
+                                            <ComboBoxItem Content="Linked"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <FontIcon Glyph="&#xE710;" FontSize="12"/>
+                        </Button>
                         <StackPanel x:Name="SidebarFields">
                         </StackPanel>
-                        <local:TextField Title="Text Field 1" Value="Some Text"/>
-                        <local:HiddenField Title="Hidden Field 24" Value="Some Hidden Text"/>
-                        <local:CheckboxField Title="Some Checkbox" Value="False"/>
-                        <local:LinkedField Title="Linked Field 9" Value="Username"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
         </NavigationView>
+        <TeachingTip x:Name="CopyTip"
+                     Title="Copied to clipboard!"
+                     IsLightDismissEnabled="True"
+                     PlacementMargin="20"
+                     PreferredPlacement="Auto"
+                     IsOpen="false"/>
     </Grid>
 </Page>

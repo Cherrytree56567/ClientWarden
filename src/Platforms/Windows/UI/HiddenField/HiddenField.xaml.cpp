@@ -37,6 +37,15 @@ namespace winrt::WindowsUI::implementation
     }
 
     void HiddenField::FieldButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        if (FieldIcon().UriSource().RawUri() == L"ms-appx:///Assets/ic_fluent_eye_show_24_regular.png") {
+            FieldIcon().UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_eye_hide_24_regular.png"));
+        } else {
+            FieldIcon().UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_eye_show_24_regular.png"));
+        }
         m_showhideEvent(*this, e);
+    }
+    
+    winrt::Microsoft::UI::Xaml::Controls::BitmapIcon HiddenField::GetShowHideImage() {
+        return FieldIcon();
     }
 }

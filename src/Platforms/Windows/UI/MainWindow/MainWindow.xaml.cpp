@@ -21,6 +21,7 @@ namespace winrt::WindowsUI::implementation
         winrt::Microsoft::UI::Windowing::AppWindow appWindow = this->AppWindow();
         //appWindow.Resize({ 400, 560 });
         appWindow.Resize({ 1000, 620 });
+        appWindow.Closing({ this, &MainWindow::OnWindowClosing });
 
         winrt::Microsoft::UI::Windowing::OverlappedPresenter presenter = appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>();
         presenter.IsResizable(true);
@@ -38,8 +39,20 @@ namespace winrt::WindowsUI::implementation
         vault.Sync();
     }
 
+    void MainWindow::deviceVerifySwitch() {
+        winrt::hstring devVerifytypeName{ winrt::name_of<WindowsUI::DeviceVerify>() };
+        winrt::Windows::UI::Xaml::Interop::TypeName devVerifyType{devVerifytypeName, winrt::Windows::UI::Xaml::Interop::TypeKind::Metadata};
+
+        MainFrame().Navigate(devVerifyType);
+    }
+
     void MainWindow::OnWindowClosing(winrt::Microsoft::UI::Windowing::AppWindow const&, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs const& args) {
         ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        auto frame = MainFrame().CurrentSourcePageType();
+        if (auto vaultUI = MainFrame().Content().try_as<winrt::WindowsUI::VaultUI>()) {
+            vaultUI.StopTOTPThread();
+        }
 
         vault.stopRefreshThread();
         vault.Lock();

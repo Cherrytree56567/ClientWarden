@@ -1,0 +1,11 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass CheckboxEditField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        CheckboxEditField();
+        String Title;
+        Boolean Value;
+        event Microsoft.UI.Xaml.RoutedEventHandler DeleteField;
+    }
+}

@@ -121,7 +121,7 @@ Before Building, make sure you have conan and vcpkg installed.
 - [X] Get Card/Identity/SSH Keys/Note Working
 - [X] Implement Favorites
 - [X] Implement Clipboard
-- [ ] Implement Edit
+- [X] Implement Edit
 - [X] Add Callback for Delete Button
 - [ ] Add Callback for Duplicate button
 - [ ] Implement Search Bar

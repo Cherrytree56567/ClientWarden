@@ -5,6 +5,7 @@ namespace ClientWarden::Vault {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::NoteItem");
         }
+        if (!localVault.vaultData.contains("ciphers") || localVault.vaultData["ciphers"].is_null()) return;
         data["id"] = uuid;
         for (auto& cipher : localVault.vaultData["ciphers"]) {
             if (!cipher.contains("id")) {
@@ -135,6 +136,10 @@ namespace ClientWarden::Vault {
 
     NoteItem& NoteItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
         if (field == CustomFieldType::Text) {
@@ -188,6 +193,10 @@ namespace ClientWarden::Vault {
 
     NoteItem& NoteItem::RemoveField(std::string& name) {
         if (!init) return *this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
+        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
+            fieldData["Fields"] = nlohmann::json::object();
+        }
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
             std::string decName = localVault.Decrypt((*it)["name"], itemEncKey, itemMacKey);
@@ -326,6 +335,7 @@ namespace ClientWarden::Vault {
     NoteItem& NoteItem::GetName(std::string& name) {
         if (!init) return *this;
         if (!data.contains("name")) return *this;
+        if (!data["name"].is_string()) return *this;
         name = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -333,6 +343,7 @@ namespace ClientWarden::Vault {
     NoteItem& NoteItem::GetNotes(std::string& notes) {
         if (!init) return *this;
         if (!data.contains("notes")) return *this;
+        if (!data["notes"].is_string()) return *this;
         notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
         return *this;
     }
@@ -340,6 +351,7 @@ namespace ClientWarden::Vault {
     NoteItem& NoteItem::GetFolder(std::string& folder) {
         if (!init) return *this;
         if (!data.contains("folderId")) return *this;
+        if (!data["folderId"].is_string()) return *this;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
         return *this;
     }
@@ -347,6 +359,7 @@ namespace ClientWarden::Vault {
     NoteItem& NoteItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
         if (!init) return *this;
         if (!data.contains("fields")) return *this;
+        if (!data["fields"].is_array()) return *this;
         fields.clear();
         for (auto& f : data["fields"]) {
             CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());
@@ -381,6 +394,7 @@ namespace ClientWarden::Vault {
     NoteItem& NoteItem::GetFavorite(bool& val) {
         if (!init) return *this;
         if (!data.contains("favorite")) return *this;
+        if (!data["favorite"].is_boolean()) return *this;
         val = data["favorite"];
         return *this;
     }
@@ -388,6 +402,7 @@ namespace ClientWarden::Vault {
     NoteItem& NoteItem::GetReprompt(bool& val) {
         if (!init) return *this;
         if (!data.contains("reprompt")) return *this;
+        if (!data["reprompt"].is_number()) return *this;
         if (data["reprompt"].get<int>() == 1) {
             val = true;
         }

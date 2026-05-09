@@ -1,0 +1,10 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass GenericEditField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        GenericEditField();
+        String Title;
+        String Value;
+    }
+}
