@@ -84,7 +84,7 @@ Here are some instructions on how to build Clientwarden, currently only on windo
 
 ### Prerequisites
 
-First, make sure you have `Visual Studio 2026` and are using the `Visual Studio 2026 Powershell` prompt. Then you can get started by installing dependencies.
+Before building Clientwarden, install VS 2026 with C++ and WinUI Extensions, CMake, Conan, vcpkg and git.
 ```sh
 mkdir build
 conan install . --output-folder=build --build=missing
@@ -92,8 +92,6 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 ```
 
 ### Building
-
-Before Building, make sure you have conan and vcpkg installed.
 
 1. Install CMake
 2. Clone the repo
