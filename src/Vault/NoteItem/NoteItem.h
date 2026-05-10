@@ -20,6 +20,8 @@ namespace ClientWarden::Vault {
         NoteItem& AddField(CustomFieldType field, std::string& name, std::string& value);
         NoteItem& RemoveField(std::string& name);
 
+        NoteItem& Duplicate(std::string& id);
+
         NoteItem& GetName(std::string& name);
         NoteItem& GetNotes(std::string& notes);
         NoteItem& GetFolder(std::string& folder);

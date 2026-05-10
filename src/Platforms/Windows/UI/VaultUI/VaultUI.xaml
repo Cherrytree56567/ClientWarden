@@ -144,6 +144,7 @@
                                 </AppBarButton.Icon>
                             </AppBarButton>
                             <AppBarButton Label="Duplicate"
+                                          Click="Duplicate_Click"
                                           x:Name="DuplicateButton">
                                 <AppBarButton.Icon>
                                     <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_document_copy_24_regular.png"

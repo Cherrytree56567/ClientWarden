@@ -789,4 +789,317 @@ namespace ClientWarden::Vault {
         }
         return *this;
     }
+
+    IdentityItem& IdentityItem::Duplicate(std::string& id) {
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::IdentityItem");
+        }
+        auto keys = localVault.generateEncMacKeys();
+        auto newitemEncKey = keys.first;
+        auto newitemMacKey = keys.second;
+
+        /*
+         * SECRET DATA
+        */
+        std::string oldName;
+        std::string oldAddress1;
+        std::string oldAddress2;
+        std::string oldAddress3;
+        std::string oldCity;
+        std::string oldCompany;
+        std::string oldCountry;
+        std::string oldEmail;
+        std::string oldFirstName;
+        std::string oldLastName;
+        std::string oldLicenceNumber;
+        std::string oldMiddleName;
+        std::string oldPassportNumber;
+        std::string oldPhone;
+        std::string oldPostalCode;
+        std::string oldSSN;
+        std::string oldState;
+        std::string oldTitle;
+        std::string oldUsername;
+        std::string oldNotes;
+        std::vector<std::tuple<CustomFieldType, std::string, std::string>> oldFields;
+
+        bool oldFavorite = false;
+        int oldReprompt = 0;
+
+        if (data.contains("name") && data["name"].is_string()) {
+            oldName = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
+        }
+
+        if (data.contains("identity") && data["identity"].is_object()) {
+            if (data["identity"].contains("address1") && data["identity"]["address1"].is_string()) {
+                oldAddress1 = localVault.Decrypt(data["identity"]["address1"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("address2") && data["identity"]["address2"].is_string()) {
+                oldAddress2 = localVault.Decrypt(data["identity"]["address2"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("address3") && data["identity"]["address3"].is_string()) {
+                oldAddress3 = localVault.Decrypt(data["identity"]["address3"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("city") && data["identity"]["city"].is_string()) {
+                oldCity = localVault.Decrypt(data["identity"]["city"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("company") && data["identity"]["company"].is_string()) {
+                oldCompany = localVault.Decrypt(data["identity"]["company"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("country") && data["identity"]["country"].is_string()) {
+                oldCountry = localVault.Decrypt(data["identity"]["country"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("email") && data["identity"]["email"].is_string()) {
+                oldEmail = localVault.Decrypt(data["identity"]["email"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("firstName") && data["identity"]["firstName"].is_string()) {
+                oldFirstName = localVault.Decrypt(data["identity"]["firstName"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("lastName") && data["identity"]["lastName"].is_string()) {
+                oldLastName = localVault.Decrypt(data["identity"]["lastName"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("licenseNumber") && data["identity"]["licenseNumber"].is_string()) {
+                oldLicenceNumber = localVault.Decrypt(data["identity"]["licenseNumber"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("middleName") && data["identity"]["middleName"].is_string()) {
+                oldMiddleName = localVault.Decrypt(data["identity"]["middleName"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("passportNumber") && data["identity"]["passportNumber"].is_string()) {
+                oldPassportNumber = localVault.Decrypt(data["identity"]["passportNumber"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("phone") && data["identity"]["phone"].is_string()) {
+                oldPhone = localVault.Decrypt(data["identity"]["phone"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("postalCode") && data["identity"]["postalCode"].is_string()) {
+                oldPostalCode = localVault.Decrypt(data["identity"]["postalCode"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("ssn") && data["identity"]["ssn"].is_string()) {
+                oldSSN = localVault.Decrypt(data["identity"]["ssn"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("state") && data["identity"]["state"].is_string()) {
+                oldState = localVault.Decrypt(data["identity"]["state"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("title") && data["identity"]["title"].is_string()) {
+                oldTitle = localVault.Decrypt(data["identity"]["title"], itemEncKey, itemMacKey);
+            }
+            if (data["identity"].contains("username") && data["identity"]["username"].is_string()) {
+                oldUsername = localVault.Decrypt(data["identity"]["username"], itemEncKey, itemMacKey);
+            }
+        }
+
+        if (data.contains("notes") && data["notes"].is_string()) {
+            oldNotes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
+        }
+
+        if (data.contains("fields") && data["fields"].is_array()) {
+            for (auto& field : data["fields"]) {
+                CustomFieldType type = static_cast<CustomFieldType>(field["type"].get<int>());
+                std::string fname = localVault.Decrypt(field["name"], itemEncKey, itemMacKey);
+                std::string fval;
+                if (type == CustomFieldType::Linked) {
+                    fval = field["linkedId"].is_null() ? "" : std::to_string(field["linkedId"].get<int>());
+                } else {
+                    fval = field["value"].is_null() ? "" : localVault.Decrypt(field["value"], itemEncKey, itemMacKey);
+                }
+                oldFields.emplace_back(type, std::move(fname), std::move(fval));
+            }
+        }
+
+        if (data.contains("favorite") && data["favorite"].is_boolean()) {
+            oldFavorite = data["favorite"];
+        }
+
+        if (data.contains("reprompt") && data["reprompt"].is_number()) {
+            oldReprompt = data["reprompt"];
+        }
+
+        nlohmann::json newdata;
+        nlohmann::json newfieldData;
+
+        newdata["archivedDate"] = nullptr;
+        newdata["attachments"] = nullptr;
+        newdata["card"] = nullptr;
+        newdata["collectionIds"] = nlohmann::json::array();
+        newdata["creationDate"] = getBitwardenTime();
+        newdata["data"] = "";
+        newdata["deletedDate"] = nullptr;
+        newdata["edit"] = true;
+        newdata["favorite"] = oldFavorite;
+        newdata["fields"] = nlohmann::json::array();
+        newdata["folderId"] = data["folderId"];
+        newdata["id"] = uniqueGuid();
+        newdata["identity"] = nlohmann::json::object();
+        newdata["identity"]["address1"] = localVault.Encrypt(oldAddress1, newitemEncKey, newitemMacKey);
+        newdata["identity"]["address2"] = localVault.Encrypt(oldAddress2, newitemEncKey, newitemMacKey);
+        newdata["identity"]["address3"] = localVault.Encrypt(oldAddress3, newitemEncKey, newitemMacKey);
+        newdata["identity"]["city"] = localVault.Encrypt(oldCity, newitemEncKey, newitemMacKey);
+        newdata["identity"]["company"] = localVault.Encrypt(oldCompany, newitemEncKey, newitemMacKey);
+        newdata["identity"]["country"] = localVault.Encrypt(oldCountry, newitemEncKey, newitemMacKey);
+        newdata["identity"]["email"] = localVault.Encrypt(oldEmail, newitemEncKey, newitemMacKey);
+        newdata["identity"]["firstName"] = localVault.Encrypt(oldFirstName, newitemEncKey, newitemMacKey);
+        newdata["identity"]["lastName"] = localVault.Encrypt(oldLastName, newitemEncKey, newitemMacKey);
+        newdata["identity"]["licenseNumber"] = localVault.Encrypt(oldLicenceNumber, newitemEncKey, newitemMacKey);
+        newdata["identity"]["middleName"] = localVault.Encrypt(oldMiddleName, newitemEncKey, newitemMacKey);
+        newdata["identity"]["passportNumber"] = localVault.Encrypt(oldPassportNumber, newitemEncKey, newitemMacKey);
+        newdata["identity"]["phone"] = localVault.Encrypt(oldPhone, newitemEncKey, newitemMacKey);
+        newdata["identity"]["postalCode"] = localVault.Encrypt(oldPostalCode, newitemEncKey, newitemMacKey);
+        newdata["identity"]["ssn"] = localVault.Encrypt(oldSSN, newitemEncKey, newitemMacKey);
+        newdata["identity"]["state"] = localVault.Encrypt(oldState, newitemEncKey, newitemMacKey);
+        newdata["identity"]["title"] = localVault.Encrypt(oldTitle, newitemEncKey, newitemMacKey);
+        newdata["identity"]["username"] = localVault.Encrypt(oldUsername, newitemEncKey, newitemMacKey);
+        std::vector<uint8_t> mainKey(newitemEncKey.begin(), newitemEncKey.end());
+        mainKey.insert(mainKey.end(), newitemMacKey.begin(), newitemMacKey.end());
+        newdata["key"] = localVault.InternalEncrypt(mainKey, localVault.encKey, localVault.macKey);
+        OPENSSL_cleanse(mainKey.data(), mainKey.size());
+        newdata["login"] = nullptr;
+        newdata["name"] = localVault.Encrypt(oldName, newitemEncKey, newitemMacKey);
+        newdata["notes"] = localVault.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
+        newdata["object"] = "cipherDetails";
+        newdata["organizationId"] = nullptr;
+        newdata["organizationUseTotp"] = false;
+        newdata["passwordHistory"] = nullptr;
+        newdata["permissions"] = nlohmann::json::object();
+        newdata["permissions"]["delete"] = true;
+        newdata["permissions"]["restore"] = true;
+        newdata["reprompt"] = oldReprompt;
+        newdata["revisionDate"] = nullptr;
+        newdata["secureNote"] = nullptr;
+        newdata["sshKey"] = nullptr;
+        newdata["type"] = 4;
+        newdata["viewPassword"] = true;
+
+        newfieldData["Title"] = localVault.Encrypt(oldTitle, newitemEncKey, newitemMacKey);
+        newfieldData["FirstName"] = localVault.Encrypt(oldFirstName, newitemEncKey, newitemMacKey);
+        newfieldData["MiddleName"] = localVault.Encrypt(oldMiddleName, newitemEncKey, newitemMacKey);
+        newfieldData["LastName"] = localVault.Encrypt(oldLastName, newitemEncKey, newitemMacKey);
+        newfieldData["Address1"] = localVault.Encrypt(oldAddress1, newitemEncKey, newitemMacKey);
+        newfieldData["Address2"] = localVault.Encrypt(oldAddress2, newitemEncKey, newitemMacKey);
+        newfieldData["Address3"] = localVault.Encrypt(oldAddress3, newitemEncKey, newitemMacKey);
+        newfieldData["City"] = localVault.Encrypt(oldCity, newitemEncKey, newitemMacKey);
+        newfieldData["State"] = localVault.Encrypt(oldState, newitemEncKey, newitemMacKey);
+        newfieldData["PostalCode"] = localVault.Encrypt(oldPostalCode, newitemEncKey, newitemMacKey);
+        newfieldData["Country"] = localVault.Encrypt(oldCountry, newitemEncKey, newitemMacKey);
+        newfieldData["Company"] = localVault.Encrypt(oldCompany, newitemEncKey, newitemMacKey);
+        newfieldData["Email"] = localVault.Encrypt(oldEmail, newitemEncKey, newitemMacKey);
+        newfieldData["Phone"] = localVault.Encrypt(oldPhone, newitemEncKey, newitemMacKey);
+        newfieldData["SSN"] = localVault.Encrypt(oldSSN, newitemEncKey, newitemMacKey);
+        newfieldData["Username"] = localVault.Encrypt(oldUsername, newitemEncKey, newitemMacKey);
+        newfieldData["PassportNumber"] = localVault.Encrypt(oldPassportNumber, newitemEncKey, newitemMacKey);
+        newfieldData["LicenseNumber"] = localVault.Encrypt(oldLicenceNumber, newitemEncKey, newitemMacKey);
+        newfieldData["Name"] = localVault.Encrypt(oldName, newitemEncKey, newitemMacKey);
+        newfieldData["Notes"] = localVault.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
+        newfieldData["Fields"] = nlohmann::json::array();
+
+        for (auto& [type, name, value] : oldFields) {
+            nlohmann::json addFieldData;
+            nlohmann::json dataFieldData;
+            if (type == CustomFieldType::Text) {
+                addFieldData["linkedId"] = nullptr;
+                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["type"] = 0;
+                addFieldData["value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+
+                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Type"] = 0;
+                dataFieldData["Value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+            } else if (type == CustomFieldType::Hidden) {
+                addFieldData["linkedId"] = nullptr;
+                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["type"] = 1;
+                addFieldData["value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+
+                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Type"] = 1;
+                dataFieldData["Value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+            } else if (type == CustomFieldType::Checkbox) {
+                addFieldData["linkedId"] = nullptr;
+                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["type"] = 2;
+                addFieldData["value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey); // "true" or "false"
+
+                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Type"] = 2;
+                dataFieldData["Value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+            } else if (type == CustomFieldType::Linked) {
+                addFieldData["linkedId"] = std::stoi(value);
+                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["type"] = 3;
+                addFieldData["value"] = nullptr;
+
+                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Type"] = 3;
+                dataFieldData["LinkedId"] = std::stoi(value);
+            }
+
+            newfieldData["Fields"].push_back(dataFieldData);
+            newdata["fields"].push_back(addFieldData);
+
+            OPENSSL_cleanse(name.data(), name.size());
+            name.clear();
+            OPENSSL_cleanse(value.data(), value.size());
+            value.clear();
+        }
+
+        OPENSSL_cleanse(oldName.data(), oldName.size());
+        oldName.clear();
+        OPENSSL_cleanse(oldAddress1.data(), oldAddress1.size());
+        oldAddress1.clear();
+        OPENSSL_cleanse(oldAddress2.data(), oldAddress2.size());
+        oldAddress2.clear();
+        OPENSSL_cleanse(oldAddress3.data(), oldAddress3.size());
+        oldAddress3.clear();
+        OPENSSL_cleanse(oldCity.data(), oldCity.size());
+        oldCity.clear();
+        OPENSSL_cleanse(oldCompany.data(), oldCompany.size());
+        oldCompany.clear();
+        OPENSSL_cleanse(oldCountry.data(), oldCountry.size());
+        oldCountry.clear();
+        OPENSSL_cleanse(oldEmail.data(), oldEmail.size());
+        oldEmail.clear();
+        OPENSSL_cleanse(oldFirstName.data(), oldFirstName.size());
+        oldFirstName.clear();
+        OPENSSL_cleanse(oldLastName.data(), oldLastName.size());
+        oldLastName.clear();
+        OPENSSL_cleanse(oldLicenceNumber.data(), oldLicenceNumber.size());
+        oldLicenceNumber.clear();
+        OPENSSL_cleanse(oldMiddleName.data(), oldMiddleName.size());
+        oldMiddleName.clear();
+        OPENSSL_cleanse(oldPassportNumber.data(), oldPassportNumber.size());
+        oldPassportNumber.clear();
+        OPENSSL_cleanse(oldPhone.data(), oldPhone.size());
+        oldPhone.clear();
+        OPENSSL_cleanse(oldPostalCode.data(), oldPostalCode.size());
+        oldPostalCode.clear();
+        OPENSSL_cleanse(oldSSN.data(), oldSSN.size());
+        oldSSN.clear();
+        OPENSSL_cleanse(oldState.data(), oldState.size());
+        oldState.clear();
+        OPENSSL_cleanse(oldTitle.data(), oldTitle.size());
+        oldTitle.clear();
+        OPENSSL_cleanse(oldUsername.data(), oldUsername.size());
+        oldUsername.clear();
+        OPENSSL_cleanse(oldNotes.data(), oldNotes.size());
+        oldNotes.clear();
+        OPENSSL_cleanse(newitemEncKey.data(), newitemEncKey.size());
+        newitemEncKey.clear();
+        OPENSSL_cleanse(newitemMacKey.data(), newitemMacKey.size());
+        newitemMacKey.clear();
+
+        oldFavorite = false;
+        oldReprompt = 0;
+
+        newdata["revisionDate"] = getBitwardenTime();
+        newdata["data"] = (std::string)newfieldData.dump();
+        auto hr = localVault.OnlineNewItem(newdata);
+        if (!hr) {
+            spdlog::warn("Failed to add New Item Online");
+            newdata["createdOffline"] = true;
+        }
+        localVault.vaultData["ciphers"].push_back(newdata);
+        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+
+        id = newdata["id"];
+
+        return *this;
+    }
 }

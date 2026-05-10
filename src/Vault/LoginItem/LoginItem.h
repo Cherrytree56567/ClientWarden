@@ -34,6 +34,8 @@ namespace ClientWarden::Vault {
         LoginItem& AddField(CustomFieldType field, std::string& name, std::string& value);
         LoginItem& RemoveField(std::string& name);
 
+        LoginItem& Duplicate(std::string& id);
+
         LoginItem& GetName(std::string& name);
         LoginItem& GetUsername(std::string& username);
         LoginItem& GetPassword(std::string& password);

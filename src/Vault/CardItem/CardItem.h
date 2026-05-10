@@ -28,6 +28,8 @@ namespace ClientWarden::Vault {
         CardItem& SetFavorite(bool val);
         CardItem& SetReprompt(bool val);
 
+        CardItem& Duplicate(std::string& id);
+
         /*
          * Secret Data
         */

@@ -38,6 +38,8 @@ namespace ClientWarden::Vault {
         IdentityItem& AddField(CustomFieldType field, std::string& name, std::string& value);
         IdentityItem& RemoveField(std::string& name);
 
+        IdentityItem& Duplicate(std::string& id);
+
         IdentityItem& GetName(std::string& name);
         IdentityItem& GetAddress1(std::string& address1);
         IdentityItem& GetAddress2(std::string& address2);

@@ -1762,6 +1762,249 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
+    void VaultUI::Duplicate_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        std::string id = winrt::to_string(SidebarId().Text());
+        std::string type = winrt::to_string(SidebarType().Text());
+
+        if (type == "Login") {
+            ClientWarden::Vault::LoginItem loginItem(vault, id);
+
+            std::string dupid;
+
+            loginItem.Duplicate(dupid)
+                     .Close();
+
+            ClientWarden::Vault::LoginItem duploginItem(vault, dupid);
+
+            /*
+             * SECRET DATA
+            */
+            std::string loginName;
+            std::string loginUser;
+            std::vector<std::string> loginUrl;
+
+            duploginItem.GetName(loginName)
+                        .GetUsername(loginUser)
+                        .GetWebsites(loginUrl)
+                        .Close();
+
+            std::string lgurl = "ms-appx:///Assets/ic_fluent_globe_24_filled.png";
+                
+            if (loginUrl.size() != 0) {
+                lgurl = vault.downloadIcon(loginUrl[0]);
+            }
+
+            if (lgurl == "") {
+                lgurl = "ms-appx:///Assets/ic_fluent_globe_24_filled.png";
+            }
+
+            /*
+             * SECRET DATA
+            */
+            winrt::hstring hloginName = winrt::to_hstring(loginName);
+            winrt::hstring hloginUser = winrt::to_hstring(loginUser);
+               
+            OPENSSL_cleanse(loginName.data(), loginName.size());
+            loginName.clear();
+            OPENSSL_cleanse(loginUser.data(), loginUser.size());
+            loginUser.clear();
+               
+            for (auto& uri : loginUrl) {
+                OPENSSL_cleanse(uri.data(), uri.size());
+                uri.clear();
+            }
+            loginUrl.clear();
+
+            WindowsUI::VaultItem item;
+            item.Logo(winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(winrt::to_hstring(lgurl))));
+            item.Title(hloginName);
+            item.Detail(hloginUser);
+            item.Click({ this, &VaultUI::VaultItem_Click });
+            item.itemID(winrt::to_hstring(dupid));
+            item.itemType(L"Login");
+
+            VaultItemList().Children().Append(item);
+        } else if (type == "Card") {
+            ClientWarden::Vault::CardItem cardItem(vault, id);
+
+            std::string dupid;
+
+            cardItem.Duplicate(dupid)
+                    .Close();
+            
+            ClientWarden::Vault::CardItem dupcardItem(vault, dupid);
+
+            /*
+             * SECRET DATA
+            */
+            std::string cardName;
+            std::string cardnam;
+            std::string cardBrand;
+
+            dupcardItem.GetName(cardName)
+                       .GetCardholderName(cardnam)
+                       .GetBrand(cardBrand)
+                       .Close();
+               
+            auto hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_credit_card_person_24_regular.png"));
+            if (cardBrand == "Amex") {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/cc-amex-brands-solid.png"));
+            } else if (cardBrand == "Visa") {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/cc-visa-brands-solid.png"));
+            } else if (cardBrand == "Mastercard") {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/cc-mastercard-brands-solid.png"));
+            } else if (cardBrand == "Discover") {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/cc-discover-brands-solid.png"));
+            } else if (cardBrand == "Diners Club") {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/cc-diners-club-brands-solid.png"));
+            } else if (cardBrand == "JCB") {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/cc-jcb-brands-solid.png"));
+            } else {
+                hlogo = winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_credit_card_person_24_regular.png"));
+            }
+
+            /*
+             * SECRET DATA
+            */
+            winrt::hstring hcardName = winrt::to_hstring(cardName);
+            winrt::hstring hcardnam = winrt::to_hstring(cardnam);
+                
+            OPENSSL_cleanse(cardName.data(), cardName.size());
+            cardName.clear();
+            OPENSSL_cleanse(cardnam.data(), cardnam.size());
+            cardnam.clear();
+            OPENSSL_cleanse(cardBrand.data(), cardBrand.size());
+            cardBrand.clear();
+
+            WindowsUI::VaultItem item;
+            item.Logo(hlogo);
+            item.Title(hcardName);
+            item.Detail(hcardnam);
+            item.Click({ this, &VaultUI::VaultItem_Click });
+            item.itemID(winrt::to_hstring(dupid));
+            item.itemType(L"Card");
+
+            VaultItemList().Children().Append(item);
+        } else if (type == "Identity") {
+            ClientWarden::Vault::IdentityItem identityItem(vault, id);
+
+            std::string dupid;
+
+            identityItem.Duplicate(dupid)
+                        .Close();
+            
+            ClientWarden::Vault::IdentityItem dupidentityItem(vault, dupid);
+
+            /*
+             * SECRET DATA
+            */
+            std::string identityName;
+            std::string identityDetail;
+
+            dupidentityItem.GetName(identityName)
+                           .GetFirstName(identityDetail)
+                           .Close();
+
+            /*
+             * SECRET DATA
+            */
+            winrt::hstring hidentityName = winrt::to_hstring(identityName);
+            winrt::hstring hidentityDetail = winrt::to_hstring(identityDetail);
+                
+            OPENSSL_cleanse(identityName.data(), identityName.size());
+            identityName.clear();
+            OPENSSL_cleanse(identityDetail.data(), identityDetail.size());
+            identityDetail.clear();
+
+            WindowsUI::VaultItem item;
+            item.Logo(winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_share_screen_person_24_regular.png")));
+            item.Title(hidentityName);
+            item.Detail(hidentityDetail);
+            item.Click({ this, &VaultUI::VaultItem_Click });
+            item.itemID(winrt::to_hstring(dupid));
+            item.itemType(L"Identity");
+
+            VaultItemList().Children().Append(item);
+        } else if (type == "Note") {
+            ClientWarden::Vault::NoteItem noteItem(vault, id);
+
+            std::string dupid;
+
+            noteItem.Duplicate(dupid)
+                    .Close();
+            
+            ClientWarden::Vault::NoteItem dupnoteItem(vault, dupid);
+
+            /*
+             * SECRET DATA
+            */
+            std::string noteName;
+
+            dupnoteItem.GetName(noteName)
+                       .Close();
+
+            /*
+             * SECRET DATA
+            */
+            winrt::hstring hnoteName = winrt::to_hstring(noteName);
+                
+            OPENSSL_cleanse(noteName.data(), noteName.size());
+            noteName.clear();
+
+            WindowsUI::VaultItem item;
+            item.Logo(winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_note_24_regular.png")));
+            item.Title(hnoteName);
+            item.Detail(L"");
+            item.Click({ this, &VaultUI::VaultItem_Click });
+            item.itemID(winrt::to_hstring(dupid));
+            item.itemType(L"Note");
+
+            VaultItemList().Children().Append(item);
+        } else if (type == "SSHKey") {
+            ClientWarden::Vault::SSHKeyItem sshItem(vault, id);
+
+            std::string dupid;
+
+            sshItem.Duplicate(dupid)
+                   .Close();
+            
+            ClientWarden::Vault::SSHKeyItem dupsshItem(vault, dupid);
+
+            /*
+             * SECRET DATA
+            */
+            std::string sshName;
+            std::string sshDetail;
+
+            dupsshItem.GetName(sshName)
+                      .GetFingerprint(sshDetail)
+                      .Close();
+
+            /*
+             * SECRET DATA
+            */
+            winrt::hstring hsshName = winrt::to_hstring(sshName);
+            winrt::hstring hsshDetail = winrt::to_hstring(sshDetail);
+             
+            OPENSSL_cleanse(sshName.data(), sshName.size());
+            sshName.clear();
+            OPENSSL_cleanse(sshDetail.data(), sshDetail.size());
+            sshDetail.clear();
+
+            WindowsUI::VaultItem item;
+            item.Logo(winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_key_24_regular.png")));
+            item.Title(hsshName);
+            item.Detail(hsshDetail);
+            item.Click({ this, &VaultUI::VaultItem_Click });
+            item.itemID(winrt::to_hstring(dupid));
+            item.itemType(L"SSHKey");
+
+            VaultItemList().Children().Append(item);
+        }
+    }
+
     void VaultUI::PrivSSHItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
 

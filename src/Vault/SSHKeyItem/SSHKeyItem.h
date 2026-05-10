@@ -25,6 +25,8 @@ namespace ClientWarden::Vault {
         SSHKeyItem& SetFavorite(bool val);
         SSHKeyItem& SetReprompt(bool val);
 
+        SSHKeyItem& Duplicate(std::string& id);
+
         SSHKeyItem& GetName(std::string& name);
         SSHKeyItem& GetFingerprint(std::string& fingerprint);
         SSHKeyItem& GetPrivateKey(std::string& privateKey);
