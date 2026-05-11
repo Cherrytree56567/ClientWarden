@@ -2,7 +2,9 @@
 
 namespace ClientWarden::Vault {
     CipherQuery::CipherQuery(Vault& vault) : localVault(vault) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::CipherQuery");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::CipherQuery");
+        }
         for (auto& cip : localVault.vaultData["ciphers"]) {
             ciphers.push_back(cip);
         }
@@ -172,7 +174,7 @@ namespace ClientWarden::Vault {
             std::string name = localVault.Decrypt((*it)["name"].get<std::string>(), itemEncKey, itemMacKey);
             std::regex pattern(regex);
 
-            if (!std::regex_match(name, pattern)) {
+            if (!std::regex_search(name, pattern)) {
                 OPENSSL_cleanse(name.data(), name.size());
                 name.clear();
                 it = ciphers.erase(it);

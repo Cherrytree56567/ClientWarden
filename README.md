@@ -121,9 +121,9 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Implement Clipboard
 - [X] Implement Edit
 - [X] Add Callback for Delete Button
-- [ ] Add Callback for Duplicate button
-- [ ] Implement Search Bar
-- [ ] Add Filters
+- [X] Add Callback for Duplicate button
+- [X] Implement Search Bar
+- [X] Add Filters
 - [ ] Add Callback for New Item Button
 - [ ] Implement Folders
 - [ ] Add Support for Password Generator

@@ -27,6 +27,121 @@ namespace winrt::WindowsUI::implementation
         std::vector<std::pair<ClientWarden::Vault::CipherType, std::string>> cipherIDs = query.FilterByUnbinned()
                                                                                               .GetCiphers();
 
+        VaultItemList().Children().Clear();
+
+        PopulateItemsList(cipherIDs);
+    }
+
+    void VaultUI::NavigationView_SelectionChanged(winrt::Microsoft::UI::Xaml::Controls::NavigationView const& sender, winrt::Microsoft::UI::Xaml::Controls::NavigationViewSelectionChangedEventArgs const& args) {
+        auto selectedItem = args.SelectedItem().try_as<winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem>();
+
+        if (!selectedItem) {
+            return;
+        }
+
+        std::string tag = winrt::to_string(selectedItem.Name());
+
+        ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+        ClientWarden::Vault::CipherQuery query(vault);
+
+        query.FilterNameByRegex(winrt::to_string(SearchBar().Text()));
+
+        std::vector<std::pair<ClientWarden::Vault::CipherType, std::string>> cipherIDs;
+
+        if (tag == "AllItems") {
+            cipherIDs = query.FilterByUnbinned()
+                             .GetCiphers();
+        } else if (tag == "Fav") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByFavorites()
+                             .GetCiphers();
+        } else if (tag == "Del") {
+            cipherIDs = query.FilterByBinned()
+                             .GetCiphers();
+        } else if (tag == "Login") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Login)
+                             .GetCiphers();
+        } else if (tag == "Card") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Card)
+                             .GetCiphers();
+        } else if (tag == "Identity") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Identity)
+                             .GetCiphers();
+        } else if (tag == "SecNote") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Note)
+                             .GetCiphers();
+        } else if (tag == "SSH") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::SSHKey)
+                             .GetCiphers();
+        }
+
+        VaultItemList().Children().Clear();
+
+        PopulateItemsList(cipherIDs);
+    }
+
+    void VaultUI::SearchBox_TextChanged(winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBox const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& args) {
+        auto selectedItem = NavView().SelectedItem().try_as<winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem>();
+
+        if (!selectedItem) {
+            return;
+        }
+
+        std::string tag = winrt::to_string(selectedItem.Name());
+
+        ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        ClientWarden::Vault::CipherQuery query(vault);
+
+        query.FilterNameByRegex(winrt::to_string(SearchBar().Text()));
+
+        std::vector<std::pair<ClientWarden::Vault::CipherType, std::string>> cipherIDs;
+
+        if (tag == "AllItems") {
+            cipherIDs = query.FilterByUnbinned()
+                             .GetCiphers();
+        } else if (tag == "Fav") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByFavorites()
+                             .GetCiphers();
+        } else if (tag == "Del") {
+            cipherIDs = query.FilterByBinned()
+                             .GetCiphers();
+        } else if (tag == "Login") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Login)
+                             .GetCiphers();
+        } else if (tag == "Card") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Card)
+                             .GetCiphers();
+        } else if (tag == "Identity") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Identity)
+                             .GetCiphers();
+        } else if (tag == "SecNote") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::Note)
+                             .GetCiphers();
+        } else if (tag == "SSH") {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByType(ClientWarden::Vault::CipherType::SSHKey)
+                             .GetCiphers();
+        }
+
+        VaultItemList().Children().Clear();
+
+        PopulateItemsList(cipherIDs);
+    }
+
+    void VaultUI::PopulateItemsList(std::vector<std::pair<ClientWarden::Vault::CipherType, std::string>> cipherIDs) {
+        ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
         for (auto& cipher : cipherIDs) {
             if (cipher.first == ClientWarden::Vault::CipherType::Login) {
                 ClientWarden::Vault::LoginItem loginItem(vault, cipher.second);

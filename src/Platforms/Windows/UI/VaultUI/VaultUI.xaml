@@ -16,7 +16,8 @@
                         OpenPaneLength="220"
                         x:Name="NavView"
                         PaneTitle="Clientwarden"
-                        Loaded="NavigationView_Loaded">
+                        Loaded="NavigationView_Loaded"
+                        SelectionChanged="NavigationView_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="All Items" x:Name="AllItems">
                     <NavigationViewItem.Icon>
@@ -110,7 +111,9 @@
 
                                 <AutoSuggestBox Grid.Column="0"
                                                 QueryIcon="Find"
-                                                PlaceholderText="Search"/>
+                                                PlaceholderText="Search"
+                                                x:Name="SearchBar"
+                                                TextChanged="SearchBox_TextChanged"/>
                 
                                 <Button Grid.Column="1"
                                         VerticalAlignment="Stretch"

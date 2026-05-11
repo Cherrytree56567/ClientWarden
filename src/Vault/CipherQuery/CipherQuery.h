@@ -29,6 +29,6 @@ namespace ClientWarden::Vault {
         bool init;
         std::vector<nlohmann::json> ciphers;
         Vault& localVault;
-        std::shared_ptr<spdlog::logger> logger;
+        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
     };
 }
