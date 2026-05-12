@@ -47,6 +47,7 @@ namespace ClientWarden::Vault {
         LoginItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         LoginItem& GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value);
         LoginItem& GetPasskeyCreationDate(std::time_t& value);
+        LoginItem& GetId(std::string& value);
         
         LoginItem& SetFavorite(bool val);
         LoginItem& SetReprompt(bool val);

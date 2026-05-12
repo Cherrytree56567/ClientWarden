@@ -476,6 +476,12 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
+    SSHKeyItem& SSHKeyItem::GetId(std::string& value) {
+        value = data["id"];
+
+        return *this;
+    }
+
     SSHKeyItem& SSHKeyItem::Duplicate(std::string& id) {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");

@@ -119,6 +119,19 @@
                                         VerticalAlignment="Stretch"
                                         Margin="12, 0, 0, 0"
                                         Style="{ThemeResource AccentButtonStyle}">
+                                        <Button.Flyout>
+                                            <Flyout>
+                                                <StackPanel>
+                                                    <ComboBox x:Name="NewItemDropdown" SelectionChanged="NewItemDropdown_SelectionChanged">
+                                                        <ComboBoxItem Content="Login"/>
+                                                        <ComboBoxItem Content="Card"/>
+                                                        <ComboBoxItem Content="Identity"/>
+                                                        <ComboBoxItem Content="SSH Key"/>
+                                                        <ComboBoxItem Content="Note"/>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Flyout>
+                                        </Button.Flyout>
                                     <FontIcon Glyph="&#xE710;" FontSize="16"/>
                                 </Button>
                             </Grid>

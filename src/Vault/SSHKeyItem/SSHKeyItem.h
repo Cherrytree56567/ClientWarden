@@ -36,6 +36,7 @@ namespace ClientWarden::Vault {
         SSHKeyItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         SSHKeyItem& GetFavorite(bool& val);
         SSHKeyItem& GetReprompt(bool& val);
+        SSHKeyItem& GetId(std::string& value);
 
         void Commit();
         void Delete();

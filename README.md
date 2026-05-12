@@ -124,7 +124,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Add Callback for Duplicate button
 - [X] Implement Search Bar
 - [X] Add Filters
-- [ ] Add Callback for New Item Button
+- [X] Add Callback for New Item Button
 - [ ] Implement Folders
 - [ ] Add Support for Password Generator
 - [ ] Add Bin Page
@@ -135,6 +135,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Add Right Click Context
 - [ ] Add Unselected Item Sidepane Art
 - [ ] Add No Items Art
+- [ ] Add Attachments Support
 - [ ] Implement Tutorial
 - [ ] Transfer to Botan `secure_vector` for security
 - [ ] Implement Custom D2D Drawing Layer for extra security

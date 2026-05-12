@@ -755,4 +755,10 @@ namespace ClientWarden::Vault {
 
         return *this;
     }
+
+    CardItem& CardItem::GetId(std::string& value) {
+        value = data["id"];
+
+        return *this;
+    }
 }

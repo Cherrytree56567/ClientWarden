@@ -412,6 +412,12 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
+    NoteItem& NoteItem::GetId(std::string& value) {
+        value = data["id"];
+
+        return *this;
+    }
+
     NoteItem& NoteItem::Duplicate(std::string& id) {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::NoteItem");

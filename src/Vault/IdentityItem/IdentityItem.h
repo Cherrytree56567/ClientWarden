@@ -62,6 +62,7 @@ namespace ClientWarden::Vault {
         IdentityItem& GetNotes(std::string& notes);
         IdentityItem& GetFolder(std::string& folder);
         IdentityItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
+        IdentityItem& GetId(std::string& value);
         
         IdentityItem& SetFavorite(bool val);
         IdentityItem& SetReprompt(bool val);

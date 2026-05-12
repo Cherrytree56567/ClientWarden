@@ -26,6 +26,7 @@ namespace ClientWarden::Vault {
         NoteItem& GetNotes(std::string& notes);
         NoteItem& GetFolder(std::string& folder);
         NoteItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
+        NoteItem& GetId(std::string& value);
         
         NoteItem& SetFavorite(bool val);
         NoteItem& SetReprompt(bool val);

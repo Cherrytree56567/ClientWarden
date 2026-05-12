@@ -1102,4 +1102,10 @@ namespace ClientWarden::Vault {
 
         return *this;
     }
+
+    IdentityItem& IdentityItem::GetId(std::string& value) {
+        value = data["id"];
+
+        return *this;
+    }
 }

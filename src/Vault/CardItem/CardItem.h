@@ -45,6 +45,7 @@ namespace ClientWarden::Vault {
         CardItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         CardItem& GetFavorite(bool& val);
         CardItem& GetReprompt(bool& val);
+        CardItem& GetId(std::string& value);
 
         void Commit();
         void Delete();

@@ -119,6 +119,12 @@ namespace ClientWarden::Vault {
         itemMacKey.clear();
     }
 
+    LoginItem& LoginItem::GetId(std::string& value) {
+        value = data["id"];
+
+        return *this;
+    }
+
     LoginItem& LoginItem::Duplicate(std::string& id) {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
