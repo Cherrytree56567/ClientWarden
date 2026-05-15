@@ -75,12 +75,6 @@
                 <NavigationViewItemSeparator/>
 
                 <NavigationViewItemHeader Content="Folders"/>
-                <NavigationViewItem Content="Test Folder">
-                    <NavigationViewItem.Icon>
-                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_folder_24_regular.png"
-                                    ShowAsMonochrome="True"/>
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
@@ -235,8 +229,9 @@
                                             Tapped="Favorite_Click"/>
                             </Grid>
                         </Grid>
+                        <local:FolderEditField Title="Folder" x:Name="FolderPicker"/>
                         <Border BorderThickness="0, 0, 0, 1"
-                                Padding="0, 32, 0, 0"
+                                Padding="0, 16, 0, 0"
                                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"/>
                         <StackPanel x:Name="SidebarCard">
                         </StackPanel>

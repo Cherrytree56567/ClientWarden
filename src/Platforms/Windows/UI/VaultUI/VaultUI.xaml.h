@@ -7,9 +7,11 @@
 #include "Vault/IdentityItem/IdentityItem.h"
 #include "Vault/CardItem/CardItem.h"
 #include "Vault/SSHKeyItem/SSHKeyItem.h"
+#include "Vault/Folder/Folder.h"
 #include "VaultUI.g.h"
 #include "VaultItem/VaultItem.xaml.h"
 #include "GenericField/GenericField.xaml.h"
+#include "PasswordField/PasswordField.xaml.h"
 #include "PasswordField/PasswordField.xaml.h"
 
 namespace winrt::WindowsUI::implementation

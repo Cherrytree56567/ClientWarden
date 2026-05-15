@@ -1,0 +1,13 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass FolderEditField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        FolderEditField();
+        String Title;
+        String Value;
+        void AddOption(String value);
+        Microsoft.UI.Xaml.Controls.ComboBox GetComboBox();
+        Boolean SuppressSelectionChanged;
+    }
+}

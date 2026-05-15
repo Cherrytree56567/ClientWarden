@@ -74,6 +74,8 @@ namespace ClientWarden::Vault {
 
         std::string GetName();
 
+        std::vector<std::string> GetFolders();
+
     public:
         NetworkState preLogin(std::string& email);
         AuthState getToken();

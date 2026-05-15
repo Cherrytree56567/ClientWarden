@@ -729,6 +729,8 @@ namespace ClientWarden::Vault {
         try {
             std::string totpURI = localVault.Decrypt(data["login"]["totp"], itemEncKey, itemMacKey);
 
+            if (totpURI == "") return *this;
+
             boost::urls::url_view uri(totpURI);
 
             auto params = uri.params();

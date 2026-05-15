@@ -139,7 +139,7 @@ namespace ClientWarden::Vault {
 
     CipherQuery& CipherQuery::FilterByFolder(std::string folderUUID) {
         for (auto it = ciphers.begin(); it != ciphers.end();) {
-            if (!(*it).contains("folderId")) {
+            if (!(*it).contains("folderId") || !(*it)["folderId"].is_string()) {
                 it = ciphers.erase(it);
                 continue;
             }

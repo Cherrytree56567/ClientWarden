@@ -49,6 +49,7 @@ if (WIN32)
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/LinkedField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/LinkedEditField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/FolderEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/Login"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/MainWindow"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/PasswordField"
@@ -67,6 +68,7 @@ if (WIN32)
                                 src/Platforms/Windows/UI/App/App.xaml src/Platforms/Windows/UI/App/App.xaml.cpp src/Platforms/Windows/UI/App/App.xaml.h
                                 src/Platforms/Windows/UI/Login/Login.xaml src/Platforms/Windows/UI/Login/Login.xaml.cpp src/Platforms/Windows/UI/Login/Login.xaml.h src/Platforms/Windows/UI/Login/Login.idl
                                 src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.xaml src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.xaml.cpp src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.xaml.h src/Platforms/Windows/UI/DeviceVerify/DeviceVerify.idl
+                                src/Platforms/Windows/UI/FolderEditField/FolderEditField.xaml src/Platforms/Windows/UI/FolderEditField/FolderEditField.xaml.cpp src/Platforms/Windows/UI/FolderEditField/FolderEditField.xaml.h src/Platforms/Windows/UI/FolderEditField/FolderEditField.idl
                                 src/Platforms/Windows/UI/Unlock/Unlock.xaml src/Platforms/Windows/UI/Unlock/Unlock.xaml.cpp src/Platforms/Windows/UI/Unlock/Unlock.xaml.h src/Platforms/Windows/UI/Unlock/Unlock.idl
                                 src/Platforms/Windows/UI/VaultUI/VaultUI.xaml src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.cpp src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.Copy.cpp src/Platforms/Windows/UI/VaultUI/VaultUI.xaml.h src/Platforms/Windows/UI/VaultUI/VaultUI.idl
                                 src/Platforms/Windows/UI/VaultItem/VaultItem.xaml src/Platforms/Windows/UI/VaultItem/VaultItem.xaml.cpp src/Platforms/Windows/UI/VaultItem/VaultItem.xaml.h src/Platforms/Windows/UI/VaultItem/VaultItem.idl

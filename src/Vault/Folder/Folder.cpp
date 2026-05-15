@@ -2,7 +2,9 @@
 
 namespace ClientWarden::Vault {
     Folder::Folder(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");
+        }
         init = false;
         data["id"] = uuid;
         for (auto& folder : localVault.vaultData["folders"]) {
@@ -20,7 +22,9 @@ namespace ClientWarden::Vault {
     }
 
     Folder::Folder(Vault& vault) : localVault(vault), isBeingCreated(true) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");
+        }
         data["id"] = uniqueGuid();
         data["name"] = localVault.Encrypt("", localVault.encKey, localVault.macKey);
         data["object"] = "folder";

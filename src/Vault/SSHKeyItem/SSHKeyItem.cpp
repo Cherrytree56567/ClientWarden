@@ -85,15 +85,15 @@ namespace ClientWarden::Vault {
         data["revisionDate"] = nullptr;
         data["secureNote"] = nullptr;
         data["sshKey"] = nlohmann::json::object();
-        data["sshKey"]["keyFingerprint"] = nullptr;
-        data["sshKey"]["privateKey"] = nullptr;
-        data["sshKey"]["publicKey"] = nullptr;
+        data["sshKey"]["keyFingerprint"] = localVault.Encrypt("", itemEncKey, itemMacKey);
+        data["sshKey"]["privateKey"] = localVault.Encrypt("", itemEncKey, itemMacKey);
+        data["sshKey"]["publicKey"] = localVault.Encrypt("", itemEncKey, itemMacKey);
         data["type"] = 5;
         data["viewPassword"] = true;
 
-        fieldData["PrivateKey"] = nullptr;
-        fieldData["PublicKey"] = nullptr;
-        fieldData["KeyFingerprint"] = nullptr;
+        fieldData["PrivateKey"] = localVault.Encrypt("", itemEncKey, itemMacKey);
+        fieldData["PublicKey"] = localVault.Encrypt("", itemEncKey, itemMacKey);
+        fieldData["KeyFingerprint"] = localVault.Encrypt("", itemEncKey, itemMacKey);
         fieldData["Name"] = localVault.Encrypt("", itemEncKey, itemMacKey);
         fieldData["Notes"] = nullptr;
         fieldData["Fields"] = nlohmann::json::array();

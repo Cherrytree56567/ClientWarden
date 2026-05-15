@@ -40,6 +40,21 @@ namespace ClientWarden::Vault {
         }
     }
 
+    std::vector<std::string> Vault::GetFolders() {
+        /*
+         * Secret Data
+        */
+        std::vector<std::string> folders;
+
+        if (!vaultData.contains("folders") || !vaultData["folders"].is_array()) return folders;
+
+        for (auto& folder : vaultData["folders"]) {
+            folders.push_back(folder["id"]);
+        }
+
+        return folders;
+    }
+
     /*
     * If an item is added locally, then it will have
     * a createdOffline Flag.

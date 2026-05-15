@@ -30,6 +30,95 @@ namespace winrt::WindowsUI::implementation
         VaultItemList().Children().Clear();
 
         PopulateItemsList(cipherIDs);
+
+        FolderPicker().AddOption(winrt::to_hstring(""));
+
+        std::vector<std::string> folders = vault.GetFolders();
+
+        for (auto folder : folders) {
+            ClientWarden::Vault::Folder folderItem(vault, folder);
+
+            /*
+             * SECRET DATA
+            */
+            std::string folderName;
+
+            folderItem.GetName(folderName)
+                      .Close();
+            
+            FolderPicker().AddOption(winrt::to_hstring(folderName));
+            
+            winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem item;
+
+            winrt::Microsoft::UI::Xaml::Controls::Grid panel;
+            panel.HorizontalAlignment(winrt::Microsoft::UI::Xaml::HorizontalAlignment::Stretch);
+            panel.ColumnSpacing(8);
+
+            winrt::Microsoft::UI::Xaml::Controls::ColumnDefinition col1;
+            col1.Width(winrt::Microsoft::UI::Xaml::GridLength{ 1, winrt::Microsoft::UI::Xaml::GridUnitType::Star });
+            winrt::Microsoft::UI::Xaml::Controls::ColumnDefinition col2;
+            col2.Width(winrt::Microsoft::UI::Xaml::GridLength{ 16, winrt::Microsoft::UI::Xaml::GridUnitType::Pixel });
+
+            panel.ColumnDefinitions().Append(col1);
+            panel.ColumnDefinitions().Append(col2);
+
+            winrt::Microsoft::UI::Xaml::Controls::TextBox itemBox;
+            itemBox.Text(winrt::to_hstring(folderName));
+            itemBox.BorderThickness(winrt::Microsoft::UI::Xaml::Thickness{ 0, 0, 0, 0 });
+            itemBox.Background(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush{ winrt::Microsoft::UI::Colors::Transparent() });
+            itemBox.VerticalAlignment(winrt::Microsoft::UI::Xaml::VerticalAlignment::Center);
+            itemBox.HorizontalAlignment(winrt::Microsoft::UI::Xaml::HorizontalAlignment::Stretch);
+            itemBox.Tapped([](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& args) {
+                args.Handled(true);
+            });
+            itemBox.LostFocus([this, folder](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args) {
+                auto box = sender.as<winrt::Microsoft::UI::Xaml::Controls::TextBox>();
+                std::string newName = winrt::to_string(box.Text());
+
+                ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+                
+                ClientWarden::Vault::Folder fold(vault, folder);
+
+                fold.SetName(newName).Commit();
+
+                OPENSSL_cleanse(newName.data(), newName.size());
+                newName.clear();
+            });
+
+            winrt::Microsoft::UI::Xaml::Controls::Grid::SetColumn(itemBox, 0);
+
+            panel.Children().Append(itemBox);
+
+            winrt::Microsoft::UI::Xaml::Controls::Image image;
+            image.Width(16);
+            image.Height(16);
+            image.Source(winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_delete_24_regular.png")));
+            image.Margin(winrt::Microsoft::UI::Xaml::Thickness{ 0, 0, -8, 0 });
+            image.Tapped([this, folder](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& args) {
+                ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+                
+                ClientWarden::Vault::Folder fold(vault, folder);
+
+                fold.Delete();
+            });
+
+            winrt::Microsoft::UI::Xaml::Controls::Grid::SetColumn(image, 1);
+
+            panel.Children().Append(image);
+            
+            item.Content(panel);
+            item.Name(winrt::to_hstring(folder));
+
+            OPENSSL_cleanse(folderName.data(), folderName.size());
+            folderName.clear();
+
+            winrt::Microsoft::UI::Xaml::Controls::BitmapIcon icon;
+            icon.UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_folder_24_regular.png"));
+            icon.ShowAsMonochrome(true);
+            item.Icon(icon);
+
+            NavView().MenuItems().Append(item);
+        }
     }
 
     void VaultUI::NewItemDropdown_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e) {
@@ -153,6 +242,14 @@ namespace winrt::WindowsUI::implementation
         } else if (tag == "SSH") {
             cipherIDs = query.FilterByUnbinned()
                              .FilterByType(ClientWarden::Vault::CipherType::SSHKey)
+                             .GetCiphers();
+        } else if (tag == "NewFold") {
+
+        } else if (tag == "SettingsItem") {
+
+        } else {
+            cipherIDs = query.FilterByUnbinned()
+                             .FilterByFolder(tag)
                              .GetCiphers();
         }
 
@@ -864,6 +961,8 @@ namespace winrt::WindowsUI::implementation
 
     void VaultUI::SidebarCancel_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         SidebarViewMode();
+
+        PopulateSidePane(SidebarId().Text(), SidebarTitle().Text(), SidebarType().Text(), SidebarImage().Source());
     }
 
     void VaultUI::SidebarEdit_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -876,6 +975,78 @@ namespace winrt::WindowsUI::implementation
 
         SidebarCard().Children().Clear();
         SidebarFields().Children().Clear();
+
+        FolderPicker().GetComboBox().IsEnabled(true);
+        FolderPicker().GetComboBox().ClearValue(winrt::Microsoft::UI::Xaml::Controls::Control::BorderBrushProperty());
+        FolderPicker().GetComboBox().ClearValue(winrt::Microsoft::UI::Xaml::Controls::Control::BackgroundProperty());
+        FolderPicker().GetComboBox().SelectionChanged([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args) {
+            if (FolderPicker().SuppressSelectionChanged()) {
+                return;
+            }
+            auto box = sender.as<winrt::Microsoft::UI::Xaml::Controls::ComboBox>();
+            auto selected = box.SelectedItem().as<winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem>();
+            std::string value = winrt::to_string(winrt::unbox_value<winrt::hstring>(selected.Content()));
+
+            ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+            std::vector<std::string> folderIds = vault.GetFolders();
+
+            std::string selectedFolder = "";
+
+            if (value != "") {
+                for (auto& folder : folderIds) {
+                    ClientWarden::Vault::Folder folderItem(vault, folder);
+
+                    /*
+                    * Secret Data
+                    */
+                    std::string folderName = "";
+
+                    folderItem.GetName(folderName)
+                            .Close();
+                    
+                    if (folderName == value) {
+                        selectedFolder = folder;
+                    }
+
+                    OPENSSL_cleanse(folderName.data(), folderName.size());
+                    folderName.clear();
+                }
+            }
+
+            OPENSSL_cleanse(value.data(), value.size());
+            value.clear();
+
+            std::string id = winrt::to_string(SidebarId().Text());
+            std::string type = winrt::to_string(SidebarType().Text());
+
+            if (type == "Login") {
+                ClientWarden::Vault::LoginItem loginItem(vault, id);
+
+                loginItem.SetFolder(selectedFolder)
+                         .Commit();
+            } else if (type == "Identity") {
+                ClientWarden::Vault::IdentityItem identityItem(vault, id);
+
+                identityItem.SetFolder(selectedFolder)
+                            .Commit();
+            } else if (type == "Card") {
+                ClientWarden::Vault::CardItem cardItem(vault, id);
+
+                cardItem.SetFolder(selectedFolder)
+                        .Commit();
+            } else if (type == "Note") {
+                ClientWarden::Vault::NoteItem noteItem(vault, id);
+
+                noteItem.SetFolder(selectedFolder)
+                        .Commit();
+            } else if (type == "SSHKey") {
+                ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
+
+                sshkeyItem.SetFolder(selectedFolder)
+                          .Commit();
+            }
+        });
 
         /*
          * SECRET DATA
@@ -1402,11 +1573,16 @@ namespace winrt::WindowsUI::implementation
         SidebarFields().Children().Clear();
         SidebarNotes().Text(L"");
 
+        FolderPicker().GetComboBox().IsEnabled(false);
+        FolderPicker().GetComboBox().Background(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Microsoft::UI::Colors::Transparent()));
+        FolderPicker().GetComboBox().BorderBrush(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Microsoft::UI::Colors::Transparent()));
+
         /*
          * SECRET DATA
         */
         std::string notes = "";
         std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> fields;
+        std::string folder = "";
         bool fav = false;
         
         if (type == L"Login") {
@@ -1429,6 +1605,7 @@ namespace winrt::WindowsUI::implementation
                      .GetNotes(notes)
                      .GetFields(fields)
                      .GetFavorite(fav)
+                     .GetFolder(folder)
                      .Close();
             
             int siz = password.size();
@@ -1831,6 +2008,7 @@ namespace winrt::WindowsUI::implementation
                     hidite = hidite + "•";
                 }
                 hidField.Value(winrt::to_hstring(hidite));
+                hidField.ShowHide({ this, &VaultUI::HiddenItem_Click });
                 SidebarFields().Children().Append(hidField);
             } else if (FieldType == ClientWarden::Vault::CustomFieldType::Checkbox) {
                 WindowsUI::CheckboxField checkField;
@@ -1856,6 +2034,21 @@ namespace winrt::WindowsUI::implementation
             OPENSSL_cleanse(value.data(), value.size());
             value.clear();
         }
+
+        ClientWarden::Vault::Folder folderItem(vault, folder);
+
+        /*
+         * Secret Data
+        */
+        std::string folderName = "";
+
+        folderItem.GetName(folderName)
+                  .Close();
+        
+        FolderPicker().Value(winrt::to_hstring(folderName));
+
+        OPENSSL_cleanse(folderName.data(), folderName.size());
+        folderName.clear();
     }
 
     void VaultUI::VaultItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
