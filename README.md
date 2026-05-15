@@ -125,7 +125,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Implement Search Bar
 - [X] Add Filters
 - [X] Add Callback for New Item Button
-- [ ] Implement Folders
+- [X] Implement Folders
 - [ ] Add Support for Password Generator
 - [ ] Add Bin Page
 - [ ] Add Permanantly Delete Button
