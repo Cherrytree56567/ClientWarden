@@ -17,6 +17,11 @@ namespace winrt::WindowsUI::implementation
 
         winrt::hstring Value();
         void Value(winrt::hstring value);
+
+        void PassGen_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& e);
+        void PassGenList_Changed(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
+
+        void DisablePasswordGen();
     private:
         winrt::event<Microsoft::UI::Xaml::RoutedEventHandler> m_clipboardEvent;
     };

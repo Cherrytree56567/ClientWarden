@@ -1091,6 +1091,7 @@ namespace winrt::WindowsUI::implementation
             WindowsUI::PasswordEditField totpField;
             totpField.Title(L"One Time Password");
             totpField.Value(winrt::to_hstring(totp));
+            totpField.DisablePasswordGen();
 
             SidebarCard().Children().Append(totpField);
 
@@ -1200,12 +1201,14 @@ namespace winrt::WindowsUI::implementation
             WindowsUI::PasswordEditField natInsNumField;
             natInsNumField.Title(L"National Insurance Number");
             natInsNumField.Value(winrt::to_hstring(nationalInsuranceNum));
+            natInsNumField.DisablePasswordGen();
 
             SidebarCard().Children().Append(natInsNumField);
 
             WindowsUI::PasswordEditField passportField;
             passportField.Title(L"Passport Number");
             passportField.Value(winrt::to_hstring(passportNum));
+            passportField.DisablePasswordGen();
 
             SidebarCard().Children().Append(passportField);
 
@@ -1335,6 +1338,7 @@ namespace winrt::WindowsUI::implementation
             WindowsUI::PasswordEditField numberField;
             numberField.Title(L"Number");
             numberField.Value(winrt::to_hstring(number));
+            numberField.DisablePasswordGen();
 
             SidebarCard().Children().Append(numberField);
 
@@ -1359,6 +1363,7 @@ namespace winrt::WindowsUI::implementation
             WindowsUI::PasswordEditField cvvField;
             cvvField.Title(L"CVV");
             cvvField.Value(winrt::to_hstring(cvv));
+            cvvField.DisablePasswordGen();
 
             SidebarCard().Children().Append(cvvField);
 
@@ -1399,6 +1404,7 @@ namespace winrt::WindowsUI::implementation
             WindowsUI::PasswordEditField privField;
             privField.Title(L"Private Key");
             privField.Value(winrt::to_hstring(privKey));
+            privField.DisablePasswordGen();
 
             SidebarCard().Children().Append(privField);
             

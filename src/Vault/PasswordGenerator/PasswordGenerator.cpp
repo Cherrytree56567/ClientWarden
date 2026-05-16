@@ -2,7 +2,9 @@
 
 namespace ClientWarden::Vault {
     PasswordGenerator::PasswordGenerator(Vault& vault) : storage(""), localVault(vault) {
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault::PasswordGenerator");
+        if (!logger) {
+            logger = spdlog::stdout_color_mt("ClientWarden::Vault::PasswordGenerator");
+        }
         std::string file = storage.read("clientgen.txt");
 
         std::stringstream ss(file);

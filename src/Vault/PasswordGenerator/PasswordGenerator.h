@@ -20,7 +20,7 @@ namespace ClientWarden::Vault {
     private:
         Vault& localVault;
         Storage storage;
-        std::shared_ptr<spdlog::logger> logger;
+        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
 
         bool init = false;
 
