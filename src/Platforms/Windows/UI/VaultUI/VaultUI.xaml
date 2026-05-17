@@ -19,19 +19,19 @@
                         Loaded="NavigationView_Loaded"
                         SelectionChanged="NavigationView_SelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="All Items" x:Name="AllItems">
+                <NavigationViewItem Content="All Items" x:Name="AllItems" Tag="AllItems">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/Logo.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Favorites" x:Name="Fav">
+                <NavigationViewItem Content="Favorites" x:Name="Fav" Tag="Fav">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_star_24_regular.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Trash" x:Name="Del">
+                <NavigationViewItem Content="Trash" x:Name="Del" Tag="Del">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_delete_24_regular.png"
                                     ShowAsMonochrome="True"/>
@@ -41,31 +41,31 @@
                 <NavigationViewItemSeparator/>
 
                 <NavigationViewItemHeader Content="Types"/>
-                <NavigationViewItem Content="Login" x:Name="Login">
+                <NavigationViewItem Content="Login" x:Name="Login" Tag="Login">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_globe_24_filled.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Card" x:Name="Card">
+                <NavigationViewItem Content="Card" x:Name="Card" Tag="Card">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_credit_card_person_24_regular.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Identity" x:Name="Identity">
+                <NavigationViewItem Content="Identity" x:Name="Identity" Tag="Identity">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_contact_card_24_regular.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Secure Note" x:Name="SecNote">
+                <NavigationViewItem Content="Secure Note" x:Name="SecNote" Tag="SecNote">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_note_24_regular.png"
                                     ShowAsMonochrome="True"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="SSH Key" x:Name="SSH">
+                <NavigationViewItem Content="SSH Key" x:Name="SSH" Tag="SSH">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_key_24_regular.png"
                                     ShowAsMonochrome="True"/>
@@ -78,7 +78,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem Content="New Folder" Icon="Add" x:Name="NewFold"/>
+                <NavigationViewItem Content="New Folder" Icon="Add" x:Name="NewFold" Tag="NewFold"/>
             </NavigationView.FooterMenuItems>
             <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                   Grid.Column="1">
@@ -144,7 +144,8 @@
                     <StackPanel Orientation="Vertical">
                         <CommandBar IsOpen="False"
                                     DefaultLabelPosition="Right"
-                                    Margin="0, 0, -12, 0">
+                                    Margin="0, 0, 0, 0"
+                                    IsDynamicOverflowEnabled="False">
                             <AppBarButton Label="Edit"
                                           Click="SidebarEdit_Click"
                                           x:Name="EditButton">
@@ -162,6 +163,24 @@
                                 </AppBarButton.Icon>
                             </AppBarButton>
                             <AppBarButton Label="Delete"
+                                          Visibility="Collapsed"
+                                          Click="Perm_Click"
+                                          x:Name="PermButton">
+                                <AppBarButton.Icon>
+                                    <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_delete_24_regular.png"
+                                                ShowAsMonochrome="True"/>
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="Restore"
+                                          Visibility="Collapsed"
+                                          Click="Restore_Click"
+                                          x:Name="RestoreButton">
+                                <AppBarButton.Icon>
+                                    <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_arrow_reset_24_regular.png"
+                                                ShowAsMonochrome="True"/>
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="Bin"
                                           Click="Delete_Click"
                                           x:Name="DeleteButton">
                                 <AppBarButton.Icon>

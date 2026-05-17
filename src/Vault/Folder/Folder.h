@@ -16,6 +16,8 @@ namespace ClientWarden::Vault {
         Folder& SetName(std::string& name);
         Folder& GetName(std::string& name);
 
+        Folder& GetID(std::string& id);
+
         void Commit();
         void Delete();
         void Close();

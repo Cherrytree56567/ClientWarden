@@ -213,6 +213,14 @@ namespace winrt::WindowsUI::implementation
 
         std::vector<std::pair<ClientWarden::Vault::CipherType, std::string>> cipherIDs;
 
+        PermButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+        RestoreButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+        DeleteButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+
+        /*
+         * TODO: FIX New Folder Button and Fix This weird issue with App Bar Visibility
+        */
+
         if (tag == "AllItems") {
             cipherIDs = query.FilterByUnbinned()
                              .GetCiphers();
@@ -223,6 +231,9 @@ namespace winrt::WindowsUI::implementation
         } else if (tag == "Del") {
             cipherIDs = query.FilterByBinned()
                              .GetCiphers();
+            PermButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+            RestoreButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+            DeleteButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
         } else if (tag == "Login") {
             cipherIDs = query.FilterByUnbinned()
                              .FilterByType(ClientWarden::Vault::CipherType::Login)
@@ -244,7 +255,100 @@ namespace winrt::WindowsUI::implementation
                              .FilterByType(ClientWarden::Vault::CipherType::SSHKey)
                              .GetCiphers();
         } else if (tag == "NewFold") {
+            ClientWarden::Vault::Folder folderItem(vault);
 
+            /*
+             * SECRET DATA
+            */
+            std::string folderName = "New Folder";
+            std::string FfolderName = "New Folder";
+            std::string folder = "";
+
+            folderItem.SetName(FfolderName)
+                      .GetID(folder)
+                      .Close();
+            
+            FolderPicker().AddOption(winrt::to_hstring(folderName));
+            
+            winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem item;
+
+            winrt::Microsoft::UI::Xaml::Controls::Grid panel;
+            panel.HorizontalAlignment(winrt::Microsoft::UI::Xaml::HorizontalAlignment::Stretch);
+            panel.ColumnSpacing(8);
+
+            winrt::Microsoft::UI::Xaml::Controls::ColumnDefinition col1;
+            col1.Width(winrt::Microsoft::UI::Xaml::GridLength{ 1, winrt::Microsoft::UI::Xaml::GridUnitType::Star });
+            winrt::Microsoft::UI::Xaml::Controls::ColumnDefinition col2;
+            col2.Width(winrt::Microsoft::UI::Xaml::GridLength{ 16, winrt::Microsoft::UI::Xaml::GridUnitType::Pixel });
+
+            panel.ColumnDefinitions().Append(col1);
+            panel.ColumnDefinitions().Append(col2);
+
+            winrt::Microsoft::UI::Xaml::Controls::TextBox itemBox;
+            itemBox.Text(winrt::to_hstring(folderName));
+            itemBox.BorderThickness(winrt::Microsoft::UI::Xaml::Thickness{ 0, 0, 0, 0 });
+            itemBox.Background(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush{ winrt::Microsoft::UI::Colors::Transparent() });
+            itemBox.VerticalAlignment(winrt::Microsoft::UI::Xaml::VerticalAlignment::Center);
+            itemBox.HorizontalAlignment(winrt::Microsoft::UI::Xaml::HorizontalAlignment::Stretch);
+            itemBox.Tapped([](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& args) {
+                args.Handled(true);
+            });
+            itemBox.LostFocus([this, folder](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args) {
+                auto box = sender.as<winrt::Microsoft::UI::Xaml::Controls::TextBox>();
+                std::string newName = winrt::to_string(box.Text());
+
+                ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+                
+                ClientWarden::Vault::Folder fold(vault, folder);
+
+                fold.SetName(newName).Commit();
+
+                OPENSSL_cleanse(newName.data(), newName.size());
+                newName.clear();
+            });
+
+            winrt::Microsoft::UI::Xaml::Controls::Grid::SetColumn(itemBox, 0);
+
+            panel.Children().Append(itemBox);
+
+            winrt::Microsoft::UI::Xaml::Controls::Image image;
+            image.Width(16);
+            image.Height(16);
+            image.Source(winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_delete_24_regular.png")));
+            image.Margin(winrt::Microsoft::UI::Xaml::Thickness{ 0, 0, -8, 0 });
+            image.Tapped([this, folder, item](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& args) {
+                ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+                
+                ClientWarden::Vault::Folder fold(vault, folder);
+
+                fold.Delete();
+
+                auto menuItems = NavView().MenuItems();
+                uint32_t index = 0;
+                if (menuItems.IndexOf(item, index)) {
+                    menuItems.RemoveAt(index);
+                }
+
+                NavView().SelectedItem(AllItems());
+            });
+
+            winrt::Microsoft::UI::Xaml::Controls::Grid::SetColumn(image, 1);
+
+            panel.Children().Append(image);
+            
+            item.Content(panel);
+            item.Name(winrt::to_hstring(folder));
+
+            OPENSSL_cleanse(folderName.data(), folderName.size());
+            folderName.clear();
+
+            winrt::Microsoft::UI::Xaml::Controls::BitmapIcon icon;
+            icon.UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_folder_24_regular.png"));
+            icon.ShowAsMonochrome(true);
+            item.Icon(icon);
+
+            NavView().MenuItems().Append(item);
+            NavView().SelectedItem(item);
         } else if (tag == "SettingsItem") {
 
         } else {
@@ -2142,6 +2246,84 @@ namespace winrt::WindowsUI::implementation
             ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
 
             sshkeyItem.Bin();
+        }
+
+        auto items = VaultItemList().Children();
+        for (uint32_t i = 0; i < items.Size(); i++) {
+            if (auto item = items.GetAt(i).try_as<winrt::WindowsUI::VaultItem>()) {
+                if (winrt::to_string(item.itemID()) == id) {
+                    items.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    void VaultUI::Perm_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        std::string id = winrt::to_string(SidebarId().Text());
+        std::string type = winrt::to_string(SidebarType().Text());
+
+        if (type == "Login") {
+            ClientWarden::Vault::LoginItem loginItem(vault, id);
+
+            loginItem.Delete();
+        } else if (type == "Identity") {
+            ClientWarden::Vault::IdentityItem identityItem(vault, id);
+
+            identityItem.Delete();
+        } else if (type == "Card") {
+            ClientWarden::Vault::CardItem cardItem(vault, id);
+
+            cardItem.Delete();
+        } else if (type == "Note") {
+            ClientWarden::Vault::NoteItem noteItem(vault, id);
+
+            noteItem.Delete();
+        } else if (type == "SSHKey") {
+            ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
+
+            sshkeyItem.Delete();
+        }
+
+        auto items = VaultItemList().Children();
+        for (uint32_t i = 0; i < items.Size(); i++) {
+            if (auto item = items.GetAt(i).try_as<winrt::WindowsUI::VaultItem>()) {
+                if (winrt::to_string(item.itemID()) == id) {
+                    items.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    void VaultUI::Restore_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        std::string id = winrt::to_string(SidebarId().Text());
+        std::string type = winrt::to_string(SidebarType().Text());
+
+        if (type == "Login") {
+            ClientWarden::Vault::LoginItem loginItem(vault, id);
+
+            loginItem.UnBin();
+        } else if (type == "Identity") {
+            ClientWarden::Vault::IdentityItem identityItem(vault, id);
+
+            identityItem.UnBin();
+        } else if (type == "Card") {
+            ClientWarden::Vault::CardItem cardItem(vault, id);
+
+            cardItem.UnBin();
+        } else if (type == "Note") {
+            ClientWarden::Vault::NoteItem noteItem(vault, id);
+
+            noteItem.UnBin();
+        } else if (type == "SSHKey") {
+            ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
+
+            sshkeyItem.UnBin();
         }
 
         auto items = VaultItemList().Children();

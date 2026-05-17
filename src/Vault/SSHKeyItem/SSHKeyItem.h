@@ -41,6 +41,7 @@ namespace ClientWarden::Vault {
         void Commit();
         void Delete();
         void Bin();
+        void UnBin();
         void Close();
     private:
         /*

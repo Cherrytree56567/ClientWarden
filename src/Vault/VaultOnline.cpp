@@ -303,6 +303,26 @@ namespace ClientWarden::Vault {
         return NetworkState::Success;
     }
 
+    NetworkState Vault::OnlineRestoreItem(std::string uuid) {
+        httplib::Client client(vaultURL);
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+        auto res = client.Put("/api/ciphers/" + uuid + "/restore", headers, "", "application/json");
+        if (!res) {
+            logger->error("restoreItem request failed");
+            return NetworkState::Failed;
+        }
+        if (res->status != 200) {
+            logger->error("restoreItem failed: {}", res->status);
+            return NetworkState::Failed;
+        }
+        return NetworkState::Success;
+    }
+
     std::expected<nlohmann::json, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string encryptedFileContents, std::string encryptedFileName) {
         logger->error("Unsupported: Add Attachment");
         return std::unexpected(NetworkState::NotImpl);

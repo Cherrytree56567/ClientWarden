@@ -127,8 +127,9 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Add Callback for New Item Button
 - [X] Implement Folders
 - [X] Add Support for Password Generator
-- [ ] Add Bin Page
-- [ ] Add Permanantly Delete Button
+- [X] Add Bin Page
+- [X] Add Permanantly Delete Button
+- [ ] Add Custom Vault Uri Page in Login
 - [ ] Show Passkeys in Sidebar
 - [ ] Implement Clipboard Timeout
 - [ ] Implement Bitwarden WebSockets
@@ -137,6 +138,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Add No Items Art
 - [ ] Add Attachments Support
 - [ ] Implement Tutorial
+- [ ] Multithread
 - [ ] Transfer to Botan `secure_vector` for security
 - [ ] Implement Custom D2D Drawing Layer for extra security
 - [ ] Beta Release

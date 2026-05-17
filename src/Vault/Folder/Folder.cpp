@@ -77,6 +77,11 @@ namespace ClientWarden::Vault {
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
     }
 
+    Folder& Folder::GetID(std::string& id) {
+        id = data["id"];
+        return *this;
+    }
+
     void Folder::Delete() {
         if (!init) return;
         if (!isBeingCreated) {

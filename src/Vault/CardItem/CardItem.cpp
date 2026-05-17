@@ -432,6 +432,40 @@ namespace ClientWarden::Vault {
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
     }
 
+    void CardItem::UnBin() {
+        if (!init) return;
+        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
+        itemEncKey.clear();
+        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
+        itemMacKey.clear();
+
+        data["revisionDate"] = getBitwardenTime();
+        data["deletedDate"] = nullptr;
+        data["data"] = (std::string)fieldData.dump();
+        if (isBeingCreated) {
+            auto hr = localVault.OnlineNewItem(data);
+            if (!hr) {
+                spdlog::warn("Failed to add New Item Online");
+                data["createdOffline"] = true;
+            }
+            localVault.vaultData["ciphers"].push_back(data);
+            localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+            return;
+        }
+
+        auto& ciphers = localVault.vaultData["ciphers"];
+        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
+            return cipher["id"] == data["id"];
+        });
+
+        if (it != ciphers.end()) {
+            *it = data;
+        }
+
+        auto hr = localVault.OnlineRestoreItem(data["id"]);
+        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+    }
+
     void CardItem::Close() {
         if (!init) return;
         OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
