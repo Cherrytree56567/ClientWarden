@@ -81,6 +81,7 @@ namespace winrt::WindowsUI::implementation
     private:
         std::thread mt_thread;
         std::atomic<bool> mt_running;
+        winrt::event_token m_folderPickerToken{};
         bool isEdit = false;
     };
 }

@@ -61,6 +61,8 @@ namespace ClientWarden::Vault {
         AuthState submitDeviceVerify(std::string& code);
         NetworkState postLogin();
 
+        void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri);
+
         void Unlock(std::string& password);
         void Lock();
 
@@ -137,10 +139,6 @@ namespace ClientWarden::Vault {
         nlohmann::json authData;
         nlohmann::json vaultData;
         Storage storage;
-        std::string vaultURL;
-        std::string mainURL;
-        std::string apiURL;
-        std::string iconURL;
         std::shared_ptr<spdlog::logger> logger;
     };
 }

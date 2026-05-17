@@ -169,7 +169,17 @@ namespace ClientWarden::Vault {
             /*
              * Secret Data
             */
-            auto [itemEncKey, itemMacKey] = localVault.getKeysFromCipher((*it)["key"].get<std::string>());
+
+            std::vector<uint8_t> itemEncKey;
+            std::vector<uint8_t> itemMacKey;
+            if (!(*it)["key"].is_string()) {
+                itemEncKey = localVault.encKey;
+                itemMacKey = localVault.macKey;
+            } else {
+                auto [itemEnc, itemMac] = localVault.getKeysFromCipher((*it)["key"].get<std::string>());
+                itemEncKey = std::move(itemEnc);
+                itemMacKey = std::move(itemMac);
+            }
 
             std::string name = localVault.Decrypt((*it)["name"].get<std::string>(), itemEncKey, itemMacKey);
             std::regex pattern(regex);

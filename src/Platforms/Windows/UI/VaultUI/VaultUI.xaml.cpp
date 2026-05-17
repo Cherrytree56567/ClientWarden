@@ -79,7 +79,42 @@ namespace winrt::WindowsUI::implementation
                 
                 ClientWarden::Vault::Folder fold(vault, folder);
 
-                fold.SetName(newName).Commit();
+                fold.SetName(newName)
+                    .Commit();
+                
+                if (m_folderPickerToken) {
+                    FolderPicker().GetComboBox().SelectionChanged(m_folderPickerToken);
+                    m_folderPickerToken = {};
+                }
+
+                FolderPicker().GetComboBox().Items().Clear();
+
+                winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem emptyItem;
+                emptyItem.Content(winrt::box_value(winrt::hstring(L"")));
+                FolderPicker().GetComboBox().Items().Append(emptyItem);
+
+                for (auto& foldId : vault.GetFolders()) {
+                    ClientWarden::Vault::Folder folde(vault, foldId);
+
+                    std::string foldName;
+
+                    folde.GetName(foldName)
+                         .Close();
+
+                    winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem comboBoxItem;
+                    comboBoxItem.Content(winrt::box_value(winrt::to_hstring(foldName)));
+
+                    FolderPicker().GetComboBox().Items().Append(comboBoxItem);
+
+                    OPENSSL_cleanse(foldName.data(), foldName.size());
+                    foldName.clear();
+                }
+
+                FolderPicker().Value(winrt::to_hstring(newName));
+
+                if (!SidebarId().Text().empty()) {
+                    PopulateSidePane(SidebarId().Text(), SidebarTitle().Text(), SidebarType().Text(), SidebarImage().Source());
+                }
 
                 OPENSSL_cleanse(newName.data(), newName.size());
                 newName.clear();
@@ -217,10 +252,6 @@ namespace winrt::WindowsUI::implementation
         RestoreButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
         DeleteButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
 
-        /*
-         * TODO: FIX New Folder Button and Fix This weird issue with App Bar Visibility
-        */
-
         if (tag == "AllItems") {
             cipherIDs = query.FilterByUnbinned()
                              .GetCiphers();
@@ -266,7 +297,7 @@ namespace winrt::WindowsUI::implementation
 
             folderItem.SetName(FfolderName)
                       .GetID(folder)
-                      .Close();
+                      .Commit();
             
             FolderPicker().AddOption(winrt::to_hstring(folderName));
             
@@ -301,7 +332,42 @@ namespace winrt::WindowsUI::implementation
                 
                 ClientWarden::Vault::Folder fold(vault, folder);
 
-                fold.SetName(newName).Commit();
+                fold.SetName(newName)
+                    .Commit();
+                
+                if (m_folderPickerToken) {
+                    FolderPicker().GetComboBox().SelectionChanged(m_folderPickerToken);
+                    m_folderPickerToken = {};
+                }
+
+                FolderPicker().GetComboBox().Items().Clear();
+
+                winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem emptyItem;
+                emptyItem.Content(winrt::box_value(winrt::hstring(L"")));
+                FolderPicker().GetComboBox().Items().Append(emptyItem);
+
+                for (auto& foldId : vault.GetFolders()) {
+                    ClientWarden::Vault::Folder folde(vault, foldId);
+
+                    std::string foldName;
+
+                    folde.GetName(foldName)
+                         .Close();
+
+                    winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem comboBoxItem;
+                    comboBoxItem.Content(winrt::box_value(winrt::to_hstring(foldName)));
+
+                    FolderPicker().GetComboBox().Items().Append(comboBoxItem);
+
+                    OPENSSL_cleanse(foldName.data(), foldName.size());
+                    foldName.clear();
+                }
+
+                FolderPicker().Value(winrt::to_hstring(newName));
+
+                if (!SidebarId().Text().empty()) {
+                    PopulateSidePane(SidebarId().Text(), SidebarTitle().Text(), SidebarType().Text(), SidebarImage().Source());
+                }
 
                 OPENSSL_cleanse(newName.data(), newName.size());
                 newName.clear();
@@ -1083,7 +1149,12 @@ namespace winrt::WindowsUI::implementation
         FolderPicker().GetComboBox().IsEnabled(true);
         FolderPicker().GetComboBox().ClearValue(winrt::Microsoft::UI::Xaml::Controls::Control::BorderBrushProperty());
         FolderPicker().GetComboBox().ClearValue(winrt::Microsoft::UI::Xaml::Controls::Control::BackgroundProperty());
-        FolderPicker().GetComboBox().SelectionChanged([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args) {
+
+        if (m_folderPickerToken) {
+            FolderPicker().GetComboBox().SelectionChanged(m_folderPickerToken);
+            m_folderPickerToken = {};
+        }
+        m_folderPickerToken = FolderPicker().GetComboBox().SelectionChanged([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args) {
             if (FolderPicker().SuppressSelectionChanged()) {
                 return;
             }
@@ -1821,6 +1892,7 @@ namespace winrt::WindowsUI::implementation
                         .GetPostalCode(postalCode)
                         .GetCountry(country)
                         .GetNotes(notes)
+                        .GetFolder(folder)
                         .GetFields(fields)
                         .GetFavorite(fav)
                         .Close();
@@ -1973,6 +2045,7 @@ namespace winrt::WindowsUI::implementation
                     .GetCode(cvv)
                     .GetBrand(brand)
                     .GetNotes(notes)
+                    .GetFolder(folder)
                     .GetFields(fields)
                     .GetFavorite(fav)
                     .Close();
@@ -2035,6 +2108,7 @@ namespace winrt::WindowsUI::implementation
             ClientWarden::Vault::NoteItem noteItem(vault, winrt::to_string(id));
 
             noteItem.GetNotes(notes)
+                    .GetFolder(folder)
                     .GetFields(fields)
                     .GetFavorite(fav)
                     .Close();
@@ -2049,6 +2123,7 @@ namespace winrt::WindowsUI::implementation
                       .GetPublicKey(pubKey)
                       .GetFingerprint(fingerprint)
                       .GetNotes(notes)
+                      .GetFolder(folder)
                       .GetFields(fields)
                       .GetFavorite(fav)
                       .Close();

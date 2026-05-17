@@ -9,41 +9,98 @@
     mc:Ignorable="d">
 
     <Grid>
-        <Grid Margin="6">
-
-        </Grid>
+        <StackPanel HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Padding="6"
+                    Orientation="Horizontal"
+                    Spacing="8">
+            <Border Width="24"
+                    Height="24"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top">
+                <Image Source="ms-appx:///Assets/cw-logo.png"
+                       Stretch="UniformToFill"></Image>
+            </Border>
+            <TextBlock Text="Clientwarden"
+                       FontFamily="Cascadia Mono"
+                       FontWeight="SemiBold"
+                       FontSize="18"
+                       Foreground="White"
+                       VerticalAlignment="Center"></TextBlock>
+        </StackPanel>
+        <StackPanel Padding="6" 
+                    Margin="0, 30, 0, 0" 
+                    Width="200"
+                    HorizontalAlignment="Left"
+                    Spacing="8"
+                    Orientation="Vertical">
+            <ListView x:Name="UriMode" 
+                      SelectionMode="Single" 
+                      SelectedIndex="0"
+                      VerticalAlignment="Top"
+                      SelectionChanged="UriMode_SelectionChanged">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                        
+                <ListViewItem Content="Bitwarden"/>
+                <ListViewItem Content="Self-Hosted"/>
+            </ListView>
+            <TextBlock Text="Vault URL"
+                       Margin="8, 0, 0, 0"
+                       Visibility="Collapsed"
+                       x:Name="VaultUriText"/>
+            <TextBox PlaceholderText="https://self-hosted-vw.com"
+                     Margin="4, 0, 0, 0"
+                     Visibility="Collapsed"
+                     x:Name="VaultUri"/>
+            
+            <TextBlock Text="Main URL"
+                       Margin="8, 4, 0, 0"
+                       Visibility="Collapsed"
+                       x:Name="MainUriText"/>
+            <TextBox Text="{x:Bind VaultUri.Text, Mode=OneWay}"
+                     Margin="4, 0, 0, 0"
+                     PlaceholderText="https://self-hosted-vw.com"
+                     Visibility="Collapsed"
+                     x:Name="MainUri"/>
+            
+            <TextBlock Text="API URL"
+                       Margin="8, 4, 0, 0"
+                       Visibility="Collapsed"
+                       x:Name="ApiUriText"/>
+            <TextBox Text="{x:Bind VaultUri.Text, Mode=OneWay}"
+                     Margin="4, 0, 0, 0"
+                     PlaceholderText="https://self-hosted-vw.com"
+                     Visibility="Collapsed"
+                     x:Name="ApiUri"/>
+            
+            <TextBlock Text="Icon URL"
+                       Margin="8, 4, 0, 0"
+                       Visibility="Collapsed"
+                       x:Name="IconUriText"/>
+            <TextBox Text="https://icons.bitwarden.net"
+                     Margin="4, 0, 0, 0"
+                     PlaceholderText="https://icons.bitwarden.net"
+                     Visibility="Collapsed"
+                     x:Name="IconUri"/>
+        </StackPanel>
         <Grid Width="300">
             <StackPanel Orientation="Vertical"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Stretch"
-            Spacing="12">
-                <StackPanel Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        Spacing="8">
-                    <Border Width="36"
-                        Height="36"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top">
-                        <Image Source="/Assets/logo.png"
-                           Stretch="UniformToFill"></Image>
-                    </Border>
-                    <TextBlock Text="Clientwarden"
-                           FontFamily="Cascadia Mono"
-                           FontWeight="SemiBold"
-                           FontSize="24"
-                           Foreground="White"
-                           VerticalAlignment="Center"></TextBlock>
-                </StackPanel>
+                        HorizontalAlignment="Stretch"
+                        Spacing="12">
                 <TextBox PlaceholderText="Email"
                          x:Name="FieldEmail"></TextBox>
                 <PasswordBox PlaceholderText="Password"
                              x:Name="FieldPassword"></PasswordBox>
                 <TextBlock x:Name="FieldError"/>
                 <Button Content="Login"
-                    HorizontalAlignment="Stretch"
-                    Style="{ThemeResource AccentButtonStyle}"
-                    Click="LoginButton_Click"></Button>
+                        HorizontalAlignment="Stretch"
+                        Style="{ThemeResource AccentButtonStyle}"
+                        Click="LoginButton_Click"></Button>
             </StackPanel>
         </Grid>
     </Grid>
