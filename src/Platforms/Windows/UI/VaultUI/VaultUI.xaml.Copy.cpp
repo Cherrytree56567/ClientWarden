@@ -28,18 +28,10 @@ namespace winrt::WindowsUI::implementation
             loginItem.GetUsername(username)
                      .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(username));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(username.data(), username.size());
-            username.clear();
+            clipboard.Copy(username);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -65,21 +57,13 @@ namespace winrt::WindowsUI::implementation
             */
             std::string password;
 
-            loginItem.GetUsername(password)
+            loginItem.GetPassword(password)
                      .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(password));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(password.data(), password.size());
-            password.clear();
+            clipboard.Copy(password);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -108,18 +92,10 @@ namespace winrt::WindowsUI::implementation
             loginItem.GetTotp(code)
                      .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(code.code));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(code.code.data(), code.code.size());
-            code.code.clear();
+            clipboard.Copy(code.code);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -153,10 +129,9 @@ namespace winrt::WindowsUI::implementation
                         .GetMiddleName(middleName)
                         .GetLastName(lastName)
                         .Close();
-            
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(title + " " + firstName + " " + middleName + " " + lastName));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
+
+            std::string data = title + " " + firstName + " " + middleName + " " + lastName;
+            clipboard.Copy(data);
 
             OPENSSL_cleanse(title.data(), title.size());
             title.clear();
@@ -169,9 +144,6 @@ namespace winrt::WindowsUI::implementation
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -200,18 +172,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetUsername(username)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(username));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(username.data(), username.size());
-            username.clear();
+            clipboard.Copy(username);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -240,18 +204,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetCompany(company)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(company));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(company.data(), company.size());
-            company.clear();
+            clipboard.Copy(company);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -280,18 +236,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetSSN(natIns)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(natIns));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(natIns.data(), natIns.size());
-            natIns.clear();
+            clipboard.Copy(natIns);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -320,18 +268,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetPassportNumber(passport)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(passport));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(passport.data(), passport.size());
-            passport.clear();
+            clipboard.Copy(passport);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -360,18 +300,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetLicenceNumber(licence)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(licence));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(licence.data(), licence.size());
-            licence.clear();
+            clipboard.Copy(licence);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -400,18 +332,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetEmail(email)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(email));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(email.data(), email.size());
-            email.clear();
+            clipboard.Copy(email);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -440,18 +364,10 @@ namespace winrt::WindowsUI::implementation
             identityItem.GetPhone(phone)
                         .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(phone));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(phone.data(), phone.size());
-            phone.clear();
+            clipboard.Copy(phone);
 
             CopyTip().IsOpen(true);
 
-            /*
-             * TODO: Close after 3s
-            */
             auto dispatcher = Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread();
             std::thread t([this, dispatcher]() {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -480,12 +396,7 @@ namespace winrt::WindowsUI::implementation
             cardItem.GetCardholderName(name)
                     .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(name));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(name.data(), name.size());
-            name.clear();
+            clipboard.Copy(name);
 
             CopyTip().IsOpen(true);
 
@@ -517,12 +428,7 @@ namespace winrt::WindowsUI::implementation
             cardItem.GetNumber(number)
                     .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(number));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(number.data(), number.size());
-            number.clear();
+            clipboard.Copy(number);
 
             CopyTip().IsOpen(true);
 
@@ -555,10 +461,10 @@ namespace winrt::WindowsUI::implementation
             cardItem.GetExpMonth(expMon)
                     .GetExpYear(expYer)
                     .Close();
-            
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(expMon + " / " + expYer));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
+
+            std::string data = expMon + " / " + expYer;
+
+            clipboard.Copy(data);
 
             OPENSSL_cleanse(expMon.data(), expMon.size());
             expMon.clear();
@@ -595,12 +501,7 @@ namespace winrt::WindowsUI::implementation
             cardItem.GetCode(cvv)
                     .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(cvv));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(cvv.data(), cvv.size());
-            cvv.clear();
+            clipboard.Copy(cvv);
 
             CopyTip().IsOpen(true);
 
@@ -632,12 +533,7 @@ namespace winrt::WindowsUI::implementation
             sshkeyItem.GetPrivateKey(priv)
                       .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(priv));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(priv.data(), priv.size());
-            priv.clear();
+            clipboard.Copy(priv);
 
             CopyTip().IsOpen(true);
 
@@ -669,12 +565,7 @@ namespace winrt::WindowsUI::implementation
             sshkeyItem.GetPublicKey(pub)
                       .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(pub));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(pub.data(), pub.size());
-            pub.clear();
+            clipboard.Copy(pub);
 
             CopyTip().IsOpen(true);
 
@@ -706,12 +597,7 @@ namespace winrt::WindowsUI::implementation
             sshkeyItem.GetFingerprint(fing)
                       .Close();
             
-            auto data = winrt::Windows::ApplicationModel::DataTransfer::DataPackage();
-            data.SetText(winrt::to_hstring(fing));
-            winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(data);
-
-            OPENSSL_cleanse(fing.data(), fing.size());
-            fing.clear();
+            clipboard.Copy(fing);
 
             CopyTip().IsOpen(true);
 

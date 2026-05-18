@@ -131,7 +131,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Add Permanantly Delete Button
 - [X] Add Custom Vault Uri Page in Login
 - [X] Show Passkeys in Sidebar
-- [ ] Implement Vault Based Clipboard with Timeout
+- [X] Implement Vault Based Clipboard with Timeout
 - [ ] Add Unselected Item Sidepane Art
 - [ ] Add No Items Art
 - [ ] Add Attachments Support
@@ -140,6 +140,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Add Right Click Context
 - [ ] Implement Tutorial
 - [ ] Multithread
+- [ ] Settings Support
 - [X] TOTP Support
 - [ ] Transfer to Botan `secure_vector` for security
 - [ ] Implement Custom D2D Drawing Layer for extra security

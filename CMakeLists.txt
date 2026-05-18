@@ -64,7 +64,7 @@ if (WIN32)
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/DeviceVerify"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/WebsiteEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/WebsiteField")
-    target_sources(clientwarden PRIVATE src/Platforms/Windows/Storage/Storage.cpp
+    target_sources(clientwarden PRIVATE src/Platforms/Windows/Storage/Storage.cpp src/Platforms/Windows/Clipboard/Clipboard.cpp
                                 src/Platforms/Windows/UI/app.manifest
                                 src/Platforms/Windows/UI/App/App.xaml src/Platforms/Windows/UI/App/App.xaml.cpp src/Platforms/Windows/UI/App/App.xaml.h
                                 src/Platforms/Windows/UI/Login/Login.xaml src/Platforms/Windows/UI/Login/Login.xaml.cpp src/Platforms/Windows/UI/Login/Login.xaml.h src/Platforms/Windows/UI/Login/Login.idl

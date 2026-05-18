@@ -34,6 +34,11 @@ namespace ClientWarden::Vault {
         }
 
         getMainKeys();
+
+        settingsData["clipboardClear"] = 30;
+
+        storage.write("settings.json", settingsData.dump(2));
+        
         return NetworkState::Success;
     }
 
@@ -79,5 +84,12 @@ namespace ClientWarden::Vault {
     void Vault::loadFiles() {
         authData = nlohmann::json::parse(storage.read("data.json"));
         vaultData = nlohmann::json::parse(storage.read("vault.json"));
+        if (storage.exists("settings.json")) {
+            settingsData = nlohmann::json::parse(storage.read("settings.json"));
+        } else {
+            settingsData["clipboardClear"] = 30;
+
+            storage.write("settings.json", settingsData.dump(2));
+        }
     }
 }

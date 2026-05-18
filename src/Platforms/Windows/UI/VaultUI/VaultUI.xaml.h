@@ -8,6 +8,7 @@
 #include "Vault/CardItem/CardItem.h"
 #include "Vault/SSHKeyItem/SSHKeyItem.h"
 #include "Vault/Folder/Folder.h"
+#include "Clipboard/Clipboard.h"
 #include "VaultUI.g.h"
 #include "VaultItem/VaultItem.xaml.h"
 #include "GenericField/GenericField.xaml.h"
@@ -82,6 +83,7 @@ namespace winrt::WindowsUI::implementation
         std::thread mt_thread;
         std::atomic<bool> mt_running;
         winrt::event_token m_folderPickerToken{};
+        ClientWarden::Clipboard clipboard;
         bool isEdit = false;
     };
 }

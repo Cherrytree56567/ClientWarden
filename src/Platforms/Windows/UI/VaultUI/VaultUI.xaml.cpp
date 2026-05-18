@@ -14,13 +14,18 @@ using namespace Microsoft::UI::Xaml;
 
 namespace winrt::WindowsUI::implementation
 {
-    void VaultUI::NavigationView_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
-    {
+    void VaultUI::NavigationView_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         NavView().SelectedItem(NavView().MenuItems().GetAt(0));
 
-        StartTOTPThread();
-
         ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        if (!vault.settingsData["clipboardClear"].is_number()) {
+            vault.settingsData["clipboardClear"] = 30;
+        }
+
+        clipboard.SetDelay(vault.settingsData["clipboardClear"]);
+
+        StartTOTPThread();
 
         ClientWarden::Vault::CipherQuery query(vault);
 
