@@ -138,9 +138,8 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Add Folders Tree View
 - [ ] Implement Bitwarden WebSockets
 - [ ] Add Right Click Context
-- [ ] Implement Tutorial
 - [ ] Multithread
-- [-] Settings Support
+- [ ] Settings Support
 - [X] TOTP Support
 - [ ] Transfer to Botan `secure_vector` for security
 - [ ] Implement Custom D2D Drawing Layer for extra security

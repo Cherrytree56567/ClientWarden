@@ -323,9 +323,107 @@ namespace ClientWarden::Vault {
         return NetworkState::Success;
     }
 
-    std::expected<nlohmann::json, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string encryptedFileContents, std::string encryptedFileName) {
-        logger->error("Unsupported: Add Attachment");
-        return std::unexpected(NetworkState::NotImpl);
+    std::expected<nlohmann::json, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName) {
+        httplib::Client client(authData["vaultURL"]);
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        /*
+         * SECRET DATA
+        */
+        auto [attEncKey, attMacKey] = generateEncMacKeys();
+
+        std::vector<uint8_t> attKey(attEncKey.begin(), attEncKey.end());
+        attKey.insert(attKey.end(), attMacKey.begin(), attMacKey.end());
+
+        std::vector<uint8_t> cipEncKey = encKey;
+        std::vector<uint8_t> cipMacKey = macKey;
+
+        for (auto& cipher : vaultData["ciphers"]) {
+            if (cipher.contains("id") && cipher["id"] == uuid) {
+                if (!cipher["key"].is_null()) {
+                    auto [cipEnc, cipMac] = getKeysFromCipher(cipher["key"]);
+                    cipEncKey = cipEnc;
+                    cipMacKey = cipMac;
+                }
+                break;
+            }
+        }
+
+        /*
+         * TODO: Can see attachment but cannot download.
+         * fix tmrw
+        */
+        
+        std::string attKeyStr = InternalEncrypt(attKey, cipEncKey, cipMacKey);
+
+        OPENSSL_cleanse(attKey.data(), attKey.size());
+
+        std::string encryptedFileContents = Encrypt(decryptedFileContents, attEncKey, attMacKey);
+        std::string encryptedFileName = Encrypt(decryptedFileName, cipEncKey, cipMacKey);
+
+        nlohmann::json requestData;
+        requestData["adminRequest"] = false;
+        requestData["fileName"] = encryptedFileName;
+        requestData["fileSize"] = encryptedFileContents.size();
+        requestData["key"] = attKeyStr;
+        requestData["lastKnownRevisionDate"] = getBitwardenTime();
+
+        auto res = client.Post("/api/ciphers/" + uuid + "/attachment/v2", headers, requestData.dump(), "application/json");
+        if (!res) {
+            logger->error("prepareAttachment request failed");
+            return NetworkState::Failed;
+        }
+        if (res->status != 200) {
+            logger->error("prepareAttachment failed: {}", res->status);
+            return NetworkState::Failed;
+        }
+
+        auto body = nlohmann::json::parse(res->body);
+
+        if (body.contains("cipherResponse")) {
+            if (body["cipherResponse"].contains("attachments")) {
+                auto attField = body["cipherResponse"]["attachments"];
+
+                if (vaultData.contains("ciphers") && vaultData["ciphers"].is_array()) {
+                    for (auto& cipher : vaultData["ciphers"]) {
+                        if (cipher.contains("id") && cipher["id"] == uuid) {
+                            cipher["attachments"] = attField;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!body.contains("attachmentId")) return std::unexpected(NetworkState::Failed);
+        if (!body["attachmentId"].is_string()) return std::unexpected(NetworkState::Failed);
+
+        httplib::UploadFormDataItems items = {
+            {
+                "data",
+                encryptedFileContents,
+                encryptedFileName,
+                "application/octet-stream"
+            }
+        };
+
+        auto multres = client.Post("/api/ciphers/" + uuid + "/attachment/" + body["attachmentId"].get<std::string>(), headers, items);
+
+        if (!multres) {
+            logger->error("uploadAttachment request failed");
+            return std::unexpected(NetworkState::Failed);
+        }
+        if (multres->status != 200) {
+            logger->error("uploadAttachment failed: {}", multres->status);
+            return std::unexpected(NetworkState::Failed);
+        }
+
+        return NetworkState::Success;
     }
 
     NetworkState Vault::OnlineRemoveAttachment(std::string uuid, std::string attachmentID) {

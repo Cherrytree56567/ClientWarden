@@ -25,6 +25,11 @@ namespace winrt::WindowsUI::implementation
 
         clipboard.SetDelay(vault.settingsData["clipboardClear"]);
 
+        std::string data = vault.storage.read("Inter_24pt-Regular.ttf");
+        std::string fname = "Inter_24pt-Regular.ttf";
+
+        vault.OnlineAddAttachment("e81ca696-6d1d-479d-8490-e1b104bf25ba", data, fname);
+
         StartTOTPThread();
 
         ClientWarden::Vault::CipherQuery query(vault);
