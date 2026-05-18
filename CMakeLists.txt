@@ -44,6 +44,7 @@ if (WIN32)
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/CheckboxField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/CheckboxEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/GenericField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/PasskeyField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/GenericEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenEditField"
@@ -74,6 +75,7 @@ if (WIN32)
                                 src/Platforms/Windows/UI/VaultItem/VaultItem.xaml src/Platforms/Windows/UI/VaultItem/VaultItem.xaml.cpp src/Platforms/Windows/UI/VaultItem/VaultItem.xaml.h src/Platforms/Windows/UI/VaultItem/VaultItem.idl
                                 src/Platforms/Windows/UI/MainWindow/MainWindow.xaml src/Platforms/Windows/UI/MainWindow/MainWindow.xaml.cpp src/Platforms/Windows/UI/MainWindow/MainWindow.xaml.h src/Platforms/Windows/UI/MainWindow/MainWindow.idl
                                 src/Platforms/Windows/UI/GenericField/GenericField.xaml src/Platforms/Windows/UI/GenericField/GenericField.xaml.cpp src/Platforms/Windows/UI/GenericField/GenericField.xaml.h src/Platforms/Windows/UI/GenericField/GenericField.idl
+                                src/Platforms/Windows/UI/PasskeyField/PasskeyField.xaml src/Platforms/Windows/UI/PasskeyField/PasskeyField.xaml.cpp src/Platforms/Windows/UI/PasskeyField/PasskeyField.xaml.h src/Platforms/Windows/UI/PasskeyField/PasskeyField.idl
                                 src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml.cpp src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml.h src/Platforms/Windows/UI/GenericEditField/GenericEditField.idl
                                 src/Platforms/Windows/UI/PasswordField/PasswordField.xaml src/Platforms/Windows/UI/PasswordField/PasswordField.xaml.cpp src/Platforms/Windows/UI/PasswordField/PasswordField.xaml.h src/Platforms/Windows/UI/PasswordField/PasswordField.idl
                                 src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml.cpp src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml.h src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.idl

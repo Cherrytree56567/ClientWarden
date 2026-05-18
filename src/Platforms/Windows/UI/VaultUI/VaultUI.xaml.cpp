@@ -1777,12 +1777,15 @@ namespace winrt::WindowsUI::implementation
             ClientWarden::Vault::TOTPCode totp;
             totp.code = "";
 
+            std::vector<std::time_t> passkeyCreation;
+
             std::vector<std::string> websites;
 
             loginItem.GetUsername(username)
                      .GetPassword(password)
                      .GetTotp(totp)
                      .GetWebsites(websites)
+                     .GetPasskeyCreationDate(passkeyCreation)
                      .GetNotes(notes)
                      .GetFields(fields)
                      .GetFavorite(fav)
@@ -1814,6 +1817,27 @@ namespace winrt::WindowsUI::implementation
             passwdField.Clipboard({ this, &VaultUI::Password_Copy });
 
             SidebarCard().Children().Append(passwdField);
+
+            for (auto& passkCreation : passkeyCreation) {
+                struct tm tm_info;
+                errno_t err = localtime_s(&tm_info, &passkCreation);
+
+                if (err != 0) continue;
+                    
+                char buffer[64];
+                strftime(buffer, sizeof(buffer), "Created %d/%m/%Y, %H:%M", &tm_info);
+
+                std::string passkeyCreationS = buffer;
+                WindowsUI::PasskeyField passkeyField;
+                passkeyField.Title(L"Passkey");
+                passkeyField.Value(winrt::to_hstring(passkeyCreationS));
+
+                SidebarCard().Children().Append(passkeyField);
+
+                memset(buffer, 0, sizeof(buffer));
+                OPENSSL_cleanse(passkeyCreationS.data(), passkeyCreationS.size());
+                passkeyCreationS.clear();
+            }
 
             if (totp.code != "") {
                 WindowsUI::TOTPField totpField;

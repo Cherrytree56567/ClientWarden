@@ -1,0 +1,10 @@
+namespace WindowsUI
+{
+    [default_interface]
+    runtimeclass PasskeyField : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        PasskeyField();
+        String Title;
+        String Value;
+    }
+}

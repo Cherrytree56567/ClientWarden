@@ -28,6 +28,7 @@ namespace ClientWarden::Vault {
         LoginItem& SetTotp(std::string& totp);
         LoginItem& SetNotes(std::string& notes);
         LoginItem& SetFolder(std::string folder);
+        //LoginItem& SetPasskeyCounter(std::time_t& value);
         LoginItem& RemoveFolder();
         LoginItem& AddWebsite(std::string& website);
         LoginItem& RemoveWebsite(std::string& website);
@@ -46,7 +47,15 @@ namespace ClientWarden::Vault {
         LoginItem& GetWebsites(std::vector<std::string>& website);
         LoginItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         LoginItem& GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value);
-        LoginItem& GetPasskeyCreationDate(std::time_t& value);
+        LoginItem& GetPasskeyCreationDate(std::vector<std::time_t>& value);
+        /*LoginItem& GetPasskeyPartyId(std::time_t& value);
+        LoginItem& GetPasskeyUsername(std::time_t& value);
+        LoginItem& GetPasskeyUserhandle(std::time_t& value);
+        LoginItem& GetPasskeyPrivKey(std::time_t& value);
+        LoginItem& GetPasskeyAlgo(std::time_t& value);
+        LoginItem& GetPasskeyCurve(std::time_t& value);
+        LoginItem& GetPasskeyCredId(std::time_t& value);
+        LoginItem& GetPasskeyCounter(std::time_t& value);*/
         LoginItem& GetId(std::string& value);
         
         LoginItem& SetFavorite(bool val);

@@ -12,7 +12,7 @@
 #include "VaultItem/VaultItem.xaml.h"
 #include "GenericField/GenericField.xaml.h"
 #include "PasswordField/PasswordField.xaml.h"
-#include "PasswordField/PasswordField.xaml.h"
+#include "PasskeyField/PasskeyField.xaml.h"
 
 namespace winrt::WindowsUI::implementation
 {
