@@ -58,6 +58,12 @@ namespace ClientWarden::Vault {
         LoginItem& GetPasskeyCounter(std::time_t& value);*/
         LoginItem& GetId(std::string& value);
         
+        LoginItem& AddAttachment(std::string& name, std::string& content);
+        LoginItem& GetAttachmentIDs(std::vector<std::string>& ids);
+        LoginItem& GetAttachmentName(std::string id, std::string& name);
+        LoginItem& GetAttachment(std::string id, std::string& content);
+        LoginItem& RemoveAttachment(std::string id);
+        
         LoginItem& SetFavorite(bool val);
         LoginItem& SetReprompt(bool val);
         LoginItem& GetFavorite(bool& val);

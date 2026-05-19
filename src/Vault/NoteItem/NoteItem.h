@@ -28,6 +28,12 @@ namespace ClientWarden::Vault {
         NoteItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         NoteItem& GetId(std::string& value);
         
+        NoteItem& AddAttachment(std::string& name, std::string& content);
+        NoteItem& GetAttachmentIDs(std::vector<std::string>& ids);
+        NoteItem& GetAttachmentName(std::string id, std::string& name);
+        NoteItem& GetAttachment(std::string id, std::string& content);
+        NoteItem& RemoveAttachment(std::string id);
+        
         NoteItem& SetFavorite(bool val);
         NoteItem& SetReprompt(bool val);
         NoteItem& GetFavorite(bool& val);

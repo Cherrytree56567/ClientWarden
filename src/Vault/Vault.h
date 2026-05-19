@@ -96,7 +96,7 @@ namespace ClientWarden::Vault {
         NetworkState OnlineDeleteItem(std::string uuid);
         NetworkState OnlineSoftDeleteItem(std::string uuid);
         NetworkState OnlineRestoreItem(std::string uuid);
-        std::expected<nlohmann::json, NetworkState> OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName);
+        std::expected<std::string, NetworkState> OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName);
         NetworkState OnlineRemoveAttachment(std::string uuid, std::string attachmentID);
         std::expected<std::string, NetworkState> OnlineDownloadAttachment(std::string uuid, std::string attachmentID);
         std::expected<nlohmann::json, NetworkState> OnlineCreateFolder(std::string encryptedFolderName);
@@ -111,6 +111,8 @@ namespace ClientWarden::Vault {
         bool macsEqual(const std::vector<uint8_t>& macKey, const std::vector<uint8_t>& mac1, const std::vector<uint8_t>& mac2);
         std::vector<uint8_t> InternalDecrypt(const std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
         std::string InternalEncrypt(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
+        std::string InternalEncryptRaw(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
+        std::string InternalDecryptRaw(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
         std::vector<uint8_t> hkdfStretch(const std::string& info);
         std::pair<std::vector<uint8_t>, std::vector<uint8_t>> generateEncMacKeys();
         std::string getUriChecksum(std::string& uri, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);

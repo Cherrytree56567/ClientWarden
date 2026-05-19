@@ -14,6 +14,8 @@
 #include "GenericField/GenericField.xaml.h"
 #include "PasswordField/PasswordField.xaml.h"
 #include "PasskeyField/PasskeyField.xaml.h"
+#include "AttachmentField/AttachmentField.xaml.h"
+#include "AttachmentEditField/AttachmentEditField.xaml.h"
 
 namespace winrt::WindowsUI::implementation
 {
@@ -39,6 +41,7 @@ namespace winrt::WindowsUI::implementation
         void SidebarEdit_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void SidebarSave_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void SidebarCancel_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        winrt::fire_and_forget SidebarAttachment_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void NewItemDropdown_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e);
 
         void Favorite_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);

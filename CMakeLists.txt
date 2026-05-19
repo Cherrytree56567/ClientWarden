@@ -45,6 +45,8 @@ if (WIN32)
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/CheckboxEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/GenericField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/PasskeyField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/AttachmentField"
+                                            "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/AttachmentEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/GenericEditField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenField"
                                             "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/HiddenEditField"
@@ -76,6 +78,8 @@ if (WIN32)
                                 src/Platforms/Windows/UI/MainWindow/MainWindow.xaml src/Platforms/Windows/UI/MainWindow/MainWindow.xaml.cpp src/Platforms/Windows/UI/MainWindow/MainWindow.xaml.h src/Platforms/Windows/UI/MainWindow/MainWindow.idl
                                 src/Platforms/Windows/UI/GenericField/GenericField.xaml src/Platforms/Windows/UI/GenericField/GenericField.xaml.cpp src/Platforms/Windows/UI/GenericField/GenericField.xaml.h src/Platforms/Windows/UI/GenericField/GenericField.idl
                                 src/Platforms/Windows/UI/PasskeyField/PasskeyField.xaml src/Platforms/Windows/UI/PasskeyField/PasskeyField.xaml.cpp src/Platforms/Windows/UI/PasskeyField/PasskeyField.xaml.h src/Platforms/Windows/UI/PasskeyField/PasskeyField.idl
+                                src/Platforms/Windows/UI/AttachmentField/AttachmentField.xaml src/Platforms/Windows/UI/AttachmentField/AttachmentField.xaml.cpp src/Platforms/Windows/UI/AttachmentField/AttachmentField.xaml.h src/Platforms/Windows/UI/AttachmentField/AttachmentField.idl
+                                src/Platforms/Windows/UI/AttachmentEditField/AttachmentEditField.xaml src/Platforms/Windows/UI/AttachmentEditField/AttachmentEditField.xaml.cpp src/Platforms/Windows/UI/AttachmentEditField/AttachmentEditField.xaml.h src/Platforms/Windows/UI/AttachmentEditField/AttachmentEditField.idl
                                 src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml.cpp src/Platforms/Windows/UI/GenericEditField/GenericEditField.xaml.h src/Platforms/Windows/UI/GenericEditField/GenericEditField.idl
                                 src/Platforms/Windows/UI/PasswordField/PasswordField.xaml src/Platforms/Windows/UI/PasswordField/PasswordField.xaml.cpp src/Platforms/Windows/UI/PasswordField/PasswordField.xaml.h src/Platforms/Windows/UI/PasswordField/PasswordField.idl
                                 src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml.cpp src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.xaml.h src/Platforms/Windows/UI/PasswordEditField/PasswordEditField.idl

@@ -619,4 +619,86 @@ namespace ClientWarden::Vault {
 
         return *this;
     }
+
+    NoteItem& NoteItem::GetAttachmentIDs(std::vector<std::string>& ids) {
+        if (!init) return *this;
+        if (!data.contains("attachments")) return *this;
+        if (!data["attachments"].is_array()) return *this;
+
+        for (auto& attach : data["attachments"]) {
+            if (!attach.is_object()) return *this;
+            if (!attach["id"].is_string()) return *this;
+            ids.push_back(attach["id"]);
+        }
+        return *this;
+    }
+
+    NoteItem& NoteItem::GetAttachmentName(std::string id, std::string& name) {
+        if (!init) return *this;
+        if (!data.contains("attachments")) return *this;
+        if (!data["attachments"].is_array()) return *this;
+
+        for (auto& attach : data["attachments"]) {
+            if (!attach.is_object()) return *this;
+            if (!attach.contains("id")) return *this;
+            if (!attach["id"].is_string()) return *this;
+            if (!attach.contains("fileName")) return *this;
+            if (!attach["fileName"].is_string()) return *this;
+            if (attach["id"] != id) continue;
+
+            name = localVault.Decrypt(attach["fileName"], itemEncKey, itemMacKey);
+            break;
+        }
+        return *this;
+    }
+
+    NoteItem& NoteItem::GetAttachment(std::string id, std::string& content) {
+        if (!init) return *this;
+        if (!data.contains("attachments")) return *this;
+        if (!data["attachments"].is_array()) return *this;
+
+        for (auto& attach : data["attachments"]) {
+            if (!attach.is_object()) return *this;
+            if (!attach["id"].is_string()) return *this;
+            if (attach["id"] != id) continue;
+
+            auto attachData = localVault.OnlineDownloadAttachment(data["id"].get<std::string>(), id);
+            if (!attachData) return *this;
+            content = attachData.value();
+            OPENSSL_cleanse(attachData->data(), attachData->size());
+            break;
+        }
+        return *this;
+    }
+
+    NoteItem& NoteItem::RemoveAttachment(std::string id) {
+        if (!init) return *this;
+        if (!data.contains("attachments")) return *this;
+        if (!data["attachments"].is_array()) return *this;
+
+        for (auto& attach : data["attachments"]) {
+            if (!attach.is_object()) return *this;
+            if (!attach["id"].is_string()) return *this;
+            if (attach["id"] != id) continue;
+
+            auto attachData = localVault.OnlineRemoveAttachment(data["id"].get<std::string>(), id);
+            if (attachData != NetworkState::Success) return *this;
+            auto& attachments = data["attachments"];
+            attachments.erase(std::remove_if(attachments.begin(), attachments.end(),
+                [&id](const nlohmann::json& a) {
+                    return a.is_object() && a.contains("id") && a["id"] == id;
+                }), attachments.end());
+            break;
+        }
+        return *this;
+    }
+
+    NoteItem& NoteItem::AddAttachment(std::string& name, std::string& content) {
+        if (!init) return *this;
+        if (!data.contains("attachments")) return *this;
+        if (!data["attachments"].is_array()) return *this;
+
+        auto attachData = localVault.OnlineAddAttachment(data["id"].get<std::string>(), content, name);
+        return *this;
+    }
 }

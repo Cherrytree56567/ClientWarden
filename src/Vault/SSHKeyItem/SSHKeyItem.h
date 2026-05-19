@@ -37,6 +37,12 @@ namespace ClientWarden::Vault {
         SSHKeyItem& GetFavorite(bool& val);
         SSHKeyItem& GetReprompt(bool& val);
         SSHKeyItem& GetId(std::string& value);
+        
+        SSHKeyItem& AddAttachment(std::string& name, std::string& content);
+        SSHKeyItem& GetAttachmentIDs(std::vector<std::string>& ids);
+        SSHKeyItem& GetAttachmentName(std::string id, std::string& name);
+        SSHKeyItem& GetAttachment(std::string id, std::string& content);
+        SSHKeyItem& RemoveAttachment(std::string id);
 
         void Commit();
         void Delete();

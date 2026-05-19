@@ -64,6 +64,12 @@ namespace ClientWarden::Vault {
         IdentityItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         IdentityItem& GetId(std::string& value);
         
+        IdentityItem& AddAttachment(std::string& name, std::string& content);
+        IdentityItem& GetAttachmentIDs(std::vector<std::string>& ids);
+        IdentityItem& GetAttachmentName(std::string id, std::string& name);
+        IdentityItem& GetAttachment(std::string id, std::string& content);
+        IdentityItem& RemoveAttachment(std::string id);
+        
         IdentityItem& SetFavorite(bool val);
         IdentityItem& SetReprompt(bool val);
         IdentityItem& GetFavorite(bool& val);

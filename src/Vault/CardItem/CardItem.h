@@ -46,6 +46,12 @@ namespace ClientWarden::Vault {
         CardItem& GetFavorite(bool& val);
         CardItem& GetReprompt(bool& val);
         CardItem& GetId(std::string& value);
+        
+        CardItem& AddAttachment(std::string& name, std::string& content);
+        CardItem& GetAttachmentIDs(std::vector<std::string>& ids);
+        CardItem& GetAttachmentName(std::string id, std::string& name);
+        CardItem& GetAttachment(std::string id, std::string& content);
+        CardItem& RemoveAttachment(std::string id);
 
         void Commit();
         void Delete();

@@ -25,11 +25,6 @@ namespace winrt::WindowsUI::implementation
 
         clipboard.SetDelay(vault.settingsData["clipboardClear"]);
 
-        std::string data = vault.storage.read("Inter_24pt-Regular.ttf");
-        std::string fname = "Inter_24pt-Regular.ttf";
-
-        vault.OnlineAddAttachment("e81ca696-6d1d-479d-8490-e1b104bf25ba", data, fname);
-
         StartTOTPThread();
 
         ClientWarden::Vault::CipherQuery query(vault);
@@ -164,6 +159,95 @@ namespace winrt::WindowsUI::implementation
 
             NavView().MenuItems().Append(item);
         }
+    }
+
+    winrt::fire_and_forget VaultUI::SidebarAttachment_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        try {
+            std::string id = winrt::to_string(SidebarId().Text());
+            std::string type = winrt::to_string(SidebarType().Text());
+
+            ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+            HWND hwnd = GetActiveWindow();
+
+            winrt::Windows::Storage::Pickers::FileOpenPicker picker;
+            picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+            picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+            picker.FileTypeFilter().Append(L"*");
+
+            auto file = co_await picker.PickSingleFileAsync();
+            if (!file) co_return;
+
+            auto stream = co_await file.OpenReadAsync();
+            winrt::Windows::Storage::Streams::DataReader reader(stream);
+            co_await reader.LoadAsync(static_cast<uint32_t>(stream.Size()));
+
+            std::vector<uint8_t> contents(stream.Size());
+            reader.ReadBytes(contents);
+
+            std::string fileName = winrt::to_string(file.Name());
+            std::string fileContents(contents.begin(), contents.end());
+
+            auto attId = vault.OnlineAddAttachment(id, fileContents, fileName);
+
+            if (!attId) co_return;
+
+            WindowsUI::AttachmentField attField;
+            attField.Title(file.Name());
+            attField.Value(winrt::to_hstring(attId.value()));
+            attField.Download([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                auto id = winrt::to_string(field.Value());
+
+                ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                ClientWarden::Vault::LoginItem loginItem(vault, winrt::to_string(SidebarId().Text()));
+
+                std::string attCont;
+                    
+                loginItem.GetAttachment(id, attCont)
+                         .Close();
+                    
+                HWND hwnd = GetActiveWindow();
+                winrt::Windows::Storage::Pickers::FileSavePicker picker;
+                picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+                picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+                picker.SuggestedFileName(field.Title());
+                picker.FileTypeChoices().Insert(L"All Files", winrt::single_threaded_vector<winrt::hstring>({ L"." }));
+
+                auto file = co_await picker.PickSaveFileAsync();
+                if (!file) {
+                    OPENSSL_cleanse(attCont.data(), attCont.size());
+                    co_return;
+                }
+
+                auto stream = co_await file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite);
+                winrt::Windows::Storage::Streams::DataWriter writer(stream);
+                writer.WriteBytes(winrt::array_view<const uint8_t>(reinterpret_cast<const uint8_t*>(attCont.data()), reinterpret_cast<const uint8_t*>(attCont.data()) + attCont.size()));
+                co_await writer.StoreAsync();
+                co_await writer.FlushAsync();
+                writer.DetachStream();
+
+                OPENSSL_cleanse(attCont.data(), attCont.size());
+            });
+
+            SidebarAttachments().Children().Append(attField);
+
+            OPENSSL_cleanse(fileName.data(), fileName.size());
+            fileName.clear();
+
+            OPENSSL_cleanse(fileContents.data(), fileContents.size());
+            fileContents.clear();
+
+            co_return;
+        } catch (...) {
+            /*
+             * TODO: Add Logger as part of Code Cleanup
+            */
+        }
+        co_return;
     }
 
     void VaultUI::NewItemDropdown_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e) {
@@ -1238,6 +1322,7 @@ namespace winrt::WindowsUI::implementation
         */
         std::string notes = "";
         std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> fields;
+        std::vector<std::string> attachIds;
         bool fav = false;
         
         if (type == "Login") {
@@ -1259,7 +1344,37 @@ namespace winrt::WindowsUI::implementation
                      .GetNotes(notes)
                      .GetFields(fields)
                      .GetFavorite(fav)
-                     .Close();
+                     .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                loginItem.GetAttachmentName(attach, attname);
+
+                WindowsUI::AttachmentEditField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Bin([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::LoginItem loginItem(vault, winrt::to_string(SidebarId().Text()));
+                    
+                    loginItem.RemoveAttachment(id)
+                             .Close();
+                    
+                    co_return;
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            loginItem.Close();
             
             WindowsUI::GenericEditField field;
             field.Title(L"Username");
@@ -1345,7 +1460,37 @@ namespace winrt::WindowsUI::implementation
                         .GetNotes(notes)
                         .GetFields(fields)
                         .GetFavorite(fav)
-                        .Close();
+                        .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                identityItem.GetAttachmentName(attach, attname);
+
+                WindowsUI::AttachmentEditField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Bin([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::IdentityItem identityItem(vault, winrt::to_string(SidebarId().Text()));
+                    
+                    identityItem.RemoveAttachment(id)
+                                .Close();
+                    
+                    co_return;
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            identityItem.Close();
             
             WindowsUI::GenericEditField titleField;
             titleField.Title(L"Title");
@@ -1512,7 +1657,37 @@ namespace winrt::WindowsUI::implementation
                     .GetNotes(notes)
                     .GetFields(fields)
                     .GetFavorite(fav)
-                    .Close();
+                    .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                cardItem.GetAttachmentName(attach, attname);
+
+                WindowsUI::AttachmentEditField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Bin([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::CardItem cardItem(vault, winrt::to_string(SidebarId().Text()));
+                    
+                    cardItem.RemoveAttachment(id)
+                            .Close();
+                    
+                    co_return;
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            cardItem.Close();
             
             WindowsUI::GenericEditField cardholderNameField;
             cardholderNameField.Title(L"Cardholder Name");
@@ -1570,7 +1745,37 @@ namespace winrt::WindowsUI::implementation
             noteItem.GetNotes(notes)
                     .GetFields(fields)
                     .GetFavorite(fav)
-                    .Close();
+                    .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                noteItem.GetAttachmentName(attach, attname);
+
+                WindowsUI::AttachmentEditField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Bin([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::NoteItem noteItem(vault, winrt::to_string(SidebarId().Text()));
+                    
+                    noteItem.RemoveAttachment(id)
+                            .Close();
+                    
+                    co_return;
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            noteItem.Close();
         } else if (type == "SSHKey") {
             ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
 
@@ -1584,7 +1789,37 @@ namespace winrt::WindowsUI::implementation
                       .GetNotes(notes)
                       .GetFields(fields)
                       .GetFavorite(fav)
-                      .Close();
+                      .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                sshkeyItem.GetAttachmentName(attach, attname);
+
+                WindowsUI::AttachmentEditField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Bin([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, winrt::to_string(SidebarId().Text()));
+                    
+                    sshkeyItem.RemoveAttachment(id)
+                              .Close();
+                    
+                    co_return;
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            sshkeyItem.Close();
             
             WindowsUI::PasswordEditField privField;
             privField.Title(L"Private Key");
@@ -1762,6 +1997,7 @@ namespace winrt::WindowsUI::implementation
 
         SidebarCard().Children().Clear();
         SidebarFields().Children().Clear();
+        SidebarAttachments().Children().Clear();
         SidebarNotes().Text(L"");
 
         FolderPicker().GetComboBox().IsEnabled(false);
@@ -1774,6 +2010,7 @@ namespace winrt::WindowsUI::implementation
         std::string notes = "";
         std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> fields;
         std::string folder = "";
+        std::vector<std::string> attachIds;
         bool fav = false;
         
         if (type == L"Login") {
@@ -1800,7 +2037,59 @@ namespace winrt::WindowsUI::implementation
                      .GetFields(fields)
                      .GetFavorite(fav)
                      .GetFolder(folder)
-                     .Close();
+                     .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                loginItem.GetAttachmentName(attach, attname);
+                WindowsUI::AttachmentField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Download([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::LoginItem loginItem(vault, winrt::to_string(SidebarId().Text()));
+
+                    std::string attCont;
+                    
+                    loginItem.GetAttachment(id, attCont)
+                             .Close();
+                    
+                    HWND hwnd = GetActiveWindow();
+                    winrt::Windows::Storage::Pickers::FileSavePicker picker;
+                    picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+                    picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+                    picker.SuggestedFileName(field.Title());
+                    picker.FileTypeChoices().Insert(L"All Files", winrt::single_threaded_vector<winrt::hstring>({ L"." }));
+
+                    auto file = co_await picker.PickSaveFileAsync();
+                    if (!file) {
+                        OPENSSL_cleanse(attCont.data(), attCont.size());
+                        co_return;
+                    }
+
+                    auto stream = co_await file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite);
+                    winrt::Windows::Storage::Streams::DataWriter writer(stream);
+                    writer.WriteBytes(winrt::array_view<const uint8_t>(reinterpret_cast<const uint8_t*>(attCont.data()), reinterpret_cast<const uint8_t*>(attCont.data()) + attCont.size()));
+                    co_await writer.StoreAsync();
+                    co_await writer.FlushAsync();
+                    writer.DetachStream();
+
+                    OPENSSL_cleanse(attCont.data(), attCont.size());
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            loginItem.Close();
             
             int siz = password.size();
 
@@ -1929,7 +2218,59 @@ namespace winrt::WindowsUI::implementation
                         .GetFolder(folder)
                         .GetFields(fields)
                         .GetFavorite(fav)
-                        .Close();
+                        .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                identityItem.GetAttachmentName(attach, attname);
+                WindowsUI::AttachmentField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Download([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::IdentityItem identityItem(vault, winrt::to_string(SidebarId().Text()));
+
+                    std::string attCont;
+                    
+                    identityItem.GetAttachment(id, attCont)
+                                .Close();
+                    
+                    HWND hwnd = GetActiveWindow();
+                    winrt::Windows::Storage::Pickers::FileSavePicker picker;
+                    picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+                    picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+                    picker.SuggestedFileName(field.Title());
+                    picker.FileTypeChoices().Insert(L"All Files", winrt::single_threaded_vector<winrt::hstring>({ L"." }));
+
+                    auto file = co_await picker.PickSaveFileAsync();
+                    if (!file) {
+                        OPENSSL_cleanse(attCont.data(), attCont.size());
+                        co_return;
+                    }
+
+                    auto stream = co_await file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite);
+                    winrt::Windows::Storage::Streams::DataWriter writer(stream);
+                    writer.WriteBytes(winrt::array_view<const uint8_t>(reinterpret_cast<const uint8_t*>(attCont.data()), reinterpret_cast<const uint8_t*>(attCont.data()) + attCont.size()));
+                    co_await writer.StoreAsync();
+                    co_await writer.FlushAsync();
+                    writer.DetachStream();
+
+                    OPENSSL_cleanse(attCont.data(), attCont.size());
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            identityItem.Close();
             
             WindowsUI::GenericField nameField;
             nameField.Title(L"Name");
@@ -2082,7 +2423,59 @@ namespace winrt::WindowsUI::implementation
                     .GetFolder(folder)
                     .GetFields(fields)
                     .GetFavorite(fav)
-                    .Close();
+                    .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                cardItem.GetAttachmentName(attach, attname);
+                WindowsUI::AttachmentField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Download([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::CardItem cardItem(vault, winrt::to_string(SidebarId().Text()));
+
+                    std::string attCont;
+                    
+                    cardItem.GetAttachment(id, attCont)
+                            .Close();
+                    
+                    HWND hwnd = GetActiveWindow();
+                    winrt::Windows::Storage::Pickers::FileSavePicker picker;
+                    picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+                    picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+                    picker.SuggestedFileName(field.Title());
+                    picker.FileTypeChoices().Insert(L"All Files", winrt::single_threaded_vector<winrt::hstring>({ L"." }));
+
+                    auto file = co_await picker.PickSaveFileAsync();
+                    if (!file) {
+                        OPENSSL_cleanse(attCont.data(), attCont.size());
+                        co_return;
+                    }
+
+                    auto stream = co_await file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite);
+                    winrt::Windows::Storage::Streams::DataWriter writer(stream);
+                    writer.WriteBytes(winrt::array_view<const uint8_t>(reinterpret_cast<const uint8_t*>(attCont.data()), reinterpret_cast<const uint8_t*>(attCont.data()) + attCont.size()));
+                    co_await writer.StoreAsync();
+                    co_await writer.FlushAsync();
+                    writer.DetachStream();
+
+                    OPENSSL_cleanse(attCont.data(), attCont.size());
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            cardItem.Close();
             
             WindowsUI::GenericField cardholderNameField;
             cardholderNameField.Title(L"Cardholder Name");
@@ -2145,7 +2538,59 @@ namespace winrt::WindowsUI::implementation
                     .GetFolder(folder)
                     .GetFields(fields)
                     .GetFavorite(fav)
-                    .Close();
+                    .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                noteItem.GetAttachmentName(attach, attname);
+                WindowsUI::AttachmentField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Download([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::NoteItem noteItem(vault, winrt::to_string(SidebarId().Text()));
+
+                    std::string attCont;
+                    
+                    noteItem.GetAttachment(id, attCont)
+                            .Close();
+                    
+                    HWND hwnd = GetActiveWindow();
+                    winrt::Windows::Storage::Pickers::FileSavePicker picker;
+                    picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+                    picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+                    picker.SuggestedFileName(field.Title());
+                    picker.FileTypeChoices().Insert(L"All Files", winrt::single_threaded_vector<winrt::hstring>({ L"." }));
+
+                    auto file = co_await picker.PickSaveFileAsync();
+                    if (!file) {
+                        OPENSSL_cleanse(attCont.data(), attCont.size());
+                        co_return;
+                    }
+
+                    auto stream = co_await file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite);
+                    winrt::Windows::Storage::Streams::DataWriter writer(stream);
+                    writer.WriteBytes(winrt::array_view<const uint8_t>(reinterpret_cast<const uint8_t*>(attCont.data()), reinterpret_cast<const uint8_t*>(attCont.data()) + attCont.size()));
+                    co_await writer.StoreAsync();
+                    co_await writer.FlushAsync();
+                    writer.DetachStream();
+
+                    OPENSSL_cleanse(attCont.data(), attCont.size());
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            noteItem.Close();
         } else if (type == L"SSHKey") {
             ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, winrt::to_string(id));
 
@@ -2160,7 +2605,59 @@ namespace winrt::WindowsUI::implementation
                       .GetFolder(folder)
                       .GetFields(fields)
                       .GetFavorite(fav)
-                      .Close();
+                      .GetAttachmentIDs(attachIds);
+            
+            for (auto& attach : attachIds) {
+                std::string attname;
+
+                sshkeyItem.GetAttachmentName(attach, attname);
+                WindowsUI::AttachmentField attField;
+                attField.Title(winrt::to_hstring(attname));
+                attField.Value(winrt::to_hstring(attach));
+                attField.Download([this](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                    auto id = winrt::to_string(field.Value());
+
+                    ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+                    ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, winrt::to_string(SidebarId().Text()));
+
+                    std::string attCont;
+                    
+                    sshkeyItem.GetAttachment(id, attCont)
+                             .Close();
+                    
+                    HWND hwnd = GetActiveWindow();
+                    winrt::Windows::Storage::Pickers::FileSavePicker picker;
+                    picker.as<IInitializeWithWindow>()->Initialize(hwnd);
+
+                    picker.SuggestedStartLocation(winrt::Windows::Storage::Pickers::PickerLocationId::Downloads);
+                    picker.SuggestedFileName(field.Title());
+                    picker.FileTypeChoices().Insert(L"All Files", winrt::single_threaded_vector<winrt::hstring>({ L"." }));
+
+                    auto file = co_await picker.PickSaveFileAsync();
+                    if (!file) {
+                        OPENSSL_cleanse(attCont.data(), attCont.size());
+                        co_return;
+                    }
+
+                    auto stream = co_await file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite);
+                    winrt::Windows::Storage::Streams::DataWriter writer(stream);
+                    writer.WriteBytes(winrt::array_view<const uint8_t>(reinterpret_cast<const uint8_t*>(attCont.data()), reinterpret_cast<const uint8_t*>(attCont.data()) + attCont.size()));
+                    co_await writer.StoreAsync();
+                    co_await writer.FlushAsync();
+                    writer.DetachStream();
+
+                    OPENSSL_cleanse(attCont.data(), attCont.size());
+                });
+
+                OPENSSL_cleanse(attname.data(), attname.size());
+                attname.clear();
+
+                SidebarAttachments().Children().Append(attField);
+            }
+
+            sshkeyItem.Close();
 
             std::string hidnum;
             

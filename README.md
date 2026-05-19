@@ -134,7 +134,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Implement Vault Based Clipboard with Timeout
 - [ ] Add Unselected Item Sidepane Art
 - [ ] Add No Items Art
-- [ ] Add Attachments Support
+- [X] Add Attachments Support
 - [ ] Add Folders Tree View
 - [ ] Implement Bitwarden WebSockets
 - [ ] Add Right Click Context
@@ -144,6 +144,9 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Transfer to Botan `secure_vector` for security
 - [ ] Implement Custom D2D Drawing Layer for extra security
 - [ ] Clean up and Document Code
+  - [ ] Add Multi Threading
+  - [ ] Add Try and Catches
+  - [ ] Fix Attachment Support
 - [ ] Beta Release
 - [ ] Support for Win 11 Passkeys
 - [ ] Add Support for Windows Hello

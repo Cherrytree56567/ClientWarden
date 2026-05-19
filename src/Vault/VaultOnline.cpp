@@ -323,11 +323,13 @@ namespace ClientWarden::Vault {
         return NetworkState::Success;
     }
 
-    std::expected<nlohmann::json, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName) {
+    /*
+     * TODO: Clear Secure Data
+    */
+    std::expected<std::string, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName) {
         httplib::Client client(authData["vaultURL"]);
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
-            { "Content-Type", "application/json" },
             { "bitwarden-client-name", "web" },
             { "bitwarden-client-version", "2026.3.0" },
         };
@@ -349,22 +351,30 @@ namespace ClientWarden::Vault {
                     auto [cipEnc, cipMac] = getKeysFromCipher(cipher["key"]);
                     cipEncKey = cipEnc;
                     cipMacKey = cipMac;
+                    OPENSSL_cleanse(cipEnc.data(), cipEnc.size());
+                    OPENSSL_cleanse(cipMac.data(), cipMac.size());
                 }
                 break;
             }
         }
-
-        /*
-         * TODO: Can see attachment but cannot download.
-         * fix tmrw
-        */
         
         std::string attKeyStr = InternalEncrypt(attKey, cipEncKey, cipMacKey);
 
-        OPENSSL_cleanse(attKey.data(), attKey.size());
+        std::vector<uint8_t> encryptedFCvu8(decryptedFileContents.begin(), decryptedFileContents.end());
 
-        std::string encryptedFileContents = Encrypt(decryptedFileContents, attEncKey, attMacKey);
+        std::string encryptedFileContents = InternalEncryptRaw(encryptedFCvu8, attEncKey, attMacKey);
         std::string encryptedFileName = Encrypt(decryptedFileName, cipEncKey, cipMacKey);
+
+        OPENSSL_cleanse(attKey.data(), attKey.size());
+        OPENSSL_cleanse(attEncKey.data(), attEncKey.size());
+        OPENSSL_cleanse(attMacKey.data(), attMacKey.size());
+        OPENSSL_cleanse(cipEncKey.data(), cipEncKey.size());
+        OPENSSL_cleanse(cipMacKey.data(), cipMacKey.size());
+        OPENSSL_cleanse(encryptedFCvu8.data(), encryptedFCvu8.size());
+        OPENSSL_cleanse(decryptedFileContents.data(), decryptedFileContents.size());
+        decryptedFileContents.clear();
+        OPENSSL_cleanse(decryptedFileName.data(), decryptedFileName.size());
+        decryptedFileName.clear();
 
         nlohmann::json requestData;
         requestData["adminRequest"] = false;
@@ -376,11 +386,11 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/api/ciphers/" + uuid + "/attachment/v2", headers, requestData.dump(), "application/json");
         if (!res) {
             logger->error("prepareAttachment request failed");
-            return NetworkState::Failed;
+            return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
             logger->error("prepareAttachment failed: {}", res->status);
-            return NetworkState::Failed;
+            return std::unexpected(NetworkState::Failed);
         }
 
         auto body = nlohmann::json::parse(res->body);
@@ -423,17 +433,114 @@ namespace ClientWarden::Vault {
             return std::unexpected(NetworkState::Failed);
         }
 
-        return NetworkState::Success;
+        return body["attachmentId"];
     }
 
     NetworkState Vault::OnlineRemoveAttachment(std::string uuid, std::string attachmentID) {
-        logger->error("Unsupported: Remove Attachment");
-        return NetworkState::NotImpl;
+        httplib::Client client(authData["vaultURL"]);
+
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        auto res = client.Delete("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
+
+        if (!res) {
+            logger->error("removeAttachment request failed");
+            return NetworkState::Failed;
+        }
+        if (res->status != 200) {
+            logger->error("removeAttachment failed: {}", res->status);
+            return NetworkState::Failed;
+        }
+        return NetworkState::Success;
     }
 
     std::expected<std::string, NetworkState> Vault::OnlineDownloadAttachment(std::string uuid, std::string attachmentID) {
-        logger->error("Unsupported: Download Attachment");
-        return std::unexpected(NetworkState::NotImpl);
+        httplib::Client client(authData["vaultURL"]);
+
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        auto res = client.Get("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
+
+        if (!res) {
+            logger->error("removeAttachment request failed");
+            return std::unexpected(NetworkState::Failed);
+        }
+        if (res->status != 200) {
+            logger->error("removeAttachment failed: {}", res->status);
+            return std::unexpected(NetworkState::Failed);
+        }
+
+        auto body = nlohmann::json::parse(res->body);
+
+        if (!body.contains("url") || !body["url"].is_string()) return std::unexpected(NetworkState::Failed);
+        if (!body.contains("fileName") || !body["fileName"].is_string()) return std::unexpected(NetworkState::Failed);
+        if (!body.contains("key") || !body["key"].is_string()) return std::unexpected(NetworkState::Failed);
+
+        std::vector<uint8_t> cipEncKey = encKey;
+        std::vector<uint8_t> cipMacKey = macKey;
+
+        for (auto& cipher : vaultData["ciphers"]) {
+            if (cipher.contains("id") && cipher["id"] == uuid) {
+                if (!cipher["key"].is_null()) {
+                    auto [cipEnc, cipMac] = getKeysFromCipher(cipher["key"]);
+                    cipEncKey = cipEnc;
+                    cipMacKey = cipMac;
+                    OPENSSL_cleanse(cipEnc.data(), cipEnc.size());
+                    OPENSSL_cleanse(cipMac.data(), cipMac.size());
+                }
+                break;
+            }
+        }
+
+        std::string attKeyPlain = Decrypt(body["key"], cipEncKey, cipMacKey);
+        if (attKeyPlain.size() != 64) {
+            logger->error("Attachment key wrong size: {}", attKeyPlain.size());
+            return std::unexpected(NetworkState::Failed);
+        }
+        std::vector<uint8_t> decEnc(attKeyPlain.begin(), attKeyPlain.begin() + 32);
+        std::vector<uint8_t> decMac(attKeyPlain.begin() + 32, attKeyPlain.end());
+        OPENSSL_cleanse(attKeyPlain.data(), attKeyPlain.size());
+
+        auto dlres = client.Get(body["url"], headers);
+
+        if (!dlres) {
+            logger->error("downloadAttachment request failed");
+            return std::unexpected(NetworkState::Failed);
+        }
+        if (dlres->status != 200) {
+            logger->error("downloadAttachment failed: {}", dlres->status);
+            return std::unexpected(NetworkState::Failed);
+        }
+
+        const std::string& buf = dlres->body;
+        if (buf.size() < 1 + 16 + 32 + 1) {
+            logger->error("Blob too short after decode: {}", buf.size());
+            return std::unexpected(NetworkState::Failed);
+        }
+        if (buf[0] != 0x02) {
+            logger->error("Unexpected enc type: 0x{:02x}", buf[0]);
+            return std::unexpected(NetworkState::Failed);
+        }
+
+        std::vector<uint8_t> vecBuf(buf.begin(), buf.end());
+
+        std::string decBody = InternalDecryptRaw(vecBuf, decEnc, decMac);
+
+        vecBuf.clear();
+        OPENSSL_cleanse(decEnc.data(), decEnc.size());
+        OPENSSL_cleanse(decMac.data(), decMac.size());
+
+        return std::move(decBody);
     }
 
     std::expected<nlohmann::json, NetworkState> Vault::OnlineCreateFolder(std::string encryptedFolderName) {

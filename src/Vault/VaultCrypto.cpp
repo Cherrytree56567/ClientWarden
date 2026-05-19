@@ -93,6 +93,46 @@ namespace ClientWarden::Vault {
         return cipherString(0, b64Encode(iv), b64Encode(ct), "");
     }
 
+    std::string Vault::InternalDecryptRaw(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey) {
+        const uint8_t* iv = pt.data() + 1;
+        const uint8_t* mac = pt.data() + 17;
+        const uint8_t* ct = pt.data() + 49;
+        size_t ctLen = pt.size() - 49;
+
+        std::vector<uint8_t> ivct;
+        ivct.insert(ivct.end(), iv, iv + 16);
+        ivct.insert(ivct.end(), ct, ct + ctLen);
+
+        std::vector<uint8_t> expectedMac(32);
+
+        unsigned int macLen = 32;
+
+        HMAC(EVP_sha256(), macKey.data(), macKey.size(), ivct.data(), ivct.size(), expectedMac.data(), &macLen);
+
+        if (CRYPTO_memcmp(mac, expectedMac.data(), 32) != 0) {
+            logger->error("Attachment HMAC verification failed");
+            return "";
+        }
+
+        EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+        EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv);
+
+        std::vector<uint8_t> plain(ctLen + 16);
+        int outLen = 0;
+        int finalLen = 0;
+
+        EVP_DecryptUpdate(ctx, plain.data(), &outLen, ct, ctLen);
+        EVP_DecryptFinal_ex(ctx, plain.data() + outLen, &finalLen);
+        EVP_CIPHER_CTX_free(ctx);
+        plain.resize(outLen + finalLen);
+
+        std::string decryptedCont = std::string(plain.begin(), plain.end());
+
+        OPENSSL_cleanse(plain.data(), plain.size());
+
+        return std::move(decryptedCont);
+    }
+
     /*
     * compare two hmacs, with double hmac verification
     * https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/
@@ -230,6 +270,51 @@ namespace ClientWarden::Vault {
             mac.data(), &macLen);
 
         return cipherString(2, b64Encode(iv), b64Encode(ct), b64Encode(mac));
+    }
+
+    
+    std::string Vault::InternalEncryptRaw(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey) {
+        std::vector<uint8_t> iv(16);
+        RAND_bytes(iv.data(), iv.size());
+
+        EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+        if (!ctx) {
+            logger->error("failed to create cipher context");
+            return "";
+        }
+
+        EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data());
+
+        std::vector<uint8_t> ct(pt.size() + 16);
+        int len = 0, ct_len = 0;
+
+        EVP_EncryptUpdate(ctx, ct.data(), &len, pt.data(), pt.size());
+        ct_len += len;
+
+        EVP_EncryptFinal_ex(ctx, ct.data() + ct_len, &len);
+        ct_len += len;
+
+        ct.resize(ct_len);
+        EVP_CIPHER_CTX_free(ctx);
+
+        std::vector<uint8_t> ivct;
+        ivct.insert(ivct.end(), iv.begin(), iv.end());
+        ivct.insert(ivct.end(), ct.begin(), ct.end());
+
+        std::vector<uint8_t> mac(32);
+        unsigned int macLen = 32;
+        HMAC(EVP_sha256(),
+            macKey.data(), macKey.size(),
+            ivct.data(), ivct.size(),
+            mac.data(), &macLen);
+
+        std::string buf;
+        buf.reserve(1 + 16 + 32 + ct.size());
+        buf.push_back(0x02);
+        buf.append(reinterpret_cast<const char*>(iv.data()), 16);
+        buf.append(reinterpret_cast<const char*>(mac.data()), 32);
+        buf.append(reinterpret_cast<const char*>(ct.data()), ct.size());
+        return std::move(buf);
     }
 
     void Vault::getMainKeys() {
