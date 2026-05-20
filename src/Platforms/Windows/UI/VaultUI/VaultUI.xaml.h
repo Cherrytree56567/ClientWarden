@@ -29,6 +29,7 @@ namespace winrt::WindowsUI::implementation
 
         void SidebarEditMode();
         void SidebarViewMode();
+        void SidebarEmptyMode();
 
         void PopulateItemsList(std::vector<std::pair<ClientWarden::Vault::CipherType, std::string>> cipherIds);
         void PopulateItem(std::pair<ClientWarden::Vault::CipherType, std::string> cipherId);

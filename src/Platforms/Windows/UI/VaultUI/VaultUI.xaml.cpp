@@ -140,6 +140,18 @@ namespace winrt::WindowsUI::implementation
                 ClientWarden::Vault::Folder fold(vault, folder);
 
                 fold.Delete();
+
+                auto menuItems = NavView().MenuItems();
+                winrt::hstring targetName = winrt::to_hstring(folder);
+
+                for (uint32_t i = 0; i < menuItems.Size(); ++i) {
+                    if (auto navItem = menuItems.GetAt(i).try_as<winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem>()) {
+                        if (navItem.Name() == targetName) {
+                            menuItems.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }
             });
 
             winrt::Microsoft::UI::Xaml::Controls::Grid::SetColumn(image, 1);
@@ -159,6 +171,11 @@ namespace winrt::WindowsUI::implementation
 
             NavView().MenuItems().Append(item);
         }
+    }
+
+    void VaultUI::SidebarEmptyMode() {
+        SelectItem().Visibility(Microsoft::UI::Xaml::Visibility::Collapsed);
+        SelectItemPath().Visibility(Microsoft::UI::Xaml::Visibility::Visible);
     }
 
     winrt::fire_and_forget VaultUI::SidebarAttachment_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -333,6 +350,8 @@ namespace winrt::WindowsUI::implementation
             return;
         }
 
+        SidebarEmptyMode();
+
         std::string tag = winrt::to_string(selectedItem.Name());
 
         ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
@@ -393,7 +412,9 @@ namespace winrt::WindowsUI::implementation
                       .GetID(folder)
                       .Commit();
             
-            FolderPicker().AddOption(winrt::to_hstring(folderName));
+            winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem emptyItem;
+            emptyItem.Content(winrt::box_value(winrt::to_hstring(folderName)));
+            FolderPicker().GetComboBox().Items().Append(emptyItem);
             
             winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem item;
 
@@ -824,6 +845,9 @@ namespace winrt::WindowsUI::implementation
         CancelButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
 
         AddButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+        
+        SelectItem().Visibility(Microsoft::UI::Xaml::Visibility::Visible);
+        SelectItemPath().Visibility(Microsoft::UI::Xaml::Visibility::Collapsed);
     }
 
     void VaultUI::SidebarSave_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -1989,6 +2013,8 @@ namespace winrt::WindowsUI::implementation
 
     void VaultUI::PopulateSidePane(winrt::hstring id, winrt::hstring title, winrt::hstring type, winrt::Microsoft::UI::Xaml::Media::ImageSource logo) {
         ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
+
+        SidebarViewMode();
 
         SidebarImage().Source(logo);
         SidebarTitle().Text(title);
