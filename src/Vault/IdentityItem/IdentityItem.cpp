@@ -459,7 +459,7 @@ namespace ClientWarden::Vault {
         if (isBeingCreated) {
             auto hr = localVault.OnlineNewItem(data);
             if (!hr) {
-                spdlog::warn("Failed to add New Item Online");
+                logger->warn("Failed to add New Item Online");
                 data["createdOffline"] = true;
             }
             localVault.vaultData["ciphers"].push_back(data);
@@ -498,7 +498,7 @@ namespace ClientWarden::Vault {
             }
             auto hr = localVault.OnlineDeleteItem(data["id"]);
             if (hr != NetworkState::Success) {
-                spdlog::warn("Failed to Delete Online Item");
+                logger->warn("Failed to Delete Online Item");
                 localVault.vaultData["deletedCiphers"].push_back(data["id"]);
             } 
         }
@@ -518,7 +518,7 @@ namespace ClientWarden::Vault {
         if (isBeingCreated) {
             auto hr = localVault.OnlineNewItem(data);
             if (!hr) {
-                spdlog::warn("Failed to add New Item Online");
+                logger->warn("Failed to add New Item Online");
                 data["createdOffline"] = true;
             }
             localVault.vaultData["ciphers"].push_back(data);
@@ -552,7 +552,7 @@ namespace ClientWarden::Vault {
         if (isBeingCreated) {
             auto hr = localVault.OnlineNewItem(data);
             if (!hr) {
-                spdlog::warn("Failed to add New Item Online");
+                logger->warn("Failed to add New Item Online");
                 data["createdOffline"] = true;
             }
             localVault.vaultData["ciphers"].push_back(data);
@@ -825,9 +825,6 @@ namespace ClientWarden::Vault {
     }
 
     IdentityItem& IdentityItem::Duplicate(std::string& id) {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::Vault::IdentityItem");
-        }
         auto keys = localVault.generateEncMacKeys();
         auto newitemEncKey = keys.first;
         auto newitemMacKey = keys.second;
@@ -1126,7 +1123,7 @@ namespace ClientWarden::Vault {
         newdata["data"] = (std::string)newfieldData.dump();
         auto hr = localVault.OnlineNewItem(newdata);
         if (!hr) {
-            spdlog::warn("Failed to add New Item Online");
+            logger->warn("Failed to add New Item Online");
             newdata["createdOffline"] = true;
         }
         localVault.vaultData["ciphers"].push_back(newdata);

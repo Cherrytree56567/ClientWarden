@@ -15,7 +15,7 @@ namespace ClientWarden::Vault {
                 line.pop_back();
             }
             wordList.push_back(line);
-            spdlog::info("{}", line);
+            logger->info("{}", line);
         }
 
         init = true;
@@ -42,7 +42,7 @@ namespace ClientWarden::Vault {
 
         std::vector<uint8_t> randomBuf(Characters);
         if (RAND_bytes(randomBuf.data(), Characters) != 1) {
-            spdlog::error("RAND_bytes failed");
+            logger->error("RAND_bytes failed");
             return *this;
         }
 
@@ -60,7 +60,7 @@ namespace ClientWarden::Vault {
         for (int i = 0; i < Characters; i++) {
             uint32_t randVal;
             if (RAND_bytes(reinterpret_cast<uint8_t*>(&randVal), sizeof(randVal)) != 1) {
-                spdlog::error("RAND_bytes failed");
+                logger->error("RAND_bytes failed");
                 return *this;
             }
             password += wordList[randVal % wordList.size()] + "-";
@@ -81,7 +81,7 @@ namespace ClientWarden::Vault {
 
         std::vector<uint8_t> randomBuf(Characters);
         if (RAND_bytes(randomBuf.data(), Characters) != 1) {
-            spdlog::error("RAND_bytes failed");
+            logger->error("RAND_bytes failed");
             return *this;
         }
 

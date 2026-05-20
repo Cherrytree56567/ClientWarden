@@ -54,7 +54,7 @@ namespace ClientWarden::Vault {
         if (isBeingCreated) {
             auto hr = localVault.OnlineCreateFolder(data["name"]);
             if (!hr) {
-                spdlog::warn("Failed to add New Folder Online");
+                logger->warn("Failed to add New Folder Online");
                 localVault.storage.write("vault.json", localVault.vaultData.dump(2));
                 return;
             }
@@ -96,7 +96,7 @@ namespace ClientWarden::Vault {
             }
             auto hr = localVault.OnlineDeleteFolder(data["id"]);
             if (hr != NetworkState::Success) {
-                spdlog::warn("Failed to Delete Online Folder");
+                logger->warn("Failed to Delete Online Folder");
                 localVault.vaultData["deletedFolders"].push_back(data["id"]);
             } 
         }

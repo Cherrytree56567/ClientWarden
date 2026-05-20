@@ -21,11 +21,10 @@ namespace winrt::WindowsUI::implementation
 {
     struct VaultUI : VaultUIT<VaultUI>
     {
-        VaultUI()
-        {
-            // Xaml objects should not call InitializeComponent during construction.
-            // See https://github.com/microsoft/cppwinrt/tree/master/nuget#initializecomponent
-        }
+        VaultUI();
+
+        void DisplayFolder(std::string id);
+        void FolderPickerSelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
 
         void SidebarEditMode();
         void SidebarViewMode();
@@ -84,9 +83,12 @@ namespace winrt::WindowsUI::implementation
         void StopTOTPThread();
         void TOTPThread();
     private:
+        ClientWarden::Vault::Vault& vault;
+        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
+
         std::thread mt_thread;
         std::atomic<bool> mt_running;
-        winrt::event_token m_folderPickerToken{};
+        std::atomic<bool> mt_folderPick = false;
         ClientWarden::Clipboard clipboard;
         bool isEdit = false;
     };
