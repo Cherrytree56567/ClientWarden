@@ -1,8 +1,5 @@
 #include "pch.h"
 #include "VaultUI.xaml.h"
-#if __has_include("VaultUI.g.cpp")
-#include "VaultUI.g.cpp"
-#endif
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -168,25 +165,23 @@ namespace winrt::WindowsUI::implementation
 
             std::string selectedFolder = "";
 
-            if (value != "") {
-                for (auto& folder : folderIds) {
-                    ClientWarden::Vault::Folder folderItem(vault, folder);
+            for (auto& folder : folderIds) {
+                ClientWarden::Vault::Folder folderItem(vault, folder);
 
-                    /*
-                    * Secret Data
-                    */
-                    std::string folderName = "";
+                /*
+                 * Secret Data
+                */
+                std::string folderName = "";
 
-                    folderItem.GetName(folderName)
-                            .Close();
+                folderItem.GetName(folderName)
+                          .Close();
                         
-                    if (folderName == value) {
-                        selectedFolder = folder;
-                    }
-
-                    OPENSSL_cleanse(folderName.data(), folderName.size());
-                    folderName.clear();
+                if (folderName == value) {
+                    selectedFolder = folder;
                 }
+
+                OPENSSL_cleanse(folderName.data(), folderName.size());
+                folderName.clear();
             }
 
             OPENSSL_cleanse(value.data(), value.size());
@@ -195,32 +190,10 @@ namespace winrt::WindowsUI::implementation
             std::string id = winrt::to_string(SidebarId().Text());
             std::string type = winrt::to_string(SidebarType().Text());
 
-            if (type == "Login") {
-                ClientWarden::Vault::LoginItem loginItem(vault, id);
+            ClientWarden::Vault::GenericItem genericItem(vault, id);
 
-                loginItem.SetFolder(selectedFolder)
-                        .Commit();
-            } else if (type == "Identity") {
-                ClientWarden::Vault::IdentityItem identityItem(vault, id);
-
-                identityItem.SetFolder(selectedFolder)
-                            .Commit();
-            } else if (type == "Card") {
-                ClientWarden::Vault::CardItem cardItem(vault, id);
-
-                cardItem.SetFolder(selectedFolder)
-                        .Commit();
-            } else if (type == "Note") {
-                ClientWarden::Vault::NoteItem noteItem(vault, id);
-
-                noteItem.SetFolder(selectedFolder)
-                        .Commit();
-            } else if (type == "SSHKey") {
-                ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
-
-                sshkeyItem.SetFolder(selectedFolder)
-                        .Commit();
-            }
+            genericItem.SetFolder(selectedFolder)
+                       .Commit();
         } catch (const std::exception& e) {
             logger->error("FolderPickerSelectionChanged ~ exception: {}", e.what());
         } catch (...) {

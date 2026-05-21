@@ -18,6 +18,9 @@ namespace winrt::WindowsUI::implementation
         winrt::hstring Value();
         void Value(winrt::hstring value);
 
+        double Progress();
+        void Progress(double value);
+
         winrt::event_token Download(Microsoft::UI::Xaml::RoutedEventHandler const& handler);
         void Download(winrt::event_token const& token);
         

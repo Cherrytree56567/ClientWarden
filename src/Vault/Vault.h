@@ -96,9 +96,9 @@ namespace ClientWarden::Vault {
         NetworkState OnlineDeleteItem(std::string uuid);
         NetworkState OnlineSoftDeleteItem(std::string uuid);
         NetworkState OnlineRestoreItem(std::string uuid);
-        std::expected<std::string, NetworkState> OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName);
+        std::expected<std::string, NetworkState> OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, std::function<void(float)> onProgress = nullptr);
         NetworkState OnlineRemoveAttachment(std::string uuid, std::string attachmentID);
-        std::expected<std::string, NetworkState> OnlineDownloadAttachment(std::string uuid, std::string attachmentID);
+        std::expected<std::string, NetworkState> OnlineDownloadAttachment(std::string uuid, std::string attachmentID, std::function<void(float)> onProgress = nullptr);
         std::expected<nlohmann::json, NetworkState> OnlineCreateFolder(std::string encryptedFolderName);
         std::expected<nlohmann::json, NetworkState> OnlineRenameFolder(std::string folderUUID, std::string encryptedFolderName);
         NetworkState OnlineDeleteFolder(std::string folderUUID);

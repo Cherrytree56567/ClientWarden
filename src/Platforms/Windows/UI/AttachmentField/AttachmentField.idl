@@ -6,6 +6,7 @@ namespace WindowsUI
         AttachmentField();
         String Title;
         String Value;
+        Double Progress;
         event Microsoft.UI.Xaml.RoutedEventHandler Download;
     }
 }

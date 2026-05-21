@@ -134,10 +134,11 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Implement Vault Based Clipboard with Timeout
 - [X] Add Unselected Item Sidepane Art
 - [X] Add Attachments Support
-- [ ] Clean up and Document Code
-  - [ ] Add Multi Threading
-  - [ ] Add Try and Catches
-  - [ ] Fix Attachment Support
+- [X] Clean up and Document Code
+  - [X] Add Multi Threading
+  - [X] Add Try and Catches
+  - [X] Impl Generic Item
+  - [X] Fix Attachment Support
   - [ ] Fix Folder Support
 - [ ] Add Folders Tree View
 - [ ] Implement Bitwarden WebSockets

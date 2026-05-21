@@ -326,7 +326,7 @@ namespace ClientWarden::Vault {
     /*
      * TODO: Clear Secure Data
     */
-    std::expected<std::string, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName) {
+    std::expected<std::string, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, std::function<void(float)> onProgress) {
         httplib::Client client(authData["vaultURL"]);
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -422,7 +422,13 @@ namespace ClientWarden::Vault {
             }
         };
 
-        auto multres = client.Post("/api/ciphers/" + uuid + "/attachment/" + body["attachmentId"].get<std::string>(), headers, items);
+        auto multres = client.Post("/api/ciphers/" + uuid + "/attachment/" + body["attachmentId"].get<std::string>(), headers, items, 
+            [&onProgress](uint64_t current, uint64_t total) -> bool {
+                if (onProgress && total > 0) {
+                    onProgress(static_cast<float>(current) / static_cast<float>(total));
+                }
+                return true;
+            });
 
         if (!multres) {
             logger->error("uploadAttachment request failed");
@@ -459,7 +465,7 @@ namespace ClientWarden::Vault {
         return NetworkState::Success;
     }
 
-    std::expected<std::string, NetworkState> Vault::OnlineDownloadAttachment(std::string uuid, std::string attachmentID) {
+    std::expected<std::string, NetworkState> Vault::OnlineDownloadAttachment(std::string uuid, std::string attachmentID, std::function<void(float)> onProgress) {
         httplib::Client client(authData["vaultURL"]);
 
         httplib::Headers headers = {
@@ -472,11 +478,11 @@ namespace ClientWarden::Vault {
         auto res = client.Get("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
 
         if (!res) {
-            logger->error("removeAttachment request failed");
+            logger->error("downloadAttachment request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
-            logger->error("removeAttachment failed: {}", res->status);
+            logger->error("downloadAttachment failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
 
@@ -511,7 +517,13 @@ namespace ClientWarden::Vault {
         std::vector<uint8_t> decMac(attKeyPlain.begin() + 32, attKeyPlain.end());
         OPENSSL_cleanse(attKeyPlain.data(), attKeyPlain.size());
 
-        auto dlres = client.Get(body["url"], headers);
+        auto dlres = client.Get(body["url"], headers,
+            [&onProgress](uint64_t current, uint64_t total) -> bool {
+                if (onProgress && total > 0) {
+                    onProgress(static_cast<float>(current) / static_cast<float>(total));
+                }
+                return true;
+            });
 
         if (!dlres) {
             logger->error("downloadAttachment request failed");

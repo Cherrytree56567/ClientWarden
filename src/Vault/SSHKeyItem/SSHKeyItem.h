@@ -38,7 +38,7 @@ namespace ClientWarden::Vault {
         SSHKeyItem& GetReprompt(bool& val);
         SSHKeyItem& GetId(std::string& value);
         
-        SSHKeyItem& AddAttachment(std::string& name, std::string& content);
+        SSHKeyItem& AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress = nullptr);
         SSHKeyItem& GetAttachmentIDs(std::vector<std::string>& ids);
         SSHKeyItem& GetAttachmentName(std::string id, std::string& name);
         SSHKeyItem& GetAttachment(std::string id, std::string& content);

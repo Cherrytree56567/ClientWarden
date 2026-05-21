@@ -28,7 +28,7 @@ namespace ClientWarden::Vault {
         NoteItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         NoteItem& GetId(std::string& value);
         
-        NoteItem& AddAttachment(std::string& name, std::string& content);
+        NoteItem& AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress = nullptr);
         NoteItem& GetAttachmentIDs(std::vector<std::string>& ids);
         NoteItem& GetAttachmentName(std::string id, std::string& name);
         NoteItem& GetAttachment(std::string id, std::string& content);

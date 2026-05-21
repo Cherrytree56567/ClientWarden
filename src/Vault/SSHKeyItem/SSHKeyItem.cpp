@@ -779,7 +779,7 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    SSHKeyItem& SSHKeyItem::AddAttachment(std::string& name, std::string& content) {
+    SSHKeyItem& SSHKeyItem::AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress) {
         if (!init) return *this;
         if (!data.contains("attachments")) return *this;
         if (!data["attachments"].is_array()) return *this;

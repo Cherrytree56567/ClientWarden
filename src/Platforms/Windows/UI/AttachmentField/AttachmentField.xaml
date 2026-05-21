@@ -21,31 +21,39 @@
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="10, 8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Spacing="2">
-                    <TextBlock Text="Attachment" 
-                               FontSize="11"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Text="null.png"
-                               FontSize="14"
-                               x:Name="FieldName"/>
-                </StackPanel>
-                <Button Grid.Column="1"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Margin="-10"
-                        Padding="16"
-                        Click="Button_Click">
-                    <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_arrow_download_24_regular.png"
-                                ShowAsMonochrome="True"
-                                Width="20"
-                                x:Name="DownloadImage"/>
-                </Button>
-            </Grid>
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="Attachment" 
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock Text="null.png"
+                                FontSize="14"
+                                x:Name="FieldName"/>
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Margin="-10"
+                            Padding="16"
+                            Click="Button_Click">
+                        <BitmapIcon UriSource="ms-appx:///Assets/ic_fluent_arrow_download_24_regular.png"
+                                    ShowAsMonochrome="True"
+                                    Width="20"
+                                    x:Name="DownloadImage"/>
+                    </Button>
+                </Grid>
+                <ProgressBar x:Name="UploadProgress" 
+                             Minimum="0" 
+                             Maximum="1" 
+                             Value="1"
+                             Margin="-10, 0, -10, -10"
+                             Visibility="Collapsed"/>
+            </StackPanel>
         </Border>
     </Button>
 </UserControl>

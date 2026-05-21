@@ -28,6 +28,19 @@ namespace winrt::WindowsUI::implementation
         val = value;
     }
 
+    double AttachmentField::Progress() {
+        return UploadProgress().Value();
+    }
+
+    void AttachmentField::Progress(double value) {
+        if (value >= 1.0 || value <= 0.0) {
+            UploadProgress().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+        } else {
+            UploadProgress().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+        }
+        UploadProgress().Value(value);
+    }
+
     winrt::event_token AttachmentField::Download(Microsoft::UI::Xaml::RoutedEventHandler const& handler) {
         return m_downloadEvent.add(handler);
     }

@@ -47,7 +47,7 @@ namespace ClientWarden::Vault {
         CardItem& GetReprompt(bool& val);
         CardItem& GetId(std::string& value);
         
-        CardItem& AddAttachment(std::string& name, std::string& content);
+        CardItem& AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress = nullptr);
         CardItem& GetAttachmentIDs(std::vector<std::string>& ids);
         CardItem& GetAttachmentName(std::string id, std::string& name);
         CardItem& GetAttachment(std::string id, std::string& content);
