@@ -29,10 +29,10 @@ namespace ClientWarden::Vault {
         GenericItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         GenericItem& GetId(std::string& value);
         
-        GenericItem& AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress = nullptr);
+        GenericItem& AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr);
         GenericItem& GetAttachmentIDs(std::vector<std::string>& ids);
         GenericItem& GetAttachmentName(std::string id, std::string& name);
-        GenericItem& GetAttachment(std::string id, std::string& content);
+        GenericItem& GetAttachment(std::string id, std::string& content, std::function<void(float)> onProgress = nullptr);
         GenericItem& RemoveAttachment(std::string id);
         
         GenericItem& SetFavorite(bool val);

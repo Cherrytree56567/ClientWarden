@@ -35,15 +35,7 @@ namespace ClientWarden::Vault {
         } else {
             init = false;
         }
-        init = false;
-        if (data.contains("type")) {
-            if (data["type"].get<int>() == 1) {
-                init = true;
-            }
-        }
-        if (!data.contains("login")) {
-            init = false;
-        }
+        init = true;
     }
 
     GenericItem::~GenericItem() {
@@ -436,7 +428,7 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    GenericItem& GenericItem::GetAttachment(std::string id, std::string& content) {
+    GenericItem& GenericItem::GetAttachment(std::string id, std::string& content, std::function<void(float)> onProgress) {
         if (!init) return *this;
         if (!data.contains("attachments")) return *this;
         if (!data["attachments"].is_array()) return *this;
@@ -446,7 +438,7 @@ namespace ClientWarden::Vault {
             if (!attach["id"].is_string()) return *this;
             if (attach["id"] != id) continue;
 
-            auto attachData = localVault.OnlineDownloadAttachment(data["id"].get<std::string>(), id);
+            auto attachData = localVault.OnlineDownloadAttachment(data["id"].get<std::string>(), id, onProgress);
             if (!attachData) return *this;
             content = attachData.value();
             OPENSSL_cleanse(attachData->data(), attachData->size());
@@ -477,12 +469,17 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    GenericItem& GenericItem::AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress) {
+    GenericItem& GenericItem::AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress) {
         if (!init) return *this;
         if (!data.contains("attachments")) return *this;
-        if (!data["attachments"].is_array()) return *this;
+        if (!data["attachments"].is_array()) {
+            data["attachments"] = nlohmann::json::array();
+        }
 
-        auto attachData = localVault.OnlineAddAttachment(data["id"].get<std::string>(), content, name);
+        auto attachData = localVault.OnlineAddAttachment(data["id"].get<std::string>(), content, name, onProgress);
+        if (attachData) {
+            id = attachData.value();
+        }
         return *this;
     }
 }

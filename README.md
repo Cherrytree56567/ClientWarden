@@ -135,16 +135,15 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Add Unselected Item Sidepane Art
 - [X] Add Attachments Support
 - [X] Clean up and Document Code
-  - [X] Add Multi Threading
+  - [ ] Add Multi Threading (almost)
   - [X] Add Try and Catches
   - [X] Impl Generic Item
   - [X] Fix Attachment Support
-  - [ ] Fix Folder Support
+  - [X] Fix Folder Support
 - [ ] Add Folders Tree View
-- [ ] Implement Bitwarden WebSockets
 - [ ] Add Right Click Context
-- [ ] Multithread
 - [ ] Settings Support
+- [ ] Implement Bitwarden WebSockets
 - [X] TOTP Support
 - [ ] Transfer to Botan `secure_vector` for security
 - [ ] Implement Custom D2D Drawing Layer for extra security

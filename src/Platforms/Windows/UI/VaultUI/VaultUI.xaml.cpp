@@ -239,25 +239,27 @@ namespace winrt::WindowsUI::implementation
 
             co_await winrt::resume_background();
 
+            ClientWarden::Vault::GenericItem genericItem(vault, sidebarid);
+
             std::string attCont;
 
-            auto cont = vault.OnlineDownloadAttachment(sidebarid, id,
+            genericItem.GetAttachment(id, attCont,
                 [field, dispatcher](float progress) {
                     dispatcher.TryEnqueue([field, progress]() {
                         field.Progress(progress);
                     });
-                });
+                })
+                .Close();
                     
             co_await ui_thread;
 
             field.Progress(1.0);
 
-            if (!cont) {
+            if (attCont == "") {
                 field.Progress(0.0);
+                OPENSSL_cleanse(attCont.data(), attCont.size());
                 co_return;
             }
-
-            attCont = std::move(cont.value());
                         
             HWND hwnd = GetActiveWindow();
             winrt::Windows::Storage::Pickers::FileSavePicker picker;

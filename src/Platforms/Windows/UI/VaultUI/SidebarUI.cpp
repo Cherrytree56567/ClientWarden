@@ -1541,18 +1541,24 @@ namespace winrt::WindowsUI::implementation
 
             co_await winrt::resume_background();
 
-            auto attId = vault.OnlineAddAttachment(id, fileContents, fileName,
+            ClientWarden::Vault::GenericItem genericItem(vault, id);
+
+            std::string attCont;
+            std::string attId = "";
+
+            genericItem.AddAttachment(fileName, fileContents, attId,
                 [this, attField, dispatcher](float progress) {
                     dispatcher.TryEnqueue([this, attField, progress]() {
                         attField.Progress(progress);
                     });
-                });
+                })
+                .Close();
 
             co_await ui_thread;
 
             attField.Progress(1.0);
 
-            if (!attId) {
+            if (attId == "") {
                 uint32_t idx;
                 if (SidebarAttachments().Children().IndexOf(attField, idx)) {
                     SidebarAttachments().Children().RemoveAt(idx);
@@ -1560,10 +1566,8 @@ namespace winrt::WindowsUI::implementation
                 co_return;
             }
 
-            attField.Value(winrt::to_hstring(attId.value()));
+            attField.Value(winrt::to_hstring(attId));
             attField.Download({ this, &VaultUI::Attachment_Download });
-
-            SidebarAttachments().Children().Append(attField);
 
             OPENSSL_cleanse(fileName.data(), fileName.size());
             fileName.clear();
