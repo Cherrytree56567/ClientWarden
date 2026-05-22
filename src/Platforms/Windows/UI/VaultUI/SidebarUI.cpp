@@ -75,8 +75,10 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::PopulateSidePane(winrt::hstring id, winrt::hstring title, winrt::hstring type, winrt::Microsoft::UI::Xaml::Media::ImageSource logo) {
+    winrt::fire_and_forget VaultUI::PopulateSidePane(winrt::hstring id, winrt::hstring title, winrt::hstring type, winrt::Microsoft::UI::Xaml::Media::ImageSource logo) {
         try {
+            winrt::apartment_context ui_thread;
+
             SidebarViewMode();
 
             SidebarImage().Source(logo);
@@ -119,6 +121,8 @@ namespace winrt::WindowsUI::implementation
 
                 std::vector<std::string> websites;
 
+                co_await winrt::resume_background();
+
                 loginItem.GetUsername(username)
                          .GetPassword(password)
                          .GetTotp(totp)
@@ -141,6 +145,8 @@ namespace winrt::WindowsUI::implementation
                 for (int i = 0; i < siz; i++) {
                     hidPass = hidPass + "•";
                 }
+
+                co_await ui_thread;
                 
                 WindowsUI::GenericField field;
                 field.Title(L"Username");
@@ -210,10 +216,14 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(websiteField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(username.data(), username.size());
                 username.clear();
                 OPENSSL_cleanse(totp.code.data(), totp.code.size());
                 totp.code.clear();
+
+                co_await ui_thread;
             } else if (type == L"Identity") {
                 ClientWarden::Vault::IdentityItem identityItem(vault, winrt::to_string(id));
 
@@ -235,6 +245,8 @@ namespace winrt::WindowsUI::implementation
                 std::string county;
                 std::string postalCode;
                 std::string country;
+
+                co_await winrt::resume_background();
 
                 identityItem.GetTitle(title)
                             .GetFirstName(firstName)
@@ -260,6 +272,8 @@ namespace winrt::WindowsUI::implementation
                             .GetFavorite(fav)
                             .GetAttachmentIDs(attachIds)
                             .Close();
+
+                co_await ui_thread;
                 
                 WindowsUI::GenericField nameField;
                 nameField.Title(L"Name");
@@ -356,6 +370,8 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(addressField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(title.data(), title.size());
                 title.clear();
                 OPENSSL_cleanse(firstName.data(), firstName.size());
@@ -392,6 +408,8 @@ namespace winrt::WindowsUI::implementation
                 postalCode.clear();
                 OPENSSL_cleanse(country.data(), country.size());
                 country.clear();
+
+                co_await ui_thread;
             } else if (type == L"Card") {
                 ClientWarden::Vault::CardItem cardItem(vault, winrt::to_string(id));
 
@@ -401,6 +419,8 @@ namespace winrt::WindowsUI::implementation
                 std::string expirationYear;
                 std::string cvv;
                 std::string brand;
+
+                co_await winrt::resume_background();
 
                 cardItem.GetCardholderName(cardholderName)
                         .GetNumber(number)
@@ -414,6 +434,8 @@ namespace winrt::WindowsUI::implementation
                         .GetFavorite(fav)
                         .GetAttachmentIDs(attachIds)
                         .Close();
+
+                co_await ui_thread;
                 
                 WindowsUI::GenericField cardholderNameField;
                 cardholderNameField.Title(L"Cardholder Name");
@@ -457,6 +479,8 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(cvvField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(cardholderName.data(), cardholderName.size());
                 cardholderName.clear();
                 OPENSSL_cleanse(number.data(), number.size());
@@ -469,8 +493,12 @@ namespace winrt::WindowsUI::implementation
                 cvv.clear();
                 OPENSSL_cleanse(brand.data(), brand.size());
                 brand.clear();
+
+                co_await ui_thread;
             } else if (type == L"Note") {
                 ClientWarden::Vault::NoteItem noteItem(vault, winrt::to_string(id));
+
+                co_await winrt::resume_background();
 
                 noteItem.GetNotes(notes)
                         .GetFolder(folder)
@@ -478,12 +506,16 @@ namespace winrt::WindowsUI::implementation
                         .GetFavorite(fav)
                         .GetAttachmentIDs(attachIds)
                         .Close();
+
+                co_await ui_thread;
             } else if (type == L"SSHKey") {
                 ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, winrt::to_string(id));
 
                 std::string privKey;
                 std::string pubKey;
                 std::string fingerprint;
+
+                co_await winrt::resume_background();
 
                 sshkeyItem.GetPrivateKey(privKey)
                           .GetPublicKey(pubKey)
@@ -500,6 +532,8 @@ namespace winrt::WindowsUI::implementation
                 for (int i = 0; i < privKey.size(); i++) {
                     hidnum = hidnum + "•";
                 }
+
+                co_await ui_thread;
                 
                 WindowsUI::PasswordField privField;
                 privField.Title(L"Private Key");
@@ -523,12 +557,16 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(fingerField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(privKey.data(), privKey.size());
                 privKey.clear();
                 OPENSSL_cleanse(pubKey.data(), pubKey.size());
                 pubKey.clear();
                 OPENSSL_cleanse(fingerprint.data(), fingerprint.size());
                 fingerprint.clear();
+
+                co_await ui_thread;
             }
 
             SidebarNotes().Text(winrt::to_hstring(notes));
@@ -629,8 +667,10 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::SidebarEdit_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::SidebarEdit_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
+            winrt::apartment_context ui_thread;
+
             SidebarEditMode();
 
             std::string id = winrt::to_string(SidebarId().Text());
@@ -665,6 +705,8 @@ namespace winrt::WindowsUI::implementation
 
                 std::vector<std::string> websites;
 
+                co_await winrt::resume_background();
+
                 loginItem.GetUsername(username)
                          .GetPassword(password)
                          .GetTotpSecret(totp)
@@ -674,6 +716,8 @@ namespace winrt::WindowsUI::implementation
                          .GetFavorite(fav)
                          .GetAttachmentIDs(attachIds)
                          .Close();
+
+                co_await ui_thread;
                 
                 WindowsUI::GenericEditField field;
                 field.Title(L"Username");
@@ -710,12 +754,16 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(websiteField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(username.data(), username.size());
                 username.clear();
                 OPENSSL_cleanse(password.data(), password.size());
                 password.clear();
                 OPENSSL_cleanse(totp.data(), totp.size());
                 totp.clear();
+
+                co_await ui_thread;
             } else if (type == "Identity") {
                 ClientWarden::Vault::IdentityItem identityItem(vault, id);
 
@@ -737,6 +785,8 @@ namespace winrt::WindowsUI::implementation
                 std::string county;
                 std::string postalCode;
                 std::string country;
+
+                co_await winrt::resume_background();
 
                 identityItem.GetTitle(title)
                             .GetFirstName(firstName)
@@ -761,6 +811,8 @@ namespace winrt::WindowsUI::implementation
                             .GetFavorite(fav)
                             .GetAttachmentIDs(attachIds)
                             .Close();
+
+                co_await ui_thread;
                 
                 WindowsUI::GenericEditField titleField;
                 titleField.Title(L"Title");
@@ -872,6 +924,8 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(countryBlock);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(title.data(), title.size());
                 title.clear();
                 OPENSSL_cleanse(firstName.data(), firstName.size());
@@ -908,6 +962,8 @@ namespace winrt::WindowsUI::implementation
                 postalCode.clear();
                 OPENSSL_cleanse(country.data(), country.size());
                 country.clear();
+
+                co_await ui_thread;
             } else if (type == "Card") {
                 ClientWarden::Vault::CardItem cardItem(vault, id);
 
@@ -917,6 +973,8 @@ namespace winrt::WindowsUI::implementation
                 std::string expirationYear;
                 std::string cvv;
                 std::string brand;
+
+                co_await winrt::resume_background();
 
                 cardItem.GetCardholderName(cardholderName)
                         .GetNumber(number)
@@ -929,6 +987,8 @@ namespace winrt::WindowsUI::implementation
                         .GetFavorite(fav)
                         .GetAttachmentIDs(attachIds)
                         .Close();
+
+                co_await ui_thread;
                 
                 WindowsUI::GenericEditField cardholderNameField;
                 cardholderNameField.Title(L"Cardholder Name");
@@ -968,6 +1028,8 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(cvvField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(cardholderName.data(), cardholderName.size());
                 cardholderName.clear();
                 OPENSSL_cleanse(number.data(), number.size());
@@ -980,20 +1042,28 @@ namespace winrt::WindowsUI::implementation
                 cvv.clear();
                 OPENSSL_cleanse(brand.data(), brand.size());
                 brand.clear();
+
+                co_await ui_thread;
             } else if (type == "Note") {
                 ClientWarden::Vault::NoteItem noteItem(vault, id);
+
+                co_await winrt::resume_background();
 
                 noteItem.GetNotes(notes)
                         .GetFields(fields)
                         .GetFavorite(fav)
                         .GetAttachmentIDs(attachIds)
                         .Close();
+
+                co_await ui_thread;
             } else if (type == "SSHKey") {
                 ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
 
                 std::string privKey;
                 std::string pubKey;
                 std::string fingerprint;
+
+                co_await winrt::resume_background();
 
                 sshkeyItem.GetPrivateKey(privKey)
                           .GetPublicKey(pubKey)
@@ -1003,6 +1073,8 @@ namespace winrt::WindowsUI::implementation
                           .GetFavorite(fav)
                           .GetAttachmentIDs(attachIds)
                           .Close();
+
+                co_await ui_thread;
                 
                 WindowsUI::PasswordEditField privField;
                 privField.Title(L"Private Key");
@@ -1023,12 +1095,16 @@ namespace winrt::WindowsUI::implementation
 
                 SidebarCard().Children().Append(fingerField);
 
+                co_await winrt::resume_background();
+
                 OPENSSL_cleanse(privKey.data(), privKey.size());
                 privKey.clear();
                 OPENSSL_cleanse(pubKey.data(), pubKey.size());
                 pubKey.clear();
                 OPENSSL_cleanse(fingerprint.data(), fingerprint.size());
                 fingerprint.clear();
+
+                co_await ui_thread;
             }
 
             SidebarNotes().Text(winrt::to_hstring(notes));
@@ -1147,9 +1223,11 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::SidebarSave_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::SidebarSave_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
-            if (!isEdit) return;
+            if (!isEdit) co_return;
+            
+            winrt::apartment_context ui_thread;
 
             std::string name = winrt::to_string(SidebarTitleBox().Text());
             std::string ItemName = name;
@@ -1221,6 +1299,8 @@ namespace winrt::WindowsUI::implementation
                 std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> locFields;
                 std::vector<std::string> locWebsites;
 
+                co_await winrt::resume_background();
+
                 loginItem.SetName(name)
                          .SetUsername(username)
                          .SetPassword(password)
@@ -1228,6 +1308,8 @@ namespace winrt::WindowsUI::implementation
                          .GetWebsites(locWebsites)
                          .SetNotes(notes)
                          .GetFields(locFields);
+
+                co_await ui_thread;
                 
                 for (auto [type, name, value] : locFields) {
                     loginItem.RemoveField(name);
@@ -1251,7 +1333,11 @@ namespace winrt::WindowsUI::implementation
                     loginItem.AddWebsite(field);
                 }
 
+                co_await winrt::resume_background();
+
                 loginItem.Commit();
+
+                co_await ui_thread;
             } else if (type == "Identity") {
                 ClientWarden::Vault::IdentityItem identityItem(vault, id);
 
@@ -1321,6 +1407,8 @@ namespace winrt::WindowsUI::implementation
 
                 std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> locFields;
 
+                co_await winrt::resume_background();
+
                 identityItem.SetTitle(title)
                             .SetFirstName(firstName)
                             .SetMiddleName(middleName)
@@ -1342,6 +1430,8 @@ namespace winrt::WindowsUI::implementation
                             .SetName(name)
                             .SetNotes(notes)
                             .GetFields(locFields);
+
+                co_await ui_thread;
                 
                 for (auto field : locFields) {
                     identityItem.RemoveField(std::get<1>(field));
@@ -1351,7 +1441,11 @@ namespace winrt::WindowsUI::implementation
                     identityItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
+                co_await winrt::resume_background();
+
                 identityItem.Commit();
+
+                co_await ui_thread;
             } else if (type == "Card") {
                 ClientWarden::Vault::CardItem cardItem(vault, id);
 
@@ -1385,6 +1479,8 @@ namespace winrt::WindowsUI::implementation
 
                 std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> locFields;
 
+                co_await winrt::resume_background();
+
                 cardItem.SetCardholderName(cardholderName)
                         .SetNumber(number)
                         .SetExpMonth(expirationMonth)
@@ -1394,6 +1490,8 @@ namespace winrt::WindowsUI::implementation
                         .SetName(name)
                         .SetNotes(notes)
                         .GetFields(locFields);
+
+                co_await ui_thread;
                 
                 for (auto field : locFields) {
                     cardItem.RemoveField(std::get<1>(field));
@@ -1403,15 +1501,23 @@ namespace winrt::WindowsUI::implementation
                     cardItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
+                co_await winrt::resume_background();
+
                 cardItem.Commit();
+
+                co_await ui_thread;
             } else if (type == "Note") {
                 ClientWarden::Vault::NoteItem noteItem(vault, id);
 
                 std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> locFields;
 
+                co_await winrt::resume_background();
+
                 noteItem.SetNotes(notes)
                         .SetName(name)
                         .GetFields(locFields);
+
+                co_await ui_thread;
                 
                 for (auto field : locFields) {
                     noteItem.RemoveField(std::get<1>(field));
@@ -1421,7 +1527,11 @@ namespace winrt::WindowsUI::implementation
                     noteItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
+                co_await winrt::resume_background();
+
                 noteItem.Commit();
+
+                co_await ui_thread;
             } else if (type == "SSHKey") {
                 ClientWarden::Vault::SSHKeyItem sshkeyItem(vault, id);
 
@@ -1446,12 +1556,16 @@ namespace winrt::WindowsUI::implementation
 
                 std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> locFields;
 
+                co_await winrt::resume_background();
+
                 sshkeyItem.SetPrivateKey(privKey)
-                        .SetPublicKey(pubKey)
-                        .SetFingerprint(fingerprint)
-                        .SetName(name)
-                        .SetNotes(notes)
-                        .GetFields(locFields);
+                          .SetPublicKey(pubKey)
+                          .SetFingerprint(fingerprint)
+                          .SetName(name)
+                          .SetNotes(notes)
+                          .GetFields(locFields);
+
+                co_await ui_thread;
                 
                 for (auto field : locFields) {
                     sshkeyItem.RemoveField(std::get<1>(field));
@@ -1461,7 +1575,11 @@ namespace winrt::WindowsUI::implementation
                     sshkeyItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
+                co_await winrt::resume_background();
+
                 sshkeyItem.Commit();
+
+                co_await ui_thread;
             }
 
             for (auto child : VaultItemList().Children()) {
@@ -1584,8 +1702,10 @@ namespace winrt::WindowsUI::implementation
         co_return;
     }
 
-    void VaultUI::Favorite_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::Favorite_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
+            winrt::apartment_context ui_thread;
+
             std::string id = winrt::to_string(SidebarId().Text());
             std::string type = winrt::to_string(SidebarType().Text());
 
@@ -1600,10 +1720,14 @@ namespace winrt::WindowsUI::implementation
                 field.UriSource(winrt::Windows::Foundation::Uri(L"ms-appx:///Assets/ic_fluent_star_24_regular.png"));
             }
 
+            co_await winrt::resume_background();
+
             ClientWarden::Vault::GenericItem genericItem(vault, id);
 
             genericItem.SetFavorite(fav)
                        .Commit();
+            
+            co_await ui_thread;
         } catch (const std::exception& e) {
             logger->error("Favorite_Click ~ exception: {}", e.what());
         } catch (...) {
@@ -1611,12 +1735,15 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::Duplicate_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::Duplicate_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
+            winrt::apartment_context ui_thread;
+
             std::string id = winrt::to_string(SidebarId().Text());
             std::string type = winrt::to_string(SidebarType().Text());
 
             if (type == "Login") {
+                co_await winrt::resume_background();
                 ClientWarden::Vault::LoginItem loginItem(vault, id);
 
                 std::string dupid;
@@ -1624,8 +1751,11 @@ namespace winrt::WindowsUI::implementation
                 loginItem.Duplicate(dupid)
                          .Close();
 
+                co_await ui_thread;
+
                 PopulateItem({ClientWarden::Vault::CipherType::Login, dupid});
             } else if (type == "Card") {
+                co_await winrt::resume_background();
                 ClientWarden::Vault::CardItem cardItem(vault, id);
 
                 std::string dupid;
@@ -1633,8 +1763,11 @@ namespace winrt::WindowsUI::implementation
                 cardItem.Duplicate(dupid)
                         .Close();
 
+                co_await ui_thread;
+
                 PopulateItem({ClientWarden::Vault::CipherType::Card, dupid});
             } else if (type == "Identity") {
+                co_await winrt::resume_background();
                 ClientWarden::Vault::IdentityItem identityItem(vault, id);
 
                 std::string dupid;
@@ -1642,8 +1775,11 @@ namespace winrt::WindowsUI::implementation
                 identityItem.Duplicate(dupid)
                             .Close();
 
+                co_await ui_thread;
+
                 PopulateItem({ClientWarden::Vault::CipherType::Identity, dupid});
             } else if (type == "Note") {
+                co_await winrt::resume_background();
                 ClientWarden::Vault::NoteItem noteItem(vault, id);
 
                 std::string dupid;
@@ -1651,14 +1787,19 @@ namespace winrt::WindowsUI::implementation
                 noteItem.Duplicate(dupid)
                         .Close();
 
+                co_await ui_thread;
+
                 PopulateItem({ClientWarden::Vault::CipherType::Note, dupid});
             } else if (type == "SSHKey") {
+                co_await winrt::resume_background();
                 ClientWarden::Vault::SSHKeyItem sshItem(vault, id);
 
                 std::string dupid;
 
                 sshItem.Duplicate(dupid)
                        .Close();
+
+                co_await ui_thread;
 
                 PopulateItem({ClientWarden::Vault::CipherType::SSHKey, dupid});
             }
@@ -1669,14 +1810,20 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::Delete_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::Delete_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
+            winrt::apartment_context ui_thread;
+
             std::string id = winrt::to_string(SidebarId().Text());
             std::string type = winrt::to_string(SidebarType().Text());
+
+            co_await winrt::resume_background();
 
             ClientWarden::Vault::GenericItem genericItem(vault, id);
 
             genericItem.Bin();
+
+            co_await ui_thread;
 
             auto items = VaultItemList().Children();
             for (uint32_t i = 0; i < items.Size(); i++) {
@@ -1694,14 +1841,20 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::Perm_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::Perm_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
+            winrt::apartment_context ui_thread;
+
             std::string id = winrt::to_string(SidebarId().Text());
             std::string type = winrt::to_string(SidebarType().Text());
+
+            co_await winrt::resume_background();
             
             ClientWarden::Vault::GenericItem genericItem(vault, id);
 
             genericItem.Delete();
+
+            co_await ui_thread;
 
             auto items = VaultItemList().Children();
             for (uint32_t i = 0; i < items.Size(); i++) {
@@ -1719,14 +1872,20 @@ namespace winrt::WindowsUI::implementation
         }
     }
 
-    void VaultUI::Restore_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    winrt::fire_and_forget VaultUI::Restore_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         try {
+            winrt::apartment_context ui_thread;
+
             std::string id = winrt::to_string(SidebarId().Text());
             std::string type = winrt::to_string(SidebarType().Text());
+
+            co_await winrt::resume_background();
             
             ClientWarden::Vault::GenericItem genericItem(vault, id);
 
             genericItem.UnBin();
+
+            co_await ui_thread;
 
             auto items = VaultItemList().Children();
             for (uint32_t i = 0; i < items.Size(); i++) {

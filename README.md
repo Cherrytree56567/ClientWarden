@@ -135,13 +135,12 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Add Unselected Item Sidepane Art
 - [X] Add Attachments Support
 - [X] Clean up and Document Code
-  - [ ] Add Multi Threading (almost)
+  - [X] Add Multi Threading
   - [X] Add Try and Catches
   - [X] Impl Generic Item
   - [X] Fix Attachment Support
   - [X] Fix Folder Support
 - [ ] Add Folders Tree View
-- [ ] Add Right Click Context
 - [ ] Settings Support
 - [ ] Implement Bitwarden WebSockets
 - [X] TOTP Support
