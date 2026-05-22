@@ -141,7 +141,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
   - [X] Fix Attachment Support
   - [X] Fix Folder Support
 - [ ] Add Folders Tree View
-- [ ] Settings Support
+- [X] Settings Support
 - [ ] Implement Bitwarden WebSockets
 - [X] TOTP Support
 - [ ] Transfer to Botan `secure_vector` for security

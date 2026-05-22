@@ -156,6 +156,11 @@ namespace winrt::WindowsUI::implementation
             RestoreButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
             DeleteButton().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
 
+            if (tag != "NewFold") {
+                SettingsPanel().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+                MainGrid().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+            }
+
             if (tag == "AllItems") {
                 cipherIDs = query.FilterByUnbinned()
                                 .GetCiphers();
@@ -208,7 +213,8 @@ namespace winrt::WindowsUI::implementation
                 DisplayFolder(folder);
                 return;
             } else if (tag == "SettingsItem") {
-
+                SettingsPanel().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+                MainGrid().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
             } else {
                 cipherIDs = query.FilterByUnbinned()
                                 .FilterByFolder(tag)
@@ -718,5 +724,32 @@ namespace winrt::WindowsUI::implementation
         } catch (...) {
             logger->error("VaultItem_Click ~ exception");
         }
+    }
+
+    winrt::fire_and_forget VaultUI::SettingsTimeout_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        winrt::apartment_context ui_thread;
+        try {
+
+            vault.settingsData["clipboardClear"] = std::stoi(winrt::to_string(TimeoutBox().Text()));
+
+            co_await winrt::resume_background();
+
+            clipboard.SetDelay(vault.settingsData["clipboardClear"]);
+            vault.storage.write("settings.json", vault.settingsData.dump(4));
+            
+            co_await ui_thread;
+            co_return;
+        } catch (const std::exception& e) {
+            logger->error("VaultItem_Click ~ exception: {}", e.what());
+        } catch (...) {
+            logger->error("VaultItem_Click ~ exception");
+        }
+
+        co_await ui_thread;
+
+        TimeoutBox().Text(L"30");
+        vault.settingsData["clipboardClear"] = 30;
+        clipboard.SetDelay(30);
+        vault.storage.write("settings.json", vault.settingsData.dump(4));
     }
 }
