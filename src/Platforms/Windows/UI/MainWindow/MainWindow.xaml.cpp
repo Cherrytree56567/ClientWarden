@@ -36,6 +36,7 @@ namespace winrt::WindowsUI::implementation
         MainFrame().Navigate(vaultType);
 
         vault.startRefreshThread();
+        vault.startWSSLoop();
         vault.Sync();
     }
 
@@ -54,7 +55,6 @@ namespace winrt::WindowsUI::implementation
             vaultUI.StopTOTPThread();
         }
 
-        vault.stopRefreshThread();
         vault.Lock();
     }
 

@@ -11,10 +11,12 @@ namespace ClientWarden::Vault {
         authData["mainURL"] = mainUri;
         authData["apiURL"] = apiUri;
         authData["iconURL"] = iconUri;
+        authData["websURL"] = "wss://vwprod-457fe78y7u.tail24588b.ts.net";
     }
 
     Vault::~Vault() {
         stopRefreshThread();
+        stopWSSLoop();
     }
 
     Vault& Vault::Instance() {
@@ -356,5 +358,176 @@ namespace ClientWarden::Vault {
         storage.write("vault.json", vaultData.dump(2));
 
         return NetworkState::Success;
+    }
+
+    void Vault::websocketLoop() {
+        std::string wsUri = authData["websURL"].get<std::string>() + "/notifications/hub";
+
+        httplib::Headers headers = {
+            { "Authorization", "Bearer " + authData["accessString"].get<std::string>() }
+        };
+
+        httplib::ws::WebSocketClient ws(wsUri, headers);
+        
+        if (!ws.connect()) {
+            logger->error("Websocket failed");
+            return;
+        }
+
+        ws.send("{\"protocol\":\"messagepack\",\"version\":1}\x1e");
+
+        std::string msg;
+
+        while (ws.read(msg)) {
+            if (!shouldWSS) {
+                ws.close();
+                break;
+            }
+
+            if (msg == "{}\x1e") continue;
+
+            size_t headerLen = 0;
+            const auto* raw = reinterpret_cast<const uint8_t*>(msg.data());
+            for (size_t i = 0; i < msg.size() && i < 5; i++) {
+                headerLen++;
+                if (!(raw[i] & 0x80)) break;
+            }
+
+            msgpack::object_handle oh = msgpack::unpack(
+                msg.data() + headerLen,
+                msg.size() - headerLen
+            );
+            msgpack::object obj = oh.get();
+
+            auto& arr = obj.via.array;
+
+            if (arr.size < 5) continue;
+            int signalrType = arr.ptr[0].as<int>();
+            if (signalrType != 1) continue;
+
+            auto& args = arr.ptr[4].via.array;
+            if (args.size < 1) continue;
+
+            auto& notification = args.ptr[0].via.map;
+
+            int notifyType = -1;
+            std::string cipherId;
+
+            for (uint32_t i = 0; i < notification.size; i++) {
+                std::string key = notification.ptr[i].key.as<std::string>();
+
+                if (key == "Type") {
+                    notifyType = notification.ptr[i].val.as<int>();
+                } else if (key == "Payload") {
+                    auto& payload = notification.ptr[i].val.via.map;
+                    for (uint32_t j = 0; j < payload.size; j++) {
+                        std::string pkey = payload.ptr[j].key.as<std::string>();
+                        if (pkey == "Id" && payload.ptr[j].val.type == msgpack::type::STR) {
+                            cipherId = payload.ptr[j].val.as<std::string>();
+                        }
+                    }
+                }
+            }
+
+            switch (notifyType) {
+                case 0: 
+                    /*
+                     * Cipher is Updated
+                    */
+                    Sync();
+                    break;
+                case 1:
+                    /*
+                     * Cipher is created
+                    */
+                   Sync();
+                   break;
+                case 2:
+                    /*
+                     * Cipher is deleted
+                    */
+                    Sync();
+                    break;
+                case 3:
+                    /*
+                     * Folder is deleted
+                    */
+                    Sync();
+                    break;
+                case 4:
+                    /*
+                     * All Ciphers changed
+                     * TODO: Update whole vault.json file
+                    */
+                    break;
+                case 5:
+                    /*
+                     * Whole Vault Changed
+                     * TODO: Update whole vault.json file
+                    */
+                    break;
+                case 6:
+                    /*
+                     * Org Keys Changed
+                     * TODO: Update Org Keys
+                    */
+                    break;
+                case 7:
+                    /*
+                     * Folder is created
+                    */
+                    Sync();
+                    break;
+                case 8:
+                    /*
+                     * Folder is updated
+                    */
+                    Sync();
+                    break;
+                case 9:
+                    /*
+                     * Cipher is binned
+                    */
+                    Sync();
+                    break;
+                case 10:
+                    /*
+                     * Account settings changed
+                     * TODO: Update data.json
+                    */
+                    break;
+                case 11:
+                    /*
+                     * Log out
+                     * TODO: Log out
+                    */
+                    break;
+                default:
+                    logger->info("Unhandled type: {}", notifyType);
+                    break;
+            }
+
+            logger->info(msg);
+        }
+    }
+
+    void Vault::startWSSLoop() {
+        if (shouldWSS == false) {
+            shouldWSS = true;
+
+            if (wssThread.joinable()) {
+                wssThread.join();
+            }
+
+            wssThread = std::thread(&Vault::websocketLoop, this);
+        }
+    }
+
+    void Vault::stopWSSLoop() {
+        shouldWSS = false;
+
+        if (wssThread.joinable()) {
+            wssThread.join();
+        }
     }
 }

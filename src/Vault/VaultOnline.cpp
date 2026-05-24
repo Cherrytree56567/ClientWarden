@@ -51,6 +51,10 @@ namespace ClientWarden::Vault {
         
         auto res = client.Post("/identity/connect/token", data);
 
+        if (!res) {
+            logger->error("getToken request failed");
+            return AuthState::Failed;
+        }
         if (res->status == 400) {
             auto body = nlohmann::json::parse(res->body);
             if (body["error_description"] == "Two factor required.") {
@@ -60,11 +64,6 @@ namespace ClientWarden::Vault {
                 logger->warn("Needs New Device Verification.");
                 return AuthState::NeedsEmailVerification;
             }
-        }
-
-        if (!res) {
-            logger->error("getToken request failed");
-            return AuthState::Failed;
         }
         if (res->status != 200) {
             logger->error("getToken failed: {}", res->status);

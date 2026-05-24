@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <expected>
+#include <msgpack.hpp>
 #include "Storage/Storage.h"
 #include "CommonVault.h"
 #include "VaultUtils/VaultUtils.h"
@@ -74,6 +75,9 @@ namespace ClientWarden::Vault {
         void startRefreshThread();
         void stopRefreshThread();
 
+        void startWSSLoop();
+        void stopWSSLoop();
+
         std::string GetName();
 
         std::vector<std::string> GetFolders();
@@ -127,6 +131,8 @@ namespace ClientWarden::Vault {
         void refreshToken();
         bool needsRefresh();
 
+        void websocketLoop();
+
         /*
         * SECRET DATA
         */
@@ -137,6 +143,9 @@ namespace ClientWarden::Vault {
 
         std::thread refreshThread;
         std::atomic<bool> shouldRefresh { false };
+
+        std::thread wssThread;
+        std::atomic<bool> shouldWSS { false };
 
         nlohmann::json authData;
         nlohmann::json vaultData;
