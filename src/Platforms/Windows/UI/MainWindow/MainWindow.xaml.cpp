@@ -66,7 +66,43 @@ namespace winrt::WindowsUI::implementation
 
         ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
 
-        MainFrame().Navigate(loginType);
+        vault.OnError = [this](std::string value) {
+            this->DispatcherQueue().TryEnqueue([this, value]() {
+                winrt::Microsoft::UI::Xaml::Controls::InfoBar bar;
+                bar.Title(L"Clientwarden Vault");
+                bar.Message(winrt::to_hstring(value));
+                bar.Severity(winrt::Microsoft::UI::Xaml::Controls::InfoBarSeverity::Error);
+                bar.IsOpen(true);
+                bar.IsClosable(false);
+
+                NotifStack().Children().Append(bar);
+
+                winrt::Microsoft::UI::Dispatching::DispatcherQueueTimer timer = this->DispatcherQueue().CreateTimer();
+                timer.Interval(std::chrono::seconds(5));
+                timer.IsRepeating(false);
+                timer.Tick([=](auto&, auto&) mutable {
+                    auto fadeTimer = this->DispatcherQueue().CreateTimer();
+                    fadeTimer.Interval(std::chrono::milliseconds(16));
+                    fadeTimer.IsRepeating(true);
+                    fadeTimer.Tick([this, bar, fadeTimer](auto&, auto&) mutable {
+                        double opacity = bar.Opacity() - 0.05;
+                        if (opacity <= 0.0) {
+                            bar.Opacity(0.0);
+                            uint32_t index;
+                            if (NotifStack().Children().IndexOf(bar, index))
+                                NotifStack().Children().RemoveAt(index);
+                            fadeTimer.Stop();
+                        } else {
+                            bar.Opacity(opacity);
+                        }
+                    });
+                    fadeTimer.Start();
+                    timer.Stop();
+                });
+                timer.Start();
+            });
+        };
+
         if (!vault.hasStoredSession()) {
             MainFrame().Navigate(loginType);
         } else {

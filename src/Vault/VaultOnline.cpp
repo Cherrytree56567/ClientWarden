@@ -219,10 +219,16 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/api/ciphers", headers, encryptedData.dump(), "application/json");
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Sync New Item");
+            }
             logger->error("newItem request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Sync New Item");
+            }
             logger->error("newItem failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
@@ -244,13 +250,31 @@ namespace ClientWarden::Vault {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = client.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, encryptedData.dump(), "application/json");
+        nlohmann::json dBody = encryptedData;
+        dBody["encryptedFor"] = encryptedData["id"];
+
+        std::string data = dBody.dump();
+
+        auto res = client.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, data, "application/json");
 
         if (!res) {
+            std::string err = httplib::to_string(res.error());
+            auto sslerr = res.ssl_error();
+            auto sslberr = res.ssl_backend_error();
+            logger->error("updateItem failed err: {} ssl_error: {} ssl_backend_error: {}", 
+            err,
+            sslerr,
+            sslberr);
+            if (OnError) {
+                OnError("Failed to Update Item");
+            }
             logger->error("updateItem request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Update Item");
+            }
             logger->error("updateItem failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
@@ -272,10 +296,16 @@ namespace ClientWarden::Vault {
         auto res = client.Delete("/api/ciphers/" + uuid, headers);
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Delete Item");
+            }
             logger->error("deleteItem request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Delete Item");
+            }
             logger->error("deleteItem failed: {}", res->status);
             return NetworkState::Failed;
         }
@@ -292,10 +322,16 @@ namespace ClientWarden::Vault {
         };
         auto res = client.Put("/api/ciphers/" + uuid + "/delete", headers, "", "application/json");
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Bin Item");
+            }
             logger->error("softDeleteItem request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Bin Item");
+            }
             logger->error("softDeleteItem failed: {}", res->status);
             return NetworkState::Failed;
         }
@@ -312,10 +348,16 @@ namespace ClientWarden::Vault {
         };
         auto res = client.Put("/api/ciphers/" + uuid + "/restore", headers, "", "application/json");
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Restore Item");
+            }
             logger->error("restoreItem request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Restore Item");
+            }
             logger->error("restoreItem failed: {}", res->status);
             return NetworkState::Failed;
         }
@@ -384,10 +426,16 @@ namespace ClientWarden::Vault {
 
         auto res = client.Post("/api/ciphers/" + uuid + "/attachment/v2", headers, requestData.dump(), "application/json");
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Prepare Attachment");
+            }
             logger->error("prepareAttachment request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Prepare Attachment");
+            }
             logger->error("prepareAttachment failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
@@ -454,10 +502,16 @@ namespace ClientWarden::Vault {
         auto res = client.Delete("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Remove Attachment");
+            }
             logger->error("removeAttachment request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Remove Attachment");
+            }
             logger->error("removeAttachment failed: {}", res->status);
             return NetworkState::Failed;
         }
@@ -477,10 +531,16 @@ namespace ClientWarden::Vault {
         auto res = client.Get("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Download Attachment");
+            }
             logger->error("downloadAttachment request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Download Attachment");
+            }
             logger->error("downloadAttachment failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
@@ -509,6 +569,9 @@ namespace ClientWarden::Vault {
 
         std::string attKeyPlain = Decrypt(body["key"], cipEncKey, cipMacKey);
         if (attKeyPlain.size() != 64) {
+            if (OnError) {
+                OnError("Failed to Decrypt Attachment");
+            }
             logger->error("Attachment key wrong size: {}", attKeyPlain.size());
             return std::unexpected(NetworkState::Failed);
         }
@@ -525,20 +588,32 @@ namespace ClientWarden::Vault {
             });
 
         if (!dlres) {
+            if (OnError) {
+                OnError("Failed to Download Attachment");
+            }
             logger->error("downloadAttachment request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (dlres->status != 200) {
+            if (OnError) {
+                OnError("Failed to Download Attachment");
+            }
             logger->error("downloadAttachment failed: {}", dlres->status);
             return std::unexpected(NetworkState::Failed);
         }
 
         const std::string& buf = dlres->body;
         if (buf.size() < 1 + 16 + 32 + 1) {
+            if (OnError) {
+                OnError("Failed to Download Attachment");
+            }
             logger->error("Blob too short after decode: {}", buf.size());
             return std::unexpected(NetworkState::Failed);
         }
         if (buf[0] != 0x02) {
+            if (OnError) {
+                OnError("Failed to Download Attachment");
+            }
             logger->error("Unexpected enc type: 0x{:02x}", buf[0]);
             return std::unexpected(NetworkState::Failed);
         }
@@ -567,10 +642,16 @@ namespace ClientWarden::Vault {
         auto res = client.Post("/api/folders", headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Create Folder");
+            }
             logger->error("createFolder request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Create Folder");
+            }
             logger->error("createFolder failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
@@ -592,10 +673,16 @@ namespace ClientWarden::Vault {
         auto res = client.Put("/api/folders/" + folderUUID, headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Rename Folder");
+            }
             logger->error("renameFolder request failed");
             return std::unexpected(NetworkState::Failed);
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Rename Folder");
+            }
             logger->error("renameFolder failed: {}", res->status);
             return std::unexpected(NetworkState::Failed);
         }
@@ -617,10 +704,16 @@ namespace ClientWarden::Vault {
         auto res = client.Delete("/api/folders/" + folderUUID, headers);
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Delete Folder");
+            }
             logger->error("deleteFolder request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Delete Folder");
+            }
             logger->error("deleteFolder failed: {}", res->status);
             return NetworkState::Failed;
         }

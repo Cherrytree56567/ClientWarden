@@ -92,10 +92,16 @@ namespace ClientWarden::Vault {
     */
     NetworkState Vault::Sync() {
         if (!checkConnectivity()) {
+            if (OnError) {
+                OnError("Failed to connect to Server");
+            }
             logger->warn("No Internet");
             return NetworkState::Failed;
         }
         if (!checkAccessTokenValidity()) {
+            if (OnError) {
+                OnError("Invalid Access Token");
+            }
             logger->warn("Invalid Access Token");
             return NetworkState::InvalidAccessToken;
         }
@@ -112,10 +118,16 @@ namespace ClientWarden::Vault {
         auto res = client.Get("/api/sync", headers);
 
         if (!res) {
+            if (OnError) {
+                OnError("Failed to Sync");
+            }
             logger->error("sync request failed");
             return NetworkState::Failed;
         }
         if (res->status != 200) {
+            if (OnError) {
+                OnError("Failed to Sync");
+            }
             logger->error("sync failed: {}", res->status);
             return NetworkState::Failed;
         }
@@ -144,6 +156,9 @@ namespace ClientWarden::Vault {
         for (auto it = deletedFolders.begin(); it != deletedFolders.end();) {
             auto hr = OnlineDeleteFolder(it->get<std::string>());
             if (hr != NetworkState::Success) {
+                if (OnError) {
+                    OnError("Failed to Sync Folder");
+                }
                 logger->warn("Failed to Delete Online Folder");
                 return hr;
             }
@@ -185,6 +200,9 @@ namespace ClientWarden::Vault {
                     */
                     auto hr = OnlineRenameFolder(folder["id"], folder["name"]);
                     if (!hr) {
+                        if (OnError) {
+                            OnError("Failed to Sync Folder");
+                        }
                         logger->warn("Failed to Update Online Folder");
                         return hr.error();
                     }
@@ -244,6 +262,9 @@ namespace ClientWarden::Vault {
         for (auto it = deletedCiphers.begin(); it != deletedCiphers.end();) {
             auto hr = OnlineDeleteItem(it->get<std::string>());
             if (hr != NetworkState::Success) {
+                if (OnError) {
+                    OnError("Failed to Sync Item");
+                }
                 logger->warn("Failed to Delete Online Item");
                 return hr;
             }
@@ -267,6 +288,9 @@ namespace ClientWarden::Vault {
                     */
                     auto hr = OnlineNewItem(cipher);
                     if (!hr) {
+                        if (OnError) {
+                            OnError("Failed to Sync Item");
+                        }
                         logger->warn("Failed to Create Online Item");
                         return hr.error();
                     }
@@ -300,6 +324,9 @@ namespace ClientWarden::Vault {
                     */
                     auto hr = OnlineUpdateItem(cipher);
                     if (!hr) {
+                        if (OnError) {
+                            OnError("Failed to Sync Item");
+                        }
                         logger->warn("Failed to Create Online Item");
                         return hr.error();
                     }
@@ -370,6 +397,9 @@ namespace ClientWarden::Vault {
         httplib::ws::WebSocketClient ws(wsUri, headers);
         
         if (!ws.connect()) {
+            if (OnError) {
+                OnError("Websocket failed");
+            }
             logger->error("Websocket failed");
             return;
         }
@@ -503,6 +533,9 @@ namespace ClientWarden::Vault {
                     */
                     break;
                 default:
+                    if (OnError) {
+                        OnError("Unknown WebSocket Type");
+                    }
                     logger->info("Unhandled type: {}", notifyType);
                     break;
             }

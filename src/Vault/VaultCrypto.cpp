@@ -33,6 +33,9 @@ namespace ClientWarden::Vault {
         );
 
         if (result != 1) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->error("PBKDF2 failed");
             throw std::runtime_error("PBKDF2 failed");
         }
@@ -68,6 +71,9 @@ namespace ClientWarden::Vault {
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->error("Failed to create cipher context");
             throw std::runtime_error("Failed to create cipher context");
         }
@@ -110,6 +116,9 @@ namespace ClientWarden::Vault {
         HMAC(EVP_sha256(), macKey.data(), macKey.size(), ivct.data(), ivct.size(), expectedMac.data(), &macLen);
 
         if (CRYPTO_memcmp(mac, expectedMac.data(), 32) != 0) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->error("Attachment HMAC verification failed");
             return "";
         }
@@ -160,6 +169,9 @@ namespace ClientWarden::Vault {
     */
     std::vector<uint8_t> Vault::InternalDecrypt(const std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey) {
         if (str[0] != '2') {
+            if (OnError) {
+                OnError("Unknown Decryption Type");
+            }
             logger->error("Implement {} decryption", std::string(1, str[0]));
             throw std::runtime_error("Implement " + std::string(1, str[0]) + " decryption");
         }
@@ -182,6 +194,9 @@ namespace ClientWarden::Vault {
 
         auto parts = split(rest, '|', 3);
         if (parts.size() != 3) {
+            if (OnError) {
+                OnError("Decryption Failed");
+            }
             logger->error("invalid cipher string format");
             throw std::runtime_error("invalid cipher string format");
         }
@@ -202,6 +217,9 @@ namespace ClientWarden::Vault {
             cmac.data(), &len);
 
         if (!macsEqual(macKey, mac, cmac)) {
+            if (OnError) {
+                OnError("Decryption Failed");
+            }
             logger->error("invalid mac");
             throw std::runtime_error("invalid mac");
             return std::vector<uint8_t>();
@@ -209,6 +227,9 @@ namespace ClientWarden::Vault {
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
+            if (OnError) {
+                OnError("Decryption Failed");
+            }
             logger->error("failed to create cipher context");
             return std::vector<uint8_t>();
         }
@@ -223,6 +244,9 @@ namespace ClientWarden::Vault {
 
         if (EVP_DecryptFinal_ex(ctx, pt.data() + pt_len, (int*)&len) <= 0) {
             EVP_CIPHER_CTX_free(ctx);
+            if (OnError) {
+                OnError("Decryption Failed");
+            }
             logger->error("invalid mac");
             throw std::runtime_error("invalid mac");
         }
@@ -240,6 +264,9 @@ namespace ClientWarden::Vault {
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->error("failed to create cipher context");
             return "";
         }
@@ -279,6 +306,9 @@ namespace ClientWarden::Vault {
 
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->error("failed to create cipher context");
             return "";
         }
@@ -372,10 +402,16 @@ namespace ClientWarden::Vault {
         std::vector<uint8_t> itemMacKey(32);
 
         if (!RAND_bytes(itemEncKey.data(), 32)) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->info("Failed to generate encKey");
             return { itemEncKey, itemMacKey };
         }
         if (!RAND_bytes(itemMacKey.data(), 32)) {
+            if (OnError) {
+                OnError("Encryption Failed");
+            }
             logger->info("Failed to generate macKey");
             return { itemEncKey, itemMacKey };
         }

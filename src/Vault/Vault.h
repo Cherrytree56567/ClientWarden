@@ -1,4 +1,5 @@
 #pragma once
+#define CPPHTTPLIB_EXPECT_100_THRESHOLD 0
 #include <httplib.h>
 #include <openssl/kdf.h>
 #include <openssl/sha.h>
@@ -146,6 +147,8 @@ namespace ClientWarden::Vault {
 
         std::thread wssThread;
         std::atomic<bool> shouldWSS { false };
+
+        std::function<void(std::string)> OnError;
 
         nlohmann::json authData;
         nlohmann::json vaultData;
