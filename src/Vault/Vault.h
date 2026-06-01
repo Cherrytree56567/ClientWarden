@@ -154,6 +154,6 @@ namespace ClientWarden::Vault {
         nlohmann::json vaultData;
         nlohmann::json settingsData;
         Storage storage;
-        std::shared_ptr<spdlog::logger> logger;
+        inline static std::shared_ptr<spdlog::logger> logger;
     };
 }

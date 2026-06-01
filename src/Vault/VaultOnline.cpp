@@ -250,10 +250,7 @@ namespace ClientWarden::Vault {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        nlohmann::json dBody = encryptedData;
-        dBody["encryptedFor"] = encryptedData["id"];
-
-        std::string data = dBody.dump();
+        std::string data = encryptedData.dump();
 
         auto res = client.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, data, "application/json");
 

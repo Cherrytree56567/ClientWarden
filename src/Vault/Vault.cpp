@@ -2,8 +2,17 @@
 
 namespace ClientWarden::Vault {
     Vault::Vault() {
-        spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
-        logger = spdlog::stdout_color_mt("ClientWarden::Vault");
+        if (!logger) {
+            spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
+
+            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(storage.path.string() + "/cw.log", true);
+
+            logger = std::make_shared<spdlog::logger>("ClientWarden::Vault", spdlog::sinks_init_list{console_sink, file_sink});
+            logger->set_level(spdlog::level::trace);
+            logger->flush_on(spdlog::level::trace);
+            spdlog::register_logger(logger);
+        }
     }
 
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri) {
@@ -17,6 +26,7 @@ namespace ClientWarden::Vault {
     Vault::~Vault() {
         stopRefreshThread();
         stopWSSLoop();
+        spdlog::shutdown();
     }
 
     Vault& Vault::Instance() {
@@ -322,7 +332,38 @@ namespace ClientWarden::Vault {
                     /*
                     * Update Online
                     */
-                    auto hr = OnlineUpdateItem(cipher);
+                    nlohmann::json onlCipBody;
+                    onlCipBody["encryptedFor"] = cipher["id"];
+                    onlCipBody["favorite"] = cipher["favorite"];
+                    onlCipBody["folderId"] = cipher["folderId"];
+                    onlCipBody["lastKnownRevisionDate"] = cipher["revisionDate"];
+                    onlCipBody["name"] = cipher["name"];
+                    onlCipBody["notes"] = cipher["notes"];
+                    onlCipBody["organizationId"] = cipher["organizationId"];
+                    onlCipBody["reprompt"] = cipher["reprompt"];
+                    onlCipBody["type"] = cipher["type"];
+
+                    if (cipher.contains("login") && !cipher["login"].is_null()) {
+                        onlCipBody["login"] = cipher["login"];
+                    }
+                    if (cipher.contains("card") && !cipher["card"].is_null()) {
+                        onlCipBody["card"] = cipher["card"];
+                    }
+                    if (cipher.contains("identity") && !cipher["identity"].is_null()) {
+                        onlCipBody["identity"] = cipher["identity"];
+                    }
+                    if (cipher.contains("secureNote") && !cipher["secureNote"].is_null()) {
+                        onlCipBody["secureNote"] = cipher["secureNote"];
+                    }
+                    if (cipher.contains("sshKey") && !cipher["sshKey"].is_null()) {
+                        onlCipBody["sshKey"] = cipher["sshKey"];
+                    }
+
+                    if (cipher.contains("fields") && !cipher["fields"].is_null()) {
+                        onlCipBody["fields"] = cipher["fields"];
+                    }
+
+                    auto hr = OnlineUpdateItem(onlCipBody);
                     if (!hr) {
                         if (OnError) {
                             OnError("Failed to Sync Item");

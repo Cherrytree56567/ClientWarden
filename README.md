@@ -142,6 +142,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
   - [X] Fix Folder Support
 - [ ] Add Folders Tree View
 - [X] Settings Support
+- [ ] Lock/Unlock Support
 - [ ] Implement Bitwarden WebSockets
 - [X] TOTP Support
 - [ ] Transfer to Botan `secure_vector` for security
@@ -150,6 +151,26 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Support for Win 11 Passkeys
 - [ ] Add Support for Windows Hello
 - [ ] Official Release
+
+## Bugs
+- [ ] Changing Tabs needs Multithreading (All Items, Trash, Folder)
+- [ ] View Only Attachment Field needs to be cleared when editing
+- [ ] Removing Item from Folder fails
+- [ ] Save needs Multithreading
+- [ ] New Folders cant change names
+- [ ] Attempting to Delete an Attachment Crashes
+- [ ] Deleting fields doesnt work
+- [ ] PrivateKey Box needs to be bigger
+- [ ] Field Name or value doesnt change
+- [ ] Linked Field on Identity reports wrong name
+- [ ] Linked Field needs support for other Items
+- [ ] Deleting a Folder doesnt remove it from the Folder Picker
+- [ ] Restoring an Item doesn't reset the sidepane
+- [ ] Selected Item needs to be Highlighted
+- [ ] Clipboard Timeout on Settings needs Sections
+- [ ] App shouldn't allow fullscreen.
+- [ ] Sometimes it asks to re-login.
+- [ ] Clear json files if re-login is needed.
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
