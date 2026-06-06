@@ -678,6 +678,7 @@ namespace winrt::WindowsUI::implementation
 
             SidebarCard().Children().Clear();
             SidebarFields().Children().Clear();
+            SidebarAttachments().Children().Clear();
 
             mt_folderPick = true;
             FolderPicker().GetComboBox().IsEnabled(true);

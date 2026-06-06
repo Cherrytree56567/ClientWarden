@@ -19,7 +19,7 @@ namespace winrt::WindowsUI::implementation
             std::string folderName;
 
             folderItem.GetName(folderName)
-                    .Close();
+                      .Close();
             
             /*
             * TODO: Use Botan and D2D Drawing to prevent leaking
@@ -158,8 +158,6 @@ namespace winrt::WindowsUI::implementation
             auto box = sender.as<winrt::Microsoft::UI::Xaml::Controls::ComboBox>();
             auto selected = box.SelectedItem().as<winrt::Microsoft::UI::Xaml::Controls::ComboBoxItem>();
             std::string value = winrt::to_string(winrt::unbox_value<winrt::hstring>(selected.Content()));
-
-            ClientWarden::Vault::Vault& vault = ClientWarden::Vault::Vault::Instance();
 
             std::vector<std::string> folderIds = vault.GetFolders();
 

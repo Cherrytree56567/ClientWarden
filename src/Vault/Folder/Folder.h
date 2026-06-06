@@ -18,7 +18,7 @@ namespace ClientWarden::Vault {
 
         Folder& GetID(std::string& id);
 
-        void Commit();
+        std::string Commit();
         void Delete();
         void Close();
     private:

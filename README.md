@@ -153,19 +153,20 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [ ] Official Release
 
 ## Bugs
-- [ ] Changing Tabs needs Multithreading (All Items, Trash, Folder)
-- [ ] View Only Attachment Field needs to be cleared when editing
-- [ ] Removing Item from Folder fails
-- [ ] Save needs Multithreading
-- [ ] New Folders cant change names
+- [X] View Only Attachment Field needs to be cleared when editing
+- [X] Changing Folder Doesnt Work
+- [X] Removing Item from Folder fails
+- [X] New Folders cant change names
 - [ ] Attempting to Delete an Attachment Crashes
 - [ ] Deleting fields doesnt work
 - [ ] PrivateKey Box needs to be bigger
 - [ ] Field Name or value doesnt change
-- [ ] Linked Field on Identity reports wrong name
-- [ ] Linked Field needs support for other Items
 - [ ] Deleting a Folder doesnt remove it from the Folder Picker
 - [ ] Restoring an Item doesn't reset the sidepane
+- [ ] Linked Field on Identity reports wrong name
+- [ ] Linked Field needs support for other Items
+- [ ] Changing Tabs needs Multithreading (All Items, Trash, Folder)
+- [ ] Save needs Multithreading
 - [ ] Selected Item needs to be Highlighted
 - [ ] Clipboard Timeout on Settings needs Sections
 - [ ] App shouldn't allow fullscreen.

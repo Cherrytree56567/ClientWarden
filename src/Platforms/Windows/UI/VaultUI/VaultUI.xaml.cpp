@@ -204,14 +204,21 @@ namespace winrt::WindowsUI::implementation
                 * SECRET DATA
                 */
                 std::string folderName = "New Folder";
-                std::string folder = "";
-
-                folderItem.SetName(folderName)
-                        .GetID(folder)
-                        .Commit();
+                std::string folder = folderItem.SetName(folderName)
+                                               .Commit();
                 
                 DisplayFolder(folder);
-                return;
+                winrt::hstring targetName = winrt::to_hstring(folder);
+                auto menuItems = NavView().MenuItems();
+
+                for (uint32_t i = 0; i < menuItems.Size(); ++i) {
+                    if (auto navItem = menuItems.GetAt(i).try_as<winrt::Microsoft::UI::Xaml::Controls::NavigationViewItem>()) {
+                        if (navItem.Name() == targetName) {
+                            NavView().SelectedItem(navItem);
+                            break;
+                        }
+                    }
+                }
             } else if (tag == "SettingsItem") {
                 SettingsPanel().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
                 MainGrid().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);

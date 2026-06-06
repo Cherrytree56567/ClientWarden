@@ -47,8 +47,10 @@ namespace ClientWarden::Vault {
         return *this;
     }
 
-    void Folder::Commit() {
-        if (!init) return;
+    std::string Folder::Commit() {
+        if (!init) return "";
+
+        std::string idret;
 
         data["revisionDate"] = getBitwardenTime();
         if (isBeingCreated) {
@@ -56,12 +58,15 @@ namespace ClientWarden::Vault {
             if (!hr) {
                 logger->warn("Failed to add New Folder Online");
                 localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-                return;
+                return "";
             }
             nlohmann::json res = hr.value();
+            if (res.contains("id") && res["id"].is_string()) {
+                idret = res["id"];
+            }
             localVault.vaultData["folders"].push_back(res);
             localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-            return;
+            return idret;
         }
 
         auto& folders = localVault.vaultData["folders"];
@@ -75,6 +80,8 @@ namespace ClientWarden::Vault {
 
         auto hr = localVault.OnlineRenameFolder(data["id"], data["name"]);
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+        
+        return data["id"];
     }
 
     Folder& Folder::GetID(std::string& id) {

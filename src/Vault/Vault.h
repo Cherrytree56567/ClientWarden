@@ -96,6 +96,8 @@ namespace ClientWarden::Vault {
         * data sent to these functions must be encrypted with the
         * exception of uuids
         */
+        std::expected<nlohmann::json, NetworkState> UpdateItem(nlohmann::json encryptedData);
+
         std::expected<nlohmann::json, NetworkState> OnlineNewItem(nlohmann::json encryptedData);
         std::expected<nlohmann::json, NetworkState> OnlineUpdateItem(nlohmann::json encryptedData);
         NetworkState OnlineDeleteItem(std::string uuid);

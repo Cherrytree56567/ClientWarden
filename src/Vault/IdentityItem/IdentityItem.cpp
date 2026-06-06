@@ -476,7 +476,7 @@ namespace ClientWarden::Vault {
             *it = data;
         }
 
-        auto hr = localVault.OnlineUpdateItem(data);
+        auto hr = localVault.UpdateItem(data);
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
     }
 

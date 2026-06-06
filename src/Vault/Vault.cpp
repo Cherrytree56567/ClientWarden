@@ -70,6 +70,42 @@ namespace ClientWarden::Vault {
         return folders;
     }
 
+    std::expected<nlohmann::json, NetworkState> Vault::UpdateItem(nlohmann::json cipher) {
+        nlohmann::json onlCipBody;
+        onlCipBody["id"] = cipher["id"];
+        onlCipBody["encryptedFor"] = cipher["id"];
+        onlCipBody["favorite"] = cipher["favorite"];
+        onlCipBody["folderId"] = cipher["folderId"];
+        onlCipBody["lastKnownRevisionDate"] = cipher["revisionDate"];
+        onlCipBody["name"] = cipher["name"];
+        onlCipBody["notes"] = cipher["notes"];
+        onlCipBody["organizationId"] = cipher["organizationId"];
+        onlCipBody["reprompt"] = cipher["reprompt"];
+        onlCipBody["type"] = cipher["type"];
+
+        if (cipher.contains("login") && !cipher["login"].is_null()) {
+            onlCipBody["login"] = cipher["login"];
+        }
+        if (cipher.contains("card") && !cipher["card"].is_null()) {
+            onlCipBody["card"] = cipher["card"];
+        }
+        if (cipher.contains("identity") && !cipher["identity"].is_null()) {
+            onlCipBody["identity"] = cipher["identity"];
+        }
+        if (cipher.contains("secureNote") && !cipher["secureNote"].is_null()) {
+            onlCipBody["secureNote"] = cipher["secureNote"];
+        }
+        if (cipher.contains("sshKey") && !cipher["sshKey"].is_null()) {
+            onlCipBody["sshKey"] = cipher["sshKey"];
+        }
+
+        if (cipher.contains("fields") && !cipher["fields"].is_null()) {
+            onlCipBody["fields"] = cipher["fields"];
+        }
+
+        return OnlineUpdateItem(onlCipBody);
+    }
+
     /*
     * If an item is added locally, then it will have
     * a createdOffline Flag.
@@ -332,38 +368,7 @@ namespace ClientWarden::Vault {
                     /*
                     * Update Online
                     */
-                    nlohmann::json onlCipBody;
-                    onlCipBody["encryptedFor"] = cipher["id"];
-                    onlCipBody["favorite"] = cipher["favorite"];
-                    onlCipBody["folderId"] = cipher["folderId"];
-                    onlCipBody["lastKnownRevisionDate"] = cipher["revisionDate"];
-                    onlCipBody["name"] = cipher["name"];
-                    onlCipBody["notes"] = cipher["notes"];
-                    onlCipBody["organizationId"] = cipher["organizationId"];
-                    onlCipBody["reprompt"] = cipher["reprompt"];
-                    onlCipBody["type"] = cipher["type"];
-
-                    if (cipher.contains("login") && !cipher["login"].is_null()) {
-                        onlCipBody["login"] = cipher["login"];
-                    }
-                    if (cipher.contains("card") && !cipher["card"].is_null()) {
-                        onlCipBody["card"] = cipher["card"];
-                    }
-                    if (cipher.contains("identity") && !cipher["identity"].is_null()) {
-                        onlCipBody["identity"] = cipher["identity"];
-                    }
-                    if (cipher.contains("secureNote") && !cipher["secureNote"].is_null()) {
-                        onlCipBody["secureNote"] = cipher["secureNote"];
-                    }
-                    if (cipher.contains("sshKey") && !cipher["sshKey"].is_null()) {
-                        onlCipBody["sshKey"] = cipher["sshKey"];
-                    }
-
-                    if (cipher.contains("fields") && !cipher["fields"].is_null()) {
-                        onlCipBody["fields"] = cipher["fields"];
-                    }
-
-                    auto hr = OnlineUpdateItem(onlCipBody);
+                    auto hr = UpdateItem(cipher);
                     if (!hr) {
                         if (OnError) {
                             OnError("Failed to Sync Item");
