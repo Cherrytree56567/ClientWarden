@@ -1195,21 +1195,24 @@ namespace winrt::WindowsUI::implementation
                 WindowsUI::AttachmentEditField attField;
                 attField.Title(winrt::to_hstring(attname));
                 attField.Value(winrt::to_hstring(attach));
-                attField.Bin([this, attField](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) -> winrt::fire_and_forget {
-                    auto field = sender.as<winrt::WindowsUI::AttachmentField>();
+                attField.Bin([this, attField](winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+                    auto field = sender.as<winrt::WindowsUI::AttachmentEditField>();
                     auto id = winrt::to_string(field.Value());
+
+                    uint32_t idx;
+                    bool b_found = SidebarAttachments().Children().IndexOf(attField, idx);
 
                     ClientWarden::Vault::GenericItem genericItem(vault, winrt::to_string(SidebarId().Text()));
                         
                     genericItem.RemoveAttachment(id)
-                               .Close();
+                               .Commit();
                     
-                    uint32_t idx;
-                    if (SidebarAttachments().Children().IndexOf(attField, idx)) {
+                    
+                    if (b_found) {
                         SidebarAttachments().Children().RemoveAt(idx);
                     }
-                        
-                    co_return;
+                    
+                    return;
                 });
 
                 OPENSSL_cleanse(attname.data(), attname.size());
