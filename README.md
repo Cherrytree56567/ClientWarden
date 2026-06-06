@@ -158,7 +158,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Removing Item from Folder fails
 - [X] New Folders cant change names
 - [X] Attempting to Delete an Attachment Crashes
-- [ ] Deleting fields doesnt work
+- [X] Deleting fields doesnt work
 - [ ] PrivateKey Box needs to be bigger
 - [ ] Field Name or value doesnt change
 - [ ] Deleting a Folder doesnt remove it from the Folder Picker

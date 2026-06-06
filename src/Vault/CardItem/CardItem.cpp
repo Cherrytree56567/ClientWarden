@@ -21,6 +21,24 @@ namespace ClientWarden::Vault {
                 fieldData = nlohmann::json::parse(data["data"].get<std::string>());
             } else {
                 fieldData = data["data"];
+                if (fieldData.contains("fields")) {
+                    fieldData["Fields"] = fieldData["fields"];
+                    fieldData.erase("fields");
+                    for (auto& fieldD : fieldData["Fields"]) {
+                        if (fieldD.contains("name")) {
+                            fieldD["Name"] = fieldD["name"];
+                            fieldD.erase("name");
+                        }
+                        if (fieldD.contains("type")) {
+                            fieldD["Type"] = fieldD["type"];
+                            fieldD.erase("Type");
+                        }
+                        if (fieldD.contains("value")) {
+                            fieldD["Value"] = fieldD["value"];
+                            fieldD.erase("Value");
+                        }
+                    }
+                }
             }
         }
         if (data.contains("key")) {

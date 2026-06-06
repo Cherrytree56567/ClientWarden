@@ -1240,21 +1240,21 @@ namespace winrt::WindowsUI::implementation
             std::string detail = "";
 
             std::string notes = "";
-            std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> fields;
+            std::vector<std::tuple<ClientWarden::Vault::CustomFieldType, std::string, std::string>> fieldsSide;
 
             notes = winrt::to_string(SidebarNotesEdit().Text());
 
             for (auto child : SidebarFields().Children()) {
                 if (auto typ = child.try_as<WindowsUI::TextEditField>()) {
-                    fields.push_back({ClientWarden::Vault::CustomFieldType::Text, winrt::to_string(typ.Title()), winrt::to_string(typ.Value())});
+                    fieldsSide.push_back({ClientWarden::Vault::CustomFieldType::Text, winrt::to_string(typ.Title()), winrt::to_string(typ.Value())});
                 } else if (auto typ = child.try_as<WindowsUI::HiddenEditField>()) {
-                    fields.push_back({ClientWarden::Vault::CustomFieldType::Hidden, winrt::to_string(typ.Title()), winrt::to_string(typ.Value())});
+                    fieldsSide.push_back({ClientWarden::Vault::CustomFieldType::Hidden, winrt::to_string(typ.Title()), winrt::to_string(typ.Value())});
                 } else if (auto typ = child.try_as<WindowsUI::CheckboxEditField>()) {
                     std::string val = "false";
                     if (typ.Value()) {
                         val = "true";
                     }
-                    fields.push_back({ClientWarden::Vault::CustomFieldType::Checkbox, winrt::to_string(typ.Title()), val});
+                    fieldsSide.push_back({ClientWarden::Vault::CustomFieldType::Checkbox, winrt::to_string(typ.Title()), val});
                 } else if (auto typ = child.try_as<WindowsUI::LinkedEditField>()) {
                     std::string val = "100";
                     if (typ.Value() == L"Username") {
@@ -1262,7 +1262,7 @@ namespace winrt::WindowsUI::implementation
                     } else if (typ.Value() == L"Password") {
                         val = "101";
                     }
-                    fields.push_back({ClientWarden::Vault::CustomFieldType::Linked, winrt::to_string(typ.Title()), val});
+                    fieldsSide.push_back({ClientWarden::Vault::CustomFieldType::Linked, winrt::to_string(typ.Title()), val});
                 }
             }
 
@@ -1329,8 +1329,12 @@ namespace winrt::WindowsUI::implementation
                     field.clear();
                 }
 
-                for (auto [type, name, value] : fields) {
+                for (auto [type, name, value] : fieldsSide) {
                     loginItem.AddField(type, name, value);
+                    OPENSSL_cleanse(name.data(), name.size());
+                    name.clear();
+                    OPENSSL_cleanse(value.data(), value.size());
+                    value.clear();
                 }
 
                 for (auto field : websites) {
@@ -1441,7 +1445,7 @@ namespace winrt::WindowsUI::implementation
                     identityItem.RemoveField(std::get<1>(field));
                 }
 
-                for (auto field : fields) {
+                for (auto field : fieldsSide) {
                     identityItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
@@ -1501,7 +1505,7 @@ namespace winrt::WindowsUI::implementation
                     cardItem.RemoveField(std::get<1>(field));
                 }
 
-                for (auto field : fields) {
+                for (auto field : fieldsSide) {
                     cardItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
@@ -1527,7 +1531,7 @@ namespace winrt::WindowsUI::implementation
                     noteItem.RemoveField(std::get<1>(field));
                 }
 
-                for (auto field : fields) {
+                for (auto field : fieldsSide) {
                     noteItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
@@ -1575,7 +1579,7 @@ namespace winrt::WindowsUI::implementation
                     sshkeyItem.RemoveField(std::get<1>(field));
                 }
 
-                for (auto field : fields) {
+                for (auto field : fieldsSide) {
                     sshkeyItem.AddField(std::get<0>(field), std::get<1>(field), std::get<2>(field));
                 }
 
