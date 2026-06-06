@@ -159,8 +159,8 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] New Folders cant change names
 - [X] Attempting to Delete an Attachment Crashes
 - [X] Deleting fields doesnt work
+- [X] Field Name or value doesnt change
 - [ ] PrivateKey Box needs to be bigger
-- [ ] Field Name or value doesnt change
 - [ ] Deleting a Folder doesnt remove it from the Folder Picker
 - [ ] Restoring an Item doesn't reset the sidepane
 - [ ] Linked Field on Identity reports wrong name
