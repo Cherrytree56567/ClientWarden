@@ -100,6 +100,8 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
    ```
 3. Build
    ```sh
+   mkdir build
+   conan install . -s compiler.cppstd=20 --build=missing
    cd build
    cmake .. -DCMAKE_TOOLCHAIN_FILE=<VCPKG_PARENT>/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
    cd ../

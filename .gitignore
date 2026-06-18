@@ -15,3 +15,4 @@ build
 Generated Files
 packages
 x64
+vcpkg_installed
