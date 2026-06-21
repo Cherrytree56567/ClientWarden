@@ -27,4 +27,22 @@ namespace winrt::WindowsUI::implementation
     void GenericEditField::Value(winrt::hstring const& value) {
         FieldValue().Text(value);
     }
+
+    bool GenericEditField::Wrap() {
+        if (FieldValue().TextWrapping() == Microsoft::UI::Xaml::TextWrapping::Wrap) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void GenericEditField::Wrap(bool const& value) {
+        if (value) {
+            FieldValue().TextWrapping(Microsoft::UI::Xaml::TextWrapping::Wrap);
+            FieldValue().AcceptsReturn(true);
+        } else {
+            FieldValue().TextWrapping(Microsoft::UI::Xaml::TextWrapping::NoWrap);
+            FieldValue().AcceptsReturn(false);
+        }
+    }
 }

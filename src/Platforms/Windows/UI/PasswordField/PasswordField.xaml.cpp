@@ -28,6 +28,22 @@ namespace winrt::WindowsUI::implementation
         FieldValue().Text(value);
     }
 
+    bool PasswordField::Wrap() {
+        if (FieldValue().TextWrapping() == Microsoft::UI::Xaml::TextWrapping::Wrap) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void PasswordField::Wrap(bool value) {
+        if (value) {
+            FieldValue().TextWrapping(Microsoft::UI::Xaml::TextWrapping::Wrap);
+        } else {
+            FieldValue().TextWrapping(Microsoft::UI::Xaml::TextWrapping::NoWrap);
+        }
+    }
+
     winrt::event_token PasswordField::Clipboard(Microsoft::UI::Xaml::RoutedEventHandler const& handler) {
         return m_clipboardEvent.add(handler);
     }

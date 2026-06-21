@@ -6,5 +6,6 @@ namespace WindowsUI
         GenericEditField();
         String Title;
         String Value;
+        Boolean Wrap;
     }
 }

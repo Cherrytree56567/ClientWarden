@@ -538,6 +538,7 @@ namespace winrt::WindowsUI::implementation
                 WindowsUI::PasswordField privField;
                 privField.Title(L"Private Key");
                 privField.Value(winrt::to_hstring(hidnum));
+                privField.Wrap(true);
                 privField.ShowHide({ this, &VaultUI::PrivSSHItem_Click });
                 privField.Clipboard({ this, &VaultUI::PrivSSH_Copy });
 
@@ -1077,10 +1078,10 @@ namespace winrt::WindowsUI::implementation
 
                 co_await ui_thread;
                 
-                WindowsUI::PasswordEditField privField;
+                WindowsUI::GenericEditField privField;
                 privField.Title(L"Private Key");
+                privField.Wrap(true);
                 privField.Value(winrt::to_hstring(privKey));
-                privField.DisablePasswordGen();
 
                 SidebarCard().Children().Append(privField);
                 

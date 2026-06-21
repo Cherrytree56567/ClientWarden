@@ -18,6 +18,9 @@ namespace winrt::WindowsUI::implementation
         winrt::hstring Value();
         void Value(winrt::hstring value);
 
+        bool Wrap();
+        void Wrap(bool value);
+
         winrt::event_token Clipboard(Microsoft::UI::Xaml::RoutedEventHandler const& handler);
         void Clipboard(winrt::event_token const& token);
 

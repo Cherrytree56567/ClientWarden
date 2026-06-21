@@ -129,6 +129,18 @@ if (WIN32)
         VS_GLOBAL_WindowsAppSDKSelfContained true
     )
 
+    if(CMAKE_VS_PLATFORM_NAME STREQUAL "ARM64")
+        set_target_properties(clientwarden PROPERTIES
+            VS_GLOBAL_RuntimeIdentifiers "win10-arm64"
+            VS_GLOBAL_RuntimeIdentifier "win10-arm64"
+        )
+    elseif(CMAKE_VS_PLATFORM_NAME STREQUAL "x64")
+        set_target_properties(clientwarden PROPERTIES
+            VS_GLOBAL_RuntimeIdentifiers "win10-x64"
+            VS_GLOBAL_RuntimeIdentifier "win10-x64"
+        )
+    endif()
+
     get_target_property(SOURCES clientwarden SOURCES)
 
     foreach(SOURCE ${SOURCES})

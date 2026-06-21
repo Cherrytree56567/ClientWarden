@@ -90,6 +90,7 @@ mkdir build
 conan install . --output-folder=build --build=missing
 conan install . --output-folder=build --build=missing -s build_type=Debug
 ```
+You might need to use the `-s compiler.cppstd=20` flag.
 
 ### Building
 
@@ -98,15 +99,15 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
    ```sh
    git clone https://github.com/Cherrytree56567/ClientWarden.git
    ```
-3. Build
+3. Prerequisites
+4. Build
    ```sh
-   mkdir build
-   conan install . -s compiler.cppstd=20 --build=missing
    cd build
    cmake .. -DCMAKE_TOOLCHAIN_FILE=<VCPKG_PARENT>/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
    cd ../
    cmake --build build
    ```
+5. Enjoy!
 
 <!-- ROADMAP -->
 ## Roadmap
@@ -162,7 +163,7 @@ conan install . --output-folder=build --build=missing -s build_type=Debug
 - [X] Attempting to Delete an Attachment Crashes
 - [X] Deleting fields doesnt work
 - [X] Field Name or value doesnt change
-- [ ] PrivateKey Box needs to be bigger
+- [X] PrivateKey Box needs to be bigger
 - [ ] Deleting a Folder doesnt remove it from the Folder Picker
 - [ ] Restoring an Item doesn't reset the sidepane
 - [ ] Linked Field on Identity reports wrong name

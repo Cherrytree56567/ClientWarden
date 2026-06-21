@@ -17,6 +17,9 @@ namespace winrt::WindowsUI::implementation
 
         winrt::hstring Value();
         void Value(winrt::hstring const& value);
+
+        bool Wrap();
+        void Wrap(bool const& value);
     };
 }
 
