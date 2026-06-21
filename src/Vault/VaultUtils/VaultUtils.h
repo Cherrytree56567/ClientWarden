@@ -11,6 +11,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
+#ifdef __APPLE__
+#include <iomanip>
+#endif
+
 namespace ClientWarden::Vault {
     std::string b64Encode(const std::vector<uint8_t>& data); // Claude Func
     std::vector<uint8_t> b64Decode(const std::string& data); // Claude Func

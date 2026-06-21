@@ -103,7 +103,24 @@ You might need to use the `-s compiler.cppstd=20` flag.
 4. Build
    ```sh
    cd build
-   cmake .. -DCMAKE_TOOLCHAIN_FILE=<VCPKG_PARENT>/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
+   cmake .. -DCMAKE_TOOLCHAIN_FILE=build/Debug/generators/conan_toolchain.cmake
+   cd ../
+   cmake --build build
+   ```
+5. Enjoy!
+
+### Building XCode (Mac OS Only)
+
+1. Install CMake
+2. Clone the repo
+   ```sh
+   git clone https://github.com/Cherrytree56567/ClientWarden.git
+   ```
+3. Prerequisites
+4. Build
+   ```sh
+   cd build
+   cmake .. -DCMAKE_PREFIX_PATH=build/Debug/generators/conan_toolchain.cmake -G Xcode
    cd ../
    cmake --build build
    ```

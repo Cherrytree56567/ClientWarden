@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <botan/hash.h>
 #include <botan/otp.h>
 #include <boost/url.hpp>

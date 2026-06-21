@@ -1,0 +1,6 @@
+function(buildUI _target)
+    target_sources(${_target} PRIVATE src/Platforms/MacOS/Storage/Storage.mm src/Platforms/MacOS/Clipboard/Clipboard.mm)
+    target_include_directories(${_target} PRIVATE src/Platforms/MacOS)
+    target_link_libraries(${_target} "-framework Cocoa")
+    target_compile_definitions(${_target} PRIVATE MSGPACK_DISABLE_LEGACY_NIL)
+endfunction()

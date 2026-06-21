@@ -54,7 +54,11 @@ namespace ClientWarden::Vault {
 
         if (ss.peek() == 'Z') ss.get();
 
-        std::time_t t = _mkgmtime(&tmStruct);
+        #ifdef _WIN32
+            std::time_t t = _mkgmtime(&tmStruct);
+        #else
+            std::time_t t = timegm(&tmStruct);
+        #endif
 
         t += static_cast<time_t>(fractional);
 
