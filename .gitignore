@@ -16,3 +16,4 @@ Generated Files
 packages
 x64
 vcpkg_installed
+.DS_Store
