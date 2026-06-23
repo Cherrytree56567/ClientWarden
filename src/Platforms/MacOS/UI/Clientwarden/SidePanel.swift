@@ -8,6 +8,15 @@ struct SidePanel: View {
     @State private var uuid: UUID
     @State private var type: ItemType
     
+    @State private var itemFields: [GenericItemData] = [
+        GenericItemData(title: "Email", value: "a@a.com\nfd", type: GenericItemType.generic),
+        GenericItemData(title: "Password", value: "@abc12345", type: GenericItemType.password)
+    ]
+    @State private var customFields: [GenericItemData] = [
+        GenericItemData(title: "Email", value: "a@a.com\nfd", type: GenericItemType.generic),
+        GenericItemData(title: "Password", value: "@abc12345", type: GenericItemType.password)
+    ]
+    
     @State public var cb_favorite: ((Bool, UUID) -> Bool)?
     
     init(name: String, uuid: UUID, type: ItemType, favorite: Bool) {
@@ -69,7 +78,20 @@ struct SidePanel: View {
             
             Divider()
                 .padding(.top, 4)
-                .padding(.bottom, 12)        }
+            
+            ForEach(itemFields) { itemField in
+                GenericItem(data: itemField)
+            }
+            
+            if !itemFields.isEmpty {
+                Divider()
+                    .padding(.top, 4)
+            }
+            
+            
+            //FieldItem(data: FieldItemData(title: "Password", value: "@abc12345", type: FieldItemType.text))
+            
+        }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background {
