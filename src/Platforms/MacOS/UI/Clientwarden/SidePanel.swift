@@ -8,13 +8,12 @@ struct SidePanel: View {
     @State private var uuid: UUID
     @State private var type: ItemType
     
-    @State private var itemFields: [GenericItemData] = [
-        GenericItemData(title: "Email", value: "a@a.com\nfd", type: GenericItemType.generic),
-        GenericItemData(title: "Password", value: "@abc12345", type: GenericItemType.password)
-    ]
-    @State private var customFields: [GenericItemData] = [
-        GenericItemData(title: "Email", value: "a@a.com\nfd", type: GenericItemType.generic),
-        GenericItemData(title: "Password", value: "@abc12345", type: GenericItemType.password)
+    @State private var itemFields: [GenericItemData] = []
+    @State private var customFields: [FieldItemData] = [
+        FieldItemData(title: "Text", value: "Some Text", type: FieldItemType.text),
+        FieldItemData(title: "Hidden", value: "@abc12345", type: FieldItemType.hidden),
+        FieldItemData(title: "Checkbox", value: "true", type: FieldItemType.checkbox),
+        FieldItemData(title: "Linked", value: "100", type: FieldItemType.linked)
     ]
     
     @State public var cb_favorite: ((Bool, UUID) -> Bool)?
@@ -88,8 +87,9 @@ struct SidePanel: View {
                     .padding(.top, 4)
             }
             
-            
-            //FieldItem(data: FieldItemData(title: "Password", value: "@abc12345", type: FieldItemType.text))
+            ForEach(customFields) { customField in
+                FieldItem(data: customField, itemType: type)
+            }
             
         }
         .padding(16)

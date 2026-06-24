@@ -34,39 +34,99 @@ struct FieldItemData : Identifiable, Hashable {
 struct FieldItem: View {
     @State private var data: FieldItemData
     @State private var revealed: Bool
+    @State private var itemType: ItemType
     @State public var editable: Bool
     
-    init(data: FieldItemData) {
-        self.data = data
-        self.revealed = true
-        self.editable = false
+    private var loginLinkedBinding: Binding<LoginLinkedIDs> {
+        Binding(
+            get: {
+                let raw = Int(data.value) ?? -1
+                return LoginLinkedIDs(rawValue: raw) ?? LoginLinkedIDs.Username
+            },
+            set: { newVal in
+                data.value = String(newVal.rawValue)
+            }
+        )
     }
     
-    init(data: FieldItemData, editable: Bool) {
+    private var cardLinkedBinding: Binding<CardLinkedIDs> {
+        Binding(
+            get: {
+                let raw = Int(data.value) ?? -1
+                return CardLinkedIDs(rawValue: raw) ?? CardLinkedIDs.CardholderName
+            },
+            set: { newVal in
+                data.value = String(newVal.rawValue)
+            }
+        )
+    }
+    
+    private var identityLinkedBinding: Binding<IdentityLinkedIDs> {
+        Binding(
+            get: {
+                let raw = Int(data.value) ?? -1
+                return IdentityLinkedIDs(rawValue: raw) ?? IdentityLinkedIDs.Email
+            },
+            set: { newVal in
+                data.value = String(newVal.rawValue)
+            }
+        )
+    }
+    
+    init(data: FieldItemData, itemType: ItemType) {
         self.data = data
-        self.revealed = true
+        self.revealed = false
+        self.editable = true
+        self.itemType = itemType
+    }
+    
+    init(data: FieldItemData, itemType: ItemType, editable: Bool) {
+        self.data = data
+        self.revealed = false
         self.editable = editable
+        self.itemType = itemType
     }
     
     var body: some View {
         VStack(alignment: .leading) {
-            if (editable) {
-                TextField("Title", text: $data.title)
-                    .font(.caption)
-                    .foregroundColor(Color.gray)
-                    .padding(.bottom, -6)
-                    .padding(-4)
-            } else {
-                Text(data.title)
-                    .font(.caption)
-                    .foregroundColor(Color.gray)
-                    .padding(.bottom, -6)
+            if (data.type != FieldItemType.checkbox) {
+                if (editable) {
+                    TextField("Title", text: $data.title)
+                        .font(.caption)
+                        .foregroundColor(Color.gray)
+                        .padding(.bottom, -6)
+                        .padding(-4)
+                } else {
+                    Text(data.title)
+                        .font(.caption)
+                        .foregroundColor(Color.gray)
+                        .padding(.bottom, -6)
+                }
+                
+                Divider()
             }
             
-            Divider()
-            
             HStack {
-                if (data.type == FieldItemType.hidden) {
+                /*
+                 * Hidden items need a show reveal button
+                 * Checkbox needs a toggle w/o divider and the title
+                 * next to the toggle
+                 * Text items are normal.
+                 * Linked needs a specific value per number
+                 */
+                if (data.type == FieldItemType.checkbox) {
+                    Toggle("", isOn: Binding(get: {
+                        data.value == "true" ? true : false
+                    }, set: {
+                        if editable {
+                            data.value = ($0 ? "true" : "false")
+                        }
+                    }))
+                    .labelsHidden()
+                    .padding(.trailing, -2)
+                    
+                    Text(verbatim: data.title)
+                } else if (data.type == FieldItemType.hidden) {
                     Text(verbatim: revealed ? data.value : String(repeating: "•", count: data.value.count))
                         .font(.system(.body, design: .monospaced))
                     
@@ -104,6 +164,70 @@ struct FieldItem: View {
                         .offset(x: revealed ? 0 : 60)
                     }
                     .animation(.easeInOut(duration: 0.25), value: revealed)
+                } else if (data.type == FieldItemType.linked) {
+                    if (editable) {
+                        /*
+                         * Create a Picker that used bindings for each type of item
+                         */
+                        if (itemType == ItemType.Login) {
+                            Picker("", selection: loginLinkedBinding) {
+                                    ForEach(LoginLinkedIDs.allCases, id: \.self) { id in
+                                        Text(id.description).tag(id)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                                .padding(-4)
+                        } else if (itemType == ItemType.Card) {
+                            Picker("", selection: cardLinkedBinding) {
+                                    ForEach(CardLinkedIDs.allCases, id: \.self) { id in
+                                        Text(id.description).tag(id)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                                .padding(-4)
+                        } else if (itemType == ItemType.Identity) {
+                            Picker("", selection: identityLinkedBinding) {
+                                    ForEach(IdentityLinkedIDs.allCases, id: \.self) { id in
+                                        Text(id.description).tag(id)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                                .padding(-4)
+                        }
+                    } else {
+                        /*
+                         * We need to convert the text to Int and then
+                         * to the enum and get the desc
+                         */
+                        if (itemType == ItemType.Login) {
+                            Text(verbatim: {
+                                guard let rawVal = Int(data.value),
+                                      let linkedId = LoginLinkedIDs(rawValue: rawVal) else {
+                                    return "Unknown"
+                                }
+                                return linkedId.description
+                            }())
+                        } else if (itemType == ItemType.Card) {
+                            Text(verbatim: {
+                                guard let rawVal = Int(data.value),
+                                      let linkedId = CardLinkedIDs(rawValue: rawVal) else {
+                                    return "Unknown"
+                                }
+                                return linkedId.description
+                            }())
+                        } else if (itemType == ItemType.Identity) {
+                            Text(verbatim: {
+                                guard let rawVal = Int(data.value),
+                                      let linkedId = IdentityLinkedIDs(rawValue: rawVal) else {
+                                    return "Unknown"
+                                }
+                                return linkedId.description
+                            }())
+                        }
+                    }
                 } else {
                     if (editable) {
                         TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
@@ -124,12 +248,6 @@ struct FieldItem: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .clipped()
-        .contentShape(Rectangle())
-        .onTapGesture {
-            /*
-             * TODO: X1FE - Use Clipboard Swift Bridge to copy the value
-             */
-        }
     }
 }
 

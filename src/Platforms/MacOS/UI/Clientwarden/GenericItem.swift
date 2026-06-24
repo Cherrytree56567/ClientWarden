@@ -67,13 +67,13 @@ struct GenericItem: View {
     
     init(data: GenericItemData) {
         self.data = data
-        self.revealed = true
+        self.revealed = false
         self.transparent = false
     }
     
     init(data: GenericItemData, transparent: Bool) {
         self.data = data
-        self.revealed = true
+        self.revealed = false
         self.transparent = transparent
     }
     
