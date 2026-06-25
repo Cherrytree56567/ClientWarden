@@ -15,7 +15,6 @@ enum NavItems: Hashable {
 struct NavigationPanel: View {
     @State private var selection: NavItems = .all_items
     @State public var folders: [Folder] = []
-    @State private var toasts: [Toast] = []
     
     @State public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
     @State public var cb_deleteFolder: ((UUID) -> Bool)?
@@ -73,13 +72,13 @@ struct NavigationPanel: View {
                              * the callback was successful
                              */
                             if let folderUUID = cb_deleteFolder?(folder.id) {
-                                if folderUUID {
+                                if (folderUUID) {
                                     folders.removeAll { $0.id == folder.id }
                                 } else {
-                                    toasts.append(Toast(message: "Failed to delete folder"))
+                                    g_toastStore.toasts.append(Toast(message: "Failed to delete folder"))
                                 }
                             } else {
-                                toasts.append(Toast(message: "No callback set for deleteFolder"))
+                                g_toastStore.toasts.append(Toast(message: "No callback set for deleteFolder"))
                             }
                         } label: {
                             Label("Delete", systemImage: "minus.circle")
@@ -97,13 +96,13 @@ struct NavigationPanel: View {
                  * the callback was successful
                  */
                 if let folderUUID = cb_createFolder?("New Folder") {
-                    if folderUUID.result {
+                    if (folderUUID.result) {
                         folders.append(Folder(id: folderUUID.id, name: "New Folder"))
                     } else {
-                        toasts.append(Toast(message: "Failed to create folder"))
+                        g_toastStore.toasts.append(Toast(message: "Failed to create folder"))
                     }
                 } else {
-                    toasts.append(Toast(message: "No callback set for createFolder"))
+                    g_toastStore.toasts.append(Toast(message: "No callback set for createFolder"))
                 }
             } label: {
                 Label("Add Folder", systemImage: "folder.badge.plus")
@@ -112,7 +111,12 @@ struct NavigationPanel: View {
             .padding(.vertical, 4)
             .padding(.horizontal, 4)
         }
-        .toast($toasts)
+        .toast(
+            Binding(
+                get: { g_toastStore.toasts },
+                set: { g_toastStore.toasts = $0 }
+            )
+        )
     }
 }
 

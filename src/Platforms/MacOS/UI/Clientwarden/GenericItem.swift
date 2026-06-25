@@ -11,23 +11,33 @@ import SwiftUI
 enum GenericItemType {
     case generic
     case password
+    case totp
     case ml_generic
     case ml_password
     case editable
     case ml_editable
     case t_editable
+    case website_editable
 }
 
-struct GenericItemData : Identifiable, Hashable {
+struct GenericItemData : Identifiable {
     let id = UUID()
     public var title: String
     public var value: String
     public var type: GenericItemType
+    public var cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?
     
     init(title: String, value: String, type: GenericItemType) {
         self.title = title
         self.value = value
         self.type = type
+    }
+    
+    init(title: String, value: String, type: GenericItemType, cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?) {
+        self.title = title
+        self.value = value
+        self.type = type
+        self.cb_getTOTP = cb_getTOTP
     }
     
     func isMultiline() -> Bool {
@@ -57,13 +67,53 @@ struct GenericItemData : Identifiable, Hashable {
     }
 }
 
-/*
- * TODO: Fix multiline liquid glass color
- */
+struct TOTPTimerModifier: ViewModifier {
+    let active: Bool
+    let cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?
+    @Binding var left: Double
+    @Binding var maxValue: Int
+    @Binding var value: String
+    
+    func body(content: Content) -> some View {
+        content
+            .task(id: active) {
+                guard active, let cb_getTOTP else { return }
+                
+                var refresh: Int64 = 0
+                
+                while !Task.isCancelled {
+                    let now = Int64(Date().timeIntervalSince1970)
+                    
+                    if (now >= refresh) {
+                        let res = cb_getTOTP()
+                        value = res.value
+                        maxValue = res.maxTimer
+                        refresh = res.refreshDate
+                    }
+
+                    left = max(0, Double(refresh - now))
+
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            }
+    }
+}
+
 struct GenericItem: View {
     @State private var data: GenericItemData
     @State private var revealed: Bool
-    @State public var transparent: Bool
+    @State private var transparent: Bool
+    
+    @State private var totpValue: String = ""
+    @State private var totpLeft: Double = 0
+    @State private var totpMax: Int = 30
+    
+    private var websiteBinding: Binding<[String]> {
+        Binding(
+            get: { data.value.components(separatedBy: .newlines) },
+            set: { data.value = $0.joined(separator: "\n") }
+        )
+    }
     
     init(data: GenericItemData) {
         self.data = data
@@ -109,7 +159,7 @@ struct GenericItem: View {
                     Button {
                         revealed.toggle()
                     } label: {
-                        if revealed {
+                        if (revealed) {
                             Image(systemName: "eye.fill")
                                 .font(.caption)
                                 .padding(.horizontal, 4)
@@ -133,11 +183,82 @@ struct GenericItem: View {
                         .offset(x: revealed ? 0 : 60)
                     }
                     .animation(.easeInOut(duration: 0.25), value: revealed)
+                } else if (data.type == GenericItemType.totp) {
+                    Text(verbatim: totpValue.isEmpty ? data.d_value() : totpValue)
+                    
+                    Spacer()
+                    
+                    /*
+                     * Since I wanted to have a UI and UI Bridge, I decided to use a totp
+                     * callback which gets called everytime the totp needs to be refreshed.
+                     */
+                    if (data.cb_getTOTP != nil && totpMax > 0) {
+                        let progress = totpMax > 0 ? totpLeft / Double(totpMax) : 0
+                        let slabel = String(Int(totpLeft))
+                        Gauge(value: progress) {
+                        } currentValueLabel: {
+                            Text(slabel)
+                        }
+                        .gaugeStyle(.accessoryCircular)
+                        .scaleEffect(0.35)
+                        .padding(-20)
+                        .padding(.trailing, 4)
+                        .tint(totpLeft < 10 ? Color.red.opacity(0.8) : .accentColor)
+                    }
                 } else {
                     if (data.isEditable()) {
                         TextField("Title", text: Binding(get: { data.d_value() }, set: { data.value = $0 }), axis: .vertical)
                             .lineLimit(6)
                             .padding(-4)
+                    } else if (data.type == GenericItemType.website_editable) {
+                        VStack {
+                            List {
+                                ForEach(websiteBinding.wrappedValue.indices, id: \.self) { index in
+                                    HStack {
+                                        TextField("Website", text: Binding(
+                                            get: { websiteBinding.wrappedValue[index] },
+                                            set: { newVal in
+                                                var val = websiteBinding.wrappedValue
+                                                val[index] = newVal
+                                                data.value = val.joined(separator: "\n")
+                                            }
+                                        ))
+                                        
+                                        Button {
+                                            var val = websiteBinding.wrappedValue
+                                            val.remove(at: index)
+                                            data.value = val.joined(separator: "\n")
+                                        } label: {
+                                            Image(systemName: "minus.circle")
+                                        }
+                                        .buttonStyle(BorderlessButtonStyle())
+                                    }
+                                }
+                                .onMove { index, offset in
+                                    var val = websiteBinding.wrappedValue
+                                    val.move(fromOffsets: index, toOffset: offset)
+                                    data.value = val.joined(separator: "\n")
+                                }
+                                .onDelete { offset in
+                                    var val = websiteBinding.wrappedValue
+                                    val.remove(atOffsets: offset)
+                                    data.value = val.joined(separator: "\n")
+                                }
+                            }
+                            .scrollContentBackground(.hidden)
+                            .listStyle(.plain)
+                            .frame(height: max(CGFloat(websiteBinding.wrappedValue.count) * 24 + 8, 0))
+                            
+                            Button {
+                                var val = websiteBinding.wrappedValue
+                                val.append("")
+                                data.value = val.joined(separator: "\n")
+                            } label: {
+                                Label("Add website", systemImage: "plus.circle")
+                                    .font(.caption)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                        }
                     } else {
                         Text(verbatim: data.d_value())
                     }
@@ -160,7 +281,17 @@ struct GenericItem: View {
             /*
              * TODO: X1FE - Use Clipboard Swift Bridge to copy the value
              */
+            g_toastStore.toasts.append(Toast(message: "Copied to clipboard", icon: "document.on.document").setColor(color: Color.clear))
         }
+        .modifier(
+            TOTPTimerModifier(
+                active: data.type == .totp,
+                cb_getTOTP: data.cb_getTOTP,
+                left: $totpLeft,
+                maxValue: $totpMax,
+                value: $totpValue
+            )
+        )
     }
 }
 
@@ -170,3 +301,4 @@ struct GenericItem: View {
         SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: false)
     }
 }
+

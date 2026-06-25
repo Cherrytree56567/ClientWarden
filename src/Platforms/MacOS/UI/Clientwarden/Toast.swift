@@ -5,6 +5,13 @@ struct Toast: Identifiable, Equatable {
     let id: UUID = UUID()
     let message: String
     var icon: String = "exclamationmark.warninglight"
+    var color: Color = .orange.opacity(0.2)
+    
+    func setColor(color: Color) -> Self {
+        var result = self
+        result.color = color
+        return result
+    }
 }
 
 struct ToastView: View {
@@ -18,8 +25,12 @@ struct ToastView: View {
                     .font(.caption)
             }
             .padding(8)
-            .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
+            .background(toast.color, in: RoundedRectangle(cornerRadius: 8))
             .shadow(radius: 6)
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.gray.opacity(0.5), lineWidth: toast.color == Color.clear ? 0.5 : 0)
+            }
         }
         .background(Color(.windowBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
     }

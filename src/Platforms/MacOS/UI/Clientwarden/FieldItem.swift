@@ -1,13 +1,5 @@
 import SwiftUI
 
-/*
- * generic - Non-Editable Title and Value
- * password - Non-Editable Title and Hidden Value with Reveal button
- * ml_generic - Non-Editable Title and Multiline Value
- * editable - Non-Editable Title and Editable Value
- * ml_editable - Non-Editable Title and Editable Multiline Value
- * t_editable - Editable Title and value
- */
 enum FieldItemType {
     case text
     case hidden
@@ -20,11 +12,13 @@ struct FieldItemData : Identifiable, Hashable {
     public var title: String
     public var value: String
     public var type: FieldItemType
+    public var editable: Bool
     
-    init(title: String, value: String, type: FieldItemType) {
+    init(title: String, value: String, type: FieldItemType, editable: Bool) {
         self.title = title
         self.value = value
         self.type = type
+        self.editable = editable
     }
 }
 
@@ -34,8 +28,7 @@ struct FieldItemData : Identifiable, Hashable {
 struct FieldItem: View {
     @State private var data: FieldItemData
     @State private var revealed: Bool
-    @State private var itemType: ItemType
-    @State public var editable: Bool
+    private var itemType: ItemType
     
     private var loginLinkedBinding: Binding<LoginLinkedIDs> {
         Binding(
@@ -76,26 +69,19 @@ struct FieldItem: View {
     init(data: FieldItemData, itemType: ItemType) {
         self.data = data
         self.revealed = false
-        self.editable = true
-        self.itemType = itemType
-    }
-    
-    init(data: FieldItemData, itemType: ItemType, editable: Bool) {
-        self.data = data
-        self.revealed = false
-        self.editable = editable
         self.itemType = itemType
     }
     
     var body: some View {
         VStack(alignment: .leading) {
             if (data.type != FieldItemType.checkbox) {
-                if (editable) {
+                if (data.editable) {
                     TextField("Title", text: $data.title)
                         .font(.caption)
                         .foregroundColor(Color.gray)
                         .padding(.bottom, -6)
-                        .padding(-4)
+                        .padding(.leading, 2)
+                        .padding(.trailing, 2)
                 } else {
                     Text(data.title)
                         .font(.caption)
@@ -115,57 +101,66 @@ struct FieldItem: View {
                  * Linked needs a specific value per number
                  */
                 if (data.type == FieldItemType.checkbox) {
-                    Toggle("", isOn: Binding(get: {
-                        data.value == "true" ? true : false
-                    }, set: {
-                        if editable {
-                            data.value = ($0 ? "true" : "false")
-                        }
-                    }))
-                    .labelsHidden()
-                    .padding(.trailing, -2)
-                    
-                    Text(verbatim: data.title)
+                    HStack {
+                        Toggle("", isOn: Binding(get: {
+                            data.value == "true" ? true : false
+                        }, set: {
+                            if (data.editable) {
+                                data.value = ($0 ? "true" : "false")
+                            }
+                        }))
+                        .labelsHidden()
+                        .padding(.trailing, -2)
+                        
+                        Text(verbatim: data.title)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 } else if (data.type == FieldItemType.hidden) {
-                    Text(verbatim: revealed ? data.value : String(repeating: "•", count: data.value.count))
-                        .font(.system(.body, design: .monospaced))
-                    
-                    Spacer()
-                    
-                    /*
-                     * The button reveals or hides the text via bool
-                     * as well as creating a nice glow when the value
-                     * is revealed
-                     */
-                    Button {
-                        revealed.toggle()
-                    } label: {
-                        if revealed {
-                            Image(systemName: "eye.fill")
-                                .font(.caption)
-                                .padding(.horizontal, 4)
-                        } else {
-                            Image(systemName: "eye")
-                                .font(.caption)
-                                .padding(.horizontal, 4)
+                    if (data.editable) {
+                        TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
+                            .lineLimit(6)
+                            .padding(.top, -4)
+                    } else {
+                        Text(verbatim: revealed ? data.value : String(repeating: "•", count: data.value.count))
+                            .font(.system(.body, design: .monospaced))
+                        
+                        Spacer()
+                        
+                        /*
+                         * The button reveals or hides the text via bool
+                         * as well as creating a nice glow when the value
+                         * is revealed
+                         */
+                        Button {
+                            revealed.toggle()
+                        } label: {
+                            if (revealed) {
+                                Image(systemName: "eye.fill")
+                                    .font(.caption)
+                                    .padding(.horizontal, 4)
+                            } else {
+                                Image(systemName: "eye")
+                                    .font(.caption)
+                                    .padding(.horizontal, 4)
+                            }
                         }
+                        .buttonStyle(.plain)
+                        .background {
+                            LinearGradient(
+                                gradient: Gradient(colors: [.clear, .blue.opacity(0.6)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .opacity(revealed ? 1 : 0)
+                            .blur(radius: 8)
+                            .frame(maxHeight: .infinity)
+                            .scaleEffect(x: 4.0, y: 1.40)
+                            .offset(x: revealed ? 0 : 60)
+                        }
+                        .animation(.easeInOut(duration: 0.25), value: revealed)
                     }
-                    .buttonStyle(.plain)
-                    .background {
-                        LinearGradient(
-                            gradient: Gradient(colors: [.clear, .blue.opacity(0.6)]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                        .opacity(revealed ? 1 : 0)
-                        .blur(radius: 8)
-                        .frame(maxHeight: .infinity)
-                        .scaleEffect(x: 4.0, y: 1.40)
-                        .offset(x: revealed ? 0 : 60)
-                    }
-                    .animation(.easeInOut(duration: 0.25), value: revealed)
                 } else if (data.type == FieldItemType.linked) {
-                    if (editable) {
+                    if (data.editable) {
                         /*
                          * Create a Picker that used bindings for each type of item
                          */
@@ -229,10 +224,10 @@ struct FieldItem: View {
                         }
                     }
                 } else {
-                    if (editable) {
+                    if (data.editable) {
                         TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
                             .lineLimit(6)
-                            .padding(-4)
+                            .padding(.top, -4)
                     } else {
                         Text(verbatim: data.value)
                     }
@@ -241,7 +236,7 @@ struct FieldItem: View {
             .padding(.top, 1)
             .padding(.bottom, 1)
         }
-        .padding(8)
+        .padding(2)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(lineWidth: 0)
@@ -254,6 +249,6 @@ struct FieldItem: View {
 #Preview {
     HStack(spacing: 0) {
         NavigationPanel()
-        SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: false)
+        SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: true)
     }
 }
