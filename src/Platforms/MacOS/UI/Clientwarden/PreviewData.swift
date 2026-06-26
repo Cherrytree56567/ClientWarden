@@ -8,6 +8,7 @@ struct PreviewData {
                 .onAppear {
                     SidePanel.instance.name = "Google"
                     SidePanel.instance.type = ItemType.Login
+                    SidePanel.instance.icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
                     SidePanel.instance.favorite = false
                     SidePanel.instance.itemFields = [
                         GenericItemData(title: "Email", value: "test@example.com", type: GenericItemType.generic),

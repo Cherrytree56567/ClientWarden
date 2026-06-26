@@ -20,6 +20,66 @@ final class NavigationPanel {
     
     public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
     public var cb_deleteFolder: ((UUID) -> Bool)?
+    
+    public var cb_allItems: (() -> [ItemElement])? = {
+        return [
+            ItemElement(
+                name: "GitHub",
+                uuid: UUID(),
+                type: .Login,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            ),
+            ItemElement(
+                name: "Gmail",
+                uuid: UUID(),
+                type: .Login,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            ),
+            ItemElement(
+                name: "Visa Card",
+                uuid: UUID(),
+                type: .Card,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            ),
+            ItemElement(
+                name: "Personal Identity",
+                uuid: UUID(),
+                type: .Identity,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            ),
+            ItemElement(
+                name: "Wifi Password",
+                uuid: UUID(),
+                type: .Note,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            )
+        ]
+    }
+    public var cb_favorites: (() -> [ItemElement])? = {
+        return [
+            ItemElement(
+                name: "GitHub",
+                uuid: UUID(),
+                type: .Login,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            ),
+            ItemElement(
+                name: "Gmail",
+                uuid: UUID(),
+                type: .Login,
+                image: ClientwardenImage(type: .bundle, path: "profile1")
+            ),
+        ]
+    }
+    public var cb_trash: (() -> [ItemElement])?
+    
+    public var cb_login: (() -> [ItemElement])?
+    public var cb_card: (() -> [ItemElement])?
+    public var cb_identity: (() -> [ItemElement])?
+    public var cb_note: (() -> [ItemElement])?
+    public var cb_SSHKey: (() -> [ItemElement])?
+    
+    public var cb_folder: ((UUID) -> [ItemElement])?
 }
 
 struct NavigationPanelView: View {
@@ -30,36 +90,92 @@ struct NavigationPanelView: View {
     var body: some View {
         TabView(selection: $selection) {
             Tab("All Items", systemImage: "command", value: .all_items) {
-                Text("Items")
+                if let items = data.cb_allItems?() {
+                    ItemsPanel(elements: items)
+                } else {
+                    EmptyView()
+                        .onAppear {
+                            g_toastStore.toasts.append(Toast(message: "No callback set for all Items"))
+                        }
+                }
             }
             
             Tab("Favorites", systemImage: "star", value: .favorites) {
-                Text("Items")
+                if let items = data.cb_favorites?() {
+                    ItemsPanel(elements: items)
+                } else {
+                    EmptyView()
+                        .onAppear {
+                            g_toastStore.toasts.append(Toast(message: "No callback set for favorites"))
+                        }
+                }
             }
             
             Tab("Trash", systemImage: "trash", value: .trash) {
-                Text("Items")
+                if let items = data.cb_trash?() {
+                    ItemsPanel(elements: items)
+                } else {
+                    EmptyView()
+                        .onAppear {
+                            g_toastStore.toasts.append(Toast(message: "No callback set for trash"))
+                        }
+                }
             }
             
             TabSection("Type") {
                 Tab("Login", systemImage: "globe", value: NavItems.login) {
-                    Text("Items")
+                    if let items = data.cb_login?() {
+                        ItemsPanel(elements: items)
+                    } else {
+                        EmptyView()
+                            .onAppear {
+                                g_toastStore.toasts.append(Toast(message: "No callback set for login"))
+                            }
+                    }
                 }
                 
                 Tab("Card", systemImage: "creditcard", value: NavItems.card) {
-                    Text("Items")
+                    if let items = data.cb_card?() {
+                        ItemsPanel(elements: items)
+                    } else {
+                        EmptyView()
+                            .onAppear {
+                                g_toastStore.toasts.append(Toast(message: "No callback set for card"))
+                            }
+                    }
                 }
                 
                 Tab("Identity", systemImage: "person.text.rectangle", value: NavItems.identity) {
-                    Text("Items")
+                    if let items = data.cb_identity?() {
+                        ItemsPanel(elements: items)
+                    } else {
+                        EmptyView()
+                            .onAppear {
+                                g_toastStore.toasts.append(Toast(message: "No callback set for identity"))
+                            }
+                    }
                 }
                 
                 Tab("Note", systemImage: "pad.header", value: NavItems.note) {
-                    Text("Items")
+                    if let items = data.cb_note?() {
+                        ItemsPanel(elements: items)
+                    } else {
+                        EmptyView()
+                            .onAppear {
+                                g_toastStore.toasts.append(Toast(message: "No callback set for note"))
+                            }
+                    }
                 }
                 
                 Tab("SSH Key", systemImage: "key.viewfinder", value: NavItems.sshkey) {
-                    Text("Items")
+                    if let items = data.cb_SSHKey?() {
+                        ItemsPanel(elements: items)
+                    } else {
+                        EmptyView()
+                            .onAppear {
+                                g_toastStore.toasts.append(Toast(message: "No callback set for SSH Key"))
+                            }
+                    }
                 }
             }
             
@@ -71,7 +187,14 @@ struct NavigationPanelView: View {
                  */
                 ForEach(data.folders) { folder in
                     Tab(folder.name, systemImage: "folder", value: NavItems.folder(folder.id)) {
-                        Text("folder")
+                        if let items = data.cb_folder?(folder.id) {
+                            ItemsPanel(elements: items)
+                        } else {
+                            EmptyView()
+                                .onAppear {
+                                    g_toastStore.toasts.append(Toast(message: "No callback set for folder"))
+                                }
+                        }
                     }
                     .contextMenu {
                         Button(role: .destructive) {

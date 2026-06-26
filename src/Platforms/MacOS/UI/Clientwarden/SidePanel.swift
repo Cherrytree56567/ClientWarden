@@ -15,6 +15,7 @@ final class SidePanel {
     public var name: String = ""
     public var uuid: UUID = UUID()
     public var type: ItemType = ItemType.Login
+    public var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     public var editable: Bool = false
     public var favorite: Bool = false
     
@@ -29,6 +30,8 @@ final class SidePanel {
     public var cb_duplicate: ((UUID) -> Bool)?
     public var cb_delete: ((UUID) -> Bool)?
     public var cb_save: ((UUID) -> Bool)?
+    
+    public var cb_sidebar: ((UUID) -> Bool)?
     
     public var s_name: String = ""
     public var s_favorite: Bool = false
@@ -90,8 +93,8 @@ final class SidePanel {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_save?(uuid) {
-            if (fav) {
+        if let sav = cb_save?(uuid) {
+            if (sav) {
                 return true
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to save item"))
@@ -107,8 +110,8 @@ final class SidePanel {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_duplicate?(uuid) {
-            if (fav) {
+        if let dup = cb_duplicate?(uuid) {
+            if (dup) {
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to duplicate item"))
             }
@@ -122,13 +125,28 @@ final class SidePanel {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_delete?(uuid) {
-            if (fav) {
+        if let del = cb_delete?(uuid) {
+            if (del) {
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to delete item"))
             }
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for delete Item"))
+        }
+    }
+    
+    func viewItem(cb_uuid: UUID) {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let side = cb_sidebar?(cb_uuid) {
+            if (side) {
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to view item"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for view Item"))
         }
     }
 }
@@ -143,10 +161,17 @@ struct SidePanelView: View {
         VStack(alignment: .leading) {
             ScrollView {
                 HStack {
-                    Image("profile1")
-                        .resizable()
-                        .frame(width: 32, height: 32)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                    if let image = data.icon.getImage() {
+                        image
+                            .resizable()
+                            .frame(width: 32, height: 32)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    } else {
+                        Image("profile1")
+                            .resizable()
+                            .frame(width: 32, height: 32)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
                     
                     VStack(alignment: .leading) {
                         if (data.editable) {
@@ -290,7 +315,7 @@ struct SidePanelView: View {
                     }
                 }
             }
-            
+            .scrollIndicators(.never)
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
