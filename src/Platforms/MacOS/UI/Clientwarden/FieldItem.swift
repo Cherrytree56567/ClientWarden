@@ -12,13 +12,11 @@ struct FieldItemData : Identifiable, Hashable {
     public var title: String
     public var value: String
     public var type: FieldItemType
-    public var editable: Bool
     
-    init(title: String, value: String, type: FieldItemType, editable: Bool) {
+    init(title: String, value: String, type: FieldItemType) {
         self.title = title
         self.value = value
         self.type = type
-        self.editable = editable
     }
 }
 
@@ -26,9 +24,10 @@ struct FieldItemData : Identifiable, Hashable {
  * TODO: Fix multiline liquid glass color
  */
 struct FieldItem: View {
-    @State private var data: FieldItemData
+    @Binding var data: FieldItemData
     @State private var revealed: Bool
     private var itemType: ItemType
+    public var editable: Bool
     
     private var loginLinkedBinding: Binding<LoginLinkedIDs> {
         Binding(
@@ -66,16 +65,17 @@ struct FieldItem: View {
         )
     }
     
-    init(data: FieldItemData, itemType: ItemType) {
-        self.data = data
+    init(data: Binding<FieldItemData>, itemType: ItemType, edit: Bool) {
+        self._data = data
         self.revealed = false
         self.itemType = itemType
+        self.editable = edit
     }
     
     var body: some View {
         VStack(alignment: .leading) {
             if (data.type != FieldItemType.checkbox) {
-                if (data.editable) {
+                if (editable) {
                     TextField("Title", text: $data.title)
                         .font(.caption)
                         .foregroundColor(Color.gray)
@@ -105,18 +105,21 @@ struct FieldItem: View {
                         Toggle("", isOn: Binding(get: {
                             data.value == "true" ? true : false
                         }, set: {
-                            if (data.editable) {
+                            if (editable) {
                                 data.value = ($0 ? "true" : "false")
                             }
                         }))
                         .labelsHidden()
                         .padding(.trailing, -2)
-                        
-                        Text(verbatim: data.title)
+                        if (editable) {
+                            TextField("Title", text: Binding(get: { data.title }, set: { data.title = $0 }))
+                        } else {
+                            Text(verbatim: data.title)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else if (data.type == FieldItemType.hidden) {
-                    if (data.editable) {
+                    if (editable) {
                         TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
                             .lineLimit(6)
                             .padding(.top, -4)
@@ -160,7 +163,7 @@ struct FieldItem: View {
                         .animation(.easeInOut(duration: 0.25), value: revealed)
                     }
                 } else if (data.type == FieldItemType.linked) {
-                    if (data.editable) {
+                    if (editable) {
                         /*
                          * Create a Picker that used bindings for each type of item
                          */
@@ -224,7 +227,7 @@ struct FieldItem: View {
                         }
                     }
                 } else {
-                    if (data.editable) {
+                    if (editable) {
                         TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
                             .lineLimit(6)
                             .padding(.top, -4)
@@ -247,8 +250,5 @@ struct FieldItem: View {
 }
 
 #Preview {
-    HStack(spacing: 0) {
-        NavigationPanel()
-        SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: true)
-    }
+    PreviewData().test1()
 }

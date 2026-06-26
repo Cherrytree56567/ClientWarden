@@ -13,8 +13,5 @@ struct ItemsPanel: View {
 }
 
 #Preview {
-    HStack(spacing: 0) {
-        NavigationPanel()
-        SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: true)
-    }
+    PreviewData().test1()
 }

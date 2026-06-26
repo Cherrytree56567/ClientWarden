@@ -1,23 +1,27 @@
 import SwiftUI
 
 /*
- * generic - Non-Editable Title and Value
- * password - Non-Editable Title and Hidden Value with Reveal button
- * ml_generic - Non-Editable Title and Multiline Value
- * editable - Non-Editable Title and Editable Value
- * ml_editable - Non-Editable Title and Editable Multiline Value
- * t_editable - Editable Title and value
+ * Generic Item is used for all main fields in an item.
+ * The title cannot be changed in a Generic Item.
+ * All Generic Items use a simple Text Field when editable is set, except for
+ * website, which uses a custom re-arrangable Text Field List.
+ * To use the TOTP Field, a totp callback must be set which will be called,
+ * after the TOTP Code expires.
+ *
+ * generic - Title and Value
+ * password - Title and Hidden Value with Reveal Button
+ * totp - Title and Value (not displayed) with TOTP
+ * website - Title and Multiline Value
+ * ml_generic - Title and Multiline Value
+ * ml_password - Title and Hidden Multiline Value with Reveal Button
  */
 enum GenericItemType {
     case generic
     case password
     case totp
+    case website
     case ml_generic
     case ml_password
-    case editable
-    case ml_editable
-    case t_editable
-    case website_editable
 }
 
 struct GenericItemData : Identifiable {
@@ -42,23 +46,18 @@ struct GenericItemData : Identifiable {
     
     func isMultiline() -> Bool {
         switch type {
-            case .ml_generic, .ml_password, .ml_editable:
+            case .ml_generic, .ml_password, .website:
                 return true
             default:
                 return false
         }
     }
     
-    func isEditable() -> Bool {
-        switch type {
-            case .editable, .ml_editable:
-                return true
-            default:
-                return false
-        }
-    }
-    
-    func d_value() -> String {
+    /*
+     * Formatted Value
+     * When the type isn't a Multi-Line Type, the newline values are replaced with a space.
+     */
+    func f_value() -> String {
         if (isMultiline()) {
             return value
         } else {
@@ -67,6 +66,11 @@ struct GenericItemData : Identifiable {
     }
 }
 
+/*
+ * Used as a TOTP Callback Timer
+ * First, it calls the TOTP Callback and gets the refreshDate, maxTimer and value.
+ * After the refreshDate is reached, the callback is called again to refresh the values
+ */
 struct TOTPTimerModifier: ViewModifier {
     let active: Bool
     let cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?
@@ -100,13 +104,13 @@ struct TOTPTimerModifier: ViewModifier {
 }
 
 struct GenericItem: View {
-    @State private var data: GenericItemData
+    @Binding var data: GenericItemData
     @State private var revealed: Bool
-    @State private var transparent: Bool
     
     @State private var totpValue: String = ""
     @State private var totpLeft: Double = 0
     @State private var totpMax: Int = 30
+    public var editable: Bool
     
     private var websiteBinding: Binding<[String]> {
         Binding(
@@ -115,102 +119,24 @@ struct GenericItem: View {
         )
     }
     
-    init(data: GenericItemData) {
-        self.data = data
+    init(data: Binding<GenericItemData>, edit: Bool) {
+        self._data = data
         self.revealed = false
-        self.transparent = false
-    }
-    
-    init(data: GenericItemData, transparent: Bool) {
-        self.data = data
-        self.revealed = false
-        self.transparent = transparent
+        self.editable = edit
     }
     
     var body: some View {
         VStack(alignment: .leading) {
-            if (data.type == GenericItemType.t_editable) {
-                TextField("Title", text: $data.title)
-                    .font(.caption)
-                    .foregroundColor(Color.gray)
-                    .padding(.bottom, -6)
-                    .padding(-4)
-            } else {
-                Text(data.title)
-                    .font(.caption)
-                    .foregroundColor(Color.gray)
-                    .padding(.bottom, -6)
-            }
+            Text(data.title)
+                .font(.caption)
+                .foregroundColor(Color.gray)
+                .padding(.bottom, -6)
             
             Divider()
             
             HStack {
-                if (data.type == GenericItemType.password) {
-                    Text(verbatim: revealed ? data.d_value() : String(repeating: "•", count: data.d_value().count))
-                        .font(.system(.body, design: .monospaced))
-                    
-                    Spacer()
-                    
-                    /*
-                     * The button reveals or hides the text via bool
-                     * as well as creating a nice glow when the value
-                     * is revealed
-                     */
-                    Button {
-                        revealed.toggle()
-                    } label: {
-                        if (revealed) {
-                            Image(systemName: "eye.fill")
-                                .font(.caption)
-                                .padding(.horizontal, 4)
-                        } else {
-                            Image(systemName: "eye")
-                                .font(.caption)
-                                .padding(.horizontal, 4)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .background {
-                        LinearGradient(
-                            gradient: Gradient(colors: [.clear, .blue.opacity(0.6)]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                        .opacity(revealed ? 1 : 0)
-                        .blur(radius: 8)
-                        .frame(maxHeight: .infinity)
-                        .scaleEffect(x: 4.0, y: 1.40)
-                        .offset(x: revealed ? 0 : 60)
-                    }
-                    .animation(.easeInOut(duration: 0.25), value: revealed)
-                } else if (data.type == GenericItemType.totp) {
-                    Text(verbatim: totpValue.isEmpty ? data.d_value() : totpValue)
-                    
-                    Spacer()
-                    
-                    /*
-                     * Since I wanted to have a UI and UI Bridge, I decided to use a totp
-                     * callback which gets called everytime the totp needs to be refreshed.
-                     */
-                    if (data.cb_getTOTP != nil && totpMax > 0) {
-                        let progress = totpMax > 0 ? totpLeft / Double(totpMax) : 0
-                        let slabel = String(Int(totpLeft))
-                        Gauge(value: progress) {
-                        } currentValueLabel: {
-                            Text(slabel)
-                        }
-                        .gaugeStyle(.accessoryCircular)
-                        .scaleEffect(0.35)
-                        .padding(-20)
-                        .padding(.trailing, 4)
-                        .tint(totpLeft < 10 ? Color.red.opacity(0.8) : .accentColor)
-                    }
-                } else {
-                    if (data.isEditable()) {
-                        TextField("Title", text: Binding(get: { data.d_value() }, set: { data.value = $0 }), axis: .vertical)
-                            .lineLimit(6)
-                            .padding(-4)
-                    } else if (data.type == GenericItemType.website_editable) {
+                if (editable) {
+                    if (data.type == GenericItemType.website) {
                         VStack {
                             List {
                                 ForEach(websiteBinding.wrappedValue.indices, id: \.self) { index in
@@ -260,7 +186,73 @@ struct GenericItem: View {
                             }
                         }
                     } else {
-                        Text(verbatim: data.d_value())
+                        TextField("Title", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
+                            .lineLimit(6)
+                            .padding(-4)
+                    }
+                } else {
+                    if (data.type == GenericItemType.password) {
+                        Text(verbatim: revealed ? data.f_value() : String(repeating: "•", count: data.f_value().count))
+                            .font(.system(.body, design: .monospaced))
+                        
+                        Spacer()
+                        
+                        /*
+                         * The button reveals or hides the text via bool
+                         * as well as creating a nice glow when the value
+                         * is revealed
+                         */
+                        Button {
+                            revealed.toggle()
+                        } label: {
+                            if (revealed) {
+                                Image(systemName: "eye.fill")
+                                    .font(.caption)
+                                    .padding(.horizontal, 4)
+                            } else {
+                                Image(systemName: "eye")
+                                    .font(.caption)
+                                    .padding(.horizontal, 4)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .background {
+                            LinearGradient(
+                                gradient: Gradient(colors: [.clear, .blue.opacity(0.6)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .opacity(revealed ? 1 : 0)
+                            .blur(radius: 8)
+                            .frame(maxHeight: .infinity)
+                            .scaleEffect(x: 4.0, y: 1.40)
+                            .offset(x: revealed ? 0 : 60)
+                        }
+                        .animation(.easeInOut(duration: 0.25), value: revealed)
+                    } else if (data.type == GenericItemType.totp) {
+                        Text(verbatim: totpValue.isEmpty ? data.f_value() : totpValue)
+                        
+                        Spacer()
+                        
+                        /*
+                         * Since I wanted to have a UI and UI Bridge, I decided to use a totp
+                         * callback which gets called everytime the totp needs to be refreshed.
+                         */
+                        if (data.cb_getTOTP != nil && totpMax > 0) {
+                            let progress = totpMax > 0 ? totpLeft / Double(totpMax) : 0
+                            let slabel = String(Int(totpLeft))
+                            Gauge(value: progress) {
+                            } currentValueLabel: {
+                                Text(slabel)
+                            }
+                            .gaugeStyle(.accessoryCircular)
+                            .scaleEffect(0.35)
+                            .padding(-20)
+                            .padding(.trailing, 4)
+                            .tint(totpLeft < 10 ? Color.red.opacity(0.8) : .accentColor)
+                        }
+                    } else {
+                        Text(verbatim: data.f_value())
                     }
                 }
             }
@@ -271,15 +263,15 @@ struct GenericItem: View {
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(lineWidth: 0)
-                .fill(transparent ? AnyShapeStyle(Color.clear) : AnyShapeStyle(Material.ultraThinMaterial))
-                .stroke(Color.gray.opacity(transparent ? 0.0 : (data.isMultiline() ? 0.5 : 0.3)), lineWidth: 0.5)
+                .fill(AnyShapeStyle(Material.ultraThinMaterial))
+                .stroke(Color.gray.opacity(data.isMultiline() ? 0.5 : 0.3), lineWidth: 0.5)
         }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .clipped()
         .contentShape(Rectangle())
         .onTapGesture {
             /*
-             * TODO: X1FE - Use Clipboard Swift Bridge to copy the value
+             * TODO: X1FD - Use Clipboard Swift Bridge to copy the value
              */
             g_toastStore.toasts.append(Toast(message: "Copied to clipboard", icon: "document.on.document").setColor(color: Color.clear))
         }
@@ -296,9 +288,5 @@ struct GenericItem: View {
 }
 
 #Preview {
-    HStack(spacing: 0) {
-        NavigationPanel()
-        SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: false)
-    }
+    PreviewData().test1()
 }
-

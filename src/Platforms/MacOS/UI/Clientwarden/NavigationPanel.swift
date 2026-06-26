@@ -12,12 +12,20 @@ enum NavItems: Hashable {
     case folder(UUID)
 }
 
-struct NavigationPanel: View {
-    @State private var selection: NavItems = .all_items
-    @State public var folders: [Folder] = []
+@Observable
+final class NavigationPanel {
+    static let instance = NavigationPanel()
     
-    @State public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
-    @State public var cb_deleteFolder: ((UUID) -> Bool)?
+    public var folders: [Folder] = []
+    
+    public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
+    public var cb_deleteFolder: ((UUID) -> Bool)?
+}
+
+struct NavigationPanelView: View {
+    @State private var selection: NavItems = .all_items
+    
+    @Bindable var data: NavigationPanel = NavigationPanel.instance
     
     var body: some View {
         TabView(selection: $selection) {
@@ -61,7 +69,7 @@ struct NavigationPanel: View {
                  * by iterating through the `folders` array which contains
                  * a Folder struct that contains a name and uuid.
                  */
-                ForEach(folders) { folder in
+                ForEach(data.folders) { folder in
                     Tab(folder.name, systemImage: "folder", value: NavItems.folder(folder.id)) {
                         Text("folder")
                     }
@@ -71,9 +79,9 @@ struct NavigationPanel: View {
                              * Check if the var has a callback and check if
                              * the callback was successful
                              */
-                            if let folderUUID = cb_deleteFolder?(folder.id) {
+                            if let folderUUID = data.cb_deleteFolder?(folder.id) {
                                 if (folderUUID) {
-                                    folders.removeAll { $0.id == folder.id }
+                                    data.folders.removeAll { $0.id == folder.id }
                                 } else {
                                     g_toastStore.toasts.append(Toast(message: "Failed to delete folder"))
                                 }
@@ -95,9 +103,9 @@ struct NavigationPanel: View {
                  * Check if the var has a callback and check if
                  * the callback was successful
                  */
-                if let folderUUID = cb_createFolder?("New Folder") {
+                if let folderUUID = data.cb_createFolder?("New Folder") {
                     if (folderUUID.result) {
-                        folders.append(Folder(id: folderUUID.id, name: "New Folder"))
+                        data.folders.append(Folder(id: folderUUID.id, name: "New Folder"))
                     } else {
                         g_toastStore.toasts.append(Toast(message: "Failed to create folder"))
                     }
@@ -121,8 +129,5 @@ struct NavigationPanel: View {
 }
 
 #Preview {
-    HStack(spacing: 0) {
-        NavigationPanel()
-        SidePanel(name: "Google", uuid: UUID(), type: ItemType.Login, favorite: true)
-    }
+    PreviewData().test1()
 }
