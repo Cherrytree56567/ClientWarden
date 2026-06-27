@@ -8,9 +8,7 @@ final class ItemsPanel {
     public var filteredElements: [ItemElement] = []
     public var searchQuery: String = ""
 
-    public var cb_query: ((String) -> [ItemElement])? = { str in
-        return []
-    }
+    public var cb_query: ((String) -> [ItemElement])?
     public var cb_new: (() -> Bool)?
 
     func update(data: [ItemElement]) {
