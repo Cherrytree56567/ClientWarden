@@ -16,7 +16,7 @@ final class ItemsPanel {
     func update(data: [ItemElement]) {
         elements = data
         filteredElements = data
-        searchQuery = "f"
+        searchQuery = ""
     }
 
     func query() {
@@ -41,6 +41,7 @@ final class ItemsPanel {
 }
 struct ItemsPanelView: View {
     @Bindable var data: ItemsPanel = ItemsPanel.instance
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack() {
@@ -49,8 +50,12 @@ struct ItemsPanelView: View {
                     .textFieldStyle(.plain)
                     .padding(8)
                     .glassEffect(.regular.interactive())
+                    .focused($isFocused)
                     .onChange(of: data.searchQuery) { _,_ in
                         data.query()
+                    }
+                    .onExitCommand {
+                        isFocused = false
                     }
                 Button {
                     data.newItem()

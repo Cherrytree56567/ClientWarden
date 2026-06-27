@@ -36,6 +36,7 @@ struct PreviewData {
                         "Password 1",
                         "Some Old Password"
                     ]
+                    SidePanel.instance.viewable = true
                     SidePanel.instance.notes = GenericItemData(title: "Notes", value: "Some Notes ig\nClientwarden avail soon", type: GenericItemType.ml_generic)
                     SidePanel.instance.cb_favorite = {_,_ in
                         return true

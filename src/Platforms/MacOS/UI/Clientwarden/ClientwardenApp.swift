@@ -7,15 +7,21 @@ final class ToastStore {
 
 let g_toastStore = ToastStore()
 
-@main
-struct ClientwardenApp: App {
-    var body: some Scene {
-        WindowGroup {
-            HStack(spacing: 0) {
+/*
+ * On Release:
+ * Change code to:
+ * HStack(spacing: 0) {
                 NavigationPanelView()
                 SidePanelView()
             }
             .frame(minWidth: 700, minHeight: 400)
+ * Remove NavPanel and ItemsPanel Callback
+ */
+@main
+struct ClientwardenApp: App {
+    var body: some Scene {
+        WindowGroup {
+            PreviewData().test1()
         }
     }
 }
