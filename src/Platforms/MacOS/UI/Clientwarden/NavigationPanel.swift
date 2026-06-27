@@ -23,56 +23,8 @@ final class NavigationPanel {
     public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
     public var cb_deleteFolder: ((UUID) -> Bool)?
     
-    public var cb_allItems: (() -> [ItemElement])? = {
-        return [
-            ItemElement(
-                name: "GitHub",
-                uuid: UUID(),
-                type: .Login,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            ),
-            ItemElement(
-                name: "Gmail",
-                uuid: UUID(),
-                type: .Login,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            ),
-            ItemElement(
-                name: "Visa Card",
-                uuid: UUID(),
-                type: .Card,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            ),
-            ItemElement(
-                name: "Personal Identity",
-                uuid: UUID(),
-                type: .Identity,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            ),
-            ItemElement(
-                name: "Wifi Password",
-                uuid: UUID(),
-                type: .Note,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            )
-        ]
-    }
-    public var cb_favorites: (() -> [ItemElement])? = {
-        return [
-            ItemElement(
-                name: "GitHub",
-                uuid: UUID(),
-                type: .Login,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            ),
-            ItemElement(
-                name: "Gmail",
-                uuid: UUID(),
-                type: .Login,
-                image: ClientwardenImage(type: .bundle, path: "profile1")
-            ),
-        ]
-    }
+    public var cb_allItems: (() -> [ItemElement])?
+    public var cb_favorites: (() -> [ItemElement])?
     public var cb_trash: (() -> [ItemElement])?
     
     public var cb_login: (() -> [ItemElement])?
