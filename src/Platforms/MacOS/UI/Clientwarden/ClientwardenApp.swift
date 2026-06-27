@@ -11,8 +11,11 @@ let g_toastStore = ToastStore()
 struct ClientwardenApp: App {
     var body: some Scene {
         WindowGroup {
-            PreviewData().test1()
-                .frame(minWidth: 700, minHeight: 400)
+            HStack(spacing: 0) {
+                NavigationPanelView()
+                SidePanelView()
+            }
+            .frame(minWidth: 700, minHeight: 400)
         }
     }
 }

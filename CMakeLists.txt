@@ -3,11 +3,18 @@ project(ClientWarden VERSION 1.0)
 
 if (APPLE)
     enable_language(OBJCXX)
+    enable_language(Swift)
 endif()
+
+set(CW_IDENTIFIER com.ct5.clientwarden)
+set(CW_VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment version")
+endif()
 
 set(Botan_DIR "build/build/generators")
 
@@ -36,7 +43,6 @@ if (WIN32)
 endif()
 
 set(FILES
-    src/main.cpp 
     src/Vault/Vault.cpp 
     src/Vault/VaultOnline.cpp 
     src/Vault/VaultLogin.cpp 
@@ -56,6 +62,8 @@ set(FILES
 
 if (WIN32)
     add_executable(clientwarden WIN32 ${FILES})
+elseif (APPLE)
+    add_executable(clientwarden MACOSX_BUNDLE ${FILES})
 else()
     add_executable(clientwarden ${FILES})
 endif()

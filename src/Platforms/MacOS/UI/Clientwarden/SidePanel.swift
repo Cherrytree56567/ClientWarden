@@ -17,6 +17,7 @@ final class SidePanel {
     public var type: ItemType = ItemType.Login
     public var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     public var editable: Bool = false
+    public var viewable: Bool = true
     public var favorite: Bool = false
     
     public var itemFields: [GenericItemData] = []
@@ -25,6 +26,9 @@ final class SidePanel {
     public var passwordHistory: [String] = []
     public var notes: GenericItemData = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     
+    /*
+     * Callbacks
+     */
     public var cb_favorite: ((Bool, UUID) -> Bool)?
     
     public var cb_duplicate: ((UUID) -> Bool)?
@@ -33,6 +37,28 @@ final class SidePanel {
     
     public var cb_sidebar: ((UUID) -> Bool)?
     
+    func closeItem() {
+        viewable = false
+    }
+    
+    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [String], notes: String) {
+        self.viewable = true
+        self.editable = false
+        self.name = name
+        self.uuid = uuid
+        self.type = type
+        self.icon = icon
+        self.favorite = favorite
+        self.itemFields = itemFields
+        self.customFields = customFields
+        self.itemHistory = itemHistory
+        self.passwordHistory = passwordHistory
+        self.notes = GenericItemData(title: "Notes", value: notes, type: GenericItemType.ml_generic)
+    }
+    
+    /*
+     * Snapshots
+     */
     public var s_name: String = ""
     public var s_favorite: Bool = false
     
@@ -72,6 +98,9 @@ final class SidePanel {
         s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     }
     
+    /*
+     * Callback Functions
+     */
     func toggleFavorite() {
         /*
          * Check if the var has a callback and check if
@@ -159,163 +188,173 @@ struct SidePanelView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            ScrollView {
-                HStack {
-                    if let image = data.icon.getImage() {
-                        image
-                            .resizable()
-                            .frame(width: 32, height: 32)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                    } else {
-                        Image("profile1")
-                            .resizable()
-                            .frame(width: 32, height: 32)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        if (data.editable) {
-                            TextField("Title", text: $data.name)
-                                .font(.system(size: 18, weight: .bold))
-                                .padding(.top, 4)
-                        } else {
-                            Text(data.name)
-                                .font(.system(size: 18, weight: .bold))
-                                .padding(.top, -2)
-                        }
-                        Text(data.type.description)
-                            .font(.system(size: 8))
-                            .foregroundStyle(.secondary)
-                            .padding(.top, -10)
-                    }
-                    
-                    Spacer()
-                    
-                    Button {
-                        data.toggleFavorite()
-                    } label: {
-                        if (data.favorite) {
-                            Image(systemName: "star.fill")
-                                .font(.subheadline)
-                                .padding(8)
-                                .foregroundStyle(Color.orange)
-                        } else {
-                            Image(systemName: "star")
-                                .font(.subheadline)
-                                .padding(8)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .glassEffect(.regular.interactive(), in: Circle())
-                }
-                
-                Divider()
-                    .padding(.top, 4)
-                
-                ForEach($data.itemFields) { $itemField in
-                    GenericItem(data: $itemField, edit: data.editable)
-                }
-                
-                if (!data.itemFields.isEmpty) {
-                    Divider()
-                        .padding(.top, 4)
-                }
-                
-                GenericItem(data: $data.notes, edit: data.editable)
-                
-                Divider()
-                    .padding(.top, 4)
-                
-                if (data.editable) {
+            if (!data.viewable) {
+                ContentUnavailableView(
+                    "Clientwarden",
+                    systemImage: "text.viewfinder",
+                    description: Text("Select an item to view its details")
+                )
+                .imageScale(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
                     HStack {
-                        Text("Fields")
-                            .font(.caption)
-                            .padding(.leading, 2)
-                        Spacer()
-                        Button() {
-                            showNewFieldCallout = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .padding(3)
+                        if let image = data.icon.getImage() {
+                            image
+                                .resizable()
+                                .frame(width: 32, height: 32)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        } else {
+                            Image("profile1")
+                                .resizable()
+                                .frame(width: 32, height: 32)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
-                        .buttonStyle(BorderlessButtonStyle())
-                        .glassEffect(in: Circle())
-                        .padding(.top, 0)
-                        .popover(isPresented: $showNewFieldCallout, arrowEdge: .leading) {
-                            Menu {
-                                Button("Text Field") {
-                                    data.customFields.append(FieldItemData(title: "New Field", value: "", type: .text))
-                                    showNewFieldCallout = false
-                                }
-                                Button("Hidden Field") {
-                                    data.customFields.append(FieldItemData(title: "New Field", value: "", type: .hidden))
-                                    showNewFieldCallout = false
-                                }
-                                Button("Checkbox") {
-                                    data.customFields.append(FieldItemData(title: "New Field", value: "false", type: .checkbox))
-                                    showNewFieldCallout = false
-                                }
-                                Button("Linked Field") {
-                                    data.customFields.append(FieldItemData(title: "New Field", value: "", type: .linked))
-                                    showNewFieldCallout = false
-                                }
-                            } label: {
-                                Label("Add field", systemImage: "plus.circle")
+                        
+                        VStack(alignment: .leading) {
+                            if (data.editable) {
+                                TextField("Title", text: $data.name)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .padding(.top, 4)
+                            } else {
+                                Text(data.name)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .padding(.top, -2)
                             }
-                            .menuStyle(.borderlessButton)
-                            .padding(.top, 5)
-                            .padding(.bottom, 5)
+                            Text(data.type.description)
+                                .font(.system(size: 8))
+                                .foregroundStyle(.secondary)
+                                .padding(.top, -10)
                         }
+                        
+                        Spacer()
+                        
+                        Button {
+                            data.toggleFavorite()
+                        } label: {
+                            if (data.favorite) {
+                                Image(systemName: "star.fill")
+                                    .font(.subheadline)
+                                    .padding(8)
+                                    .foregroundStyle(Color.orange)
+                            } else {
+                                Image(systemName: "star")
+                                    .font(.subheadline)
+                                    .padding(8)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .glassEffect(.regular.interactive(), in: Circle())
                     }
-                }
-                
-                ForEach($data.customFields) { $customField in
-                    FieldItem(data: $customField, itemType: data.type, edit: data.editable)
-                }
-                
-                if (!data.customFields.isEmpty) {
+                    
                     Divider()
                         .padding(.top, 4)
-                }
-                
-                ForEach(data.itemHistory, id: \.self) { itemHist in
-                    Text(verbatim: itemHist)
-                        .font(.caption)
-                        .foregroundStyle(Color.gray)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                
-                if (data.type == ItemType.Login && !data.passwordHistory.isEmpty) {
-                    Button {
-                        showPasswordHistory = true
-                    } label: {
-                        Text(verbatim: "View Password History")
+                    
+                    ForEach($data.itemFields) { $itemField in
+                        GenericItem(data: $itemField, edit: data.editable)
+                    }
+                    
+                    if (!data.itemFields.isEmpty) {
+                        Divider()
+                            .padding(.top, 4)
+                    }
+                    
+                    GenericItem(data: $data.notes, edit: data.editable)
+                    
+                    Divider()
+                        .padding(.top, 4)
+                    
+                    if (data.editable) {
+                        HStack {
+                            Text("Fields")
+                                .font(.caption)
+                                .padding(.leading, 2)
+                            Spacer()
+                            Button() {
+                                showNewFieldCallout = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .padding(3)
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                            .glassEffect(in: Circle())
+                            .padding(.top, 0)
+                            .popover(isPresented: $showNewFieldCallout, arrowEdge: .leading) {
+                                Menu {
+                                    Button("Text Field") {
+                                        data.customFields.append(FieldItemData(title: "New Field", value: "", type: .text))
+                                        showNewFieldCallout = false
+                                    }
+                                    Button("Hidden Field") {
+                                        data.customFields.append(FieldItemData(title: "New Field", value: "", type: .hidden))
+                                        showNewFieldCallout = false
+                                    }
+                                    Button("Checkbox") {
+                                        data.customFields.append(FieldItemData(title: "New Field", value: "false", type: .checkbox))
+                                        showNewFieldCallout = false
+                                    }
+                                    Button("Linked Field") {
+                                        data.customFields.append(FieldItemData(title: "New Field", value: "", type: .linked))
+                                        showNewFieldCallout = false
+                                    }
+                                } label: {
+                                    Label("Add field", systemImage: "plus.circle")
+                                }
+                                .menuStyle(.borderlessButton)
+                                .padding(.top, 5)
+                                .padding(.bottom, 5)
+                            }
+                        }
+                    }
+                    
+                    ForEach($data.customFields) { $customField in
+                        FieldItem(data: $customField, itemType: data.type, edit: data.editable)
+                    }
+                    
+                    if (!data.customFields.isEmpty) {
+                        Divider()
+                            .padding(.top, 4)
+                    }
+                    
+                    ForEach(data.itemHistory, id: \.self) { itemHist in
+                        Text(verbatim: itemHist)
                             .font(.caption)
                             .foregroundStyle(Color.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .buttonStyle(.plain)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .sheet(isPresented: $showPasswordHistory) {
-                        VStack {
-                            HStack {
-                                Text("Password History")
-                                Spacer()
-                                Button() {
-                                    showPasswordHistory = false
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                }
-                                .buttonStyle(BorderlessButtonStyle())
-                            }
-                            ForEach($data.passwordHistory, id: \.self) {$password in
-                                GenericItem(data: .constant(GenericItemData(title: "Password", value: password, type: .password)), edit: false)
-                            }
+                    
+                    if (data.type == ItemType.Login && !data.passwordHistory.isEmpty) {
+                        Button {
+                            showPasswordHistory = true
+                        } label: {
+                            Text(verbatim: "View Password History")
+                                .font(.caption)
+                                .foregroundStyle(Color.gray)
                         }
-                        .padding()
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .sheet(isPresented: $showPasswordHistory) {
+                            VStack {
+                                HStack {
+                                    Text("Password History")
+                                    Spacer()
+                                    Button() {
+                                        showPasswordHistory = false
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                    }
+                                    .buttonStyle(BorderlessButtonStyle())
+                                }
+                                ForEach($data.passwordHistory, id: \.self) {$password in
+                                    GenericItem(data: .constant(GenericItemData(title: "Password", value: password, type: .password)), edit: false)
+                                }
+                            }
+                            .padding()
+                        }
                     }
                 }
+                .scrollIndicators(.never)
             }
-            .scrollIndicators(.never)
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -327,70 +366,72 @@ struct SidePanelView: View {
         .padding(.vertical, 8)
         .padding(.trailing, 8)
         .toolbar {
-            if (!data.editable) {
-                /*
-                 * Edit Button
-                 * It should turn on editable and set editable for each generic item
-                 * and field
-                 * When edit is pressed, editable will be set to true. If the save button
-                 * is pressed then the edit_* fields (eg: edit_itemFields) will be copied
-                 * to the normal field (eg: itemFields). If cancel is pressed, then edit_*
-                 * fields will be discarded
-                 */
-                ToolbarItem {
-                    Button {
-                        data.editable = true
-                        data.saveSnapshot()
-                    } label: {
-                        Image(systemName: "pencil")
+            if (data.viewable) {
+                if (!data.editable) {
+                    /*
+                     * Edit Button
+                     * It should turn on editable and set editable for each generic item
+                     * and field
+                     * When edit is pressed, editable will be set to true. If the save button
+                     * is pressed then the edit_* fields (eg: edit_itemFields) will be copied
+                     * to the normal field (eg: itemFields). If cancel is pressed, then edit_*
+                     * fields will be discarded
+                     */
+                    ToolbarItem {
+                        Button {
+                            data.editable = true
+                            data.saveSnapshot()
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
                     }
-                    .glassEffect(.regular.interactive(), in: Circle())
-                }
-                .sharedBackgroundVisibility(.hidden)
-                ToolbarItem {
-                    Button {
-                        data.duplicateItem()
-                    } label: {
-                        Image(systemName: "document.on.document")
-                            .imageScale(.medium)
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.duplicateItem()
+                        } label: {
+                            Image(systemName: "document.on.document")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
                     }
-                    .glassEffect(.regular.interactive(), in: Circle())
-                }
-                .sharedBackgroundVisibility(.hidden)
-                ToolbarItem {
-                    Button {
-                        data.deleteItem()
-                    } label: {
-                        Image(systemName: "trash")
-                            .imageScale(.medium)
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.deleteItem()
+                        } label: {
+                            Image(systemName: "trash")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
                     }
-                    .glassEffect(.regular.interactive(), in: Circle())
-                }
-                .sharedBackgroundVisibility(.hidden)
-            } else {
-                ToolbarItem {
-                    Button {
-                        if (data.saveItem()) {
-                            data.editable = false
-                            data.deleteSnapshot()
-                        } else {
+                    .sharedBackgroundVisibility(.hidden)
+                } else {
+                    ToolbarItem {
+                        Button {
+                            if (data.saveItem()) {
+                                data.editable = false
+                                data.deleteSnapshot()
+                            } else {
+                                data.editable = false
+                                data.pullSnapshot()
+                            }
+                        } label: {
+                            Image(systemName: "square.and.arrow.down")
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
                             data.editable = false
                             data.pullSnapshot()
+                        } label: {
+                            Image(systemName: "eraser")
                         }
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
+                        .glassEffect(.regular.interactive(), in: Circle())
                     }
-                    .glassEffect(.regular.interactive(), in: Circle())
-                }
-                .sharedBackgroundVisibility(.hidden)
-                ToolbarItem {
-                    Button {
-                        data.editable = false
-                        data.pullSnapshot()
-                    } label: {
-                        Image(systemName: "eraser")
-                    }
-                    .glassEffect(.regular.interactive(), in: Circle())
                 }
             }
         }

@@ -17,7 +17,7 @@ class ClientwardenImage {
     func getImage() -> Image? {
         switch type {
             case .bundle:
-                guard NSImage(named: path) != nil else {
+                guard NSImage(named: NSImage.Name(path)) != nil else {
                     return nil
                 }
                 return Image(path)

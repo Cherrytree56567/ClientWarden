@@ -2,7 +2,7 @@ import Foundation
 
 final class Clipboard {
     static let instance = Clipboard()
-    /*
+    
     private let bridge = CWClipboard()
     
     private init() {}
@@ -18,5 +18,4 @@ final class Clipboard {
     func setDelay(_ seconds: Int) {
         bridge.setDelay(seconds)
     }
-     */
 }

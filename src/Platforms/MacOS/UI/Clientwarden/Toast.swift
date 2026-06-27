@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftUIColor
 
 struct Toast: Identifiable, Equatable {
     let id: UUID = UUID()

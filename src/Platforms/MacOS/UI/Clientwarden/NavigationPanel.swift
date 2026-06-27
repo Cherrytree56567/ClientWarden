@@ -16,6 +16,8 @@ enum NavItems: Hashable {
 final class NavigationPanel {
     static let instance = NavigationPanel()
     
+    public var refresh: Int = 0
+    
     public var folders: [Folder] = []
     
     public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
@@ -80,102 +82,91 @@ final class NavigationPanel {
     public var cb_SSHKey: (() -> [ItemElement])?
     
     public var cb_folder: ((UUID) -> [ItemElement])?
+    
+    func refreshItems() {
+        self.refresh += 1
+    }
 }
 
 struct NavigationPanelView: View {
     @State private var selection: NavItems = .all_items
+    @State private var refreshToken: Int = 0
     
     @Bindable var data: NavigationPanel = NavigationPanel.instance
+    
+    private func loadTabElements(tab: NavItems, prev: NavItems) {
+        var elements: [ItemElement]?
+        
+        switch tab {
+            case .all_items:
+                elements = data.cb_allItems?()
+            case .favorites:
+                elements = data.cb_favorites?()
+            case .trash:
+                elements = data.cb_trash?()
+            case .login:
+                elements = data.cb_login?()
+            case .card:
+                elements = data.cb_card?()
+            case .identity:
+                elements = data.cb_identity?()
+            case .note:
+                elements = data.cb_note?()
+            case .sshkey:
+                elements = data.cb_SSHKey?()
+            case .folder(let uuid):
+                elements = data.cb_folder?(uuid)
+        }
+        
+        if let elements {
+            ItemsPanel.instance.update(data: elements)
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for \(tab)"))
+            selection = prev
+        }
+    }
     
     var body: some View {
         TabView(selection: $selection) {
             Tab("All Items", systemImage: "command", value: .all_items) {
-                if let items = data.cb_allItems?() {
-                    ItemsPanel(elements: items)
-                } else {
-                    EmptyView()
-                        .onAppear {
-                            g_toastStore.toasts.append(Toast(message: "No callback set for all Items"))
-                        }
-                }
+                ItemsPanelView()
+                    .id(refreshToken)
             }
             
             Tab("Favorites", systemImage: "star", value: .favorites) {
-                if let items = data.cb_favorites?() {
-                    ItemsPanel(elements: items)
-                } else {
-                    EmptyView()
-                        .onAppear {
-                            g_toastStore.toasts.append(Toast(message: "No callback set for favorites"))
-                        }
-                }
+                ItemsPanelView()
+                    .id(refreshToken)
             }
             
             Tab("Trash", systemImage: "trash", value: .trash) {
-                if let items = data.cb_trash?() {
-                    ItemsPanel(elements: items)
-                } else {
-                    EmptyView()
-                        .onAppear {
-                            g_toastStore.toasts.append(Toast(message: "No callback set for trash"))
-                        }
-                }
+                ItemsPanelView()
+                    .id(refreshToken)
             }
             
             TabSection("Type") {
                 Tab("Login", systemImage: "globe", value: NavItems.login) {
-                    if let items = data.cb_login?() {
-                        ItemsPanel(elements: items)
-                    } else {
-                        EmptyView()
-                            .onAppear {
-                                g_toastStore.toasts.append(Toast(message: "No callback set for login"))
-                            }
-                    }
+                    ItemsPanelView()
+                        .id(refreshToken)
                 }
                 
                 Tab("Card", systemImage: "creditcard", value: NavItems.card) {
-                    if let items = data.cb_card?() {
-                        ItemsPanel(elements: items)
-                    } else {
-                        EmptyView()
-                            .onAppear {
-                                g_toastStore.toasts.append(Toast(message: "No callback set for card"))
-                            }
-                    }
+                    ItemsPanelView()
+                        .id(refreshToken)
                 }
                 
                 Tab("Identity", systemImage: "person.text.rectangle", value: NavItems.identity) {
-                    if let items = data.cb_identity?() {
-                        ItemsPanel(elements: items)
-                    } else {
-                        EmptyView()
-                            .onAppear {
-                                g_toastStore.toasts.append(Toast(message: "No callback set for identity"))
-                            }
-                    }
+                    ItemsPanelView()
+                        .id(refreshToken)
                 }
                 
                 Tab("Note", systemImage: "pad.header", value: NavItems.note) {
-                    if let items = data.cb_note?() {
-                        ItemsPanel(elements: items)
-                    } else {
-                        EmptyView()
-                            .onAppear {
-                                g_toastStore.toasts.append(Toast(message: "No callback set for note"))
-                            }
-                    }
+                    ItemsPanelView()
+                        .id(refreshToken)
                 }
                 
                 Tab("SSH Key", systemImage: "key.viewfinder", value: NavItems.sshkey) {
-                    if let items = data.cb_SSHKey?() {
-                        ItemsPanel(elements: items)
-                    } else {
-                        EmptyView()
-                            .onAppear {
-                                g_toastStore.toasts.append(Toast(message: "No callback set for SSH Key"))
-                            }
-                    }
+                    ItemsPanelView()
+                        .id(refreshToken)
                 }
             }
             
@@ -187,14 +178,8 @@ struct NavigationPanelView: View {
                  */
                 ForEach(data.folders) { folder in
                     Tab(folder.name, systemImage: "folder", value: NavItems.folder(folder.id)) {
-                        if let items = data.cb_folder?(folder.id) {
-                            ItemsPanel(elements: items)
-                        } else {
-                            EmptyView()
-                                .onAppear {
-                                    g_toastStore.toasts.append(Toast(message: "No callback set for folder"))
-                                }
-                        }
+                        ItemsPanelView()
+                            .id(refreshToken)
                     }
                     .contextMenu {
                         Button(role: .destructive) {
@@ -241,6 +226,7 @@ struct NavigationPanelView: View {
             }
             .padding(.vertical, 4)
             .padding(.horizontal, 4)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8))
         }
         .toast(
             Binding(
@@ -248,6 +234,16 @@ struct NavigationPanelView: View {
                 set: { g_toastStore.toasts = $0 }
             )
         )
+        .onChange(of: data.refresh) { _, newVal in
+            refreshToken = newVal
+        }
+        .onChange(of: selection) { oldValue, newValue in
+            SidePanel.instance.closeItem()
+            loadTabElements(tab: newValue, prev: oldValue)
+        }
+        .onAppear() {
+            loadTabElements(tab: selection, prev: selection)
+        }
     }
 }
 
