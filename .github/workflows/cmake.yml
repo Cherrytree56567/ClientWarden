@@ -22,10 +22,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Conan
+      uses: conan-io/setup-conan@v1
+      with:
+          cache_packages: true
+
     - name: Install Dependencies
       run: |
-          pip install conan
-          conan profile detect
           mkdir build
           conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True"
           
