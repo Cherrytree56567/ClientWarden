@@ -1,5 +1,12 @@
 import SwiftUI
 
+@Observable
+final class ToastStore {
+    var toasts: [Toast] = []
+}
+
+let g_toastStore = ToastStore()
+
 struct Toast: Identifiable, Equatable {
     let id: UUID = UUID()
     let message: String
