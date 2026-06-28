@@ -10,14 +10,14 @@
 
   <Identity
     Name="9faabc23-f6f4-498a-95ac-d2c7554d3ea4"
-    Publisher="CN=ronit"
+    Publisher="CN=ct5"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="9faabc23-f6f4-498a-95ac-d2c7554d3ea4" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>WindowsUI</DisplayName>
-    <PublisherDisplayName>ronit</PublisherDisplayName>
+    <PublisherDisplayName>ct5</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

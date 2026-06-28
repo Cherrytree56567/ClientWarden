@@ -120,7 +120,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
 4. Build
    ```sh
    cd build
-   cmake .. -DCMAKE_PREFIX_PATH=build/Debug/generators/conan_toolchain.cmake -G Xcode
+   cmake .. -DCMAKE_TOOLCHAIN_FILE=build/Debug/generators/conan_toolchain.cmake -G Xcode
    cd ../
    cmake --build build
    ```

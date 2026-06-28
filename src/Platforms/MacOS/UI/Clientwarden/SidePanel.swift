@@ -17,7 +17,7 @@ final class SidePanel {
     public var type: ItemType = ItemType.Login
     public var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     public var editable: Bool = false
-    public var viewable: Bool = true
+    public var viewable: Bool = false
     public var favorite: Bool = false
     
     public var itemFields: [GenericItemData] = []
