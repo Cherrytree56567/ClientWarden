@@ -114,7 +114,7 @@ struct LoginView: View {
                                 data.vaultURL = "https://vault.bitwarden.com"
                                 data._mainURL = "https://bitwarden.com"
                                 data._apiURL = "https://api.bitwarden.com"
-                                data._wssURL = "wss://someVault.com"
+                                data._wssURL = "wss://vault.bitwarden.com"
                                 data.mainChanged = true
                                 data.apiChanged = true
                                 data.wssChanged = true

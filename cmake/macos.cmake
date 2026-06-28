@@ -11,6 +11,8 @@ function(buildUI _target)
         src/Platforms/MacOS/UI/Clientwarden/NavigationPanel.swift
         src/Platforms/MacOS/UI/Clientwarden/PreviewData.swift
         src/Platforms/MacOS/UI/Clientwarden/SidePanel.swift
+        src/Platforms/MacOS/UI/Clientwarden/Unlock.swift
+        src/Platforms/MacOS/UI/Clientwarden/Login.swift
         src/Platforms/MacOS/UI/Clientwarden/Toast.swift
     )
 
