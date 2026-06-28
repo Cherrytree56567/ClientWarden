@@ -43,6 +43,7 @@ struct PreviewData {
                     }
                 }
         }
+        .frame(minWidth: 700, minHeight: 400)
     }
 }
 

@@ -12,6 +12,9 @@ enum NavItems: Hashable {
     case folder(UUID)
 }
 
+/*
+ * TODO: Make the liquid glass bg to always be there and move No Items to the center
+ */
 @Observable
 final class NavigationPanel {
     static let instance = NavigationPanel()
@@ -180,12 +183,6 @@ struct NavigationPanelView: View {
             .padding(.horizontal, 4)
             .animation(.spring(response: 0.4, dampingFraction: 0.8))
         }
-        .toast(
-            Binding(
-                get: { g_toastStore.toasts },
-                set: { g_toastStore.toasts = $0 }
-            )
-        )
         .onChange(of: data.refresh) { _, newVal in
             refreshToken = newVal
         }

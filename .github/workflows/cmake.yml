@@ -34,5 +34,3 @@ jobs:
 
     - name: Build
       run: cmake --build build --config ${{env.BUILD_TYPE}}
-
-

@@ -67,6 +67,9 @@ struct ItemsPanelView: View {
                 .buttonStyle(.plain)
                 .glassEffect(.regular.interactive(), in: Circle())
             }
+            .padding(8)
+            .padding(.bottom, -8)
+            
             if (data.searchQuery != "" && data.filteredElements.isEmpty) {
                 ContentUnavailableView(
                     "No Items Found",
@@ -84,14 +87,22 @@ struct ItemsPanelView: View {
                     ForEach(data.filteredElements) { item in
                         ItemElementView(data: item)
                     }
+                    .padding(8)
                 }
                 .scrollIndicators(.never)
+                .background {
+                    RoundedRectangle(cornerRadius: 0, style: .continuous)
+                        .stroke(lineWidth: 0)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                }
+                .padding(.bottom, -9)
+                .padding(.leading, -1)
+                .padding(.trailing, -1)
             }
 
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .padding(8)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: data.elements)
     }
 }

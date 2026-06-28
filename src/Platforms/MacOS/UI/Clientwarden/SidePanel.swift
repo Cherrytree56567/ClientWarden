@@ -357,14 +357,16 @@ struct SidePanelView: View {
             }
         }
         .padding(16)
+        .padding(.bottom, -16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 0, style: .continuous)
                 .stroke(lineWidth: 0)
-                .glassEffect(in: .rect(cornerRadius: 16))
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
         }
-        .padding(.vertical, 8)
-        .padding(.trailing, 8)
+        .padding(.top, -1)
+        .padding(.trailing, -1)
+        .padding(.bottom, -1)
         .toolbar {
             if (data.viewable) {
                 if (!data.editable) {

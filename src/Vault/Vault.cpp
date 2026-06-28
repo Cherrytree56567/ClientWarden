@@ -15,12 +15,12 @@ namespace ClientWarden::Vault {
         }
     }
 
-    void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri) {
+    void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
         authData["vaultURL"] = vaultUri;
         authData["mainURL"] = mainUri;
         authData["apiURL"] = apiUri;
         authData["iconURL"] = iconUri;
-        authData["websURL"] = "wss://vwprod-457fe78y7u.tail24588b.ts.net";
+        authData["wssURL"] = wssUri;
     }
 
     Vault::~Vault() {
@@ -434,7 +434,7 @@ namespace ClientWarden::Vault {
     }
 
     void Vault::websocketLoop() {
-        std::string wsUri = authData["websURL"].get<std::string>() + "/notifications/hub";
+        std::string wsUri = authData["wssURL"].get<std::string>() + "/notifications/hub";
 
         httplib::Headers headers = {
             { "Authorization", "Bearer " + authData["accessString"].get<std::string>() }

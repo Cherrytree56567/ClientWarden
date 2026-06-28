@@ -63,7 +63,7 @@ namespace ClientWarden::Vault {
         AuthState submitDeviceVerify(std::string& code);
         NetworkState postLogin();
 
-        void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri);
+        void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
 
         void Unlock(std::string& password);
         void Lock();

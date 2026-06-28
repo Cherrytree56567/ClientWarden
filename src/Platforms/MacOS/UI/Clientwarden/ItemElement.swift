@@ -46,7 +46,6 @@ struct ItemElementView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
-        .glassEffect(in: .rect(cornerRadius: 12))
     }
 }
 
