@@ -30,14 +30,14 @@ jobs:
     - name: Install Dependencies
       run: |
           mkdir build
-          conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True"  -s build_type=Release
+          conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
           
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
           cd build
-          cmake .. -DCMAKE_PREFIX_PATH=build/Debug/generators/conan_toolchain.cmake -G Xcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake .. -DCMAKE_PREFIX_PATH=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -G Xcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       # Build your program with the given configuration
