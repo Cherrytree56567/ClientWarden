@@ -24,6 +24,9 @@ final class SidePanel {
     public var customFields: [FieldItemData] = []
     public var itemHistory: [String] = []
     public var passwordHistory: [String] = []
+    public var attachmentItems: [AttachmentItemData] = [
+        AttachmentItemData(id: UUID(), name: "test.png")
+    ]
     public var notes: GenericItemData = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     
     /*
@@ -36,6 +39,10 @@ final class SidePanel {
     public var cb_save: ((UUID) -> Bool)?
     
     public var cb_sidebar: ((UUID) -> Bool)?
+    
+    public var cb_downloadAttachment: ((UUID, UUID) -> Bool)?
+    public var cb_removeAttachment: ((UUID, UUID) -> Bool)?
+    public var cb_uploadAttachment: ((UUID) -> Bool)?
     
     func closeItem() {
         viewable = false
@@ -178,6 +185,64 @@ final class SidePanel {
             g_toastStore.toasts.append(Toast(message: "No callback set for view Item"))
         }
     }
+    
+    func downloadAttachment(id: UUID) {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let fav = cb_downloadAttachment?(uuid, id) {
+            if (fav) {
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to download Attachment"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for downloadAttachment"))
+        }
+    }
+    
+    func removeAttachment(id: UUID) {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let fav = cb_removeAttachment?(uuid, id) {
+            if (fav) {
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to remove Attachment"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for removeAttachment"))
+        }
+    }
+    
+    func uploadAttachment() {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let fav = cb_uploadAttachment?(uuid) {
+            if (fav) {
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to upload Attachment"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for uploadAttachment"))
+        }
+    }
+    
+    /*
+     * Callback Helpers
+     */
+    func updateProgress(id: UUID, progress: Double) {
+        if let index = attachmentItems.firstIndex(where: { $0.id == id }) {
+            attachmentItems[index].progress = progress
+        }
+    }
+    
+    func deleteAttachmentView(id: UUID) {
+        attachmentItems.removeAll { $0.id == id }
+    }
 }
 
 struct SidePanelView: View {
@@ -312,6 +377,33 @@ struct SidePanelView: View {
                     }
                     
                     if (!data.customFields.isEmpty) {
+                        Divider()
+                            .padding(.top, 4)
+                    }
+                    
+                    if (data.editable) {
+                        HStack {
+                            Text("Attachments")
+                                .font(.caption)
+                                .padding(.leading, 2)
+                            Spacer()
+                            Button() {
+                                data.uploadAttachment()
+                            } label: {
+                                Image(systemName: "plus")
+                                    .padding(3)
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                            .glassEffect(in: Circle())
+                            .padding(.top, 0)
+                        }
+                    }
+                    
+                    ForEach($data.attachmentItems) { $attachment in
+                        AttachmentItem(data: $attachment, editable: data.editable)
+                    }
+                    
+                    if (!data.attachmentItems.isEmpty) {
                         Divider()
                             .padding(.top, 4)
                     }

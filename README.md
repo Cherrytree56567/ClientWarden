@@ -129,69 +129,31 @@ You might need to use the `-s compiler.cppstd=20` flag.
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Implement Basic UI
-- [x] Implement Callbacks for Fields
-    - [X] Get Password Show/Hide Fixed
-    - [X] Get Websites Working
-    - [X] Get TOTP Working
-    - [X] Get Note Working
-    - [X] Get Custom Fields Working
-- [X] Get Card/Identity/SSH Keys/Note Working
-- [X] Implement Favorites
-- [X] Implement Clipboard
-- [X] Implement Edit
-- [X] Add Callback for Delete Button
-- [X] Add Callback for Duplicate button
-- [X] Implement Search Bar
-- [X] Add Filters
-- [X] Add Callback for New Item Button
-- [X] Implement Folders
-- [X] Add Support for Password Generator
-- [X] Add Bin Page
-- [X] Add Permanantly Delete Button
-- [X] Add Custom Vault Uri Page in Login
-- [X] Show Passkeys in Sidebar
-- [X] Implement Vault Based Clipboard with Timeout
-- [X] Add Unselected Item Sidepane Art
-- [X] Add Attachments Support
-- [X] Clean up and Document Code
-  - [X] Add Multi Threading
-  - [X] Add Try and Catches
-  - [X] Impl Generic Item
-  - [X] Fix Attachment Support
-  - [X] Fix Folder Support
-- [ ] Add Folders Tree View
-- [X] Settings Support
-- [ ] Lock/Unlock Support
-- [ ] Implement Bitwarden WebSockets
-- [X] TOTP Support
-- [ ] Transfer to Botan `secure_vector` for security
-- [ ] Implement Custom D2D Drawing Layer for extra security
-- [ ] Beta Release
-- [ ] Support for Win 11 Passkeys
-- [ ] Add Support for Windows Hello
+- [X] MacOS Support
+    - [X] Attachment Support
+    - [ ] Bin Page
+    - [ ] Settings Support
+    - [ ] Lock Support
+    - [ ] UI Bridge
+    - [ ] Folder Tree View
+    - [ ] Passkey Support
+- [ ] Derive Item Classes from Generic Item
+- [ ] Add Reprompt func to Generic Item
+- [ ] Windows Support
+    - [ ] Create Nav Panel
+    - [ ] Create Side Panel
+    - [ ] Create Create Items Panel
+    - [ ] Settings Support
+    - [ ] UI Bridge
+    - [ ] Passkey Support
+- [ ] Linux Support
+    - [ ] Create Nav Panel
+    - [ ] Create Side Panel
+    - [ ] Create Create Items Panel
+    - [ ] Settings Support
+    - [ ] UI Bridge
+    - [ ] Passkey Support
 - [ ] Official Release
-
-## Bugs
-- [X] View Only Attachment Field needs to be cleared when editing
-- [X] Changing Folder Doesnt Work
-- [X] Removing Item from Folder fails
-- [X] New Folders cant change names
-- [X] Attempting to Delete an Attachment Crashes
-- [X] Deleting fields doesnt work
-- [X] Field Name or value doesnt change
-- [X] PrivateKey Box needs to be bigger
-- [ ] Deleting a Folder doesnt remove it from the Folder Picker
-- [ ] Restoring an Item doesn't reset the sidepane
-- [ ] Linked Field on Identity reports wrong name
-- [ ] Linked Field needs support for other Items
-- [ ] Changing Tabs needs Multithreading (All Items, Trash, Folder)
-- [ ] Save needs Multithreading
-- [ ] Selected Item needs to be Highlighted
-- [ ] Clipboard Timeout on Settings needs Sections
-- [ ] App shouldn't allow fullscreen.
-- [ ] Sometimes it asks to re-login.
-- [ ] Clear json files if re-login is needed.
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
