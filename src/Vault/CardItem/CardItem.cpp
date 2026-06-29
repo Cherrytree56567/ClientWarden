@@ -1,57 +1,9 @@
 #include "CardItem.h"
 
 namespace ClientWarden::Vault {
-    CardItem::CardItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
-        }
-        if (!localVault.vaultData.contains("ciphers") || localVault.vaultData["ciphers"].is_null()) return;
-        data["id"] = uuid;
-        for (auto& cipher : localVault.vaultData["ciphers"]) {
-            if (!cipher.contains("id") || cipher["id"].is_null()) {
-                continue;
-            }
-            if (cipher["id"].get<std::string>() == uuid) {
-                data = cipher;
-                break;
-            }
-        }
-        if (data.contains("data")) {
-            if (data["data"].is_string()) {
-                fieldData = nlohmann::json::parse(data["data"].get<std::string>());
-            } else {
-                fieldData = data["data"];
-                if (fieldData.contains("fields")) {
-                    fieldData["Fields"] = fieldData["fields"];
-                    fieldData.erase("fields");
-                    for (auto& fieldD : fieldData["Fields"]) {
-                        if (fieldD.contains("name")) {
-                            fieldD["Name"] = fieldD["name"];
-                            fieldD.erase("name");
-                        }
-                        if (fieldD.contains("type")) {
-                            fieldD["Type"] = fieldD["type"];
-                            fieldD.erase("Type");
-                        }
-                        if (fieldD.contains("value")) {
-                            fieldD["Value"] = fieldD["value"];
-                            fieldD.erase("Value");
-                        }
-                    }
-                }
-            }
-        }
-        if (data.contains("key")) {
-            if (data["key"].is_null()) {
-                itemEncKey = localVault.encKey;
-                itemMacKey = localVault.macKey;
-            } else  {
-                auto keys = localVault.getKeysFromCipher(data["key"]);
-                itemEncKey = keys.first;
-                itemMacKey = keys.second;
-            }
-        } else {
-            init = false;
+    CardItem::CardItem(Vault& vault, std::string uuid) : GenericItem(vault, uuid) {
+        if (!l_logger) {
+            l_logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
         }
         init = false;
         if (data.contains("type") || data["type"].is_number()) {
@@ -64,9 +16,9 @@ namespace ClientWarden::Vault {
         }
     }
 
-    CardItem::CardItem(Vault& vault) : localVault(vault), isBeingCreated(true) {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
+    CardItem::CardItem(Vault& vault) : GenericItem(vault) {
+        if (!l_logger) {
+            l_logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
         }
         auto keys = localVault.generateEncMacKeys();
         itemEncKey = keys.first;
@@ -125,473 +77,177 @@ namespace ClientWarden::Vault {
         init = true;
     }
 
-    CardItem::~CardItem() {
-        /*
-        * TODO: Destruct
-        */
-        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-        itemEncKey.clear();
-        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-        itemMacKey.clear();
+    CardItem* CardItem::SetName(std::string& name) {
+        return static_cast<CardItem*>(this->GenericItem::SetName(name));
     }
 
-    CardItem& CardItem::SetName(std::string& name) {
-        if (!init) return *this;
-        fieldData["Name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-        data["name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(name.data(), name.size());
-        name.clear();
-        return *this;
-    }
-
-    CardItem& CardItem::SetBrand(std::string& brand) {
-        if (!init) return *this;
-        if (!data.contains("card") || !data["card"].is_object()) return *this;
+    CardItem* CardItem::SetBrand(std::string& brand) {
+        if (!init) return this;
+        if (!data.contains("card") || !data["card"].is_object()) return this;
         fieldData["Brand"] = localVault.Encrypt(brand, itemEncKey, itemMacKey);
         data["card"]["brand"] = localVault.Encrypt(brand, itemEncKey, itemMacKey);
         OPENSSL_cleanse(brand.data(), brand.size());
         brand.clear();
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::SetCardholderName(std::string& cardholderName) {
-        if (!init) return *this;
-        if (!data.contains("card") || !data["card"].is_object()) return *this;
+    CardItem* CardItem::SetCardholderName(std::string& cardholderName) {
+        if (!init) return this;
+        if (!data.contains("card") || !data["card"].is_object()) return this;
         fieldData["CardholderName"] = localVault.Encrypt(cardholderName, itemEncKey, itemMacKey);
         data["card"]["cardholderName"] = localVault.Encrypt(cardholderName, itemEncKey, itemMacKey);
         OPENSSL_cleanse(cardholderName.data(), cardholderName.size());
         cardholderName.clear();
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::SetCode(std::string& code) {
-        if (!init) return *this;
-        if (!data.contains("card") || !data["card"].is_object()) return *this;
+    CardItem* CardItem::SetCode(std::string& code) {
+        if (!init) return this;
+        if (!data.contains("card") || !data["card"].is_object()) return this;
         fieldData["Code"] = localVault.Encrypt(code, itemEncKey, itemMacKey);
         data["card"]["code"] = localVault.Encrypt(code, itemEncKey, itemMacKey);
         OPENSSL_cleanse(code.data(), code.size());
         code.clear();
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::SetExpMonth(std::string& expMonth) {
-        if (!init) return *this;
-        if (!data.contains("card") || !data["card"].is_object()) return *this;
+    CardItem* CardItem::SetExpMonth(std::string& expMonth) {
+        if (!init) return this;
+        if (!data.contains("card") || !data["card"].is_object()) return this;
         fieldData["ExpMonth"] = localVault.Encrypt(expMonth, itemEncKey, itemMacKey);
         data["card"]["expMonth"] = localVault.Encrypt(expMonth, itemEncKey, itemMacKey);
         OPENSSL_cleanse(expMonth.data(), expMonth.size());
         expMonth.clear();
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::SetExpYear(std::string& expYear) {
-        if (!init) return *this;
-        if (!data.contains("card") || !data["card"].is_object()) return *this;
+    CardItem* CardItem::SetExpYear(std::string& expYear) {
+        if (!init) return this;
+        if (!data.contains("card") || !data["card"].is_object()) return this;
         fieldData["ExpYear"] = localVault.Encrypt(expYear, itemEncKey, itemMacKey);
         data["card"]["expYear"] = localVault.Encrypt(expYear, itemEncKey, itemMacKey);
         OPENSSL_cleanse(expYear.data(), expYear.size());
         expYear.clear();
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::SetNumber(std::string& number) {
-        if (!init) return *this;
-        if (!data.contains("card") || !data["card"].is_object()) return *this;
+    CardItem* CardItem::SetNumber(std::string& number) {
+        if (!init) return this;
+        if (!data.contains("card") || !data["card"].is_object()) return this;
         fieldData["Number"] = localVault.Encrypt(number, itemEncKey, itemMacKey);
         data["card"]["number"] = localVault.Encrypt(number, itemEncKey, itemMacKey);
         OPENSSL_cleanse(number.data(), number.size());
         number.clear();
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::SetNotes(std::string& notes) {
-        if (!init) return *this;
-        fieldData["Notes"] = localVault.Encrypt(notes, itemEncKey, itemMacKey);
-        data["notes"] = localVault.Encrypt(notes, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(notes.data(), notes.size());
-        notes.clear();
-        return *this;
+    CardItem* CardItem::SetNotes(std::string& notes) {
+        return static_cast<CardItem*>(this->GenericItem::SetNotes(notes));
     }
 
-    CardItem& CardItem::SetFolder(std::string folderUUID) {
-        if (!init) return *this;
-        data["folderId"] = folderUUID;
-        return *this;
+    CardItem* CardItem::SetFolder(std::string folderUUID) {
+        return static_cast<CardItem*>(this->GenericItem::SetFolder(folderUUID));
     }
 
-    CardItem& CardItem::RemoveFolder() {
-        if (!init) return *this;
-        data["folderId"] = nullptr;
-        return *this;
+    CardItem* CardItem::RemoveFolder() {
+        return static_cast<CardItem*>(this->GenericItem::RemoveFolder());
     }
 
-    CardItem& CardItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
-        if (!init) return *this;
-        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
-        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
-            fieldData["Fields"] = nlohmann::json::object();
-        }
-        nlohmann::json addFieldData;
-        nlohmann::json dataFieldData;
-        if (field == CustomFieldType::Text) {
-            addFieldData["linkedId"] = nullptr;
-            addFieldData["name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            addFieldData["type"] = 0;
-            addFieldData["value"] = localVault.Encrypt(value, itemEncKey, itemMacKey);
-
-            dataFieldData["Name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            dataFieldData["Type"] = 0;
-            dataFieldData["Value"] = localVault.Encrypt(value, itemEncKey, itemMacKey);
-        } else if (field == CustomFieldType::Hidden) {
-            addFieldData["linkedId"] = nullptr;
-            addFieldData["name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            addFieldData["type"] = 1;
-            addFieldData["value"] = localVault.Encrypt(value, itemEncKey, itemMacKey);
-
-            dataFieldData["Name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            dataFieldData["Type"] = 1;
-            dataFieldData["Value"] = localVault.Encrypt(value, itemEncKey, itemMacKey);
-        } else if (field == CustomFieldType::Checkbox) {
-            addFieldData["linkedId"] = nullptr;
-            addFieldData["name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            addFieldData["type"] = 2;
-            addFieldData["value"] = localVault.Encrypt(value, itemEncKey, itemMacKey); // "true" or "false"
-
-            dataFieldData["Name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            dataFieldData["Type"] = 2;
-            dataFieldData["Value"] = localVault.Encrypt(value, itemEncKey, itemMacKey);
-        } else if (field == CustomFieldType::Linked) {
-            addFieldData["linkedId"] = std::stoi(value);
-            addFieldData["name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            addFieldData["type"] = 3;
-            addFieldData["value"] = nullptr;
-
-            dataFieldData["Name"] = localVault.Encrypt(name, itemEncKey, itemMacKey);
-            dataFieldData["Type"] = 3;
-            dataFieldData["LinkedId"] = std::stoi(value);
-        }
-
-        fieldData["Fields"].push_back(dataFieldData);
-        data["fields"].push_back(addFieldData);
-
-        OPENSSL_cleanse(name.data(), name.size());
-        name.clear();
-        OPENSSL_cleanse(value.data(), value.size());
-        value.clear();
-
-        return *this;
+    CardItem* CardItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
+        return static_cast<CardItem*>(this->GenericItem::AddField(field, name, value));
     }
 
-    CardItem& CardItem::RemoveField(std::string& name) {
-        if (!init) return *this;
-        if (!data.contains("fields") || !fieldData.contains("Fields")) return *this;
-        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
-            fieldData["Fields"] = nlohmann::json::object();
-        }
-        auto& fields = data["fields"];
-        for (auto it = fields.begin(); it != fields.end(); ++it) {
-            std::string decName = localVault.Decrypt((*it)["name"], itemEncKey, itemMacKey);
-            if (decName == name) {
-                OPENSSL_cleanse(decName.data(), decName.size());
-                decName.clear();
-                fields.erase(it);
-                break;
-            }
-
-            OPENSSL_cleanse(decName.data(), decName.size());
-            decName.clear();
-        }
-
-        auto& fieldsField = fieldData["Fields"];
-        for (auto it = fieldsField.begin(); it != fieldsField.end(); ++it) {
-            std::string decName = localVault.Decrypt((*it)["Name"], itemEncKey, itemMacKey);
-            if (decName == name) {
-                OPENSSL_cleanse(decName.data(), decName.size());
-                decName.clear();
-                fieldsField.erase(it);
-                break;
-            }
-
-            OPENSSL_cleanse(decName.data(), decName.size());
-            decName.clear();
-        }
-
-        OPENSSL_cleanse(name.data(), name.size());
-        name.clear();
-        return *this;
+    CardItem* CardItem::RemoveField(std::string& name) {
+        return static_cast<CardItem*>(this->GenericItem::RemoveField(name));
     }
 
-    CardItem& CardItem::SetFavorite(bool val) {
-        if (!init) return *this;
-        data["favorite"] = val;
-        return *this;
+    CardItem* CardItem::SetFavorite(bool val) {
+        return static_cast<CardItem*>(this->GenericItem::SetFavorite(val));
     }
 
-    CardItem& CardItem::SetReprompt(bool val) {
-        if (!init) return *this;
-        if (val) {
-            data["reprompt"] = 1;
-        } else {
-            data["reprompt"] = 0;
-        }
-        return *this;
+    CardItem* CardItem::SetReprompt(bool val) {
+        return static_cast<CardItem*>(this->GenericItem::SetReprompt(val));
     }
 
-    CardItem& CardItem::GetFavorite(bool& val) {
-        if (!init) return *this;
-        if (!data.contains("favorite")) return *this;
-        if (data["favorite"].is_null()) return *this;
-        val = data["favorite"];
-        return *this;
+    CardItem* CardItem::GetFavorite(bool& val) {
+        return static_cast<CardItem*>(this->GenericItem::GetFavorite(val));
     }
 
-    CardItem& CardItem::GetReprompt(bool& val) {
-        if (!init) return *this;
-        if (!data.contains("reprompt")) return *this;
-        if (!data["reprompt"].is_number()) return *this;
-        if (data["reprompt"].get<int>() == 1) {
-            val = true;
-        }
-        if (data["reprompt"].get<int>() == 0) {
-            val = false;
-        }
-        return *this;
+    CardItem* CardItem::GetReprompt(bool& val) {
+        return static_cast<CardItem*>(this->GenericItem::GetReprompt(val));
     }
 
-    void CardItem::Commit() {
-        if (!init) return;
-        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-        itemEncKey.clear();
-        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-        itemMacKey.clear();
-
-        data["revisionDate"] = getBitwardenTime();
-        data["data"] = fieldData.dump();
-        if (isBeingCreated) {
-            auto hr = localVault.OnlineNewItem(data);
-            if (!hr) {
-                logger->warn("Failed to add New Item Online");
-                data["createdOffline"] = true;
-            }
-            localVault.vaultData["ciphers"].push_back(data);
-            localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-            return;
-        }
-
-        auto& ciphers = localVault.vaultData["ciphers"];
-        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
-            return cipher["id"] == data["id"];
-        });
-
-        if (it != ciphers.end()) {
-            *it = data;
-        }
-
-        auto hr = localVault.UpdateItem(data);
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+    CardItem* CardItem::GetName(std::string& name) {
+        return static_cast<CardItem*>(this->GenericItem::GetName(name));
     }
 
-    void CardItem::Delete() {
-        if (!init) return;
-        if (!isBeingCreated) {
-            OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-            itemEncKey.clear();
-            OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-            itemMacKey.clear();
-            auto& ciphers = localVault.vaultData["ciphers"];
-            auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
-                if (!cipher.contains("id") || cipher["id"].is_null()) return false;
-                return cipher["id"].get<std::string>() == data["id"].get<std::string>();
-            });
-
-            if (it != ciphers.end()) {
-                ciphers.erase(it);
-            }
-            auto hr = localVault.OnlineDeleteItem(data["id"]);
-            if (hr != NetworkState::Success) {
-                logger->warn("Failed to Delete Online Item");
-                localVault.vaultData["deletedCiphers"].push_back(data["id"]);
-            } 
-        }
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-    }
-
-    void CardItem::Bin() {
-        if (!init) return;
-        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-        itemEncKey.clear();
-        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-        itemMacKey.clear();
-
-        data["revisionDate"] = getBitwardenTime();
-        data["deletedDate"] = getBitwardenTime();
-        data["data"] = fieldData.dump();
-        if (isBeingCreated) {
-            auto hr = localVault.OnlineNewItem(data);
-            if (!hr) {
-                logger->warn("Failed to add New Item Online");
-                data["createdOffline"] = true;
-            }
-            localVault.vaultData["ciphers"].push_back(data);
-            localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-            return;
-        }
-
-        auto& ciphers = localVault.vaultData["ciphers"];
-        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
-            return cipher["id"] == data["id"];
-        });
-
-        if (it != ciphers.end()) {
-            *it = data;
-        }
-
-        auto hr = localVault.OnlineSoftDeleteItem(data["id"]);
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-    }
-
-    void CardItem::UnBin() {
-        if (!init) return;
-        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-        itemEncKey.clear();
-        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-        itemMacKey.clear();
-
-        data["revisionDate"] = getBitwardenTime();
-        data["deletedDate"] = nullptr;
-        data["data"] = (std::string)fieldData.dump();
-        if (isBeingCreated) {
-            auto hr = localVault.OnlineNewItem(data);
-            if (!hr) {
-                logger->warn("Failed to add New Item Online");
-                data["createdOffline"] = true;
-            }
-            localVault.vaultData["ciphers"].push_back(data);
-            localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-            return;
-        }
-
-        auto& ciphers = localVault.vaultData["ciphers"];
-        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
-            return cipher["id"] == data["id"];
-        });
-
-        if (it != ciphers.end()) {
-            *it = data;
-        }
-
-        auto hr = localVault.OnlineRestoreItem(data["id"]);
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-    }
-
-    void CardItem::Close() {
-        if (!init) return;
-        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
-        itemEncKey.clear();
-        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
-        itemMacKey.clear();
-
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-    }
-
-    CardItem& CardItem::GetName(std::string& name) {
-        if (!init) return *this;
-        if (!data.contains("name")) return *this;
-        if (!data["name"].is_string()) return *this;
-        name = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
-        return *this;
-    }
-
-    CardItem& CardItem::GetBrand(std::string& brand) {
-        if (!init) return *this;
-        if (!data["card"].is_object()) return *this;
-        if (!data["card"].contains("brand")) return *this;
-        if (!data["card"]["brand"].is_string()) return *this;
+    CardItem* CardItem::GetBrand(std::string& brand) {
+        if (!init) return this;
+        if (!data["card"].is_object()) return this;
+        if (!data["card"].contains("brand")) return this;
+        if (!data["card"]["brand"].is_string()) return this;
         brand = localVault.Decrypt(data["card"]["brand"], itemEncKey, itemMacKey);
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetCardholderName(std::string& cardholderName) {
-        if (!init) return *this;
-        if (!data["card"].is_object()) return *this;
-        if (!data["card"].contains("cardholderName")) return *this;
-        if (!data["card"]["cardholderName"].is_string()) return *this;
+    CardItem* CardItem::GetCardholderName(std::string& cardholderName) {
+        if (!init) return this;
+        if (!data["card"].is_object()) return this;
+        if (!data["card"].contains("cardholderName")) return this;
+        if (!data["card"]["cardholderName"].is_string()) return this;
         cardholderName = localVault.Decrypt(data["card"]["cardholderName"], itemEncKey, itemMacKey);
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetCode(std::string& code) {
-        if (!init) return *this;
-        if (!data["card"].is_object()) return *this;
-        if (!data["card"].contains("code")) return *this;
-        if (!data["card"]["code"].is_string()) return *this;
+    CardItem* CardItem::GetCode(std::string& code) {
+        if (!init) return this;
+        if (!data["card"].is_object()) return this;
+        if (!data["card"].contains("code")) return this;
+        if (!data["card"]["code"].is_string()) return this;
         code = localVault.Decrypt(data["card"]["code"], itemEncKey, itemMacKey);
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetExpMonth(std::string& expMonth) {
-        if (!init) return *this;
-        if (!data["card"].is_object()) return *this;
-        if (!data["card"].contains("expMonth")) return *this;
-        if (!data["card"]["expMonth"].is_string()) return *this;
+    CardItem* CardItem::GetExpMonth(std::string& expMonth) {
+        if (!init) return this;
+        if (!data["card"].is_object()) return this;
+        if (!data["card"].contains("expMonth")) return this;
+        if (!data["card"]["expMonth"].is_string()) return this;
         expMonth = localVault.Decrypt(data["card"]["expMonth"], itemEncKey, itemMacKey);
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetExpYear(std::string& expYear) {
-        if (!init) return *this;
-        if (!data["card"].is_object()) return *this;
-        if (!data["card"].contains("expYear")) return *this;
-        if (!data["card"]["expYear"].is_string()) return *this;
+    CardItem* CardItem::GetExpYear(std::string& expYear) {
+        if (!init) return this;
+        if (!data["card"].is_object()) return this;
+        if (!data["card"].contains("expYear")) return this;
+        if (!data["card"]["expYear"].is_string()) return this;
         expYear = localVault.Decrypt(data["card"]["expYear"], itemEncKey, itemMacKey);
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetNumber(std::string& number) {
-        if (!init) return *this;
-        if (!data["card"].is_object()) return *this;
-        if (!data["card"].contains("number")) return *this;
-        if (!data["card"]["number"].is_string()) return *this;
+    CardItem* CardItem::GetNumber(std::string& number) {
+        if (!init) return this;
+        if (!data["card"].is_object()) return this;
+        if (!data["card"].contains("number")) return this;
+        if (!data["card"]["number"].is_string()) return this;
         number = localVault.Decrypt(data["card"]["number"], itemEncKey, itemMacKey);
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetNotes(std::string& notes) {
-        if (!init) return *this;
-        if (!data.contains("notes")) return *this;
-        if (!data["notes"].is_string()) return *this;
-        notes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
-        return *this;
+    CardItem* CardItem::GetNotes(std::string& notes) {
+        return static_cast<CardItem*>(this->GenericItem::GetNotes(notes));
     }
 
-    CardItem& CardItem::GetFolder(std::string& folder) {
-        if (!init) return *this;
-        if (!data.contains("folderId")) return *this;
-        if (!data["folderId"].is_string()) return *this;
-        folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
-        return *this;
+    CardItem* CardItem::GetFolder(std::string& folder) {
+        return static_cast<CardItem*>(this->GenericItem::GetFolder(folder));
     }
 
-    CardItem& CardItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
-        if (!init) return *this;
-        if (!data.contains("fields")) return *this;
-        if (!data["fields"].is_array()) return *this;
-        fields.clear();
-        for (auto& f : data["fields"]) {
-            CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());
-            std::string value;
-            if (type == CustomFieldType::Linked) {
-                value = f["linkedId"].is_null() ? "" : std::to_string(f["linkedId"].get<int>());
-            } else {
-                value = f["value"].is_null() ? "" : localVault.Decrypt(f["value"], itemEncKey, itemMacKey);
-            }
-            std::string name = localVault.Decrypt(f["name"], itemEncKey, itemMacKey);
-            fields.emplace_back(type, std::move(name), std::move(value));
-        }
-        return *this;
+    CardItem* CardItem::GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
+        return static_cast<CardItem*>(this->GenericItem::GetFields(fields));
     }
 
-    CardItem& CardItem::Duplicate(std::string& id) {
+    CardItem* CardItem::Duplicate(std::string& id) {
         auto keys = localVault.generateEncMacKeys();
         auto newitemEncKey = keys.first;
         auto newitemMacKey = keys.second;
@@ -794,7 +450,7 @@ namespace ClientWarden::Vault {
         newdata["data"] = (std::string)newfieldData.dump();
         auto hr = localVault.OnlineNewItem(newdata);
         if (!hr) {
-            logger->warn("Failed to add New Item Online");
+            l_logger->warn("Failed to add New Item Online");
             newdata["createdOffline"] = true;
         }
         localVault.vaultData["ciphers"].push_back(newdata);
@@ -802,94 +458,30 @@ namespace ClientWarden::Vault {
 
         id = newdata["id"];
 
-        return *this;
+        return this;
     }
 
-    CardItem& CardItem::GetId(std::string& value) {
-        value = data["id"];
-
-        return *this;
+    CardItem* CardItem::GetId(std::string& value) {
+        return static_cast<CardItem*>(this->GenericItem::GetId(value));
     }
 
-    CardItem& CardItem::GetAttachmentIDs(std::vector<std::string>& ids) {
-        if (!init) return *this;
-        if (!data.contains("attachments")) return *this;
-        if (!data["attachments"].is_array()) return *this;
-
-        for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return *this;
-            if (!attach["id"].is_string()) return *this;
-            ids.push_back(attach["id"]);
-        }
-        return *this;
+    CardItem* CardItem::GetAttachmentIDs(std::vector<std::string>& ids) {
+        return static_cast<CardItem*>(this->GenericItem::GetAttachmentIDs(ids));
     }
 
-    CardItem& CardItem::GetAttachmentName(std::string id, std::string& name) {
-        if (!init) return *this;
-        if (!data.contains("attachments")) return *this;
-        if (!data["attachments"].is_array()) return *this;
-
-        for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return *this;
-            if (!attach.contains("id")) return *this;
-            if (!attach["id"].is_string()) return *this;
-            if (!attach.contains("fileName")) return *this;
-            if (!attach["fileName"].is_string()) return *this;
-            if (attach["id"] != id) continue;
-
-            name = localVault.Decrypt(attach["fileName"], itemEncKey, itemMacKey);
-            break;
-        }
-        return *this;
+    CardItem* CardItem::GetAttachmentName(std::string id, std::string& name) {
+        return static_cast<CardItem*>(this->GenericItem::GetAttachmentName(id, name));
     }
 
-    CardItem& CardItem::GetAttachment(std::string id, std::string& content) {
-        if (!init) return *this;
-        if (!data.contains("attachments")) return *this;
-        if (!data["attachments"].is_array()) return *this;
-
-        for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return *this;
-            if (!attach["id"].is_string()) return *this;
-            if (attach["id"] != id) continue;
-
-            auto attachData = localVault.OnlineDownloadAttachment(data["id"].get<std::string>(), id);
-            if (!attachData) return *this;
-            content = attachData.value();
-            OPENSSL_cleanse(attachData->data(), attachData->size());
-            break;
-        }
-        return *this;
+    CardItem* CardItem::GetAttachment(std::string id, std::string& content, std::function<void(float)> onProgress) {
+        return static_cast<CardItem*>(this->GenericItem::GetAttachment(id, content, onProgress));
     }
 
-    CardItem& CardItem::RemoveAttachment(std::string id) {
-        if (!init) return *this;
-        if (!data.contains("attachments")) return *this;
-        if (!data["attachments"].is_array()) return *this;
-
-        for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return *this;
-            if (!attach["id"].is_string()) return *this;
-            if (attach["id"] != id) continue;
-
-            auto attachData = localVault.OnlineRemoveAttachment(data["id"].get<std::string>(), id);
-            if (attachData != NetworkState::Success) return *this;
-            auto& attachments = data["attachments"];
-            attachments.erase(std::remove_if(attachments.begin(), attachments.end(),
-                [&id](const nlohmann::json& a) {
-                    return a.is_object() && a.contains("id") && a["id"] == id;
-                }), attachments.end());
-            break;
-        }
-        return *this;
+    CardItem* CardItem::RemoveAttachment(std::string id) {
+        return static_cast<CardItem*>(this->GenericItem::RemoveAttachment(id));
     }
 
-    CardItem& CardItem::AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress) {
-        if (!init) return *this;
-        if (!data.contains("attachments")) return *this;
-        if (!data["attachments"].is_array()) return *this;
-
-        auto attachData = localVault.OnlineAddAttachment(data["id"].get<std::string>(), content, name);
-        return *this;
+    CardItem* CardItem::AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress) {
+        return static_cast<CardItem*>(this->GenericItem::AddAttachment(name, content, id, onProgress));
     }
 }

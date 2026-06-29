@@ -10,6 +10,7 @@
 #include "../CommonVault.h"
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
+#include "../GenericItem/GenericItem.h"
 
 namespace ClientWarden::Vault {
     struct TOTPCode {
@@ -17,76 +18,58 @@ namespace ClientWarden::Vault {
         std::time_t remaining;
     };
 
-    class LoginItem {
+    class LoginItem : public GenericItem {
     public:
         LoginItem(Vault& vault, std::string uuid); // Existing Item
         LoginItem(Vault& vault); // New Item
-        ~LoginItem();
 
-        LoginItem& SetName(std::string& name);
-        LoginItem& SetUsername(std::string& username);
-        LoginItem& SetPassword(std::string& password);
-        LoginItem& SetTotp(std::string& totp);
-        LoginItem& SetNotes(std::string& notes);
-        LoginItem& SetFolder(std::string folder);
-        //LoginItem& SetPasskeyCounter(std::time_t& value);
-        LoginItem& RemoveFolder();
-        LoginItem& AddWebsite(std::string& website);
-        LoginItem& RemoveWebsite(std::string& website);
-        LoginItem& AddField(CustomFieldType field, std::string& name, std::string& value);
-        LoginItem& RemoveField(std::string& name);
+        LoginItem* SetName(std::string& name) override;
+        LoginItem* SetUsername(std::string& username);
+        LoginItem* SetPassword(std::string& password);
+        LoginItem* SetTotp(std::string& totp);
+        LoginItem* SetNotes(std::string& notes) override;
+        LoginItem* SetFolder(std::string folder) override;
+        //LoginItem* SetPasskeyCounter(std::time_t& value);
+        LoginItem* RemoveFolder() override;
+        LoginItem* AddWebsite(std::string& website);
+        LoginItem* RemoveWebsite(std::string& website);
+        LoginItem* AddField(CustomFieldType field, std::string& name, std::string& value) override;
+        LoginItem* RemoveField(std::string& name) override;
 
-        LoginItem& Duplicate(std::string& id);
+        LoginItem* Duplicate(std::string& id);
 
-        LoginItem& GetName(std::string& name);
-        LoginItem& GetUsername(std::string& username);
-        LoginItem& GetPassword(std::string& password);
-        LoginItem& GetTotp(TOTPCode& totp);
-        LoginItem& GetTotpSecret(std::string& totp);
-        LoginItem& GetNotes(std::string& notes);
-        LoginItem& GetFolder(std::string& folder);
-        LoginItem& GetWebsites(std::vector<std::string>& website);
-        LoginItem& GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
-        LoginItem& GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value);
-        LoginItem& GetPasskeyCreationDate(std::vector<std::time_t>& value);
-        /*LoginItem& GetPasskeyPartyId(std::time_t& value);
-        LoginItem& GetPasskeyUsername(std::time_t& value);
-        LoginItem& GetPasskeyUserhandle(std::time_t& value);
-        LoginItem& GetPasskeyPrivKey(std::time_t& value);
-        LoginItem& GetPasskeyAlgo(std::time_t& value);
-        LoginItem& GetPasskeyCurve(std::time_t& value);
-        LoginItem& GetPasskeyCredId(std::time_t& value);
-        LoginItem& GetPasskeyCounter(std::time_t& value);*/
-        LoginItem& GetId(std::string& value);
+        LoginItem* GetName(std::string& name) override;
+        LoginItem* GetUsername(std::string& username);
+        LoginItem* GetPassword(std::string& password);
+        LoginItem* GetTotp(TOTPCode& totp);
+        LoginItem* GetTotpSecret(std::string& totp);
+        LoginItem* GetNotes(std::string& notes) override;
+        LoginItem* GetFolder(std::string& folder) override;
+        LoginItem* GetWebsites(std::vector<std::string>& website);
+        LoginItem* GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value) override;
+        LoginItem* GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value);
+        LoginItem* GetPasskeyCreationDate(std::vector<std::time_t>& value);
+        /*LoginItem* GetPasskeyPartyId(std::time_t& value);
+        LoginItem* GetPasskeyUsername(std::time_t& value);
+        LoginItem* GetPasskeyUserhandle(std::time_t& value);
+        LoginItem* GetPasskeyPrivKey(std::time_t& value);
+        LoginItem* GetPasskeyAlgo(std::time_t& value);
+        LoginItem* GetPasskeyCurve(std::time_t& value);
+        LoginItem* GetPasskeyCredId(std::time_t& value);
+        LoginItem* GetPasskeyCounter(std::time_t& value);*/
+        LoginItem* GetId(std::string& value) override;
         
-        LoginItem& AddAttachment(std::string& name, std::string& content, std::function<void(float)> onProgress = nullptr);
-        LoginItem& GetAttachmentIDs(std::vector<std::string>& ids);
-        LoginItem& GetAttachmentName(std::string id, std::string& name);
-        LoginItem& GetAttachment(std::string id, std::string& content);
-        LoginItem& RemoveAttachment(std::string id);
+        LoginItem* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) override;
+        LoginItem* GetAttachmentIDs(std::vector<std::string>& ids) override;
+        LoginItem* GetAttachmentName(std::string id, std::string& name) override;
+        LoginItem* GetAttachment(std::string id, std::string& content, std::function<void(float)> onProgress = nullptr) override;
+        LoginItem* RemoveAttachment(std::string id) override;
         
-        LoginItem& SetFavorite(bool val);
-        LoginItem& SetReprompt(bool val);
-        LoginItem& GetFavorite(bool& val);
-        LoginItem& GetReprompt(bool& val);
-
-        void Commit();
-        void Delete();
-        void Bin();
-        void UnBin();
-        void Close();
+        LoginItem* SetFavorite(bool val) override;
+        LoginItem* SetReprompt(bool val) override;
+        LoginItem* GetFavorite(bool& val) override;
+        LoginItem* GetReprompt(bool& val) override;
     private:
-        /*
-         * Secret Data
-        */
-        std::vector<uint8_t> itemEncKey;
-        std::vector<uint8_t> itemMacKey;
-
-        bool isBeingCreated;
-        bool init;
-        nlohmann::json data;
-        nlohmann::json fieldData;
-        Vault& localVault;
-        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
+        inline static std::shared_ptr<spdlog::logger> l_logger = nullptr;
     };
 }

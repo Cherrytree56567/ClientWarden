@@ -137,8 +137,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [ ] UI Bridge
     - [ ] Folder Tree View
     - [ ] Passkey Support
-- [ ] Derive Item Classes from Generic Item
-- [ ] Add Reprompt func to Generic Item
+- [X] Derive Item Classes from Generic Item
 - [ ] Windows Support
     - [ ] Create Nav Panel
     - [ ] Create Side Panel
@@ -154,6 +153,9 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [ ] UI Bridge
     - [ ] Passkey Support
 - [ ] Official Release
+- [ ] Watchtower
+- [ ] Custom Item Types
+- [ ] iOS and Android Support
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
@@ -194,6 +196,7 @@ Thanks to:
 
 * [Fluent Icons](https://fluenticons.co/outlined/)
 * [Readme Template](https://github.com/othneildrew/Best-README-Template)
+* @Dexrn - For helping me with base and derived classes in the Backend
 
 [contributors-shield]: https://img.shields.io/github/contributors/Cherrytree56567/ClientWarden.svg?style=for-the-badge
 [contributors-url]: https://github.com/Cherrytree56567/ClientWarden/graphs/contributors
