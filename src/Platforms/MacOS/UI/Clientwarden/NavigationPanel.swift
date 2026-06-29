@@ -12,14 +12,12 @@ enum NavItems: Hashable {
     case folder(UUID)
 }
 
-/*
- * TODO: Make the liquid glass bg to always be there and move No Items to the center
- */
 @Observable
 final class NavigationPanel {
     static let instance = NavigationPanel()
     
     public var refresh: Int = 0
+    public var selection: NavItems = .all_items
     
     public var folders: [Folder] = []
     
@@ -44,7 +42,6 @@ final class NavigationPanel {
 }
 
 struct NavigationPanelView: View {
-    @State private var selection: NavItems = .all_items
     @State private var refreshToken: Int = 0
     
     @Bindable var data: NavigationPanel = NavigationPanel.instance
@@ -77,12 +74,12 @@ struct NavigationPanelView: View {
             ItemsPanel.instance.update(data: elements)
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for \(tab)"))
-            selection = prev
+            data.selection = prev
         }
     }
     
     var body: some View {
-        TabView(selection: $selection) {
+        TabView(selection: $data.selection) {
             Tab("All Items", systemImage: "command", value: .all_items) {
                 ItemsPanelView()
                     .id(refreshToken)
@@ -186,12 +183,12 @@ struct NavigationPanelView: View {
         .onChange(of: data.refresh) { _, newVal in
             refreshToken = newVal
         }
-        .onChange(of: selection) { oldValue, newValue in
+        .onChange(of: data.selection) { oldValue, newValue in
             SidePanel.instance.closeItem()
             loadTabElements(tab: newValue, prev: oldValue)
         }
         .onAppear() {
-            loadTabElements(tab: selection, prev: selection)
+            loadTabElements(tab: data.selection, prev: data.selection)
         }
     }
 }

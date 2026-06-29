@@ -131,9 +131,9 @@ You might need to use the `-s compiler.cppstd=20` flag.
 
 - [X] MacOS Support
     - [X] Attachment Support
-    - [ ] Bin Page
-    - [ ] Settings Support
-    - [ ] Lock Support
+    - [X] Bin Page
+    - [X] Settings Support
+    - [X] Lock Support
     - [ ] UI Bridge
     - [ ] Folder Tree View
     - [ ] Passkey Support

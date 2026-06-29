@@ -18,13 +18,50 @@ final class ClientwardenWindow {
     
     public var state: WindowState = .Login
     
-    public var cb_getState: (() -> WindowState)?
+    public var cb_getState: (() -> (WindowState, Bool))?
+    public var cb_lock: (() -> (Bool))?
+    
+    func getState() {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let res = cb_getState?() {
+            if (res.1) {
+                state = res.0
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to Get State"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for getState"))
+        }
+    }
+    
+    func lock() {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let res = cb_lock?() {
+            if (res) {
+                state = WindowState.Unlock
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to Lock Vault"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for lock"))
+        }
+    }
 }
 
 @main
 struct ClientwardenApp: App {
     private var data: ClientwardenWindow = ClientwardenWindow.instance
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
+    init() {
+        data.getState()
+    }
     
     var body: some Scene {
         WindowGroup("Clientwarden") {
@@ -60,6 +97,20 @@ struct ClientwardenApp: App {
             }
         }
         .windowResizability(.contentSize)
+        .commands {
+            if (data.state == WindowState.Vault) {
+                CommandMenu("Vault") {
+                    Button("Lock") {
+                        data.lock()
+                    }
+                    .keyboardShortcut("L", modifiers: [.command])
+                }
+            }
+        }
+        
+        Settings {
+            SettingsView()
+        }
     }
 }
 

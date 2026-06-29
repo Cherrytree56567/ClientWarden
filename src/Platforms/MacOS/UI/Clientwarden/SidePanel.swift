@@ -24,9 +24,7 @@ final class SidePanel {
     public var customFields: [FieldItemData] = []
     public var itemHistory: [String] = []
     public var passwordHistory: [String] = []
-    public var attachmentItems: [AttachmentItemData] = [
-        AttachmentItemData(id: UUID(), name: "test.png")
-    ]
+    public var attachmentItems: [AttachmentItemData] = []
     public var notes: GenericItemData = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     
     /*
@@ -37,6 +35,9 @@ final class SidePanel {
     public var cb_duplicate: ((UUID) -> Bool)?
     public var cb_delete: ((UUID) -> Bool)?
     public var cb_save: ((UUID) -> Bool)?
+    
+    public var cb_restore: ((UUID) -> Bool)?
+    public var cb_permDel: ((UUID) -> Bool)?
     
     public var cb_sidebar: ((UUID) -> Bool)?
     
@@ -163,6 +164,8 @@ final class SidePanel {
          */
         if let del = cb_delete?(uuid) {
             if (del) {
+                editable = false
+                viewable = false
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to delete item"))
             }
@@ -231,6 +234,40 @@ final class SidePanel {
         }
     }
     
+    func restoreItem() {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let fav = cb_restore?(uuid) {
+            if (fav) {
+                editable = false
+                viewable = false
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to restore item"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for restore"))
+        }
+    }
+    
+    func permDeleteItem() {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let fav = cb_permDel?(uuid) {
+            if (fav) {
+                editable = false
+                viewable = false
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to Permanantly Delete Item"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for permDelete"))
+        }
+    }
+    
     /*
      * Callback Helpers
      */
@@ -248,6 +285,7 @@ final class SidePanel {
 struct SidePanelView: View {
     @State private var showPasswordHistory: Bool = false
     @State private var showNewFieldCallout: Bool = false
+    @State private var showDeleteCallout: Bool = false
     
     @Bindable var data: SidePanel = SidePanel.instance
     
@@ -461,7 +499,27 @@ struct SidePanelView: View {
         .padding(.bottom, -1)
         .toolbar {
             if (data.viewable) {
-                if (!data.editable) {
+                if (NavigationPanel.instance.selection == NavItems.trash) {
+                    ToolbarItem {
+                        Button {
+                            showDeleteCallout = true
+                        } label: {
+                            Image(systemName: "minus.circle")
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.restoreItem()
+                        } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                } else if (!data.editable) {
                     /*
                      * Edit Button
                      * It should turn on editable and set editable for each generic item
@@ -528,6 +586,14 @@ struct SidePanelView: View {
                     }
                 }
             }
+        }
+        .alert("Are you sure you would like to Permanantly Delete this item?", isPresented: $showDeleteCallout) {
+            Button("Cancel", role: .cancel) { }
+            Button("Confirm", role: .destructive) {
+                data.permDeleteItem()
+            }
+        } message: {
+            Text("This action cannot be undone.")
         }
     }
 }
