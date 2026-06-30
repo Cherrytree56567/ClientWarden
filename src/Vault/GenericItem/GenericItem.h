@@ -11,7 +11,7 @@
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     class GenericItem {
     public:
         GenericItem(Vault& vault, std::string uuid); // Existing Item

@@ -1,6 +1,6 @@
 #include "PasswordGenerator.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     PasswordGenerator::PasswordGenerator(Vault& vault) : storage(""), localVault(vault) {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::PasswordGenerator");

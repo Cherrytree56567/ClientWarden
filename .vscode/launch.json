@@ -16,7 +16,7 @@
             "name": "(MacOS) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/clientwarden",
+            "program": "${workspaceFolder}/build/Debug/clientwarden.app",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

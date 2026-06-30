@@ -1,6 +1,6 @@
 #include "CipherQuery.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     CipherQuery::CipherQuery(Vault& vault) : localVault(vault) {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::CipherQuery");

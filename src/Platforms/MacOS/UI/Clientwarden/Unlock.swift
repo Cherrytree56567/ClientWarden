@@ -53,10 +53,6 @@ final class Unlock {
 struct UnlockView: View {
     @Bindable private var data: Unlock = Unlock.instance
     
-    init() {
-        data.getInfo()
-    }
-    
     var body: some View {
         HStack {
             Spacer()
@@ -97,6 +93,9 @@ struct UnlockView: View {
             Spacer()
         }
         .frame(minWidth: 300, maxWidth: 300, minHeight: 400, maxHeight: 400)
+        .onAppear {
+            data.getInfo()
+        }
     }
 }
 

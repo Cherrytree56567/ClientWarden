@@ -6,20 +6,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-enum WindowState {
+@objc
+enum WindowState: Int {
     case Login
     case Unlock
     case Vault
+    case Empty
 }
 
+@objcMembers
 @Observable
-final class ClientwardenWindow {
+final class ClientwardenWindow: NSObject {
     static let instance = ClientwardenWindow()
     
-    public var state: WindowState = .Login
+    @objc public var state: WindowState = .Empty
     
-    public var cb_getState: (() -> (WindowState, Bool))?
-    public var cb_lock: (() -> (Bool))?
+    @objc public var cb_getState: (() -> WindowState)?
+    @objc public var cb_lock: (() -> Bool)?
     
     func getState() {
         /*
@@ -27,11 +30,7 @@ final class ClientwardenWindow {
          * the callback was successful
          */
         if let res = cb_getState?() {
-            if (res.1) {
-                state = res.0
-            } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Get State"))
-            }
+            state = res
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for getState"))
         }
@@ -45,6 +44,26 @@ final class ClientwardenWindow {
         if let res = cb_lock?() {
             if (res) {
                 state = WindowState.Unlock
+                SidePanel.instance.name = ""
+                SidePanel.instance.type = ItemType.Login
+                SidePanel.instance.icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+                SidePanel.instance.favorite = false
+                SidePanel.instance.itemFields = []
+                SidePanel.instance.customFields = []
+                SidePanel.instance.itemHistory = []
+                SidePanel.instance.passwordHistory = []
+                SidePanel.instance.viewable = false
+                SidePanel.instance.notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+                SidePanel.instance.s_name = ""
+                SidePanel.instance.s_favorite = false
+                SidePanel.instance.s_itemFields = []
+                SidePanel.instance.s_customFields = []
+                SidePanel.instance.s_itemHistory = []
+                SidePanel.instance.s_passwordHistory = []
+                SidePanel.instance.s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+                ItemsPanel.instance.elements = []
+                ItemsPanel.instance.filteredElements = []
+                ItemsPanel.instance.searchQuery = ""
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to Lock Vault"))
             }
@@ -59,41 +78,48 @@ struct ClientwardenApp: App {
     private var data: ClientwardenWindow = ClientwardenWindow.instance
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
-    init() {
-        data.getState()
-    }
-    
     var body: some Scene {
         WindowGroup("Clientwarden") {
-            switch data.state {
-                case .Login:
-                    LoginView()
-                    .toast(
-                        Binding(
-                            get: { g_toastStore.toasts },
-                            set: { g_toastStore.toasts = $0 }
+            VStack {
+                switch data.state {
+                    case .Login:
+                        LoginView()
+                        .toast(
+                            Binding(
+                                get: { g_toastStore.toasts },
+                                set: { g_toastStore.toasts = $0 }
+                            )
                         )
-                    )
-                case .Unlock:
-                    UnlockView()
-                    .toast(
-                        Binding(
-                            get: { g_toastStore.toasts },
-                            set: { g_toastStore.toasts = $0 }
+                    case .Unlock:
+                        UnlockView()
+                        .toast(
+                            Binding(
+                                get: { g_toastStore.toasts },
+                                set: { g_toastStore.toasts = $0 }
+                            )
                         )
-                    )
-                case .Vault:
-                    HStack(spacing: 0) {
-                        NavigationPanelView()
-                        SidePanelView()
-                    }
-                    .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
-                    .toast(
-                        Binding(
-                            get: { g_toastStore.toasts },
-                            set: { g_toastStore.toasts = $0 }
+                    case .Vault:
+                        HStack(spacing: 0) {
+                            NavigationPanelView()
+                            SidePanelView()
+                        }
+                        .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
+                        .toast(
+                            Binding(
+                                get: { g_toastStore.toasts },
+                                set: { g_toastStore.toasts = $0 }
+                            )
                         )
-                    )
+                    case .Empty:
+                        VStack {
+
+                        }
+                        .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
+                }
+            }
+            .onAppear {
+                CWAppBridge.setupCallbacks()
+                data.getState()
             }
         }
         .windowResizability(.contentSize)

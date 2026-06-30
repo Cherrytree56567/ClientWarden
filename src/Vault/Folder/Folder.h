@@ -6,7 +6,7 @@
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     class Folder {
     public:
         Folder(Vault& vault, std::string uuid); // Existing Folder

@@ -8,7 +8,7 @@
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     class PasswordGenerator {
     public:
         PasswordGenerator(Vault& vault);

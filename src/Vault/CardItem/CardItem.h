@@ -7,7 +7,7 @@
 #include "../Vault.h"
 #include "../GenericItem/GenericItem.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     class CardItem : public GenericItem {
     public:
         CardItem(Vault& vault, std::string uuid); // Existing Item

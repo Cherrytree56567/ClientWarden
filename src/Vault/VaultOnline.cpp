@@ -1,6 +1,6 @@
 #include "Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     NetworkState Vault::preLogin(std::string& email) {
         httplib::Client client(authData["vaultURL"]);
 
@@ -66,7 +66,7 @@ namespace ClientWarden::Vault {
             }
         }
         if (res->status != 200) {
-            logger->error("getToken failed: {}", res->status);
+            logger->error("getToken failed: {} - {}", res->status, res->body);
             return AuthState::Failed;
         }
 

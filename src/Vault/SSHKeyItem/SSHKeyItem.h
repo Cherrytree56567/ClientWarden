@@ -7,7 +7,7 @@
 #include "../Vault.h"
 #include "../GenericItem/GenericItem.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     class SSHKeyItem : public GenericItem {
     public:
         SSHKeyItem(Vault& vault, std::string uuid); // Existing Item

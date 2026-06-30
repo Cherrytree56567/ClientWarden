@@ -1,6 +1,6 @@
 #include "Folder.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     Folder::Folder(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
         if (!logger) {
             logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");

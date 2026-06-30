@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     enum class AuthState {
         NeedsTOTP,
         NeedsEmailVerification,

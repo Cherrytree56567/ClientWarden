@@ -62,10 +62,6 @@ struct SettingsView: View {
     @State private var showLogout: Bool = false
     @FocusState private var isFocused: Bool
     
-    init() {
-        data.getInfo()
-    }
-    
     var body: some View {
         VStack(alignment: .leading) {
             Text("Clipboard Delay")
@@ -109,6 +105,9 @@ struct SettingsView: View {
         }
         .padding(8)
         .frame(minWidth: 300, maxWidth: 300, minHeight: 400, maxHeight: 400, alignment: .leading)
+        .onAppear {
+            data.getInfo()
+        }
     }
 }
 

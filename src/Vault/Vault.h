@@ -17,7 +17,7 @@
 #include "CommonVault.h"
 #include "VaultUtils/VaultUtils.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     /*
     * On First Time:
     * Login
@@ -151,6 +151,8 @@ namespace ClientWarden::Vault {
         std::atomic<bool> shouldWSS { false };
 
         std::function<void(std::string)> OnError;
+
+        AuthState codeType;
 
         nlohmann::json authData;
         nlohmann::json vaultData;

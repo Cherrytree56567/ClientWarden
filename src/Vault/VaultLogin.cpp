@@ -1,6 +1,6 @@
 #include "Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     AuthState Vault::Login(std::string& email, std::string& password) {
         boost::algorithm::to_lower(email);
         if (preLogin(email) != NetworkState::Success) {

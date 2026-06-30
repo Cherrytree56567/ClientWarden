@@ -1,6 +1,6 @@
 #include "SSHKeyItem.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     SSHKeyItem::SSHKeyItem(Vault& vault, std::string uuid) : GenericItem(vault, uuid) {
         if (!l_logger) {
             l_logger = spdlog::stdout_color_mt("ClientWarden::Vault::SSHKeyItem");

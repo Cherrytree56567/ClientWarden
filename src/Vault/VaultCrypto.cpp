@@ -1,6 +1,6 @@
 #include "Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     /*
     * base64-encode a wrapped, stretched password+salt for signup/login
     */

@@ -1,6 +1,6 @@
 #include "VaultUtils.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     std::string b64Encode(const std::vector<uint8_t>& data) {
         BIO* b64 = BIO_new(BIO_f_base64());
         BIO* mem = BIO_new(BIO_s_mem());

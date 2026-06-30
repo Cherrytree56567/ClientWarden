@@ -12,7 +12,7 @@
 #include "../Vault.h"
 #include "../GenericItem/GenericItem.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     struct TOTPCode {
         std::string code;
         std::time_t remaining;

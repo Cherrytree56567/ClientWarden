@@ -1,6 +1,6 @@
 #include "LoginItem.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     LoginItem::LoginItem(Vault& vault, std::string uuid) : GenericItem(vault, uuid) {
         init = false;
         if (data.contains("type")) {

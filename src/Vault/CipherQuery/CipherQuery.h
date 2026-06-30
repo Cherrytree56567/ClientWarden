@@ -7,7 +7,7 @@
 #include "../VaultUtils/VaultUtils.h"
 #include "../Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     class CipherQuery {
     public:
         CipherQuery(Vault& vault);

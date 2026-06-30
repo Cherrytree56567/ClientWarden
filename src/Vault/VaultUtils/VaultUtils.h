@@ -15,7 +15,7 @@
 #include <iomanip>
 #endif
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     std::string b64Encode(const std::vector<uint8_t>& data); // Claude Func
     std::vector<uint8_t> b64Decode(const std::string& data); // Claude Func
     std::time_t BitwardenTime(std::string time);

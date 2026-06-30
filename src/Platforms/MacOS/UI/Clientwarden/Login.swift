@@ -1,7 +1,8 @@
 import SwiftUI
 
+@objcMembers
 @Observable
-final class Login {
+final class Login: NSObject {
     static let instance = Login()
     
     public var vaultURL: String = "https://vault.bitwarden.com" {
@@ -47,20 +48,20 @@ final class Login {
         return url
     }
     
-    public var EmailPasswordView: Bool = true
+    @objc public var EmailPasswordView: Bool = true
     
     public var email: String = ""
     public var password: String = ""
-    public var totp: String = ""
+    public var code: String = ""
     
     func clearData() {
         email = ""
         password = ""
-        totp = ""
+        code = ""
     }
     
-    public var cb_login: ((String, String, String, String, String, String, String) -> Bool)?
-    public var cb_submitTOTP: ((String) -> Bool)?
+    @objc public var cb_login: ((String, String, String, String, String, String, String) -> Bool)?
+    @objc public var cb_submitCode: ((String) -> Bool)?
     
     /*
      * Callback Functions
@@ -80,12 +81,12 @@ final class Login {
         }
     }
     
-    func submitTOTP() {
+    func submitCode() {
         /*
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let res = cb_submitTOTP?(totp) {
+        if let res = cb_submitCode?(code) {
             if (res) {
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to submit Code"))
@@ -235,14 +236,14 @@ struct LoginView: View {
                 } else {
                     Text("Clientwarden")
                         .font(.largeTitle.bold())
-                    TextField("TOTP Code", text: .constant(""))
+                    TextField("Code", text: .constant(""))
                         .font(.subheadline)
                         .padding(6)
                         .textFieldStyle(.plain)
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     Button {
-                        data.submitTOTP()
+                        data.submitCode()
                     } label: {
                         Text(verbatim: "Submit")
                             .font(.subheadline)
@@ -258,6 +259,9 @@ struct LoginView: View {
             Spacer()
         }
         .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
+        .onAppear {
+            LoginBridge.setupCallbacks()
+        }
     }
 }
 

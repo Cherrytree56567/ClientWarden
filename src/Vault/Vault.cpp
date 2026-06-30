@@ -1,6 +1,6 @@
 #include "Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     Vault::Vault() {
         if (!logger) {
             spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");

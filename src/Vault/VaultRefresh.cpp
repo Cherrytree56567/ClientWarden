@@ -1,6 +1,6 @@
 #include "Vault.h"
 
-namespace ClientWarden::Vault {
+namespace ClientWarden {
     bool Vault::needsRefresh() {
         std::tm tm = {};
         std::istringstream ss(authData["needsRefreshTime"].get<std::string>());
