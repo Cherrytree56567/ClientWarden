@@ -194,6 +194,7 @@ struct GenericItem: View {
                     if (data.type == GenericItemType.password) {
                         Text(verbatim: revealed ? data.f_value() : String(repeating: "•", count: data.f_value().count))
                             .font(.system(.body, design: .monospaced))
+                            .privacySensitive()
                         
                         Spacer()
                         

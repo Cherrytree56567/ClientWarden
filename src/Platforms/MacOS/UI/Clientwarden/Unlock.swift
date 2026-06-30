@@ -71,7 +71,7 @@ struct UnlockView: View {
                         .font(.largeTitle.bold())
                 }
                 .frame(width: 200)
-                TextField("Password", text: $data.password)
+                SecureField("Password", text: $data.password)
                     .font(.subheadline)
                     .padding(6)
                     .textFieldStyle(.plain)

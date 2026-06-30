@@ -126,6 +126,7 @@ struct FieldItem: View {
                     } else {
                         Text(verbatim: revealed ? data.value : String(repeating: "•", count: data.value.count))
                             .font(.system(.body, design: .monospaced))
+                            .privacySensitive()
                         
                         Spacer()
                         

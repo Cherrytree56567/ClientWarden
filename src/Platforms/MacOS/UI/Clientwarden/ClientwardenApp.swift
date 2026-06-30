@@ -4,6 +4,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        DispatchQueue.main.async {
+            if let window = NSApplication.shared.windows.first {
+                window.sharingType = .none
+            }
+        }
+    }
 }
 
 @objc

@@ -216,7 +216,7 @@ struct LoginView: View {
                         .textFieldStyle(.plain)
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
-                    TextField("Password", text: $data.password)
+                    SecureField("Password", text: $data.password)
                         .font(.subheadline)
                         .padding(6)
                         .textFieldStyle(.plain)
