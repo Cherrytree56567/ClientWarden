@@ -1,13 +1,15 @@
 import SwiftUI
 
-enum ImageType {
+@objc
+enum ImageType : Int {
     case bundle
     case appSupport
 }
 
-class ClientwardenImage {
-    public let type: ImageType
-    public let path: String
+@objcMembers
+class ClientwardenImage: NSObject {
+    @objc public let type: ImageType
+    @objc public let path: String
     
     init(type: ImageType, path: String) {
         self.type = type

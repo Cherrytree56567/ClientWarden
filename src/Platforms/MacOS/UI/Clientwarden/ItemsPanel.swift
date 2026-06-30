@@ -9,7 +9,7 @@ final class ItemsPanel {
     public var searchQuery: String = ""
 
     public var cb_query: ((String) -> [ItemElement])?
-    public var cb_new: (() -> Bool)?
+    public var cb_new: ((ItemType) -> Bool)?
 
     func update(data: [ItemElement]) {
         elements = data
@@ -25,8 +25,8 @@ final class ItemsPanel {
         }
     }
 
-    func newItem() {
-        if let res = cb_new?() {
+    func newItem(itemType: ItemType) {
+        if let res = cb_new?(itemType) {
             if (res) {
 
             } else {
@@ -40,6 +40,7 @@ final class ItemsPanel {
 struct ItemsPanelView: View {
     @Bindable var data: ItemsPanel = ItemsPanel.instance
     @FocusState private var isFocused: Bool
+    @State private var showNewItemCallout: Bool = false
 
     var body: some View {
         VStack() {
@@ -56,7 +57,7 @@ struct ItemsPanelView: View {
                         isFocused = false
                     }
                 Button {
-                    data.newItem()
+                    showNewItemCallout = true
                 } label: {
                     Image(systemName: "plus")
                         .font(.subheadline)
@@ -66,43 +67,77 @@ struct ItemsPanelView: View {
                 }
                 .buttonStyle(.plain)
                 .glassEffect(.regular.interactive(), in: Circle())
+                .popover(isPresented: $showNewItemCallout, arrowEdge: .leading) {
+                    Menu {
+                        Button("Login") {
+                            data.newItem(itemType: ItemType.Login)
+                            showNewItemCallout = false
+                        }
+                        Button("Card") {
+                            data.newItem(itemType: ItemType.Card)
+                            showNewItemCallout = false
+                        }
+                        Button("Identity") {
+                            data.newItem(itemType: ItemType.Identity)
+                            showNewItemCallout = false
+                        }
+                        Button("Note") {
+                            data.newItem(itemType: ItemType.Note)
+                            showNewItemCallout = false
+                        }
+                        Button("SSH Key") {
+                            data.newItem(itemType: ItemType.SSHKey)
+                            showNewItemCallout = false
+                        }
+                    } label: {
+                        Label("Add Item", systemImage: "plus.circle")
+                    }
+                    .menuStyle(.borderlessButton)
+                    .padding(.top, 5)
+                    .padding(.bottom, 5)
+                }
             }
             .padding(8)
             .padding(.bottom, -8)
-            
-            ScrollView {
-                if (data.searchQuery != "" && data.filteredElements.isEmpty) {
-                    ContentUnavailableView(
-                        "No Items Found",
-                        systemImage: "magnifyingglass",
-                        description: Text("Couldn't find any items!")
-                    )
-                } else if (data.searchQuery == "" && data.filteredElements.isEmpty) {
-                    ContentUnavailableView(
-                        "No Items",
-                        systemImage: "tray",
-                        description: Text("Create some items!")
-                    )
-                } else {
-                    ForEach(data.filteredElements) { item in
-                        ItemElementView(data: item)
+            GeometryReader { geo in
+                ScrollView {
+                    if (data.searchQuery != "" && data.filteredElements.isEmpty) {
+                        Spacer()
+                        ContentUnavailableView(
+                            "No Items Found",
+                            systemImage: "magnifyingglass",
+                            description: Text("Couldn't find any items!")
+                        )
+                        .frame(minWidth: geo.size.width, minHeight: geo.size.height)
+                    } else if (data.searchQuery == "" && data.filteredElements.isEmpty) {
+                        Spacer()
+                        ContentUnavailableView(
+                            "No Items",
+                            systemImage: "tray",
+                            description: Text("Create some items!")
+                        )
+                        .frame(minWidth: geo.size.width, minHeight: geo.size.height)
+                    } else {
+                        ForEach(data.filteredElements) { item in
+                            ItemElementView(data: item)
+                        }
+                        .padding(8)
                     }
-                    .padding(8)
                 }
+                .scrollIndicators(.never)
+                .background {
+                    RoundedRectangle(cornerRadius: 0, style: .continuous)
+                        .stroke(lineWidth: 0)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                }
+                .padding(.bottom, -9)
+                .padding(.leading, -1)
+                .padding(.trailing, -1)
             }
-            .scrollIndicators(.never)
-            .background {
-                RoundedRectangle(cornerRadius: 0, style: .continuous)
-                    .stroke(lineWidth: 0)
-                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
-            }
-            .padding(.bottom, -9)
-            .padding(.leading, -1)
-            .padding(.trailing, -1)
 
             Spacer()
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: data.elements)
     }
 }

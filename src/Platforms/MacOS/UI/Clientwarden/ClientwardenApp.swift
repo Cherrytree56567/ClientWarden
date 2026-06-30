@@ -33,10 +33,6 @@ final class ClientwardenWindow: NSObject {
     @objc public var cb_lock: (() -> Bool)?
     
     func getState() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let res = cb_getState?() {
             state = res
         } else {
@@ -45,38 +41,43 @@ final class ClientwardenWindow: NSObject {
     }
     
     func lock() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
-        if let res = cb_lock?() {
-            if (res) {
-                state = WindowState.Unlock
-                SidePanel.instance.name = ""
-                SidePanel.instance.type = ItemType.Login
-                SidePanel.instance.icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
-                SidePanel.instance.favorite = false
-                SidePanel.instance.itemFields = []
-                SidePanel.instance.customFields = []
-                SidePanel.instance.itemHistory = []
-                SidePanel.instance.passwordHistory = []
-                SidePanel.instance.viewable = false
-                SidePanel.instance.notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
-                SidePanel.instance.s_name = ""
-                SidePanel.instance.s_favorite = false
-                SidePanel.instance.s_itemFields = []
-                SidePanel.instance.s_customFields = []
-                SidePanel.instance.s_itemHistory = []
-                SidePanel.instance.s_passwordHistory = []
-                SidePanel.instance.s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
-                ItemsPanel.instance.elements = []
-                ItemsPanel.instance.filteredElements = []
-                ItemsPanel.instance.searchQuery = ""
-            } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Lock Vault"))
+        state = WindowState.Empty
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let res = self?.cb_lock?()
+
+            DispatchQueue.main.async {
+                if let r_res = res {
+                    if (r_res) {
+                        ClientwardenWindow.instance.state = WindowState.Unlock
+                        SidePanel.instance.name = ""
+                        SidePanel.instance.type = ItemType.Login
+                        SidePanel.instance.icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+                        SidePanel.instance.favorite = false
+                        SidePanel.instance.itemFields = []
+                        SidePanel.instance.customFields = []
+                        SidePanel.instance.itemHistory = []
+                        SidePanel.instance.passwordHistory = []
+                        SidePanel.instance.viewable = false
+                        SidePanel.instance.notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+                        SidePanel.instance.s_name = ""
+                        SidePanel.instance.s_favorite = false
+                        SidePanel.instance.s_itemFields = []
+                        SidePanel.instance.s_customFields = []
+                        SidePanel.instance.s_itemHistory = []
+                        SidePanel.instance.s_passwordHistory = []
+                        SidePanel.instance.s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+                        ItemsPanel.instance.elements = []
+                        ItemsPanel.instance.filteredElements = []
+                        ItemsPanel.instance.searchQuery = ""
+                    } else {
+                        g_toastStore.toasts.append(Toast(message: "Failed to Lock Vault"))
+                        ClientwardenWindow.instance.state = WindowState.Vault
+                    }
+                } else {
+                    g_toastStore.toasts.append(Toast(message: "No callback set for lock"))
+                    ClientwardenWindow.instance.state = WindowState.Vault
+                }
             }
-        } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for lock"))
         }
     }
 }
@@ -120,7 +121,8 @@ struct ClientwardenApp: App {
                         )
                     case .Empty:
                         VStack {
-
+                            ProgressView()
+                                .controlSize(.large)
                         }
                         .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
                 }

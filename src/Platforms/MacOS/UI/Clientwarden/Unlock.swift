@@ -1,51 +1,57 @@
 import SwiftUI
 
+@objcMembers
 @Observable
-final class Unlock {
+final class Unlock: NSObject {
     static let instance = Unlock()
     
     public var password: String = ""
-    public var username: String = "Unknown"
-    public var profilePic: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+    @objc public var username: String = "Unknown"
+    @objc public var profilePic: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     
     func clearData() {
         password = ""
         username = ""
     }
     
-    public var cb_getInfo: (() -> (String, ClientwardenImage, Bool))?
-    public var cb_unlock: ((String) -> Bool)?
+    @objc public var cb_getInfo: (() -> Bool)?
+    @objc public var cb_unlock: ((String) -> Bool)?
     
     /*
      * Callback Functions
      */
     func getInfo() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let res = cb_getInfo?() {
-            if (res.2) {
+            if (res) {
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to get Profile Info"))
+                ClientwardenWindow.instance.state = WindowState.Unlock
             }
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for getInfo"))
+            ClientwardenWindow.instance.state = WindowState.Unlock
         }
     }
     
     func unlock() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
-        if let res = cb_unlock?(password) {
-            if (res) {
-            } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Unlock Vault"))
+        let password = self.password
+        ClientwardenWindow.instance.state = WindowState.Empty
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let res = self?.cb_unlock?(password)
+
+            DispatchQueue.main.async {
+                if let r_res = res {
+                    if (r_res) {
+                    } else {
+                        g_toastStore.toasts.append(Toast(message: "Failed to Unlock Vault"))
+                        ClientwardenWindow.instance.state = WindowState.Unlock
+                    }
+                } else {
+                    g_toastStore.toasts.append(Toast(message: "No callback set for unlock"))
+                    ClientwardenWindow.instance.state = WindowState.Unlock
+                }
             }
-        } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for unlock"))
         }
     }
 }
@@ -83,17 +89,22 @@ struct UnlockView: View {
                     Text(verbatim: "Unlock")
                         .font(.subheadline)
                         .foregroundStyle(Color.gray)
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .padding(6)
                 .frame(width: 200)
                 .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                .contentShape(Rectangle())
+                .keyboardShortcut(.defaultAction)
             }
             
             Spacer()
         }
         .frame(minWidth: 300, maxWidth: 300, minHeight: 400, maxHeight: 400)
         .onAppear {
+            UnlockBridge.setupCallbacks()
             data.getInfo()
         }
     }

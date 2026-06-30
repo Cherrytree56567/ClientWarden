@@ -67,32 +67,52 @@ final class Login: NSObject {
      * Callback Functions
      */
     func login() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
-        if let res = cb_login?(email, password, vaultURL, mainURL, apiURL, wssURL, iconURL) {
-            if (res) {
-            } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to login"))
+        let email = self.email
+        let password = self.password
+        let vaultURL = self.vaultURL
+        let mainURL = self.mainURL
+        let apiURL = self.apiURL
+        let wssURL = self.wssURL
+        let iconURL = self.iconURL
+        ClientwardenWindow.instance.state = WindowState.Empty
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let res = self?.cb_login?(email, password, vaultURL, mainURL, apiURL, wssURL, iconURL)
+
+            DispatchQueue.main.async {
+                if let r_res = res {
+                    if (r_res) {
+                    } else {
+                        g_toastStore.toasts.append(Toast(message: "Failed to submit Code"))
+                        ClientwardenWindow.instance.state = WindowState.Login
+                    }
+                } else {
+                    g_toastStore.toasts.append(Toast(message: "No callback set for submitCode"))
+                    ClientwardenWindow.instance.state = WindowState.Login
+                }
             }
-        } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for login"))
         }
     }
     
     func submitCode() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
-        if let res = cb_submitCode?(code) {
-            if (res) {
-            } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to submit Code"))
+        let code = self.code
+        ClientwardenWindow.instance.state = WindowState.Empty
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let res = self?.cb_submitCode?(code)
+
+            DispatchQueue.main.async {
+                if let r_res = res {
+                    if (r_res) {
+                    } else {
+                        g_toastStore.toasts.append(Toast(message: "Failed to submit Code"))
+                        ClientwardenWindow.instance.state = WindowState.Login
+                    }
+                } else {
+                    g_toastStore.toasts.append(Toast(message: "No callback set for submitCode"))
+                    ClientwardenWindow.instance.state = WindowState.Login
+                }
             }
-        } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for submitCode"))
         }
     }
 }
@@ -228,11 +248,15 @@ struct LoginView: View {
                         Text(verbatim: "Login")
                             .font(.subheadline)
                             .foregroundStyle(Color.gray)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .padding(6)
                     .frame(width: 200)
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                    .contentShape(Rectangle())
+                    .keyboardShortcut(.defaultAction)
                 } else {
                     Text("Clientwarden")
                         .font(.largeTitle.bold())
@@ -248,11 +272,15 @@ struct LoginView: View {
                         Text(verbatim: "Submit")
                             .font(.subheadline)
                             .foregroundStyle(Color.gray)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .padding(6)
                     .frame(width: 200)
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                    .contentShape(Rectangle())
+                    .keyboardShortcut(.defaultAction)
                 }
             }
             

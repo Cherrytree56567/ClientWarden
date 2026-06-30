@@ -31,6 +31,7 @@ function(buildUI _target)
         src/Platforms/MacOS/Clipboard/ClipboardBridge.mm
         src/Platforms/MacOS/UIBridge/CWAppBridge.mm
         src/Platforms/MacOS/UIBridge/LoginBridge.mm
+        src/Platforms/MacOS/UIBridge/UnlockBridge.mm
     )
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets})
     target_include_directories(${_target} PRIVATE src/Platforms/MacOS src/Vault)

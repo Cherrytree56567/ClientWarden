@@ -24,11 +24,15 @@
 
         if (result == ClientWarden::AuthState::NeedsTOTP) {
             v_inst.codeType = ClientWarden::AuthState::NeedsTOTP;
-            Login.instance.EmailPasswordView = false;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Login.instance.EmailPasswordView = false;
+            });
             return true;
         } else if (result == ClientWarden::AuthState::NeedsEmailVerification) {
             v_inst.codeType = ClientWarden::AuthState::NeedsEmailVerification;
-            Login.instance.EmailPasswordView = false;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Login.instance.EmailPasswordView = false;
+            });
             return true;
         } else if (result != ClientWarden::AuthState::Authenticated) {
             return false;
@@ -41,8 +45,10 @@
         v_inst.startRefreshThread();
         v_inst.startWSSLoop();
         v_inst.Sync();
-        
-        ClientwardenWindow.instance.state = WindowStateVault;
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            ClientwardenWindow.instance.state = WindowStateVault;
+        });
 
         return true;
     };
@@ -60,17 +66,23 @@
         } else if (v_inst.codeType == ClientWarden::AuthState::NeedsTOTP) {
             result = v_inst.submitTOTP(c_code);
         } else {
-            Login.instance.EmailPasswordView = true;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Login.instance.EmailPasswordView = true;
+            });
             return false;
         }
 
         if (result != ClientWarden::AuthState::Authenticated) {
-            Login.instance.EmailPasswordView = true;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Login.instance.EmailPasswordView = true;
+            });
             return false;
         }
 
         if (v_inst.postLogin() != ClientWarden::NetworkState::Success) {
-            Login.instance.EmailPasswordView = true;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Login.instance.EmailPasswordView = true;
+            });
             return false;
         }
 
@@ -78,8 +90,10 @@
         v_inst.startWSSLoop();
         v_inst.Sync();
 
-        Login.instance.EmailPasswordView = true;
-        ClientwardenWindow.instance.state = WindowStateVault;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            Login.instance.EmailPasswordView = true;
+            ClientwardenWindow.instance.state = WindowStateVault;
+        });
 
         return true;
     };
