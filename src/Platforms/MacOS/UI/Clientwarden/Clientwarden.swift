@@ -1,16 +1,20 @@
 import Foundation
 
-struct Folder: Identifiable, Hashable {
-    let id: UUID
-    var name: String
-    
-    init(id: UUID, name: String) {
-        self.id = id
+@objcMembers
+class Folder: NSObject, Identifiable {
+    public var id: UUID { uuid }
+    @objc public var uuid: UUID
+    @objc public var name: String
+
+    init(uuid: UUID, name: String) {
+        self.uuid = uuid
         self.name = name
+        super.init()
     }
 }
 
-enum ItemType {
+@objc
+enum ItemType: Int {
     case Login
     case Card
     case Identity

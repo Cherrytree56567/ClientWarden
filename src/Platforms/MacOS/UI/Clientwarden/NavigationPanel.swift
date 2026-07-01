@@ -12,8 +12,9 @@ enum NavItems: Hashable {
     case folder(UUID)
 }
 
+@objcMembers
 @Observable
-final class NavigationPanel {
+final class NavigationPanel: NSObject {
     static let instance = NavigationPanel()
     
     public var refresh: Int = 0
@@ -21,20 +22,30 @@ final class NavigationPanel {
     
     public var folders: [Folder] = []
     
-    public var cb_createFolder: ((String) -> (result: Bool, id: UUID))?
-    public var cb_deleteFolder: ((UUID) -> Bool)?
+    @objc public var cb_createFolder: ((String) -> UUID)?
+    @objc public var cb_deleteFolder: ((UUID) -> Bool)?
     
-    public var cb_allItems: (() -> [ItemElement])?
-    public var cb_favorites: (() -> [ItemElement])?
-    public var cb_trash: (() -> [ItemElement])?
+    @objc public var cb_allItems: (() -> [ItemElement])?
+    @objc public var cb_favorites: (() -> [ItemElement])?
+    @objc public var cb_trash: (() -> [ItemElement])?
     
-    public var cb_login: (() -> [ItemElement])?
-    public var cb_card: (() -> [ItemElement])?
-    public var cb_identity: (() -> [ItemElement])?
-    public var cb_note: (() -> [ItemElement])?
-    public var cb_SSHKey: (() -> [ItemElement])?
+    @objc public var cb_login: (() -> [ItemElement])?
+    @objc public var cb_card: (() -> [ItemElement])?
+    @objc public var cb_identity: (() -> [ItemElement])?
+    @objc public var cb_note: (() -> [ItemElement])?
+    @objc public var cb_SSHKey: (() -> [ItemElement])?
     
-    public var cb_folder: ((UUID) -> [ItemElement])?
+    @objc public var cb_folder: ((UUID) -> [ItemElement])?
+
+    @objc public var cb_getFolders: (() -> [Folder])?
+
+    func getFolders() {
+        if let c_folders = cb_getFolders?() {
+            folders = c_folders
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for getFolders"))
+        }
+    }
     
     func refreshItems() {
         self.refresh += 1
@@ -164,11 +175,7 @@ struct NavigationPanelView: View {
                  * the callback was successful
                  */
                 if let folderUUID = data.cb_createFolder?("New Folder") {
-                    if (folderUUID.result) {
-                        data.folders.append(Folder(id: folderUUID.id, name: "New Folder"))
-                    } else {
-                        g_toastStore.toasts.append(Toast(message: "Failed to create folder"))
-                    }
+                    data.folders.append(Folder(uuid: folderUUID, name: "New Folder"))
                 } else {
                     g_toastStore.toasts.append(Toast(message: "No callback set for createFolder"))
                 }
@@ -188,6 +195,8 @@ struct NavigationPanelView: View {
             loadTabElements(tab: newValue, prev: oldValue)
         }
         .onAppear() {
+            NavPanelBridge.setupCallbacks()
+            data.getFolders()
             loadTabElements(tab: data.selection, prev: data.selection)
         }
     }

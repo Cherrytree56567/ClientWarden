@@ -1,12 +1,20 @@
 import SwiftUI
 
-struct ItemElement: Identifiable, Equatable {
+@objcMembers
+class ItemElement: NSObject, Identifiable {
     public var id: UUID { uuid }
     
     public var name: String
     public var uuid: UUID
     public var type: ItemType
     public var image: ClientwardenImage?
+
+    init(name: String, uuid: UUID, type: ItemType, image: ClientwardenImage? = nil) {
+        self.name = name
+        self.uuid = uuid
+        self.type = type
+        self.image = image
+    }
     
     static func == (old: ItemElement, new: ItemElement) -> Bool {
         old.uuid == new.uuid &&
@@ -24,10 +32,24 @@ struct ItemElementView: View {
             SidePanel.instance.viewItem(cb_uuid: data.uuid)
         } label: {
             HStack {
-                Image(data.image?.path ?? "")
-                    .resizable()
-                    .frame(width: 30, height: 30)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                if let img = data.image?.getImage() {
+                    if data.image?.type == .systemImage {
+                        img
+                            .font(.system(size: 24))
+                            .frame(width: 32, height: 32)
+                    } else {
+                        img
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 24, height: 24)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .frame(width: 32, height: 32)
+                    }
+                } else {
+                    Image(systemName: "viewfinder")
+                        .font(.system(size: 24))
+                        .frame(width: 32, height: 32)
+                }
                 
                 VStack(alignment: .leading) {
                     Text(data.name)
@@ -42,7 +64,7 @@ struct ItemElementView: View {
                 
                 Spacer()
             }
-            .padding(8)
+            .padding(4)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())

@@ -118,10 +118,12 @@ struct ItemsPanelView: View {
                         )
                         .frame(minWidth: geo.size.width, minHeight: geo.size.height)
                     } else {
-                        ForEach(data.filteredElements) { item in
-                            ItemElementView(data: item)
+                        VStack {
+                            ForEach(data.filteredElements) { item in
+                                ItemElementView(data: item)
+                            }
                         }
-                        .padding(8)
+                        .padding(12)
                     }
                 }
                 .scrollIndicators(.never)

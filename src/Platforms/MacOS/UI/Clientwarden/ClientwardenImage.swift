@@ -4,6 +4,7 @@ import SwiftUI
 enum ImageType : Int {
     case bundle
     case appSupport
+    case systemImage
 }
 
 @objcMembers
@@ -24,11 +25,12 @@ class ClientwardenImage: NSObject {
                 }
                 return Image(path)
             case .appSupport:
-                let imagePath = Self.appSupportPath.appendingPathComponent(path)
-                guard let nsImage = NSImage(contentsOfFile: imagePath.path) else {
+                guard let nsImage = NSImage(contentsOfFile: path) else {
                     return nil
                 }
                 return Image(nsImage: nsImage)
+            case .systemImage:
+                return Image(systemName: path)
         }
     }
     
