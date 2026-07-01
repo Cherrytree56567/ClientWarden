@@ -24,6 +24,7 @@ final class NavigationPanel: NSObject {
     
     @objc public var cb_createFolder: ((String) -> UUID)?
     @objc public var cb_deleteFolder: ((UUID) -> Bool)?
+    @objc public var cb_renameFolder: ((UUID, String) -> Bool)?
     
     @objc public var cb_allItems: (() -> [ItemElement])?
     @objc public var cb_favorites: (() -> [ItemElement])?
@@ -46,6 +47,20 @@ final class NavigationPanel: NSObject {
             g_toastStore.toasts.append(Toast(message: "No callback set for getFolders"))
         }
     }
+
+    func renameFolder(folderId: UUID, str: String) {
+        if let res = cb_renameFolder?(folderId, str) {
+            if (res) {
+                if let index = folders.firstIndex(where: { $0.id == folderId }) {
+                    folders[index].name = str
+                }
+            } else {
+                g_toastStore.toasts.append(Toast(message: "Failed to rename folder"))
+            }
+        } else {
+            g_toastStore.toasts.append(Toast(message: "No callback set for renameFolder"))
+        }
+    }
     
     func refreshItems() {
         self.refresh += 1
@@ -54,6 +69,9 @@ final class NavigationPanel: NSObject {
 
 struct NavigationPanelView: View {
     @State private var refreshToken: Int = 0
+    @State private var showRenameAlert: Bool = false
+    @State private var renameAlertId: UUID = UUID()
+    @State private var folderName: String = ""
     
     @Bindable var data: NavigationPanel = NavigationPanel.instance
     
@@ -146,10 +164,6 @@ struct NavigationPanelView: View {
                     }
                     .contextMenu {
                         Button(role: .destructive) {
-                            /*
-                             * Check if the var has a callback and check if
-                             * the callback was successful
-                             */
                             if let folderUUID = data.cb_deleteFolder?(folder.id) {
                                 if (folderUUID) {
                                     data.folders.removeAll { $0.id == folder.id }
@@ -161,6 +175,14 @@ struct NavigationPanelView: View {
                             }
                         } label: {
                             Label("Delete", systemImage: "minus.circle")
+                                .labelStyle(TitleAndIconLabelStyle())
+                        }
+                        Button {
+                            showRenameAlert = true
+                            renameAlertId = folder.id
+                            folderName = folder.name
+                        } label: {
+                            Label("Rename", systemImage: "character.cursor.ibeam")
                                 .labelStyle(TitleAndIconLabelStyle())
                         }
                     }
@@ -198,6 +220,15 @@ struct NavigationPanelView: View {
             NavPanelBridge.setupCallbacks()
             data.getFolders()
             loadTabElements(tab: data.selection, prev: data.selection)
+        }
+        .alert("Rename", isPresented: $showRenameAlert) {
+            TextField("Folder Name", text: $folderName)
+            Button("Cancel", role: .cancel) { }
+            Button("Confirm") {
+                data.renameFolder(folderId: renameAlertId, str: folderName)
+            }
+        } message: {
+            Text("Rename Folder.")
         }
     }
 }

@@ -30,6 +30,7 @@
     [self getFolders];
     [self cb_CreateFolder];
     [self cb_DeleteFolder];
+    [self cb_RenameFolder];
 }
 
 + (NSArray<ItemElement*>*)getItems:(std::vector<std::pair<ClientWarden::CipherType, std::string>>)ciphers {
@@ -91,7 +92,7 @@
 }
 
 + (void)cb_AllItems {
-    NavigationPanel.instance.cb_allItems = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_allItems = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -103,7 +104,7 @@
 }
 
 + (void)cb_Favorites {
-    NavigationPanel.instance.cb_favorites = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_favorites = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -116,7 +117,7 @@
 }
 
 + (void)cb_Trash {
-    NavigationPanel.instance.cb_trash = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_trash = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -128,7 +129,7 @@
 }
 
 + (void)cb_Login {
-    NavigationPanel.instance.cb_login = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_login = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -141,7 +142,7 @@
 }
 
 + (void)cb_Card {
-    NavigationPanel.instance.cb_card = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_card = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -154,7 +155,7 @@
 }
 
 + (void)cb_Identity {
-    NavigationPanel.instance.cb_identity = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_identity = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -167,7 +168,7 @@
 }
 
 + (void)cb_Note {
-    NavigationPanel.instance.cb_note = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_note = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -180,7 +181,7 @@
 }
 
 + (void)cb_SSHKey {
-    NavigationPanel.instance.cb_SSHKey = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_SSHKey = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -193,7 +194,7 @@
 }
 
 + (void)cb_Folder {
-    NavigationPanel.instance.cb_folder = ^NSArray * _Nonnull(NSUUID* uuid) {
+    NavigationPanel.instance.cb_folder = ^NSArray* _Nonnull(NSUUID* uuid) {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         ClientWarden::CipherQuery query(v_inst);
 
@@ -211,7 +212,7 @@
 }
 
 + (void)getFolders {
-    NavigationPanel.instance.cb_getFolders = ^NSArray * _Nonnull {
+    NavigationPanel.instance.cb_getFolders = ^NSArray* _Nonnull {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
         std::vector<std::string> c_folders = v_inst.GetFolders();
@@ -244,7 +245,7 @@
 }
 
 + (void)cb_CreateFolder {
-    NavigationPanel.instance.cb_createFolder = ^NSUUID * _Nullable (NSString* name) {
+    NavigationPanel.instance.cb_createFolder = ^NSUUID* _Nullable(NSString* name) {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
         ClientWarden::Folder folder(v_inst);
@@ -262,13 +263,11 @@
 }
 
 + (void)cb_DeleteFolder {
-    NavigationPanel.instance.cb_deleteFolder = ^bool (NSUUID* uuid) {
+    NavigationPanel.instance.cb_deleteFolder = ^bool(NSUUID* uuid) {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
         std::string c_uuid = uuid.UUIDString.UTF8String;
         std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
-
-        spdlog::info("{}", c_uuid);
 
         if (c_uuid.empty()) {
             return false;
@@ -277,6 +276,28 @@
         ClientWarden::Folder folder(v_inst, c_uuid);
 
         folder.Delete();
+
+        return true;
+    };
+}
+
++ (void)cb_RenameFolder {
+    NavigationPanel.instance.cb_renameFolder = ^bool(NSUUID *uuid, NSString *name) {
+        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+        std::string c_uuid = uuid.UUIDString.UTF8String;
+        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+        if (c_uuid.empty()) {
+            return false;
+        }
+
+        std::string c_name = name.UTF8String;
+
+        ClientWarden::Folder folder(v_inst, c_uuid);
+
+        folder.SetName(c_name)
+              .Commit();
 
         return true;
     };
