@@ -6,15 +6,6 @@
 #include "LoginItem/LoginItem.h"
 #include "Folder/Folder.h"
 
-/*
- * IDK what Im even doing here
- * Objective-C++ is soo weird, 
- * and I can't get any syntax 
- * highlighting for cpp stuff 
- * in here.
- *
- * tbh Ill do this later.
- */
 @implementation NavPanelBridge
 
 + (void)setupCallbacks {

@@ -3,3 +3,5 @@
 #import "UIBridge/LoginBridge.h"
 #import "UIBridge/UnlockBridge.h"
 #import "UIBridge/NavPanelBridge.h"
+#import "UIBridge/ItemsPanelBridge.h"
+#import "UIBridge/SidePanelBridge.h"

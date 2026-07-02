@@ -7,10 +7,13 @@ import SwiftUI
  * the SidePanel View and the SidePanel Data.
  */
 
+@objcMembers
 @Observable
-final class SidePanel {
+final class SidePanel: NSObject {
     static let instance = SidePanel()
-    public init() {}
+    override public init() {
+        super.init()
+    }
     
     public var name: String = ""
     public var uuid: UUID = UUID()
@@ -30,20 +33,20 @@ final class SidePanel {
     /*
      * Callbacks
      */
-    public var cb_favorite: ((Bool, UUID) -> Bool)?
+    @objc public var cb_favorite: ((Bool, UUID) -> Bool)?
     
-    public var cb_duplicate: ((UUID) -> Bool)?
-    public var cb_delete: ((UUID) -> Bool)?
-    public var cb_save: ((UUID) -> Bool)?
+    @objc public var cb_duplicate: ((UUID, ItemType) -> ItemElement)?
+    @objc public var cb_delete: ((UUID) -> Bool)?
+    @objc public var cb_save: ((UUID) -> Bool)?
     
-    public var cb_restore: ((UUID) -> Bool)?
-    public var cb_permDel: ((UUID) -> Bool)?
+    @objc public var cb_restore: ((UUID) -> Bool)?
+    @objc public var cb_permDel: ((UUID) -> Bool)?
     
-    public var cb_sidebar: ((UUID) -> Bool)?
+    @objc public var cb_sidebar: ((UUID) -> Bool)?
     
-    public var cb_downloadAttachment: ((UUID, UUID) -> Bool)?
-    public var cb_removeAttachment: ((UUID, UUID) -> Bool)?
-    public var cb_uploadAttachment: ((UUID) -> Bool)?
+    @objc public var cb_downloadAttachment: ((UUID, UUID) -> Bool)?
+    @objc public var cb_removeAttachment: ((UUID, UUID) -> Bool)?
+    @objc public var cb_uploadAttachment: ((UUID) -> Bool)?
     
     func closeItem() {
         viewable = false
@@ -147,11 +150,9 @@ final class SidePanel {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let dup = cb_duplicate?(uuid) {
-            if (dup) {
-            } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to duplicate item"))
-            }
+        if let dup = cb_duplicate?(uuid, type) {
+            ItemsPanel.instance.elements.append(dup)
+            ItemsPanel.instance.query()
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for duplicate Item"))
         }
@@ -594,6 +595,9 @@ struct SidePanelView: View {
             }
         } message: {
             Text("This action cannot be undone.")
+        }
+        .onAppear {
+            SidePanelBridge.setupCallbacks()
         }
     }
 }

@@ -1,15 +1,16 @@
 import SwiftUI
 
+@objcMembers
 @Observable
-final class ItemsPanel {
+final class ItemsPanel: NSObject {
     static let instance = ItemsPanel()
 
     public var elements: [ItemElement] = []
     public var filteredElements: [ItemElement] = []
     public var searchQuery: String = ""
 
-    public var cb_query: ((String) -> [ItemElement])?
-    public var cb_new: ((ItemType) -> Bool)?
+    @objc public var cb_query: ((String) -> [ItemElement])?
+    @objc public var cb_new: ((ItemType) -> ItemElement)?
 
     func update(data: [ItemElement]) {
         elements = data
@@ -18,6 +19,9 @@ final class ItemsPanel {
     }
 
     func query() {
+        if (searchQuery == "") {
+            filteredElements = elements
+        }
         if let results = cb_query?(searchQuery) {
             filteredElements = results
         } else {
@@ -27,11 +31,9 @@ final class ItemsPanel {
 
     func newItem(itemType: ItemType) {
         if let res = cb_new?(itemType) {
-            if (res) {
-
-            } else {
-                g_toastStore.toasts.append(Toast(message: "No callback create Item"))
-            }
+            elements.append(res)
+            query()
+            SidePanel.instance.viewItem(cb_uuid: res.uuid)
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for New Item"))
         }
@@ -141,6 +143,9 @@ struct ItemsPanelView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: data.elements)
+        .onAppear {
+            ItemsPanelBridge.setupCallbacks()
+        }
     }
 }
 #Preview {
