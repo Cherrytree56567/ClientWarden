@@ -9,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.async {
             if let window = NSApplication.shared.windows.first {
                 window.sharingType = .none
+                // TODO: Remove ScreenSHaring thing before release
             }
         }
     }

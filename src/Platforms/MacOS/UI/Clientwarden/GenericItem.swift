@@ -15,7 +15,8 @@ import SwiftUI
  * ml_generic - Title and Multiline Value
  * ml_password - Title and Hidden Multiline Value with Reveal Button
  */
-enum GenericItemType {
+@objc
+enum GenericItemType: Int {
     case generic
     case password
     case totp
@@ -24,12 +25,26 @@ enum GenericItemType {
     case ml_password
 }
 
-struct GenericItemData : Identifiable {
+@objcMembers
+class TOTPResult: NSObject {
+    @objc public let refreshDate: Int64
+    @objc public let maxTimer: Int
+    @objc public let value: String
+
+    init(refreshDate: Int64, maxTimer: Int, value: String) {
+        self.refreshDate = refreshDate
+        self.maxTimer = maxTimer
+        self.value = value
+    }
+}
+
+@objcMembers
+class GenericItemData : NSObject, Identifiable {
     let id = UUID()
-    public var title: String
-    public var value: String
-    public var type: GenericItemType
-    public var cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?
+    @objc public var title: String
+    @objc public var value: String
+    @objc public var type: GenericItemType
+    @objc public var cb_getTOTP: (() -> TOTPResult)?
     
     init(title: String, value: String, type: GenericItemType) {
         self.title = title
@@ -37,7 +52,7 @@ struct GenericItemData : Identifiable {
         self.type = type
     }
     
-    init(title: String, value: String, type: GenericItemType, cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?) {
+    init(title: String, value: String, type: GenericItemType, cb_getTOTP: (() -> TOTPResult)?) {
         self.title = title
         self.value = value
         self.type = type
@@ -73,7 +88,7 @@ struct GenericItemData : Identifiable {
  */
 struct TOTPTimerModifier: ViewModifier {
     let active: Bool
-    let cb_getTOTP: (() -> (refreshDate: Int64, maxTimer: Int, value: String))?
+    let cb_getTOTP: (() -> TOTPResult)?
     @Binding var left: Double
     @Binding var maxValue: Int
     @Binding var value: String

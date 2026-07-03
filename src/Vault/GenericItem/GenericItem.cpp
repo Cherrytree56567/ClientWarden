@@ -510,4 +510,75 @@ namespace ClientWarden {
         }
         return this;
     }
+
+    GenericItem* GenericItem::GetType(CipherType& val) {
+        if (!init) return this;
+        if (!data.contains("type")) return this;
+        if (!data["type"].is_number()) return this;
+        val = (CipherType)data["type"].get<int>();
+        return this;
+    }
+
+    GenericItem* GenericItem::GetCreation(std::string& value) {
+        if (!init) return this;
+        if (!data.contains("creationDate")) return this;
+        if (!data["creationDate"].is_string()) return this;
+
+        std::time_t time = BitwardenTime(data["creationDate"]);
+
+        std::tm tmStruct{};
+        #if defined(_WIN32)
+            localtime_s(&tmStruct, &time);
+        #else
+            localtime_r(&time, &tmStruct);
+        #endif
+
+        std::ostringstream oss;
+        oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S");
+        value = oss.str();
+        return this;
+    }
+
+    GenericItem* GenericItem::GetModification(std::string& value) {
+        if (!init) return this;
+        if (!data.contains("revisionDate")) return this;
+        if (!data["revisionDate"].is_string()) return this;
+
+        std::time_t time = BitwardenTime(data["revisionDate"]);
+
+        std::tm tmStruct{};
+        #if defined(_WIN32)
+            localtime_s(&tmStruct, &time);
+        #else
+            localtime_r(&time, &tmStruct);
+        #endif
+
+        std::ostringstream oss;
+        oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S");
+        value = oss.str();
+        return this;
+    }
+
+    GenericItem* GenericItem::GetDeletion(std::string& value) {
+        if (!init) return this;
+        if (!data.contains("GetDeletion")) return this;
+        if (!data["GetDeletion"].is_string()) {
+            value = "none";
+            return this;
+        }
+
+        std::time_t time = BitwardenTime(data["GetDeletion"]);
+
+        std::tm tmStruct{};
+        #if defined(_WIN32)
+            localtime_s(&tmStruct, &time);
+        #else
+            localtime_r(&time, &tmStruct);
+        #endif
+
+        std::ostringstream oss;
+        oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S");
+        value = oss.str();
+        return this;
+    }
 }

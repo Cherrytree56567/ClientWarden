@@ -16,6 +16,7 @@ namespace ClientWarden {
     struct TOTPCode {
         std::string code;
         std::time_t remaining;
+        int period;
     };
 
     class LoginItem : public GenericItem {
@@ -58,6 +59,10 @@ namespace ClientWarden {
         LoginItem* GetPasskeyCredId(std::time_t& value);
         LoginItem* GetPasskeyCounter(std::time_t& value);*/
         LoginItem* GetId(std::string& value) override;
+        LoginItem* GetType(CipherType& val) override;
+        LoginItem* GetCreation(std::string& value) override;
+        LoginItem* GetModification(std::string& value) override;
+        LoginItem* GetDeletion(std::string& value) override;
         
         LoginItem* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) override;
         LoginItem* GetAttachmentIDs(std::vector<std::string>& ids) override;

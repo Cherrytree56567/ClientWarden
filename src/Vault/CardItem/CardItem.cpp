@@ -452,6 +452,10 @@ namespace ClientWarden {
         if (!hr) {
             l_logger->warn("Failed to add New Item Online");
             newdata["createdOffline"] = true;
+        } else {
+            if (hr->contains("id") && (*hr)["id"].is_string()) {
+                newdata["id"] = (*hr)["id"];
+            }
         }
         localVault.vaultData["ciphers"].push_back(newdata);
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
@@ -483,5 +487,22 @@ namespace ClientWarden {
 
     CardItem* CardItem::AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress) {
         return static_cast<CardItem*>(this->GenericItem::AddAttachment(name, content, id, onProgress));
+    }
+
+    CardItem* CardItem::GetType(CipherType& val) {
+        val = CipherType::Card;
+        return this;
+    }
+
+    CardItem* CardItem::GetCreation(std::string& value) {
+        return static_cast<CardItem*>(this->GenericItem::GetCreation(value));
+    }
+
+    CardItem* CardItem::GetModification(std::string& value) {
+        return static_cast<CardItem*>(this->GenericItem::GetModification(value));
+    }
+
+    CardItem* CardItem::GetDeletion(std::string& value) {
+        return static_cast<CardItem*>(this->GenericItem::GetDeletion(value));
     }
 }

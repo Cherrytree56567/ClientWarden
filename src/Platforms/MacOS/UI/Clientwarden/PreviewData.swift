@@ -18,7 +18,7 @@ struct PreviewData {
                             let step: Int64 = 30
                             let refreshDate = ((now / step) + 1) * step
                             let code = String(format: "%06d", Int.random(in: 0...999999))
-                            return (refreshDate: refreshDate, maxTimer: 30, value: code)
+                            return TOTPResult(refreshDate: refreshDate, maxTimer: 30, value: code)
                         }),
                         GenericItemData(title: "Websites", value: "google.com\nbing.com", type: GenericItemType.website),
                     ]

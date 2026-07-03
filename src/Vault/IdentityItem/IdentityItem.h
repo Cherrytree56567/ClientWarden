@@ -63,6 +63,10 @@ namespace ClientWarden {
         IdentityItem* GetFolder(std::string& folder) override;
         IdentityItem* GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value) override;
         IdentityItem* GetId(std::string& value) override;
+        IdentityItem* GetType(CipherType& val) override;
+        IdentityItem* GetCreation(std::string& value) override;
+        IdentityItem* GetModification(std::string& value) override;
+        IdentityItem* GetDeletion(std::string& value) override;
         
         IdentityItem* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) override;
         IdentityItem* GetAttachmentIDs(std::vector<std::string>& ids) override;

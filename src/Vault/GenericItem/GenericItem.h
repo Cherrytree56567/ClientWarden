@@ -30,6 +30,9 @@ namespace ClientWarden {
         virtual GenericItem* GetFolder(std::string& folder);
         virtual GenericItem* GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value);
         virtual GenericItem* GetId(std::string& value);
+        virtual GenericItem* GetCreation(std::string& value);
+        virtual GenericItem* GetModification(std::string& value);
+        virtual GenericItem* GetDeletion(std::string& value);
         
         virtual GenericItem* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr);
         virtual GenericItem* GetAttachmentIDs(std::vector<std::string>& ids);
@@ -41,6 +44,7 @@ namespace ClientWarden {
         virtual GenericItem* SetReprompt(bool val);
         virtual GenericItem* GetFavorite(bool& val);
         virtual GenericItem* GetReprompt(bool& val);
+        virtual GenericItem* GetType(CipherType& val);
 
         void Commit();
         void Delete();

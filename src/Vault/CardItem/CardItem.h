@@ -46,6 +46,10 @@ namespace ClientWarden {
         CardItem* GetFavorite(bool& val) override;
         CardItem* GetReprompt(bool& val) override;
         CardItem* GetId(std::string& value) override;
+        CardItem* GetType(CipherType& val) override;
+        CardItem* GetCreation(std::string& value) override;
+        CardItem* GetModification(std::string& value) override;
+        CardItem* GetDeletion(std::string& value) override;
         
         CardItem* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) override;
         CardItem* GetAttachmentIDs(std::vector<std::string>& ids) override;

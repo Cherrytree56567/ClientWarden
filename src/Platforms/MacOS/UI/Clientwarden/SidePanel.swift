@@ -44,15 +44,15 @@ final class SidePanel: NSObject {
     
     @objc public var cb_sidebar: ((UUID) -> Bool)?
     
-    @objc public var cb_downloadAttachment: ((UUID, UUID) -> Bool)?
-    @objc public var cb_removeAttachment: ((UUID, UUID) -> Bool)?
+    @objc public var cb_downloadAttachment: ((UUID, String) -> Bool)?
+    @objc public var cb_removeAttachment: ((UUID, String) -> Bool)?
     @objc public var cb_uploadAttachment: ((UUID) -> Bool)?
     
     func closeItem() {
         viewable = false
     }
     
-    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [String], notes: String) {
+    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [String], attachmentItems: [AttachmentItemData], notes: String) {
         self.viewable = true
         self.editable = false
         self.name = name
@@ -64,6 +64,7 @@ final class SidePanel: NSObject {
         self.customFields = customFields
         self.itemHistory = itemHistory
         self.passwordHistory = passwordHistory
+        self.attachmentItems = attachmentItems
         self.notes = GenericItemData(title: "Notes", value: notes, type: GenericItemType.ml_generic)
     }
     
@@ -142,7 +143,7 @@ final class SidePanel: NSObject {
         } else {
             g_toastStore.toasts.append(Toast(message: "No callback set for save Item"))
         }
-        return true
+        return false
     }
     
     func duplicateItem() {
@@ -165,8 +166,7 @@ final class SidePanel: NSObject {
          */
         if let del = cb_delete?(uuid) {
             if (del) {
-                editable = false
-                viewable = false
+                ItemsPanel.instance.query()
             } else {
                 g_toastStore.toasts.append(Toast(message: "Failed to delete item"))
             }
@@ -190,7 +190,7 @@ final class SidePanel: NSObject {
         }
     }
     
-    func downloadAttachment(id: UUID) {
+    func downloadAttachment(id: String) {
         /*
          * Check if the var has a callback and check if
          * the callback was successful
@@ -205,7 +205,7 @@ final class SidePanel: NSObject {
         }
     }
     
-    func removeAttachment(id: UUID) {
+    func removeAttachment(id: String) {
         /*
          * Check if the var has a callback and check if
          * the callback was successful
@@ -272,14 +272,14 @@ final class SidePanel: NSObject {
     /*
      * Callback Helpers
      */
-    func updateProgress(id: UUID, progress: Double) {
-        if let index = attachmentItems.firstIndex(where: { $0.id == id }) {
+    func updateProgress(id: String, progress: Double) {
+        if let index = attachmentItems.firstIndex(where: { $0.AttachID == id }) {
             attachmentItems[index].progress = progress
         }
     }
     
-    func deleteAttachmentView(id: UUID) {
-        attachmentItems.removeAll { $0.id == id }
+    func deleteAttachmentView(id: String) {
+        attachmentItems.removeAll { $0.AttachID == id }
     }
 }
 
@@ -485,6 +485,7 @@ struct SidePanelView: View {
                     }
                 }
                 .scrollIndicators(.never)
+                .padding(.bottom, 8)
             }
         }
         .padding(16)

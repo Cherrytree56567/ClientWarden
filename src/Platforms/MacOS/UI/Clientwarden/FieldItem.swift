@@ -1,17 +1,19 @@
 import SwiftUI
 
-enum FieldItemType {
+@objc
+enum FieldItemType: Int {
     case text
     case hidden
     case checkbox
     case linked
 }
 
-struct FieldItemData : Identifiable, Hashable {
+@objcMembers
+class FieldItemData : NSObject, Identifiable {
     let id = UUID()
-    public var title: String
-    public var value: String
-    public var type: FieldItemType
+    @objc public var title: String
+    @objc public var value: String
+    @objc public var type: FieldItemType
     
     init(title: String, value: String, type: FieldItemType) {
         self.title = title

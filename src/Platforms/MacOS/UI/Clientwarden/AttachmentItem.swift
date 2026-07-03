@@ -1,12 +1,14 @@
 import SwiftUI
 
-struct AttachmentItemData : Identifiable, Hashable {
-    public var id: UUID
-    public var name: String
+@objcMembers
+class AttachmentItemData : NSObject, Identifiable {
+    public var id: UUID = UUID()
+    @objc public var AttachID: String
+    @objc public var name: String
     public var progress: Double = 0.0
     
-    init(id: UUID, name: String) {
-        self.id = id
+    init(AttachID: String, name: String) {
+        self.AttachID = AttachID
         self.name = name
     }
 }
@@ -51,7 +53,7 @@ struct AttachmentItem: View {
                 
                 if (editable) {
                     Button {
-                        SidePanel.instance.downloadAttachment(id: data.id)
+                        SidePanel.instance.downloadAttachment(id: data.AttachID)
                     } label: {
                         Image(systemName: "trash")
                             .padding(.horizontal, 4)
@@ -60,7 +62,7 @@ struct AttachmentItem: View {
                     .buttonStyle(.plain)
                 } else {
                     Button {
-                        SidePanel.instance.downloadAttachment(id: data.id)
+                        SidePanel.instance.downloadAttachment(id: data.AttachID)
                     } label: {
                         Image(systemName: "square.and.arrow.down")
                             .padding(.horizontal, 4)

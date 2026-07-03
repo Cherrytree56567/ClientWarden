@@ -37,6 +37,10 @@ namespace ClientWarden {
         SSHKeyItem* GetFavorite(bool& val) override;
         SSHKeyItem* GetReprompt(bool& val) override;
         SSHKeyItem* GetId(std::string& value) override;
+        SSHKeyItem* GetType(CipherType& val) override;
+        SSHKeyItem* GetCreation(std::string& value) override;
+        SSHKeyItem* GetModification(std::string& value) override;
+        SSHKeyItem* GetDeletion(std::string& value) override;
         
         SSHKeyItem* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) override;
         SSHKeyItem* GetAttachmentIDs(std::vector<std::string>& ids) override;

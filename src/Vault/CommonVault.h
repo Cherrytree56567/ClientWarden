@@ -27,6 +27,7 @@ namespace ClientWarden {
         Card = 3,
         Identity = 4,
         Note = 2,
-        SSHKey = 5
+        SSHKey = 5,
+        Generic = 0
     };
 }

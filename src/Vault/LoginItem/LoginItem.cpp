@@ -2,6 +2,9 @@
 
 namespace ClientWarden {
     LoginItem::LoginItem(Vault& vault, std::string uuid) : GenericItem(vault, uuid) {
+        if (!l_logger) {
+            l_logger = spdlog::stdout_color_mt("ClientWarden::Vault::LoginItem");
+        }
         init = false;
         if (data.contains("type")) {
             if (data["type"].get<int>() == 1) {
@@ -302,6 +305,10 @@ namespace ClientWarden {
         if (!hr) {
             l_logger->warn("Failed to add New Item Online");
             newdata["createdOffline"] = true;
+        } else {
+            if (hr->contains("id") && (*hr)["id"].is_string()) {
+                newdata["id"] = (*hr)["id"];
+            }
         }
         localVault.vaultData["ciphers"].push_back(newdata);
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
@@ -533,6 +540,7 @@ namespace ClientWarden {
             oss << std::setw(digits) << std::setfill('0') << code;
             totp.code = oss.str();
             totp.remaining = nextRefresh;
+            totp.period = period;
         } catch (...) {
             l_logger->info("Failed to get TOTP");
             return this;
@@ -628,5 +636,22 @@ namespace ClientWarden {
 
     LoginItem* LoginItem::AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress) {
         return static_cast<LoginItem*>(this->GenericItem::AddAttachment(name, content, id, onProgress));
+    }
+
+    LoginItem* LoginItem::GetType(CipherType& val) {
+        val = CipherType::Login;
+        return this;
+    }
+
+    LoginItem* LoginItem::GetCreation(std::string& value) {
+        return static_cast<LoginItem*>(this->GenericItem::GetCreation(value));
+    }
+
+    LoginItem* LoginItem::GetModification(std::string& value) {
+        return static_cast<LoginItem*>(this->GenericItem::GetModification(value));
+    }
+
+    LoginItem* LoginItem::GetDeletion(std::string& value) {
+        return static_cast<LoginItem*>(this->GenericItem::GetDeletion(value));
     }
 }
