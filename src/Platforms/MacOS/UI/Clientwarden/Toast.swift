@@ -1,13 +1,18 @@
 import SwiftUI
 
 @Observable
-final class ToastStore {
+@objcMembers
+final class ToastStore: NSObject {
+    static let instance = ToastStore()
     var toasts: [Toast] = []
+
+    func addToast(_ toast: Toast) {
+        toasts.append(toast)
+    }
 }
 
-let g_toastStore = ToastStore()
-
-struct Toast: Identifiable, Equatable {
+@objcMembers
+class Toast: NSObject, Identifiable {
     let id: UUID = UUID()
     let message: String
     var icon: String = "exclamationmark.warninglight"
@@ -17,6 +22,17 @@ struct Toast: Identifiable, Equatable {
         var result = self
         result.color = color
         return result
+    }
+
+    init(message: String) {
+        self.message = message
+        super.init()
+    }
+
+    init(message: String, icon: String) {
+        self.message = message
+        self.icon = icon
+        super.init()
     }
 }
 

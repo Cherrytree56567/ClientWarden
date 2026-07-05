@@ -25,17 +25,19 @@ final class ItemsPanel: NSObject {
         if let results = cb_query?(searchQuery) {
             filteredElements = results
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for query"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for query"))
         }
     }
 
     func newItem(itemType: ItemType) {
         if let res = cb_new?(itemType) {
-            elements.append(res)
-            query()
-            SidePanel.instance.viewItem(cb_uuid: res.uuid)
+            if (res != nil) {
+                elements.append(res)
+                query()
+                SidePanel.instance.viewItem(cb_uuid: res.uuid)
+            }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for New Item"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for New Item"))
         }
     }
 }

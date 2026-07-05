@@ -23,6 +23,7 @@ enum GenericItemType: Int {
     case website
     case ml_generic
     case ml_password
+    case date
 }
 
 @objcMembers
@@ -133,6 +134,20 @@ struct GenericItem: View {
             set: { data.value = $0.joined(separator: "\n") }
         )
     }
+    private var dateBinding: Binding<Date> {
+        Binding(
+            get: {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MM/yyyy"
+                return formatter.date(from: data.value) ?? Date()
+            },
+            set: { newDate in
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MM/yyyy"
+                data.value = formatter.string(from: newDate)
+            }
+        )
+    }
     
     init(data: Binding<GenericItemData>, edit: Bool) {
         self._data = data
@@ -200,16 +215,29 @@ struct GenericItem: View {
                                     .frame(maxWidth: .infinity, alignment: .center)
                             }
                         }
+                    } else if (data.type == GenericItemType.date) {
+                        DatePicker(
+                            "",
+                            selection: dateBinding,
+                            displayedComponents: [.date]
+                        )
+                        .datePickerStyle(.compact)
+                        .labelsHidden()
+                    } else if (data.type == .ml_generic || data.type == .ml_password) {
+                        TextEditor(text: Binding(get: { data.f_value() }, set: { data.value = $0 }))
+                            .frame(minHeight: 100)
+                            .scrollContentBackground(.hidden)
                     } else {
                         TextField("Title", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
                             .lineLimit(6)
                             .padding(-4)
                     }
                 } else {
-                    if (data.type == GenericItemType.password) {
+                    if (data.type == GenericItemType.password || data.type == GenericItemType.ml_password) {
                         Text(verbatim: revealed ? data.f_value() : String(repeating: "•", count: data.f_value().count))
                             .font(.system(.body, design: .monospaced))
                             .privacySensitive()
+                            .lineLimit(revealed ? 10 : 1)
                         
                         Spacer()
                         
@@ -289,7 +317,7 @@ struct GenericItem: View {
             /*
              * TODO: X1FD - Use Clipboard Swift Bridge to copy the value
              */
-            g_toastStore.toasts.append(Toast(message: "Copied to clipboard", icon: "document.on.document").setColor(color: Color.clear))
+            ToastStore.instance.toasts.append(Toast(message: "Copied to clipboard", icon: "document.on.document").setColor(color: Color.clear))
         }
         .modifier(
             TOTPTimerModifier(

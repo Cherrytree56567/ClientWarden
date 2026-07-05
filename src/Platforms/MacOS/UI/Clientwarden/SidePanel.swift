@@ -122,10 +122,10 @@ final class SidePanel: NSObject {
             if (fav) {
                 favorite.toggle()
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to set favorite"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to set favorite"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for favorite"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for favorite"))
         }
     }
     
@@ -138,10 +138,10 @@ final class SidePanel: NSObject {
             if (sav) {
                 return true
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to save item"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to save item"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for save Item"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for save Item"))
         }
         return false
     }
@@ -152,10 +152,12 @@ final class SidePanel: NSObject {
          * the callback was successful
          */
         if let dup = cb_duplicate?(uuid, type) {
-            ItemsPanel.instance.elements.append(dup)
-            ItemsPanel.instance.query()
+            if (dup != nil) {
+                ItemsPanel.instance.elements.append(dup)
+                ItemsPanel.instance.query()
+            }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for duplicate Item"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for duplicate Item"))
         }
     }
     
@@ -168,10 +170,10 @@ final class SidePanel: NSObject {
             if (del) {
                 ItemsPanel.instance.query()
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to delete item"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to delete item"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for delete Item"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for delete Item"))
         }
     }
     
@@ -183,10 +185,10 @@ final class SidePanel: NSObject {
         if let side = cb_sidebar?(cb_uuid) {
             if (side) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to view item"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to view item"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for view Item"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for view Item"))
         }
     }
     
@@ -198,10 +200,10 @@ final class SidePanel: NSObject {
         if let fav = cb_downloadAttachment?(uuid, id) {
             if (fav) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to download Attachment"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to download Attachment"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for downloadAttachment"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for downloadAttachment"))
         }
     }
     
@@ -213,10 +215,10 @@ final class SidePanel: NSObject {
         if let fav = cb_removeAttachment?(uuid, id) {
             if (fav) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to remove Attachment"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to remove Attachment"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for removeAttachment"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for removeAttachment"))
         }
     }
     
@@ -225,13 +227,13 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_uploadAttachment?(uuid) {
-            if (fav) {
+        if let attach = cb_uploadAttachment?(uuid) {
+            if (attach) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to upload Attachment"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to upload Attachment"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for uploadAttachment"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for uploadAttachment"))
         }
     }
     
@@ -245,10 +247,10 @@ final class SidePanel: NSObject {
                 editable = false
                 viewable = false
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to restore item"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to restore item"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for restore"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for restore"))
         }
     }
     
@@ -262,10 +264,10 @@ final class SidePanel: NSObject {
                 editable = false
                 viewable = false
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Permanantly Delete Item"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Permanantly Delete Item"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for permDelete"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for permDelete"))
         }
     }
     
@@ -277,9 +279,19 @@ final class SidePanel: NSObject {
             attachmentItems[index].progress = progress
         }
     }
+
+    func updateAttachID(id: String, attachID: String) {
+        if let index = attachmentItems.firstIndex(where: { $0.AttachID == id }) {
+            attachmentItems[index].AttachID = attachID
+        }
+    }
     
     func deleteAttachmentView(id: String) {
         attachmentItems.removeAll { $0.AttachID == id }
+    }
+
+    func addAttachmentItem(_ item: AttachmentItemData) {
+        attachmentItems.append(item)
     }
 }
 
@@ -306,6 +318,7 @@ struct SidePanelView: View {
                         if let image = data.icon.getImage() {
                             image
                                 .resizable()
+                                .aspectRatio(contentMode: .fit)
                                 .frame(width: 32, height: 32)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                         } else {
@@ -415,7 +428,7 @@ struct SidePanelView: View {
                         FieldItem(data: $customField, itemType: data.type, edit: data.editable)
                     }
                     
-                    if (!data.customFields.isEmpty) {
+                    if (!data.customFields.isEmpty || data.editable) {
                         Divider()
                             .padding(.top, 4)
                     }

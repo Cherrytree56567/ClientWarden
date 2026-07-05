@@ -19,10 +19,10 @@ final class SettingsPanel {
             if (info.1) {
                 clipboardDelay = info.0
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Get Info"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Get Info"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for getInfo"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for getInfo"))
         }
     }
     
@@ -34,10 +34,10 @@ final class SettingsPanel {
         if let info = cb_setDelay?(clipboardDelay) {
             if (info) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Set Clipboard Delay"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Set Clipboard Delay"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for setClipboardDelay"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for setClipboardDelay"))
         }
     }
     
@@ -49,10 +49,10 @@ final class SettingsPanel {
         if let info = cb_logout?() {
             if (info) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to Log Out"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Log Out"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for logOut"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for logOut"))
         }
     }
 }

@@ -24,11 +24,11 @@ final class Unlock: NSObject {
         if let res = cb_getInfo?() {
             if (res) {
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to get Profile Info"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to get Profile Info"))
                 ClientwardenWindow.instance.state = WindowState.Unlock
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for getInfo"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for getInfo"))
             ClientwardenWindow.instance.state = WindowState.Unlock
         }
     }
@@ -44,11 +44,11 @@ final class Unlock: NSObject {
                 if let r_res = res {
                     if (r_res) {
                     } else {
-                        g_toastStore.toasts.append(Toast(message: "Failed to Unlock Vault"))
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to Unlock Vault"))
                         ClientwardenWindow.instance.state = WindowState.Unlock
                     }
                 } else {
-                    g_toastStore.toasts.append(Toast(message: "No callback set for unlock"))
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for unlock"))
                     ClientwardenWindow.instance.state = WindowState.Unlock
                 }
             }

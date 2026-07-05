@@ -12,6 +12,11 @@
 
 @implementation SidePanelBridge
 
+/*
+ * Setup Callbacks will be called inside of the swift class
+ * onAppear. Setup Callbacks will setup all the necessary
+ * callbacks for that class.
+ */
 + (void)setupCallbacks {
     [self cb_favorite];
     [self cb_duplicate];
@@ -19,376 +24,920 @@
     [self cb_restore];
     [self cb_permDel];
     [self cb_sidebar];
+    [self cb_downloadAttachment];
+    [self cb_uploadAttachment];
+    [self cb_removeAttachment];
 }
 
+/*
+ * Favorite uses a bool and a UUID to apply favorite status to an item
+ */
 + (void)cb_favorite {
     SidePanel.instance.cb_favorite = ^bool(bool fav, NSUUID* uuid) {
-        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-        std::string c_uuid = uuid.UUIDString.UTF8String;
-        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-        ClientWarden::GenericItem item(v_inst, c_uuid);
+            ClientWarden::GenericItem item(v_inst, c_uuid);
 
-        item.SetFavorite(fav)
-           ->Commit();
+            item.SetFavorite(fav)
+            ->Commit();
 
-        return true;
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Favorite Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return false;
+        }
     };
 }
 
+/*
+ * Duplicate duplicates and item with a UUID and ItemType and passes back
+ * an ItemType to be added to the Items Panel
+ */
 + (void)cb_duplicate {
     SidePanel.instance.cb_duplicate = ^ItemElement* _Nonnull(NSUUID* uuid, ItemType i_type) {
-        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-        std::string c_uuid = uuid.UUIDString.UTF8String;
-        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-        std::string c_dupUUID = "";
-        std::string c_name = "";
-        ClientwardenImage* img = nil;
+            std::string c_dupUUID = "";
+            std::string c_name = "";
+            ClientwardenImage* img = nil;
 
-        if (i_type == ItemTypeLogin) {
-            ClientWarden::LoginItem item(v_inst, c_uuid);
+            if (i_type == ItemTypeLogin) {
+                ClientWarden::LoginItem item(v_inst, c_uuid);
 
-            std::vector<std::string> loginUrl;
+                std::vector<std::string> loginUrl;
 
-            item.GetWebsites(loginUrl)
-               ->GetName(c_name)
-               ->Duplicate(c_dupUUID)
-               ->Close();
-            
-            if (loginUrl.size() != 0) {
-                std::string c_path = v_inst.downloadIcon(loginUrl[0]);
-                NSString* path = [NSString stringWithUTF8String: c_path.c_str()];
+                item.GetWebsites(loginUrl)
+                ->GetName(c_name)
+                ->Duplicate(c_dupUUID)
+                ->Close();
+                
+                if (loginUrl.size() != 0) {
+                    std::string c_path = v_inst.downloadIcon(loginUrl[0]);
+                    NSString* path = [NSString stringWithUTF8String: c_path.c_str()];
 
-                img = [[ClientwardenImage alloc] initWithType:ImageTypeAppSupport path:path];
-            } else {
-                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
+                    img = [[ClientwardenImage alloc] initWithType:ImageTypeAppSupport path:path];
+                } else {
+                    img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
+                }
+
+                for (auto& uri : loginUrl) {
+                    OPENSSL_cleanse(uri.data(), uri.size());
+                    uri.clear();
+                }
+            } else if (i_type == ItemTypeCard) {
+                ClientWarden::CardItem item(v_inst, c_uuid);
+
+                item.GetName(c_name)
+                ->Duplicate(c_dupUUID)
+                ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
+            } else if (i_type == ItemTypeIdentity) {
+                ClientWarden::IdentityItem item(v_inst, c_uuid);
+
+                item.GetName(c_name)
+                ->Duplicate(c_dupUUID)
+                ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
+            } else if (i_type == ItemTypeNote) {
+                ClientWarden::NoteItem item(v_inst, c_uuid);
+
+                item.GetName(c_name)
+                ->Duplicate(c_dupUUID)
+                ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
+            } else if (i_type == ItemTypeSSHKey) {
+                ClientWarden::SSHKeyItem item(v_inst, c_uuid);
+
+                item.GetName(c_name)
+                ->Duplicate(c_dupUUID)
+                ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
             }
 
-            for (auto& uri : loginUrl) {
-                OPENSSL_cleanse(uri.data(), uri.size());
-                uri.clear();
-            }
-        } else if (i_type == ItemTypeCard) {
-            ClientWarden::CardItem item(v_inst, c_uuid);
+            NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
 
-            item.GetName(c_name)
-               ->Duplicate(c_dupUUID)
-               ->Close();
-            
-            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
-        } else if (i_type == ItemTypeIdentity) {
-            ClientWarden::IdentityItem item(v_inst, c_uuid);
+            OPENSSL_cleanse(c_name.data(), c_name.size());
+            c_name.clear();
 
-            item.GetName(c_name)
-               ->Duplicate(c_dupUUID)
-               ->Close();
-            
-            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
-        } else if (i_type == ItemTypeNote) {
-            ClientWarden::NoteItem item(v_inst, c_uuid);
+            NSUUID* dupUUID = [[NSUUID alloc] initWithUUIDString: [NSString stringWithUTF8String: c_dupUUID.c_str()]];
 
-            item.GetName(c_name)
-               ->Duplicate(c_dupUUID)
-               ->Close();
-            
-            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
-        } else if (i_type == ItemTypeSSHKey) {
-            ClientWarden::SSHKeyItem item(v_inst, c_uuid);
+            return [[ItemElement alloc] initWithName:name uuid:dupUUID type:i_type image:img];
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Duplicate Item"];
+                [[ToastStore instance] addToast:toast];
+            });
 
-            item.GetName(c_name)
-               ->Duplicate(c_dupUUID)
-               ->Close();
-            
-            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            return nil;
         }
-
-        NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
-
-        OPENSSL_cleanse(c_name.data(), c_name.size());
-        c_name.clear();
-
-        NSUUID* dupUUID = [[NSUUID alloc] initWithUUIDString: [NSString stringWithUTF8String: c_dupUUID.c_str()]];
-
-        return [[ItemElement alloc] initWithName:name uuid:dupUUID type:i_type image:img];
     };
 }
 
+/*
+ * Delete moves the item with the UUID in the bin and passes back a result bool
+ */
 + (void)cb_delete {
     SidePanel.instance.cb_delete = ^bool(NSUUID* uuid) {
-        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-        std::string c_uuid = uuid.UUIDString.UTF8String;
-        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-        ClientWarden::GenericItem item(v_inst, c_uuid);
+            ClientWarden::GenericItem item(v_inst, c_uuid);
 
-        item.Bin();
+            item.Bin();
 
-        return true;
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Delete Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
     };
 }
 
+/*
+ * Restore moves the item with the UUID out of the bin and passes back a result bool
+ */
 + (void)cb_restore {
     SidePanel.instance.cb_restore = ^bool(NSUUID* uuid) {
-        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-        std::string c_uuid = uuid.UUIDString.UTF8String;
-        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-        ClientWarden::GenericItem item(v_inst, c_uuid);
+            ClientWarden::GenericItem item(v_inst, c_uuid);
 
-        item.UnBin();
+            item.UnBin();
 
-        return true;
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Restore Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
     };
 }
 
+/*
+ * Permanantly Delete deletes the item with the UUID and passes back a result bool
+ */
 + (void)cb_permDel {
     SidePanel.instance.cb_permDel = ^bool(NSUUID* uuid) {
-        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-        std::string c_uuid = uuid.UUIDString.UTF8String;
-        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-        ClientWarden::GenericItem item(v_inst, c_uuid);
+            ClientWarden::GenericItem item(v_inst, c_uuid);
 
-        item.Delete();
+            item.Delete();
 
-        return true;
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Permanently Delete Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
     };
 }
 
+/*
+ * Sidebar fills the SidePanel with the item's info using a UUID
+ * and passes back a result bool
+ */
 + (void)cb_sidebar {
     SidePanel.instance.cb_sidebar = ^bool(NSUUID* uuid) {
-        ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-        NSString* name = nil;
-        ItemType type = ItemTypeLogin;
-        ClientwardenImage* img = nil;
-        bool favorite = false;
-        NSArray<GenericItemData*>* itemFields = [NSMutableArray array];
-        NSArray<FieldItemData*>* customFields = [NSMutableArray array];
-        NSArray<NSString*>* itemHistory = [NSMutableArray array];
-        NSArray<NSString*>* passwordHistory = [NSMutableArray array];
-        NSArray<AttachmentItemData*>* attachments = [NSMutableArray array];
-        NSString* notes = nil;
+            NSString* name = nil;
+            ItemType type = ItemTypeLogin;
+            ClientwardenImage* img = nil;
+            bool favorite = false;
+            NSArray<GenericItemData*>* itemFields = [NSMutableArray array];
+            NSArray<FieldItemData*>* customFields = [NSMutableArray array];
+            NSArray<NSString*>* itemHistory = [NSMutableArray array];
+            NSArray<NSString*>* passwordHistory = [NSMutableArray array];
+            NSArray<AttachmentItemData*>* attachments = [NSMutableArray array];
+            NSString* notes = nil;
 
-        std::string c_uuid = uuid.UUIDString.UTF8String;
-        std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-        ClientWarden::GenericItem item(v_inst, c_uuid);
+            ClientWarden::GenericItem item(v_inst, c_uuid);
 
-        std::string c_name = "";
-        ClientWarden::CipherType c_type;
-        std::vector<std::tuple<ClientWarden::CustomFieldType, std::string, std::string>> c_customFields;
-        std::string c_creation = "";
-        std::string c_modification = "";
-        std::string c_deletion = "none";
-        std::vector<std::string> c_passwordHistory;
-        std::vector<std::string> c_attachIds;
-        std::string c_notes;
+            std::string c_name = "";
+            ClientWarden::CipherType c_type;
+            std::vector<std::tuple<ClientWarden::CustomFieldType, std::string, std::string>> c_customFields;
+            std::string c_creation = "";
+            std::string c_modification = "";
+            std::string c_deletion = "none";
+            std::vector<std::string> c_passwordHistory;
+            std::vector<std::string> c_attachIds;
+            std::string c_notes;
 
-        item.GetName(c_name)
-           ->GetFields(c_customFields)
-           ->GetCreation(c_creation)
-           ->GetModification(c_modification)
-           ->GetDeletion(c_deletion)
-           ->GetNotes(c_notes)
-           ->GetType(c_type)
-           ->GetAttachmentIDs(c_attachIds);
-        
-        for (auto& c_id : c_attachIds) {
-            NSString* id = [NSString stringWithUTF8String: c_id.c_str()];
-
-            std::string c_attach_name;
-
-            item.GetAttachmentName(c_id, c_attach_name);
-
-            NSString* attach_name = [NSString stringWithUTF8String: c_attach_name.c_str()];
-
-            AttachmentItemData* attachment = [[AttachmentItemData alloc] initWithAttachID:id name:attach_name];
-
-            OPENSSL_cleanse(c_attach_name.data(), c_attach_name.size());
-            c_attach_name.clear();
-            OPENSSL_cleanse(c_id.data(), c_id.size());
-            c_id.clear();
-
-            [attachments addObject: attachment];
-        }
-        
-        item.Close();
-        
-        name = [NSString stringWithUTF8String: c_name.c_str()];
-
-        OPENSSL_cleanse(c_name.data(), c_name.size());
-        c_name.clear();
-
-        type = (ItemType)((int)c_type - 1);
-
-        for (auto& field : c_customFields) {
-            NSString* title = [NSString stringWithUTF8String: std::get<1>(field).c_str()];
-            NSString* value = [NSString stringWithUTF8String: std::get<2>(field).c_str()];
-            FieldItemType type = (FieldItemType)((int)std::get<0>(field));
-
-            FieldItemData* fieldItem = [[FieldItemData alloc] initWithTitle:title value:value type:type];
-            [customFields addObject:fieldItem];
-            OPENSSL_cleanse(std::get<1>(field).data(), std::get<1>(field).size());
-            std::get<1>(field).clear();
-            OPENSSL_cleanse(std::get<2>(field).data(), std::get<2>(field).size());
-            std::get<2>(field).clear();
-        }
-
-        NSString* creation = [NSString stringWithFormat:@"Creation: %s", c_creation.c_str()];
-        [itemHistory addObject: creation];
-
-        NSString* modification = [NSString stringWithFormat:@"Modification: %s", c_modification.c_str()];
-        [itemHistory addObject: modification];
-
-        if (c_deletion != "none") {
-            NSString* deletion = [NSString stringWithFormat:@"Deletion: %s", c_deletion.c_str()];
-            [itemHistory addObject: deletion];
-        }
-
-        notes = [NSString stringWithUTF8String: c_notes.c_str()];
-
-        OPENSSL_cleanse(c_notes.data(), c_notes.size());
-        c_notes.clear();
-
-        if (c_type == ClientWarden::CipherType::Login) {
-            ClientWarden::LoginItem l_item(v_inst, c_uuid);
-
-            std::string c_username = "";
-            std::string c_password = "";
-            std::string c_totp = "";
-            std::vector<std::string> c_website;
-            std::vector<std::pair<std::time_t, std::string>> c_passHist;
-
-            l_item.GetUsername(c_username)
-                 ->GetPassword(c_password)
-                 ->GetTotpSecret(c_totp)
-                 ->GetWebsites(c_website)
-                 ->GetPasswordHistory(c_passHist)
-                 ->Close();
-
-            NSString* username = [NSString stringWithUTF8String: c_username.c_str()];
-            NSString* password = [NSString stringWithUTF8String: c_password.c_str()];
-            NSString* totp = [NSString stringWithUTF8String: c_totp.c_str()];
-
-            GenericItemData* usernameItem = [[GenericItemData alloc] initWithTitle: @"Username"
-                                                                     value: username
-                                                                     type:GenericItemTypeGeneric];
-
-            GenericItemData* passwordItem = [[GenericItemData alloc] initWithTitle: @"Password"
-                                                                     value: password
-                                                                     type:GenericItemTypePassword];
+            item.GetName(c_name)
+            ->GetFields(c_customFields)
+            ->GetCreation(c_creation)
+            ->GetModification(c_modification)
+            ->GetDeletion(c_deletion)
+            ->GetNotes(c_notes)
+            ->GetType(c_type)
+            ->GetAttachmentIDs(c_attachIds);
             
-            auto cc_uuid = c_uuid;
+            for (auto& c_id : c_attachIds) {
+                NSString* id = [NSString stringWithUTF8String: c_id.c_str()];
 
-            GenericItemData* totpItem = [[GenericItemData alloc] initWithTitle: @"Two Factor Authentication"
-                                                                 value: totp
-                                                                 type:GenericItemTypeTotp
-            cb_getTOTP:^TOTPResult * _Nonnull {
-                ClientWarden::LoginItem loginItem(v_inst, cc_uuid);
+                std::string c_attach_name;
 
-                ClientWarden::TOTPCode code;
+                item.GetAttachmentName(c_id, c_attach_name);
 
-                loginItem.GetTotp(code)
-                        ->Close();
+                NSString* attach_name = [NSString stringWithUTF8String: c_attach_name.c_str()];
+
+                AttachmentItemData* attachment = [[AttachmentItemData alloc] initWithAttachID:id name:attach_name];
+
+                OPENSSL_cleanse(c_attach_name.data(), c_attach_name.size());
+                c_attach_name.clear();
+                OPENSSL_cleanse(c_id.data(), c_id.size());
+                c_id.clear();
+
+                [attachments addObject: attachment];
+            }
+            
+            item.Close();
+            
+            name = [NSString stringWithUTF8String: c_name.c_str()];
+
+            OPENSSL_cleanse(c_name.data(), c_name.size());
+            c_name.clear();
+
+            switch (c_type) {
+                case ClientWarden::CipherType::Login:
+                    type = ItemTypeLogin;
+                    break;
+                case ClientWarden::CipherType::Card:
+                    type = ItemTypeCard;
+                    break;
+                case ClientWarden::CipherType::Identity:
+                    type = ItemTypeIdentity;
+                    break;
+                case ClientWarden::CipherType::Note:
+                    type = ItemTypeNote;
+                    break;
+                case ClientWarden::CipherType::SSHKey:
+                    type = ItemTypeSSHKey;
+                    break;
+                default:
+                    type = ItemTypeLogin;
+                    break;
+            }
+
+            for (auto& field : c_customFields) {
+                NSString* title = [NSString stringWithUTF8String: std::get<1>(field).c_str()];
+                NSString* value = [NSString stringWithUTF8String: std::get<2>(field).c_str()];
+                FieldItemType type = (FieldItemType)((int)std::get<0>(field));
+
+                FieldItemData* fieldItem = [[FieldItemData alloc] initWithTitle:title value:value type:type];
+                [customFields addObject:fieldItem];
+                OPENSSL_cleanse(std::get<1>(field).data(), std::get<1>(field).size());
+                std::get<1>(field).clear();
+                OPENSSL_cleanse(std::get<2>(field).data(), std::get<2>(field).size());
+                std::get<2>(field).clear();
+            }
+
+            NSString* creation = [NSString stringWithFormat:@"Creation: %s", c_creation.c_str()];
+            [itemHistory addObject: creation];
+
+            NSString* modification = [NSString stringWithFormat:@"Modification: %s", c_modification.c_str()];
+            [itemHistory addObject: modification];
+
+            if (c_deletion != "none") {
+                NSString* deletion = [NSString stringWithFormat:@"Deletion: %s", c_deletion.c_str()];
+                [itemHistory addObject: deletion];
+            }
+
+            notes = [NSString stringWithUTF8String: c_notes.c_str()];
+
+            OPENSSL_cleanse(c_notes.data(), c_notes.size());
+            c_notes.clear();
+
+            if (c_type == ClientWarden::CipherType::Login) {
+                ClientWarden::LoginItem l_item(v_inst, c_uuid);
+
+                std::string c_username = "";
+                std::string c_password = "";
+                std::string c_totp = "";
+                std::vector<std::string> c_website;
+                std::vector<std::pair<std::time_t, std::string>> c_passHist;
+
+                l_item.GetUsername(c_username)
+                    ->GetPassword(c_password)
+                    ->GetTotpSecret(c_totp)
+                    ->GetWebsites(c_website)
+                    ->GetPasswordHistory(c_passHist)
+                    ->Close();
+
+                NSString* username = [NSString stringWithUTF8String: c_username.c_str()];
+                NSString* password = [NSString stringWithUTF8String: c_password.c_str()];
+                NSString* totp = [NSString stringWithUTF8String: c_totp.c_str()];
+
+                GenericItemData* usernameItem = [[GenericItemData alloc] initWithTitle: @"Username"
+                                                                        value: username
+                                                                        type:GenericItemTypeGeneric];
+
+                GenericItemData* passwordItem = [[GenericItemData alloc] initWithTitle: @"Password"
+                                                                        value: password
+                                                                        type:GenericItemTypePassword];
                 
-                int64_t refreshDate = (int64_t)code.remaining;
-                NSInteger maxTimer = (NSInteger)code.period;
-                NSString* codeValue = [NSString stringWithUTF8String: code.code.c_str()];
+                auto cc_uuid = c_uuid;
 
-                return [[TOTPResult alloc] initWithRefreshDate:refreshDate maxTimer:maxTimer value:codeValue];
+                GenericItemData* totpItem = [[GenericItemData alloc] initWithTitle: @"Two Factor Authentication"
+                                                                    value: totp
+                                                                    type:GenericItemTypeTotp
+                cb_getTOTP:^TOTPResult * _Nonnull {
+                    ClientWarden::LoginItem loginItem(v_inst, cc_uuid);
+
+                    ClientWarden::TOTPCode code;
+
+                    loginItem.GetTotp(code)
+                            ->Close();
+                    
+                    int64_t refreshDate = (int64_t)code.remaining;
+                    NSInteger maxTimer = (NSInteger)code.period;
+                    NSString* codeValue = [NSString stringWithUTF8String: code.code.c_str()];
+
+                    return [[TOTPResult alloc] initWithRefreshDate:refreshDate maxTimer:maxTimer value:codeValue];
+                }];
+
+                NSMutableArray<NSString*>* websitesArray = [NSMutableArray arrayWithCapacity: c_website.size()];
+
+                if (c_website.size() != 0) {
+                    std::string c_path = v_inst.downloadIcon(c_website[0]);
+                    NSString* path = [NSString stringWithUTF8String: c_path.c_str()];
+
+                    img = [[ClientwardenImage alloc] initWithType:ImageTypeAppSupport path:path];
+                } else {
+                    img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
+                }
+
+                for (auto& c_site : c_website) {
+                    NSString* site = [NSString stringWithUTF8String: c_site.c_str()];
+                    [websitesArray addObject: site];
+                    OPENSSL_cleanse(c_site.data(), c_site.size());
+                    c_site.clear();
+                }
+
+                NSString* websites = [websitesArray componentsJoinedByString:@"\n"];
+
+                GenericItemData* websiteItem = [[GenericItemData alloc] initWithTitle: @"Websites"
+                                                                        value: websites
+                                                                        type:GenericItemTypeWebsite];
+                
+                [itemFields addObject: usernameItem];
+                [itemFields addObject: passwordItem];
+                [itemFields addObject: totpItem];
+                [itemFields addObject: websiteItem];
+
+                passwordHistory = [NSMutableArray arrayWithCapacity: c_passHist.size()];
+                for (auto& c_pass : c_passHist) {
+                    NSString* pass = [NSString stringWithUTF8String: c_pass.second.c_str()];
+                    [passwordHistory addObject: pass];
+                    OPENSSL_cleanse(c_pass.second.data(), c_pass.second.size());
+                    c_pass.second.clear();
+                }
+                
+                OPENSSL_cleanse(c_username.data(), c_username.size());
+                c_username.clear();
+                OPENSSL_cleanse(c_password.data(), c_password.size());
+                c_password.clear();
+                OPENSSL_cleanse(c_totp.data(), c_totp.size());
+                c_totp.clear();
+            } else if (c_type == ClientWarden::CipherType::Card) {
+                ClientWarden::CardItem l_item(v_inst, c_uuid);
+
+                std::string c_brand = "";
+                std::string c_cardholderName = "";
+                std::string c_code = "";
+                std::string c_expMonth = "";
+                std::string c_expYear = "";
+                std::string c_number = "";
+
+                l_item.GetBrand(c_brand)
+                    ->GetCardholderName(c_cardholderName)
+                    ->GetCode(c_code)
+                    ->GetExpMonth(c_expMonth)
+                    ->GetExpYear(c_expYear)
+                    ->GetNumber(c_number)
+                    ->Close();
+
+                NSString* brand = [NSString stringWithUTF8String: c_brand.c_str()];
+                NSString* cardholderName = [NSString stringWithUTF8String: c_cardholderName.c_str()];
+                NSString* code = [NSString stringWithUTF8String: c_code.c_str()];
+                NSString* expiration = [NSString stringWithUTF8String: (c_expMonth + "/" + c_expYear).c_str()];
+                NSString* number = [NSString stringWithUTF8String: c_number.c_str()];
+
+                GenericItemData* brandItem = [[GenericItemData alloc] initWithTitle: @"Brand"
+                                                                    value: brand
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* cardholderNameItem = [[GenericItemData alloc] initWithTitle: @"Cardholder Name"
+                                                                        value: cardholderName
+                                                                        type:GenericItemTypeGeneric];
+
+                GenericItemData* numberItem = [[GenericItemData alloc] initWithTitle: @"Number"
+                                                                        value: number
+                                                                        type:GenericItemTypePassword];
+
+                GenericItemData* codeItem = [[GenericItemData alloc] initWithTitle: @"Code"
+                                                                        value: code
+                                                                        type:GenericItemTypePassword];
+
+                GenericItemData* expirationItem = [[GenericItemData alloc] initWithTitle: @"Expiration Date"
+                                                                        value: expiration
+                                                                        type:GenericItemTypeDate];
+                
+                [itemFields addObject: brandItem];
+                [itemFields addObject: cardholderNameItem];
+                [itemFields addObject: numberItem];
+                [itemFields addObject: codeItem];
+                [itemFields addObject: expirationItem];
+
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
+                
+                OPENSSL_cleanse(c_brand.data(), c_brand.size());
+                c_brand.clear();
+                OPENSSL_cleanse(c_cardholderName.data(), c_cardholderName.size());
+                c_cardholderName.clear();
+                OPENSSL_cleanse(c_code.data(), c_code.size());
+                c_code.clear();
+                OPENSSL_cleanse(c_expMonth.data(), c_expMonth.size());
+                c_expMonth.clear();
+                OPENSSL_cleanse(c_expYear.data(), c_expYear.size());
+                c_expYear.clear();
+                OPENSSL_cleanse(c_number.data(), c_number.size());
+                c_number.clear();
+            } else if (c_type == ClientWarden::CipherType::Identity) {
+                ClientWarden::IdentityItem l_item(v_inst, c_uuid);
+
+                std::string c_addr1 = "";
+                std::string c_addr2 = "";
+                std::string c_addr3 = "";
+                std::string c_city = "";
+                std::string c_company = "";
+                std::string c_country = "";
+                std::string c_email = "";
+                std::string c_firstName = "";
+                std::string c_middleName = "";
+                std::string c_lastName = "";
+                std::string c_licenseNum = "";
+                std::string c_passportNum = "";
+                std::string c_phone = "";
+                std::string c_postalCode = "";
+                std::string c_ssn = "";
+                std::string c_state = "";
+                std::string c_title = "";
+                std::string c_username = "";
+
+                l_item.GetAddress1(c_addr1)
+                    ->GetAddress2(c_addr2)
+                    ->GetAddress3(c_addr3)
+                    ->GetCity(c_city)
+                    ->GetCompany(c_company)
+                    ->GetCountry(c_country)
+                    ->GetEmail(c_email)
+                    ->GetFirstName(c_firstName)
+                    ->GetLastName(c_lastName)
+                    ->GetLicenceNumber(c_licenseNum)
+                    ->GetMiddleName(c_middleName)
+                    ->GetPassportNumber(c_passportNum)
+                    ->GetPhone(c_phone)
+                    ->GetPostalCode(c_postalCode)
+                    ->GetSSN(c_ssn)
+                    ->GetState(c_state)
+                    ->GetTitle(c_title)
+                    ->GetUsername(c_username)
+                    ->Close();
+
+                NSString* addr1 = [NSString stringWithUTF8String: c_addr1.c_str()];
+                NSString* addr2 = [NSString stringWithUTF8String: c_addr2.c_str()];
+                NSString* addr3 = [NSString stringWithUTF8String: c_addr3.c_str()];
+                NSString* locality = [NSString stringWithUTF8String: (c_postalCode + ", " + c_city + ", " + c_state + ", " + c_country).c_str()];
+                NSString* company = [NSString stringWithUTF8String: c_company.c_str()];
+                NSString* email = [NSString stringWithUTF8String: c_email.c_str()];
+                NSString* i_name = [NSString stringWithUTF8String: (c_title + " " + c_firstName + " " + c_middleName + " " + c_lastName).c_str()];
+                NSString* licenseNum = [NSString stringWithUTF8String: c_licenseNum.c_str()];
+                NSString* passportNum = [NSString stringWithUTF8String: c_passportNum.c_str()];
+                NSString* phone = [NSString stringWithUTF8String: c_phone.c_str()];
+                NSString* ssn = [NSString stringWithUTF8String: c_ssn.c_str()];
+                NSString* username = [NSString stringWithUTF8String: c_username.c_str()];
+
+                GenericItemData* emailItem = [[GenericItemData alloc] initWithTitle: @"Email"
+                                                                    value: email
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* nameItem = [[GenericItemData alloc] initWithTitle: @"Name"
+                                                                    value: i_name
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* usernameItem = [[GenericItemData alloc] initWithTitle: @"Username"
+                                                                        value: username
+                                                                        type:GenericItemTypeGeneric];
+
+                GenericItemData* companyItem = [[GenericItemData alloc] initWithTitle: @"Company"
+                                                                        value: company
+                                                                        type:GenericItemTypeGeneric];
+
+                GenericItemData* phoneItem = [[GenericItemData alloc] initWithTitle: @"Phone"
+                                                                    value: phone
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* ssnItem = [[GenericItemData alloc] initWithTitle: @"SSN"
+                                                                    value: ssn
+                                                                    type:GenericItemTypePassword];
+
+                GenericItemData* passportNumItem = [[GenericItemData alloc] initWithTitle: @"Passport Number"
+                                                                            value: passportNum
+                                                                            type:GenericItemTypePassword];
+
+                GenericItemData* licenseNumItem = [[GenericItemData alloc] initWithTitle: @"Licence Number"
+                                                                        value: licenseNum
+                                                                        type:GenericItemTypeGeneric];
+
+                GenericItemData* addr1Item = [[GenericItemData alloc] initWithTitle: @"Address 1"
+                                                                    value: addr1
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* addr2Item = [[GenericItemData alloc] initWithTitle: @"Address 2"
+                                                                    value: addr2
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* addr3Item = [[GenericItemData alloc] initWithTitle: @"Address 3"
+                                                                    value: addr3
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* localityItem = [[GenericItemData alloc] initWithTitle: @"Locality"
+                                                                        value: locality
+                                                                        type:GenericItemTypeGeneric];
+                
+                [itemFields addObject: nameItem];
+                [itemFields addObject: usernameItem];
+                [itemFields addObject: companyItem];
+                [itemFields addObject: ssnItem];
+                [itemFields addObject: passportNumItem];
+                [itemFields addObject: licenseNumItem];
+                [itemFields addObject: emailItem];
+                [itemFields addObject: phoneItem];
+                [itemFields addObject: addr1Item];
+                [itemFields addObject: addr2Item];
+                [itemFields addObject: addr3Item];
+                [itemFields addObject: localityItem];
+
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
+
+                OPENSSL_cleanse(c_addr1.data(), c_addr1.size());
+                c_addr1.clear();
+                OPENSSL_cleanse(c_addr2.data(), c_addr2.size());
+                c_addr2.clear();
+                OPENSSL_cleanse(c_addr3.data(), c_addr3.size());
+                c_addr3.clear();
+                OPENSSL_cleanse(c_city.data(), c_city.size());
+                c_city.clear();
+                OPENSSL_cleanse(c_company.data(), c_company.size());
+                c_company.clear();
+                OPENSSL_cleanse(c_country.data(), c_country.size());
+                c_country.clear();
+                OPENSSL_cleanse(c_email.data(), c_email.size());
+                c_email.clear();
+                OPENSSL_cleanse(c_firstName.data(), c_firstName.size());
+                c_firstName.clear();
+                OPENSSL_cleanse(c_middleName.data(), c_middleName.size());
+                c_middleName.clear();
+                OPENSSL_cleanse(c_lastName.data(), c_lastName.size());
+                c_lastName.clear();
+                OPENSSL_cleanse(c_licenseNum.data(), c_licenseNum.size());
+                c_licenseNum.clear();
+                OPENSSL_cleanse(c_passportNum.data(), c_passportNum.size());
+                c_passportNum.clear();
+                OPENSSL_cleanse(c_phone.data(), c_phone.size());
+                c_phone.clear();
+                OPENSSL_cleanse(c_postalCode.data(), c_postalCode.size());
+                c_postalCode.clear();
+                OPENSSL_cleanse(c_ssn.data(), c_ssn.size());
+                c_ssn.clear();
+                OPENSSL_cleanse(c_state.data(), c_state.size());
+                c_state.clear();
+                OPENSSL_cleanse(c_title.data(), c_title.size());
+                c_title.clear();
+                OPENSSL_cleanse(c_username.data(), c_username.size());
+                c_username.clear();
+            } else if (c_type == ClientWarden::CipherType::Note) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
+            } else if (c_type == ClientWarden::CipherType::SSHKey) {
+                ClientWarden::SSHKeyItem l_item(v_inst, c_uuid);
+
+                std::string c_fingerprint = "";
+                std::string c_privKey = "";
+                std::string c_pubKey = "";
+
+                l_item.GetFingerprint(c_fingerprint)
+                    ->GetPrivateKey(c_privKey)
+                    ->GetPublicKey(c_pubKey)
+                    ->Close();
+
+                NSString* fingerprint = [NSString stringWithUTF8String: c_fingerprint.c_str()];
+                NSString* privKey = [NSString stringWithUTF8String: c_privKey.c_str()];
+                NSString* pubKey = [NSString stringWithUTF8String: c_pubKey.c_str()];
+
+                GenericItemData* fingerprintItem = [[GenericItemData alloc] initWithTitle: @"Fingerprint"
+                                                                    value: fingerprint
+                                                                    type:GenericItemTypeGeneric];
+
+                GenericItemData* privKeyItem = [[GenericItemData alloc] initWithTitle: @"Private Key"
+                                                                        value: privKey
+                                                                        type:GenericItemTypeMl_password];
+
+                GenericItemData* pubKeyItem = [[GenericItemData alloc] initWithTitle: @"Public Key"
+                                                                        value: pubKey
+                                                                        type:GenericItemTypePassword];
+                
+                [itemFields addObject: fingerprintItem];
+                [itemFields addObject: privKeyItem];
+                [itemFields addObject: pubKeyItem];
+
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+                
+                OPENSSL_cleanse(c_fingerprint.data(), c_fingerprint.size());
+                c_fingerprint.clear();
+                OPENSSL_cleanse(c_privKey.data(), c_privKey.size());
+                c_privKey.clear();
+                OPENSSL_cleanse(c_pubKey.data(), c_pubKey.size());
+                c_pubKey.clear();
+            }
+
+            [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img favorite:favorite itemFields:itemFields 
+                                customFields:customFields itemHistory:itemHistory passwordHistory:passwordHistory 
+                                attachmentItems:attachments notes:notes];
+
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to View Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
+    };
+}
+
+/*
+ * Download Attachment uses a UUID and attachID to get the
+ * attachment from the selected item and use an item picker
+ * to determine where to save the item and save the item
+ * while updating the progress bar of the download
+ */
++ (void)cb_downloadAttachment {
+    SidePanel.instance.cb_downloadAttachment = ^bool(NSUUID* uuid, NSString* attachID) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            std::string c_attachID = attachID.UTF8String;
+
+            ClientWarden::GenericItem item(v_inst, c_uuid);
+
+            std::string c_attachName = "";
+
+            item.GetAttachmentName(c_attachID, c_attachName)->Close();
+
+            NSSavePanel* panel = [NSSavePanel savePanel];
+            panel.nameFieldStringValue = [NSString stringWithUTF8String: c_attachName.c_str()];
+            panel.canCreateDirectories = YES;
+
+            [panel beginWithCompletionHandler:^(NSModalResponse result) {
+                if (result == NSModalResponseOK && panel.URL) {
+                    NSString* path = panel.URL.path;
+
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                        std::string c_content = "";
+
+                        ClientWarden::GenericItem item(v_inst, c_uuid);
+
+                        item.GetAttachment(c_attachID, c_content, [attachID](float progress) {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [SidePanel.instance updateProgressWithId:attachID progress:(double)progress];
+                            });
+                        })->Close();
+
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [SidePanel.instance updateProgressWithId:attachID progress:0.0];
+                        });
+
+                        NSData* content = [NSData dataWithBytes:c_content.data() length:c_content.size()];
+                        NSError* writeError = nil;
+                        BOOL success = [content writeToFile:path options:NSDataWritingAtomic error:&writeError];
+
+                        if (!success) {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Write Attachment"];
+                                [[ToastStore instance] addToast:toast];
+                            });
+                        }
+
+                        OPENSSL_cleanse(c_content.data(), c_content.size());
+                        c_content.clear();
+                    });
+                } else {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        Toast* toast = [[Toast alloc] initWithMessage:@"Failed to get Download Location"];
+                        [[ToastStore instance] addToast:toast];
+                    });
+                }
             }];
 
-            NSMutableArray<NSString*>* websitesArray = [NSMutableArray arrayWithCapacity: c_website.size()];
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Download Attachment"];
+                [[ToastStore instance] addToast:toast];
+            });
 
-            if (c_website.size() != 0) {
-                std::string c_path = v_inst.downloadIcon(c_website[0]);
-                NSString* path = [NSString stringWithUTF8String: c_path.c_str()];
+            return false;
+        }
+    };
+}
 
-                img = [[ClientwardenImage alloc] initWithType:ImageTypeAppSupport path:path];
-            } else {
-                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
-            }
+/*
+ * Upload Attachment uses a UUID to upload the 
+ * selected file with NSOpenPanel to the selected
+ * item while updating the upload progress bar.
+ * If the item is over 500MB, it will not be uploaded.
+ */
++ (void)cb_uploadAttachment {
+    SidePanel.instance.cb_uploadAttachment = ^bool(NSUUID* uuid) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-            for (auto& c_site : c_website) {
-                NSString* site = [NSString stringWithUTF8String: c_site.c_str()];
-                [websitesArray addObject: site];
-                OPENSSL_cleanse(c_site.data(), c_site.size());
-                c_site.clear();
-            }
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-            NSString* websites = [websitesArray componentsJoinedByString:@"\n"];
+            NSOpenPanel* panel = [NSOpenPanel openPanel];
+            panel.canChooseFiles = YES;
+            panel.canChooseDirectories = NO;
+            panel.allowsMultipleSelection = NO;
 
-            GenericItemData* websiteItem = [[GenericItemData alloc] initWithTitle: @"Websites"
-                                                                     value: websites
-                                                                     type:GenericItemTypeWebsite];
-            
-            [itemFields addObject: usernameItem];
-            [itemFields addObject: passwordItem];
-            [itemFields addObject: totpItem];
-            [itemFields addObject: websiteItem];
+            [panel beginWithCompletionHandler:^(NSModalResponse result) {
+                if (result == NSModalResponseOK && panel.URL) {
+                    NSString* path = panel.URL.path;
+                    NSString* fileName = panel.URL.lastPathComponent;
 
-            passwordHistory = [NSMutableArray arrayWithCapacity: c_passHist.size()];
-            for (auto& c_pass : c_passHist) {
-                NSString* pass = [NSString stringWithUTF8String: c_pass.second.c_str()];
-                [passwordHistory addObject: pass];
-                OPENSSL_cleanse(c_pass.second.data(), c_pass.second.size());
-                c_pass.second.clear();
-            }
-            
-            OPENSSL_cleanse(c_username.data(), c_username.size());
-            c_username.clear();
-            OPENSSL_cleanse(c_password.data(), c_password.size());
-            c_password.clear();
-            OPENSSL_cleanse(c_totp.data(), c_totp.size());
-            c_totp.clear();
-        }/* else if (c_type == ClientWarden::CipherType::Card) {
-            ClientWarden::CardItem l_item(v_inst, c_uuid);
+                    NSError* attrRes = nil;
+                    NSDictionary* attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&attrRes];
 
-            std::string c_brand = "";
-            std::string c_cardholderName = "";
-            std::string c_totp = "";
-            std::vector<std::string> c_website;
-            std::vector<std::pair<std::time_t, std::string>> c_passHist;
+                    if (attrs) {
+                        uint64_t fileSize = [attrs fileSize];
+                        uint64_t maxSize = 500ULL * 1024 * 1024;
 
-            l_item.GetUsername(c_username)
-                 ->GetPassword(c_password)
-                 ->GetTotpSecret(c_totp)
-                 ->GetWebsites(c_website)
-                 ->GetPasswordHistory(c_passHist)
-                 ->Close();
+                        if (fileSize > maxSize) {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                Toast* toast = [[Toast alloc] initWithMessage:@"Attachment too big"];
+                                [[ToastStore instance] addToast:toast];
+                            });
+                            return;
+                        }
+                    } else {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get File Attributes"];
+                            [[ToastStore instance] addToast:toast];
+                        });
+                        return;
+                    }
 
-            NSString* username = [NSString stringWithUTF8String: c_username.c_str()];
-            NSString* password = [NSString stringWithUTF8String: c_password.c_str()];
-            NSString* totp = [NSString stringWithUTF8String: c_totp.c_str()];
+                    NSString* tempAttachID = [[NSUUID UUID] UUIDString];
 
-            GenericItemData* usernameItem = [[GenericItemData alloc] initWithTitle: @"Username"
-                                                                     value: username
-                                                                     type:GenericItemTypeGeneric];
+                    AttachmentItemData* attachmentItem = [[AttachmentItemData alloc] initWithAttachID:tempAttachID name:fileName];
 
-            GenericItemData* passwordItem = [[GenericItemData alloc] initWithTitle: @"Password"
-                                                                     value: password
-                                                                     type:GenericItemTypePassword];
-            
-            OPENSSL_cleanse(c_username.data(), c_username.size());
-            c_username.clear();
-            OPENSSL_cleanse(c_password.data(), c_password.size());
-            c_password.clear();
-            OPENSSL_cleanse(c_totp.data(), c_totp.size());
-            c_totp.clear();
-        }*/
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [SidePanel.instance addAttachmentItem:attachmentItem];
+                    });
 
-        [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img favorite:favorite itemFields:itemFields 
-                            customFields:customFields itemHistory:itemHistory passwordHistory:passwordHistory 
-                            attachmentItems:attachments notes:notes];
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                        NSError* res = nil;
+                        NSData* fileData = [NSData dataWithContentsOfFile:path options:0 error:&res];
 
-        return true;
+                        if (!fileData) {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Read File"];
+                                [[ToastStore instance] addToast:toast];
+                                [SidePanel.instance deleteAttachmentViewWithId:tempAttachID];
+                            });
+                            return;
+                        }
+
+                        std::string c_content((const char*)fileData.bytes, fileData.length);
+                        std::string c_fileName = fileName.UTF8String;
+
+                        ClientWarden::GenericItem item(v_inst, c_uuid);
+
+                        std::string c_newAttachID = "";
+
+                        item.AddAttachment(c_fileName, c_content, c_newAttachID, [tempAttachID](float progress) {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [SidePanel.instance updateProgressWithId:tempAttachID progress:(double)progress];
+                            });
+                        })->Close();
+
+                        OPENSSL_cleanse((void*)c_content.data(), c_content.size());
+                        c_content.clear();
+
+                        NSString* attachID = [NSString stringWithUTF8String: c_newAttachID.c_str()];
+
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [SidePanel.instance updateAttachIDWithId:tempAttachID attachID:attachID];
+                            [SidePanel.instance updateProgressWithId:attachID progress:0.0];
+                        });
+                    });
+                } else {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get Upload Item"];
+                        [[ToastStore instance] addToast:toast];
+                    });
+                }
+            }];
+
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Remove Attachment"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
+    };
+}
+
+/*
+ * Remove Attachment uses a UUID and attachment ID to
+ * remove the attachment from the selected item while
+ * returning a result bool
+ */
++ (void)cb_removeAttachment {
+    SidePanel.instance.cb_removeAttachment = ^bool(NSUUID* uuid, NSString* attachID) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            std::string c_attachID = attachID.UTF8String;
+
+            ClientWarden::GenericItem item(v_inst, c_uuid);
+
+            item.RemoveAttachment(c_attachID)->Commit();
+
+            [SidePanel.instance deleteAttachmentViewWithId:attachID];
+
+            return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Remove Attachment"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
     };
 }
 

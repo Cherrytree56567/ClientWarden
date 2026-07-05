@@ -44,7 +44,7 @@ final class NavigationPanel: NSObject {
         if let c_folders = cb_getFolders?() {
             folders = c_folders
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for getFolders"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for getFolders"))
         }
     }
 
@@ -55,10 +55,10 @@ final class NavigationPanel: NSObject {
                     folders[index].name = str
                 }
             } else {
-                g_toastStore.toasts.append(Toast(message: "Failed to rename folder"))
+                ToastStore.instance.toasts.append(Toast(message: "Failed to rename folder"))
             }
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for renameFolder"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for renameFolder"))
         }
     }
     
@@ -102,7 +102,7 @@ struct NavigationPanelView: View {
         if let elements {
             ItemsPanel.instance.update(data: elements)
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for \(tab)"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for \(tab)"))
             data.selection = prev
         }
     }
@@ -168,10 +168,10 @@ struct NavigationPanelView: View {
                                 if (folderUUID) {
                                     data.folders.removeAll { $0.id == folder.id }
                                 } else {
-                                    g_toastStore.toasts.append(Toast(message: "Failed to delete folder"))
+                                    ToastStore.instance.toasts.append(Toast(message: "Failed to delete folder"))
                                 }
                             } else {
-                                g_toastStore.toasts.append(Toast(message: "No callback set for deleteFolder"))
+                                ToastStore.instance.toasts.append(Toast(message: "No callback set for deleteFolder"))
                             }
                         } label: {
                             Label("Delete", systemImage: "minus.circle")
@@ -197,9 +197,11 @@ struct NavigationPanelView: View {
                  * the callback was successful
                  */
                 if let folderUUID = data.cb_createFolder?("New Folder") {
-                    data.folders.append(Folder(uuid: folderUUID, name: "New Folder"))
+                    if (folderUUID != nil) {
+                        data.folders.append(Folder(uuid: folderUUID, name: "New Folder"))
+                    }
                 } else {
-                    g_toastStore.toasts.append(Toast(message: "No callback set for createFolder"))
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for createFolder"))
                 }
             } label: {
                 Label("Add Folder", systemImage: "folder.badge.plus")

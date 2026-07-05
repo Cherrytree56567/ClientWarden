@@ -135,6 +135,24 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Settings Support
     - [X] Lock Support
     - [ ] UI Bridge
+      - [X] Nav Panel Bridge
+      - [X] Items Panel Bridge
+      - [ ] Side Panel Bridge
+        - [ ] Save Support
+      - [ ] Settings Bridge
+        - [ ] Add ScreenShot Option
+    - [X] Add Errors on Bridge
+    - [X] Fix Login Crashes
+    - [ ] Fix Freezing Issue
+    - [ ] Fix Vault Signouts
+    - [X] Code Review
+    - [ ] Show Deletion Date
+    - [ ] Show Password History Date
+    - [ ] Reprompt Support
+    - [ ] Add Password Generator
+    - [ ] Support PFP
+    - [ ] Highlight selected item
+    - [ ] Add Animation for extending window
     - [ ] Folder Tree View
     - [ ] Passkey Support
 - [X] Derive Item Classes from Generic Item

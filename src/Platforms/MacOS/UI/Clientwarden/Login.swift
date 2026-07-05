@@ -83,11 +83,11 @@ final class Login: NSObject {
                 if let r_res = res {
                     if (r_res) {
                     } else {
-                        g_toastStore.toasts.append(Toast(message: "Failed to submit Code"))
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to submit Code"))
                         ClientwardenWindow.instance.state = WindowState.Login
                     }
                 } else {
-                    g_toastStore.toasts.append(Toast(message: "No callback set for submitCode"))
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for submitCode"))
                     ClientwardenWindow.instance.state = WindowState.Login
                 }
             }
@@ -105,11 +105,11 @@ final class Login: NSObject {
                 if let r_res = res {
                     if (r_res) {
                     } else {
-                        g_toastStore.toasts.append(Toast(message: "Failed to submit Code"))
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to submit Code"))
                         ClientwardenWindow.instance.state = WindowState.Login
                     }
                 } else {
-                    g_toastStore.toasts.append(Toast(message: "No callback set for submitCode"))
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for submitCode"))
                     ClientwardenWindow.instance.state = WindowState.Login
                 }
             }

@@ -8,7 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         DispatchQueue.main.async {
             if let window = NSApplication.shared.windows.first {
-                window.sharingType = .none
+                //window.sharingType = .none
                 // TODO: Remove ScreenSHaring thing before release
             }
         }
@@ -37,7 +37,7 @@ final class ClientwardenWindow: NSObject {
         if let res = cb_getState?() {
             state = res
         } else {
-            g_toastStore.toasts.append(Toast(message: "No callback set for getState"))
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for getState"))
         }
     }
     
@@ -71,11 +71,11 @@ final class ClientwardenWindow: NSObject {
                         ItemsPanel.instance.filteredElements = []
                         ItemsPanel.instance.searchQuery = ""
                     } else {
-                        g_toastStore.toasts.append(Toast(message: "Failed to Lock Vault"))
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to Lock Vault"))
                         ClientwardenWindow.instance.state = WindowState.Vault
                     }
                 } else {
-                    g_toastStore.toasts.append(Toast(message: "No callback set for lock"))
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for lock"))
                     ClientwardenWindow.instance.state = WindowState.Vault
                 }
             }
@@ -96,16 +96,16 @@ struct ClientwardenApp: App {
                         LoginView()
                         .toast(
                             Binding(
-                                get: { g_toastStore.toasts },
-                                set: { g_toastStore.toasts = $0 }
+                                get: { ToastStore.instance.toasts },
+                                set: { ToastStore.instance.toasts = $0 }
                             )
                         )
                     case .Unlock:
                         UnlockView()
                         .toast(
                             Binding(
-                                get: { g_toastStore.toasts },
-                                set: { g_toastStore.toasts = $0 }
+                                get: { ToastStore.instance.toasts },
+                                set: { ToastStore.instance.toasts = $0 }
                             )
                         )
                     case .Vault:
@@ -116,8 +116,8 @@ struct ClientwardenApp: App {
                         .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
                         .toast(
                             Binding(
-                                get: { g_toastStore.toasts },
-                                set: { g_toastStore.toasts = $0 }
+                                get: { ToastStore.instance.toasts },
+                                set: { ToastStore.instance.toasts = $0 }
                             )
                         )
                     case .Empty:

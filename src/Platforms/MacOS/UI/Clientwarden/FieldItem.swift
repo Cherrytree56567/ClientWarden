@@ -9,6 +9,7 @@ enum FieldItemType: Int {
 }
 
 @objcMembers
+@Observable
 class FieldItemData : NSObject, Identifiable {
     let id = UUID()
     @objc public var title: String
@@ -114,7 +115,7 @@ struct FieldItem: View {
                         .labelsHidden()
                         .padding(.trailing, -2)
                         if (editable) {
-                            TextField("Title", text: Binding(get: { data.title }, set: { data.title = $0 }))
+                            TextField("Title", text: $data.title)
                         } else {
                             Text(verbatim: data.title)
                         }
@@ -122,7 +123,7 @@ struct FieldItem: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else if (data.type == FieldItemType.hidden) {
                     if (editable) {
-                        TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
+                        TextField("Title", text: $data.value, axis: .vertical)
                             .lineLimit(6)
                             .padding(.top, -4)
                     } else {

@@ -21,10 +21,14 @@ namespace ClientWarden {
             return NetworkState::Failed;
         }
 
-        auto body = nlohmann::json::parse(res->body);
-        authData["kdfIterations"] = body["kdfIterations"];
-        authData["salt"] = email;
-        authData["email"] = email;
+        try {
+            auto body = nlohmann::json::parse(res->body);
+            authData["kdfIterations"] = body["kdfIterations"];
+            authData["salt"] = email;
+            authData["email"] = email;
+        } catch (...) {
+            return NetworkState::Failed;
+        }
 
         return NetworkState::Success;
     }
@@ -70,19 +74,23 @@ namespace ClientWarden {
             return AuthState::Failed;
         }
 
-        auto body = nlohmann::json::parse(res->body);
-        authData["accessString"] = body["access_token"];
-        authData["refreshToken"] = body["refresh_token"];
-        authData["expiresIn"] = body["expires_in"];
+        try {
+            auto body = nlohmann::json::parse(res->body);
+            authData["accessString"] = body["access_token"];
+            authData["refreshToken"] = body["refresh_token"];
+            authData["expiresIn"] = body["expires_in"];
 
-        std::time_t now = std::time(nullptr) + authData["expiresIn"].get<int>();
-        std::tm* localTime = std::localtime(&now);
+            std::time_t now = std::time(nullptr) + authData["expiresIn"].get<int>();
+            std::tm* localTime = std::localtime(&now);
 
-        std::ostringstream oss;
-        oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-        authData["needsRefreshTime"] = oss.str();
+            std::ostringstream oss;
+            oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+            authData["needsRefreshTime"] = oss.str();
 
-        storage.write("data.json", authData.dump(2));
+            storage.write("data.json", authData.dump(2));
+        } catch (...) {
+            return AuthState::Failed;
+        }
 
         return AuthState::Authenticated;
     }

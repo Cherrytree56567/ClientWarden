@@ -1,6 +1,7 @@
 import SwiftUI
 
 @objcMembers
+@Observable
 class AttachmentItemData : NSObject, Identifiable {
     public var id: UUID = UUID()
     @objc public var AttachID: String
@@ -53,7 +54,7 @@ struct AttachmentItem: View {
                 
                 if (editable) {
                     Button {
-                        SidePanel.instance.downloadAttachment(id: data.AttachID)
+                        SidePanel.instance.removeAttachment(id: data.AttachID)
                     } label: {
                         Image(systemName: "trash")
                             .padding(.horizontal, 4)
