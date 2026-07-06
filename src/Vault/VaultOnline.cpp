@@ -1,8 +1,31 @@
 #include "Vault.h"
 
 namespace ClientWarden {
+    httplib::Client& Vault::getApiClient() {
+        if (!apiClient) {
+            apiClient = std::make_shared<httplib::Client>(authData["apiURL"].get<std::string>());
+        }
+        return *apiClient;
+    }
+
+    httplib::Client& Vault::getVaultClient() {
+        if (!vaultClient) {
+            vaultClient = std::make_shared<httplib::Client>(authData["vaultURL"].get<std::string>());
+        }
+        return *vaultClient;
+    }
+
+    httplib::Client& Vault::getIconClient() {
+        if (!iconClient) {
+            iconClient = std::make_shared<httplib::Client>(authData["iconURL"].get<std::string>());
+            iconClient->set_connection_timeout(2);
+            iconClient->set_read_timeout(3);
+        }
+        return *iconClient;
+    }
+
     NetworkState Vault::preLogin(std::string& email) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "Content-Type", "application/json" },
@@ -34,7 +57,7 @@ namespace ClientWarden {
     }
 
     AuthState Vault::getToken() {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         client.set_default_headers({
             { "Accept", "application/json" },
@@ -96,7 +119,7 @@ namespace ClientWarden {
     }
 
     AuthState Vault::getTokenWTotp(std::string& totp) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         client.set_default_headers({
             { "Accept", "application/json" },
@@ -147,7 +170,7 @@ namespace ClientWarden {
     }
 
     AuthState Vault::getTokenWDeviceVerify(std::string& code) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         client.set_default_headers({
             { "Accept", "application/json" },
@@ -196,14 +219,14 @@ namespace ClientWarden {
     }
 
     bool Vault::checkConnectivity() {
-        httplib::Client client(authData["apiURL"]);
+        httplib::Client& client = getApiClient();
         client.set_connection_timeout(1);
         auto res = client.Get("/alive");
         return res && res->status == 200;
     }
 
     bool Vault::checkAccessTokenValidity() {
-        httplib::Client client(authData["apiURL"]);
+        httplib::Client& client = getApiClient();
         client.set_connection_timeout(3);
         
         httplib::Headers headers = {
@@ -215,7 +238,7 @@ namespace ClientWarden {
     }
 
     std::expected<nlohmann::json, NetworkState> Vault::OnlineNewItem(nlohmann::json encryptedData) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -249,7 +272,7 @@ namespace ClientWarden {
         if (!encryptedData.contains("id")) {
             return nlohmann::json();
         }
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -289,7 +312,7 @@ namespace ClientWarden {
     }
 
     NetworkState Vault::OnlineDeleteItem(std::string uuid) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -318,7 +341,7 @@ namespace ClientWarden {
     }
 
     NetworkState Vault::OnlineSoftDeleteItem(std::string uuid) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
             { "Content-Type", "application/json" },
@@ -344,7 +367,7 @@ namespace ClientWarden {
     }
 
     NetworkState Vault::OnlineRestoreItem(std::string uuid) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
             { "Content-Type", "application/json" },
@@ -373,7 +396,7 @@ namespace ClientWarden {
      * TODO: Clear Secure Data
     */
     std::expected<std::string, NetworkState> Vault::OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, std::function<void(float)> onProgress) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
             { "bitwarden-client-name", "web" },
@@ -495,7 +518,7 @@ namespace ClientWarden {
     }
 
     NetworkState Vault::OnlineRemoveAttachment(std::string uuid, std::string attachmentID) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -524,7 +547,7 @@ namespace ClientWarden {
     }
 
     std::expected<std::string, NetworkState> Vault::OnlineDownloadAttachment(std::string uuid, std::string attachmentID, std::function<void(float)> onProgress) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -635,7 +658,7 @@ namespace ClientWarden {
     }
 
     std::expected<nlohmann::json, NetworkState> Vault::OnlineCreateFolder(std::string encryptedFolderName) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -666,7 +689,7 @@ namespace ClientWarden {
     }
 
     std::expected<nlohmann::json, NetworkState> Vault::OnlineRenameFolder(std::string folderUUID, std::string encryptedFolderName) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -697,7 +720,7 @@ namespace ClientWarden {
     }
 
     NetworkState Vault::OnlineDeleteFolder(std::string folderUUID) {
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
@@ -726,7 +749,9 @@ namespace ClientWarden {
     }
 
     std::expected<std::vector<uint8_t>, NetworkState> Vault::OnlineDownloadIcon(std::string url) {
-        httplib::Client client(authData["iconURL"]);
+        httplib::Client& client = getIconClient();
+        client.set_connection_timeout(2);
+        client.set_read_timeout(3);
 
         if (url.starts_with("https://")) {
             url = url.substr(8);

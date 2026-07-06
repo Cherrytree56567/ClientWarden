@@ -6,6 +6,8 @@
 #include "LoginItem/LoginItem.h"
 #include "Folder/Folder.h"
 
+#include <chrono>
+
 @implementation NavPanelBridge
 
 /*
@@ -134,8 +136,10 @@
 
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
                                                                                         .GetCiphers();
+            
+            NSArray<ItemElement*>* items = [NavPanelBridge getItems:ciphers];
 
-            return [NavPanelBridge getItems:ciphers];
+            return items;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get All Items"];

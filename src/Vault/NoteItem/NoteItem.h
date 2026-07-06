@@ -19,6 +19,7 @@ namespace ClientWarden {
         NoteItem* RemoveFolder() override;
         NoteItem* AddField(CustomFieldType field, std::string& name, std::string& value) override;
         NoteItem* RemoveField(std::string& name) override;
+        NoteItem* ClearFields() override;
 
         NoteItem* Duplicate(std::string& id);
 

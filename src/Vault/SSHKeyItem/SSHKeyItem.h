@@ -22,6 +22,7 @@ namespace ClientWarden {
         SSHKeyItem* RemoveFolder() override;
         SSHKeyItem* AddField(CustomFieldType field, std::string& name, std::string& value) override;
         SSHKeyItem* RemoveField(std::string& name) override;
+        SSHKeyItem* ClearFields() override;
         SSHKeyItem* SetFavorite(bool val) override;
         SSHKeyItem* SetReprompt(bool val) override;
 

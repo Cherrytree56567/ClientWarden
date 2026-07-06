@@ -91,6 +91,10 @@ namespace ClientWarden {
         bool checkConnectivity();
         bool checkAccessTokenValidity();
 
+        httplib::Client& getApiClient();
+        httplib::Client& getVaultClient();
+        httplib::Client& getIconClient();
+
         /*
         * These internal functions do not encrypt anything, and
         * data sent to these functions must be encrypted with the
@@ -114,7 +118,7 @@ namespace ClientWarden {
         std::vector<uint8_t> makeKey(const std::string& password, const std::string& salt, int iterations);
         std::string cipherString(int encryptionType, const std::string& iv, const std::string& ct, const std::string& mac);
         std::string makeEncKey(const std::vector<uint8_t>& key);
-        std::string hashedPassword(const std::string& password, const std::string& salt, int iterations);
+        std::string hashedPassword(const std::string& password, const std::vector<uint8_t>& key);
         bool macsEqual(const std::vector<uint8_t>& macKey, const std::vector<uint8_t>& mac1, const std::vector<uint8_t>& mac2);
         std::vector<uint8_t> InternalDecrypt(const std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
         std::string InternalEncrypt(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
@@ -153,6 +157,10 @@ namespace ClientWarden {
         std::function<void(std::string)> OnError;
 
         AuthState codeType;
+
+        std::shared_ptr<httplib::Client> apiClient;
+        std::shared_ptr<httplib::Client> vaultClient;
+        std::shared_ptr<httplib::Client> iconClient;
 
         nlohmann::json authData;
         nlohmann::json vaultData;

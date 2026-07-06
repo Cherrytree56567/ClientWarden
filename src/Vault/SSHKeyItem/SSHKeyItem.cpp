@@ -125,6 +125,10 @@ namespace ClientWarden {
         return static_cast<SSHKeyItem*>(this->GenericItem::RemoveField(name));
     }
 
+    SSHKeyItem* SSHKeyItem::ClearFields() {
+        return static_cast<SSHKeyItem*>(this->GenericItem::ClearFields());
+    }
+
     SSHKeyItem* SSHKeyItem::SetFavorite(bool val) {
         return static_cast<SSHKeyItem*>(this->GenericItem::SetFavorite(val));
     }

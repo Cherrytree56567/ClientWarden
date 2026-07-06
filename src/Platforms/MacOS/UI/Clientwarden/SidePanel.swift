@@ -37,7 +37,7 @@ final class SidePanel: NSObject {
     
     @objc public var cb_duplicate: ((UUID, ItemType) -> ItemElement)?
     @objc public var cb_delete: ((UUID) -> Bool)?
-    @objc public var cb_save: ((UUID) -> Bool)?
+    @objc public var cb_save: ((UUID, String, ItemType, [GenericItemData], [FieldItemData], String) -> Bool)?
     
     @objc public var cb_restore: ((UUID) -> Bool)?
     @objc public var cb_permDel: ((UUID) -> Bool)?
@@ -72,41 +72,29 @@ final class SidePanel: NSObject {
      * Snapshots
      */
     public var s_name: String = ""
-    public var s_favorite: Bool = false
     
     public var s_itemFields: [GenericItemData] = []
     public var s_customFields: [FieldItemData] = []
-    public var s_itemHistory: [String] = []
-    public var s_passwordHistory: [String] = []
     public var s_notes: GenericItemData = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     
     func saveSnapshot() {
         s_name = name
-        s_favorite = favorite
         s_itemFields = itemFields
         s_customFields = customFields
-        s_itemHistory = itemHistory
-        s_passwordHistory = passwordHistory
         s_notes = notes
     }
     
     func pullSnapshot() {
         name = s_name
-        favorite = s_favorite
         itemFields = s_itemFields
         customFields = s_customFields
-        itemHistory = s_itemHistory
-        passwordHistory = s_passwordHistory
         notes = s_notes
     }
     
     func deleteSnapshot() {
         s_name = ""
-        s_favorite = false
         s_itemFields = []
         s_customFields = []
-        s_itemHistory = []
-        s_passwordHistory = []
         s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     }
     
@@ -134,7 +122,7 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let sav = cb_save?(uuid) {
+        if let sav = cb_save?(uuid, name, type, itemFields, customFields, notes.value) {
             if (sav) {
                 return true
             } else {

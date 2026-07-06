@@ -115,8 +115,8 @@ namespace ClientWarden {
     GenericItem* GenericItem::AddField(CustomFieldType field, std::string& name, std::string& value) {
         if (!init) return this;
         if (!data.contains("fields") || !fieldData.contains("Fields")) return this;
-        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
-            fieldData["Fields"] = nlohmann::json::object();
+        if (fieldData["Fields"].is_null() || !data["fields"].is_array()) {
+            fieldData["Fields"] = nlohmann::json::array();
         }
         nlohmann::json addFieldData;
         nlohmann::json dataFieldData;
@@ -172,8 +172,8 @@ namespace ClientWarden {
     GenericItem* GenericItem::RemoveField(std::string& name) {
         if (!init) return this;
         if (!data.contains("fields") || !fieldData.contains("Fields")) return this;
-        if (fieldData["Fields"].is_null() || data["fields"].is_null()) {
-            fieldData["Fields"] = nlohmann::json::object();
+        if (fieldData["Fields"].is_null() || !data["fields"].is_array()) {
+            fieldData["Fields"] = nlohmann::json::array();
         }
         auto& fields = data["fields"];
         for (auto it = fields.begin(); it != fields.end(); ++it) {
@@ -205,6 +205,21 @@ namespace ClientWarden {
 
         OPENSSL_cleanse(name.data(), name.size());
         name.clear();
+        return this;
+    }
+
+
+
+    GenericItem* GenericItem::ClearFields() {
+        if (!init) return this;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return this;
+        if (fieldData["Fields"].is_null() || !data["fields"].is_array()) {
+            fieldData["Fields"] = nlohmann::json::array();
+        }
+        
+        fieldData["Fields"] = nlohmann::json::array();
+        data["fields"] = nlohmann::json::array();
+
         return this;
     }
 

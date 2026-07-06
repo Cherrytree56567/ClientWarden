@@ -4,9 +4,7 @@ namespace ClientWarden {
     /*
     * base64-encode a wrapped, stretched password+salt for signup/login
     */
-    std::string Vault::hashedPassword(const std::string& password, const std::string& salt, int iterations) {
-        std::vector<uint8_t> key = makeKey(password, salt, iterations);
-
+    std::string Vault::hashedPassword(const std::string& password, const std::vector<uint8_t>& key) {
         std::vector<uint8_t> hashed(256 / 8);
         PKCS5_PBKDF2_HMAC(
             reinterpret_cast<const char*>(key.data()), key.size(),
@@ -15,8 +13,6 @@ namespace ClientWarden {
             EVP_sha256(),
             hashed.size(), hashed.data()
         );
-
-        OPENSSL_cleanse(key.data(), key.size());
 
         return b64Encode(hashed);
     }

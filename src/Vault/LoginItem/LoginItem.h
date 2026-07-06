@@ -36,6 +36,7 @@ namespace ClientWarden {
         LoginItem* RemoveWebsite(std::string& website);
         LoginItem* AddField(CustomFieldType field, std::string& name, std::string& value) override;
         LoginItem* RemoveField(std::string& name) override;
+        LoginItem* ClearFields() override;
 
         LoginItem* Duplicate(std::string& id);
 

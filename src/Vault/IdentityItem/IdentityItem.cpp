@@ -305,6 +305,10 @@ namespace ClientWarden {
         return static_cast<IdentityItem*>(this->GenericItem::RemoveField(name));
     }
 
+    IdentityItem* IdentityItem::ClearFields() {
+        return static_cast<IdentityItem*>(this->GenericItem::ClearFields());
+    }
+
     IdentityItem* IdentityItem::GetName(std::string& name) {
         return static_cast<IdentityItem*>(this->GenericItem::GetName(name));
     }

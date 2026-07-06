@@ -61,11 +61,8 @@ final class ClientwardenWindow: NSObject {
                         SidePanel.instance.viewable = false
                         SidePanel.instance.notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
                         SidePanel.instance.s_name = ""
-                        SidePanel.instance.s_favorite = false
                         SidePanel.instance.s_itemFields = []
                         SidePanel.instance.s_customFields = []
-                        SidePanel.instance.s_itemHistory = []
-                        SidePanel.instance.s_passwordHistory = []
                         SidePanel.instance.s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
                         ItemsPanel.instance.elements = []
                         ItemsPanel.instance.filteredElements = []

@@ -37,6 +37,7 @@ namespace ClientWarden {
         IdentityItem* RemoveFolder() override;
         IdentityItem* AddField(CustomFieldType field, std::string& name, std::string& value) override;
         IdentityItem* RemoveField(std::string& name) override;
+        IdentityItem* ClearFields() override;
 
         IdentityItem* Duplicate(std::string& id);
 

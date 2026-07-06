@@ -24,6 +24,7 @@ namespace ClientWarden {
         virtual GenericItem* RemoveFolder();
         virtual GenericItem* AddField(CustomFieldType field, std::string& name, std::string& value);
         virtual GenericItem* RemoveField(std::string& name);
+        virtual GenericItem* ClearFields();
 
         virtual GenericItem* GetName(std::string& name);
         virtual GenericItem* GetNotes(std::string& notes);

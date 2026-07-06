@@ -143,8 +143,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
         - [ ] Add ScreenShot Option
     - [X] Add Errors on Bridge
     - [X] Fix Login Crashes
-    - [ ] Fix Freezing Issue
-    - [ ] Fix Vault Signouts
+    - [X] Fix Freezing Issue
+    - [X] Fix Vault Signouts
     - [X] Code Review
     - [ ] Show Deletion Date
     - [ ] Show Password History Date

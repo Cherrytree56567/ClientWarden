@@ -27,6 +27,7 @@
     [self cb_downloadAttachment];
     [self cb_uploadAttachment];
     [self cb_removeAttachment];
+    [self cb_save];
 }
 
 /*
@@ -938,6 +939,113 @@
 
             return false;
         }
+    };
+}
+
+/*
+ * Save Item uses a UUID and returns a bool.
+ * First it reads Sidepanel.instance to get
+ * all the values, it then overrides all the
+ * values from the vault with the new ones.
+ * This is pretty much the only way, since
+ * we do not track changes and it would be 
+ * less efficient.
+ */
++ (void)cb_save {
+    SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, NSArray<GenericItemData*>* itemFields, 
+                                       NSArray<FieldItemData*>* customFields, NSString* notes) {
+
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+            
+            ClientWarden::GenericItem item(v_inst, c_uuid);
+
+            item.ClearFields();
+
+            for (FieldItemData* field in customFields) {
+                std::string c_title;
+                std::string c_value;
+                ClientWarden::CustomFieldType c_type;
+
+                c_title = field.title.UTF8String;
+                c_value = field.value.UTF8String;
+                c_type = (ClientWarden::CustomFieldType)((int)field.type);
+
+                item.AddField(c_type, c_title, c_value);
+
+                OPENSSL_cleanse((void*)c_title.data(), c_title.size());
+                c_title.clear();
+                OPENSSL_cleanse((void*)c_value.data(), c_value.size());
+                c_value.clear();
+            }
+
+            std::string c_notes = notes.UTF8String;
+
+            item.SetNotes(c_notes)
+               ->Commit();
+
+            if (type == ItemTypeLogin) {
+                ClientWarden::LoginItem litem(v_inst, c_uuid);
+
+                std::string c_username = "";
+                std::string c_password = "";
+                std::string c_totp = "";
+                std::vector<std::string> c_website;
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Username") {
+                        c_username = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Password") {
+                        c_password = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Two Factor Authentication") {
+                        c_totp = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Websites") {
+                        c_totp = itemField.value.UTF8String;
+
+                        std::istringstream stream(itemField.value.UTF8String);
+                        std::string line;
+
+                        while (std::getline(stream, line)) {
+                            c_website.push_back(line);
+                        }
+                    }
+                }
+
+                litem.SetUsername(c_username)
+                    ->SetPassword(c_password)
+                    ->SetTotp(c_totp);
+                
+                std::vector<std::string> c_oWebsites;
+
+                litem.GetWebsites(c_oWebsites);
+
+                for (auto& website : c_oWebsites) {
+                    litem.RemoveWebsite(website);
+
+                    OPENSSL_cleanse((void*)website.data(), website.size());
+                    website.clear();
+                }
+
+                for (auto& website : c_website) {
+                    litem.AddWebsite(website);
+
+                    OPENSSL_cleanse((void*)website.data(), website.size());
+                    website.clear();
+                }
+
+                litem.Commit();
+
+                OPENSSL_cleanse((void*)c_username.data(), c_username.size());
+                c_username.clear();
+                OPENSSL_cleanse((void*)c_password.data(), c_password.size());
+                c_password.clear();
+                OPENSSL_cleanse((void*)c_totp.data(), c_totp.size());
+                c_totp.clear();
+            }
+
+            return true;
     };
 }
 

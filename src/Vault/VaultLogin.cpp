@@ -8,7 +8,7 @@ namespace ClientWarden {
         }
 
         internalKey = makeKey(password, authData["salt"], authData["kdfIterations"]);
-        masterPasswordHash = hashedPassword(password, authData["salt"], authData["kdfIterations"]);
+        masterPasswordHash = hashedPassword(password, internalKey);
 
         /*
         * Erase the password safely
@@ -44,7 +44,7 @@ namespace ClientWarden {
 
     void Vault::Unlock(std::string& password) {
         internalKey = makeKey(password, authData["salt"], authData["kdfIterations"]);
-        masterPasswordHash = hashedPassword(password, authData["salt"], authData["kdfIterations"]);
+        masterPasswordHash = hashedPassword(password, internalKey);
 
         /*
         * Erase the password safely
@@ -62,11 +62,11 @@ namespace ClientWarden {
 
         loadFiles();
 
-        if (!checkConnectivity()) {
-            return true;
+        if (checkConnectivity()) {
+            return checkAccessTokenValidity();
         }
 
-        return checkAccessTokenValidity();
+        return true;
     }
 
     void Vault::Lock() {

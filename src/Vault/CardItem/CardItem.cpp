@@ -161,6 +161,10 @@ namespace ClientWarden {
         return static_cast<CardItem*>(this->GenericItem::RemoveField(name));
     }
 
+    CardItem* CardItem::ClearFields() {
+        return static_cast<CardItem*>(this->GenericItem::ClearFields());
+    }
+
     CardItem* CardItem::SetFavorite(bool val) {
         return static_cast<CardItem*>(this->GenericItem::SetFavorite(val));
     }

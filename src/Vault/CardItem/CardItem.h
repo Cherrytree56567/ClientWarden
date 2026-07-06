@@ -25,6 +25,7 @@ namespace ClientWarden {
         CardItem* RemoveFolder() override;
         CardItem* AddField(CustomFieldType field, std::string& name, std::string& value) override;
         CardItem* RemoveField(std::string& name) override;
+        CardItem* ClearFields() override;
         CardItem* SetFavorite(bool val) override;
         CardItem* SetReprompt(bool val) override;
 

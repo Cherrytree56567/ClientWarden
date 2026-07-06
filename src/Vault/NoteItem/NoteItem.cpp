@@ -88,6 +88,10 @@ namespace ClientWarden {
         return static_cast<NoteItem*>(this->GenericItem::RemoveField(name));
     }
 
+    NoteItem* NoteItem::ClearFields() {
+        return static_cast<NoteItem*>(this->GenericItem::ClearFields());
+    }
+
     NoteItem* NoteItem::GetName(std::string& name) {
         return static_cast<NoteItem*>(this->GenericItem::GetName(name));
     }

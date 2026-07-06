@@ -41,10 +41,17 @@ namespace ClientWarden {
     std::string Vault::downloadIcon(std::string url) {
         std::vector<uint8_t> urlVec(url.begin(), url.end());
         std::string b64Url = b64Encode(urlVec)  + ".png";
+        std::string failFile = b64Url + ".failed";
+
+        if (storage.exists(failFile)) {
+            return "";
+        }
+
         if (!storage.exists(b64Url)) {
             auto iconDl = OnlineDownloadIcon(url);
             if (!iconDl) {
                 logger->error("Failed to download icon");
+                storage.write(failFile, std::vector<uint8_t>{});
                 return "";
             }
             std::vector<uint8_t> iconCont = iconDl.value();
@@ -152,7 +159,7 @@ namespace ClientWarden {
             return NetworkState::InvalidAccessToken;
         }
 
-        httplib::Client client(authData["vaultURL"]);
+        httplib::Client& client = getVaultClient();
 
         httplib::Headers headers = {
             { "authorization", "Bearer " + authData["accessString"].get<std::string>() },
