@@ -54,7 +54,7 @@ Storage::Storage(std::string) {
 }
 
 std::string Storage::read(std::filesystem::path file) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     if (!std::filesystem::exists(nFile)) {
         spdlog::info("File not found: {}", nFile.string());
         throw std::runtime_error("File not found");
@@ -73,7 +73,7 @@ std::string Storage::read(std::filesystem::path file) {
 }
 
 std::vector<uint8_t> Storage::readBinary(std::filesystem::path file) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     if (!std::filesystem::exists(nFile)) {
         spdlog::info("File not found: {}", nFile.string());
         throw std::runtime_error("File not found");
@@ -100,7 +100,7 @@ std::vector<uint8_t> Storage::readBinary(std::filesystem::path file) {
 }
 
 void Storage::write(std::filesystem::path file, std::string data) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     std::filesystem::create_directories(nFile.parent_path());
 
     std::ofstream f(nFile, std::ios::binary);
@@ -118,7 +118,7 @@ void Storage::write(std::filesystem::path file, std::string data) {
 }
 
 void Storage::write(std::filesystem::path file, std::vector<uint8_t> data) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     std::filesystem::create_directories(nFile.parent_path());
 
     std::ofstream f(nFile, std::ios::binary);
@@ -136,7 +136,7 @@ void Storage::write(std::filesystem::path file, std::vector<uint8_t> data) {
 }
 
 void Storage::remove(std::filesystem::path file) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     if (!std::filesystem::exists(nFile)) {
         return;
     }
@@ -148,7 +148,7 @@ void Storage::remove(std::filesystem::path file) {
 }
 
 void Storage::rename(std::filesystem::path file, std::string name) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     if (!std::filesystem::exists(nFile)) {
         spdlog::info("File does not exist: {}", nFile.string());
         throw std::runtime_error("File does not exist: " + nFile.string());
@@ -160,6 +160,6 @@ void Storage::rename(std::filesystem::path file, std::string name) {
 }
 
 bool Storage::exists(std::filesystem::path file) {
-    std::filesystem::path nFile = path / file;
+    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
     return std::filesystem::exists(nFile);
 }

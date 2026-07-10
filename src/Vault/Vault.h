@@ -1,55 +1,36 @@
 #pragma once
-#define CPPHTTPLIB_EXPECT_100_THRESHOLD 0
-#include <httplib.h>
-#include <openssl/kdf.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <openssl/crypto.h>
-#include <nlohmann/json.hpp>
-#include <string>
-#include <expected>
-#include <msgpack.hpp>
-#include "Storage/Storage.h"
-#include "CommonVault.h"
-#include "VaultUtils/VaultUtils.h"
+#include "VaultCrypto/VaultCrypto.h"
+#include "VaultNetwork/VaultNetwork.h"
+#include "VaultSession/VaultSession.h"
 
 namespace ClientWarden {
+    enum class AuthState {
+        Unknown,
+        LoggedOut,
+        Unlockable,
+        WaitingForTOTP,
+        WaitingForDeviceVerif,
+        Unlocked
+        Failed // Vault should never reach this point
+    };
+
     /*
-    * On First Time:
-    * Login
-    *  - submitTOTP
-    *  - submitDeviceVerify
-    * Get InternalKey and masterPasswordHash
-    * Full Sync
-    * Get macKey and encKey
-    * 
-    * On Unlock:
-    * Get InternalKey and masterPasswordHash
-    * Get macKey and encKey
-    * 
-    * On Startup:
-    * run hasStoredSession
-    *  - If false, its the first time
-    *  - If true, then 
-    *    - load data.json and vault.json
-    *    - run Unlock
-    * Load refresh Thread
-    * 
-    * On Lock:
-    *  - Clean encKey and macKey and masterPasswordHash and internalKey
-    * 
-    * Timeline:
-    * Implement create, modify, delete, restore, perm del item - Done
-    * Implement Get, Create, Rename, Delete Folder - Done
-    * Implement Get All Items, Items By UUID, Search Item, Get Items by Folder, Get Favorites - Done
-    * Implement Get Card, Identity, SSHKey, Login, Note - Done
-    * Implement Get Password History - Done
-    * Implement Copy to Clipboard - To be impl'd in UI
-    * Implement Generate Password - Done
+     * On Startup, the vault determines if
+     * the user has already logged in, or not
+     * and also initializes all member classes
+     * 
+     * TODO: For me to remember later
+     * I had a problem before where I would have
+     * to pass Vault to the Generic Item but since
+     * Vault was basically doing everything before
+     * I wasn't sure how to impl it, bc the best
+     * way would be to make a Generic Item would be
+     * from the Vault Itself.
+     * * So, what if I only pass the Vault Session,
+     * Vault Crypto and Vault Network to it *
     */
     class Vault {
     public:
@@ -58,114 +39,43 @@ namespace ClientWarden {
 
         static Vault& Instance();
 
-        AuthState Login(std::string& email, std::string& password);
-        AuthState submitTOTP(std::string& totp);
-        AuthState submitDeviceVerify(std::string& code);
-        NetworkState postLogin();
+        bool Login(std::string email, std::string password);
+        bool Login(std::string code);
+
+        bool Unlock(std::string password);
+
+        bool Lock();
+
+        bool Sync();
 
         void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
 
-        void Unlock(std::string& password);
-        void Lock();
+        Botan::secure_vector<std::string> GetFolders();
 
-        bool hasStoredSession();
-        void loadFiles();
+        bool UpdateItem(nlohmann::json encryptedData);
 
-        NetworkState Sync();
+        bool NewItem(nlohmann::json encryptedData);
+        bool UpdateItem(nlohmann::json encryptedData);
+        bool DeleteItem(std::string uuid);
+        bool SoftDeleteItem(std::string uuid);
+        bool RestoreItem(std::string uuid);
+        std::optional<std::string> AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
+            std::function<void(float)> onProgress = nullptr);
+        bool RemoveAttachment(std::string uuid, std::string attachmentID);
+        std::optional<std::string> DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath
+            std::function<void(float)> onProgress = nullptr, Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac);
+        std::optional<std::string> CreateFolder(std::string encryptedFolderName);
+        bool RenameFolder(std::string folderUUID, std::string encryptedFolderName);
+        bool DeleteFolder(std::string folderUUID);
 
-        void startRefreshThread();
-        void stopRefreshThread();
+        VaultSession session;
+        VaultCrypto crypto;
+        VaultNetwork network;
+    private:
+        AuthState state;
 
-        void startWSSLoop();
-        void stopWSSLoop();
-
-        std::string GetName();
-
-        std::vector<std::string> GetFolders();
-
-    public:
-        NetworkState preLogin(std::string& email);
-        AuthState getToken();
-        AuthState getTokenWTotp(std::string& totp);
-        AuthState getTokenWDeviceVerify(std::string& code);
-        bool checkConnectivity();
-        bool checkAccessTokenValidity();
-
-        httplib::Client& getApiClient();
-        httplib::Client& getVaultClient();
-        httplib::Client& getIconClient();
-
-        /*
-        * These internal functions do not encrypt anything, and
-        * data sent to these functions must be encrypted with the
-        * exception of uuids
-        */
-        std::expected<nlohmann::json, NetworkState> UpdateItem(nlohmann::json encryptedData);
-
-        std::expected<nlohmann::json, NetworkState> OnlineNewItem(nlohmann::json encryptedData);
-        std::expected<nlohmann::json, NetworkState> OnlineUpdateItem(nlohmann::json encryptedData);
-        NetworkState OnlineDeleteItem(std::string uuid);
-        NetworkState OnlineSoftDeleteItem(std::string uuid);
-        NetworkState OnlineRestoreItem(std::string uuid);
-        std::expected<std::string, NetworkState> OnlineAddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, std::function<void(float)> onProgress = nullptr);
-        NetworkState OnlineRemoveAttachment(std::string uuid, std::string attachmentID);
-        std::expected<std::string, NetworkState> OnlineDownloadAttachment(std::string uuid, std::string attachmentID, std::function<void(float)> onProgress = nullptr);
-        std::expected<nlohmann::json, NetworkState> OnlineCreateFolder(std::string encryptedFolderName);
-        std::expected<nlohmann::json, NetworkState> OnlineRenameFolder(std::string folderUUID, std::string encryptedFolderName);
-        NetworkState OnlineDeleteFolder(std::string folderUUID);
-        std::expected<std::vector<uint8_t>, NetworkState> OnlineDownloadIcon(std::string url);
-
-        std::vector<uint8_t> makeKey(const std::string& password, const std::string& salt, int iterations);
-        std::string cipherString(int encryptionType, const std::string& iv, const std::string& ct, const std::string& mac);
-        std::string makeEncKey(const std::vector<uint8_t>& key);
-        std::string hashedPassword(const std::string& password, const std::vector<uint8_t>& key);
-        bool macsEqual(const std::vector<uint8_t>& macKey, const std::vector<uint8_t>& mac1, const std::vector<uint8_t>& mac2);
-        std::vector<uint8_t> InternalDecrypt(const std::string& str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
-        std::string InternalEncrypt(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
-        std::string InternalEncryptRaw(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
-        std::string InternalDecryptRaw(const std::vector<uint8_t>& pt, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
-        std::vector<uint8_t> hkdfStretch(const std::string& info);
-        std::pair<std::vector<uint8_t>, std::vector<uint8_t>> generateEncMacKeys();
-        std::string getUriChecksum(std::string& uri, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);
-        std::string Encrypt(std::string str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
-        std::string Decrypt(std::string str, const std::vector<uint8_t>& key, const std::vector<uint8_t>& macKey);
-        void getMainKeys();
-        std::pair<std::vector<uint8_t>, std::vector<uint8_t>> getKeysFromCipher(std::string mainKey);
-        std::string decryptItem(std::string item, std::vector<uint8_t> itemEncKey, std::vector<uint8_t> itemMacKey);
-        std::string downloadIcon(std::string url);
-
-        void refreshLoop();
-        void refreshToken();
-        bool needsRefresh();
-
-        void websocketLoop();
-
-        /*
-        * SECRET DATA
-        */
-        std::vector<uint8_t> internalKey;
-        std::string masterPasswordHash;
-        std::vector<uint8_t> encKey;
-        std::vector<uint8_t> macKey;
-
-        std::thread refreshThread;
-        std::atomic<bool> shouldRefresh { false };
-
-        std::thread wssThread;
-        std::atomic<bool> shouldWSS { false };
-
-        std::function<void(std::string)> OnError;
-
-        AuthState codeType;
-
-        std::shared_ptr<httplib::Client> apiClient;
-        std::shared_ptr<httplib::Client> vaultClient;
-        std::shared_ptr<httplib::Client> iconClient;
-
-        nlohmann::json authData;
-        nlohmann::json vaultData;
-        nlohmann::json settingsData;
         Storage storage;
+
         inline static std::shared_ptr<spdlog::logger> logger;
     };
 }
