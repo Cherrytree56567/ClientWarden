@@ -8,14 +8,14 @@
 namespace ClientWarden {
     class VaultProfile {
     public:
-        VaultProfile(nlohmann::json vaultData);
+        VaultProfile(std::shared_ptr<nlohmann::json> vaultData);
         ~VaultProfile();
 
         std::string profileName();
         std::string profileIcon();
 
     private:
-        nlohmann::json vaultData;
+        std::shared_ptr<nlohmann::json> vaultData;
         inline static std::shared_ptr<spdlog::logger> logger;
     };
 }

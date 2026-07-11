@@ -6,6 +6,8 @@
 #include "VaultNetwork/VaultNetwork.h"
 #include "VaultSession/VaultSession.h"
 
+#include "GenericItem/GenericItemImpl.h"
+
 namespace ClientWarden {
     enum class AuthState {
         Unknown,
@@ -13,7 +15,7 @@ namespace ClientWarden {
         Unlockable,
         WaitingForTOTP,
         WaitingForDeviceVerif,
-        Unlocked
+        Unlocked,
         Failed // Vault should never reach this point
     };
 
@@ -50,9 +52,21 @@ namespace ClientWarden {
 
         void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
 
-        Botan::secure_vector<std::string> GetFolders();
+        template <typename Derived>
+        std::shared_ptr<Derived> GetItem(std::string uuid) {
+            return std::make_shared<Derived>(*this, uuid);
+        }
 
-        bool UpdateItem(nlohmann::json encryptedData);
+        template <typename Derived>
+        std::shared_ptr<Derived> CreateItem() {
+            return std::make_shared<Derived>(*this);
+        }
+        
+        std::shared_ptr<GenericItem> GetItem(std::string uuid);
+        std::shared_ptr<Folder> GetFolder(std::string uuid);
+        std::shared_ptr<Folder> CreateFolder();
+        Botan::secure_vector<std::string> GetFolders();
+        std::shared_ptr<CipherQuery> GetCipherQuery();
 
         bool NewItem(nlohmann::json encryptedData);
         bool UpdateItem(nlohmann::json encryptedData);
@@ -62,8 +76,8 @@ namespace ClientWarden {
         std::optional<std::string> AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
             std::function<void(float)> onProgress = nullptr);
         bool RemoveAttachment(std::string uuid, std::string attachmentID);
-        std::optional<std::string> DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath
-            std::function<void(float)> onProgress = nullptr, Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac);
+        bool DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,
+            Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress = nullptr);
         std::optional<std::string> CreateFolder(std::string encryptedFolderName);
         bool RenameFolder(std::string folderUUID, std::string encryptedFolderName);
         bool DeleteFolder(std::string folderUUID);
@@ -71,6 +85,7 @@ namespace ClientWarden {
         VaultSession session;
         VaultCrypto crypto;
         VaultNetwork network;
+        VaultProfile profile;
     private:
         AuthState state;
 

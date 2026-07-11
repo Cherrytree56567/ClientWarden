@@ -614,21 +614,23 @@ namespace ClientWarden {
 
         return std::nullopt;
     }
+
     bool Vault::RemoveAttachment(std::string uuid, std::string attachmentID) {
         return network.RestoreItem(uuid, (*session.authData)["accessString"].get<std::string>());
     }
-    std::optional<std::string> Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath
-        std::function<void(float)> onProgress = nullptr, Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac) {
+
+    bool Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath
+        Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress = nullptr) {
         std::optional<std::pair<std::string, nlohmann::json>> attachment = network.DownloadAttachment(uuid, attachmentID, 
             (*session.authData)["accessString"].get<std::string>(), onProgress);
         
         if (!attachment.has_value()) {
-            return std::nullopt;
+            return false;
         }
         std::string attKeyPlain = crypto.DecryptAsStr(attachment.value().second["key"], cipEnc, cipMac);
         if (attKeyPlain.size() != 64) {
             logger->error("Attachment key wrong size: {}", attKeyPlain.size());
-            return std::nullopt;
+            return false;
         }
         Botan::secure_vector<uint8_t> decEnc(attKeyPlain.begin(), attKeyPlain.begin() + 32);
         Botan::secure_vector<uint8_t> decMac(attKeyPlain.begin() + 32, attKeyPlain.end());
@@ -637,16 +639,54 @@ namespace ClientWarden {
 
         Botan::secure_vector<uint8_t> vecBuf(attachment.value().first.begin(), attachment.value().first.end());
 
-        std::string decBody = InternalDecryptRaw(vecBuf, decEnc, decMac);
+        std::string decBody = DecryptRaw(vecBuf, decEnc, decMac);
 
         attachment.value().first.clear();
         Botan::secure_scrub_memory(decEnc.data(), decEnc.size());
         Botan::secure_scrub_memory(decMac.data(), decMac.size());
         Botan::secure_scrub_memory(vecBuf.data(), vecBuf.size());
 
-        // TODO: Save
+        storage.write(savePath, decBody);
+
+        decBody.clear();
+
+        return true;
     }
-    std::optional<std::string> Vault::CreateFolder(std::string encryptedFolderName);
-    bool Vault::RenameFolder(std::string folderUUID, std::string encryptedFolderName);
-    bool Vault::DeleteFolder(std::string folderUUID);
+
+    std::optional<std::string> Vault::CreateFolder(std::string encryptedFolderName) {
+        std::optional<nlohmann::json> res = network.CreateFolder(encryptedFolderName, (*session.authData)["accessString"].get<std::string>());
+        if (!res.has_value()) {
+            return std::nullopt;
+        }
+
+        if (!res.value().contains("id") || !res.value()["id"].is_string()) {
+            return std::nullopt;
+        }
+
+        return res.value()["id"];
+    }
+
+    bool Vault::RenameFolder(std::string folderUUID, std::string encryptedFolderName) {
+        return network.RenameFolder(folderUUID, encryptedFolderName, (*session.authData)["accessString"].get<std::string>()).has_value();
+    }
+
+    bool Vault::DeleteFolder(std::string folderUUID) {
+        return network.RenameFolder(folderUUID, (*session.authData)["accessString"].get<std::string>());
+    }
+
+    std::shared_ptr<GenericItem> Vault::GetItem(std::string uuid) {
+        return std::make_shared<GenericItem>(*this, uuid);
+    }
+        
+    std::shared_ptr<Folder> Vault::GetFolder(std::string uuid) {
+        return std::make_shared<Folder>(*this, uuid);
+    }
+        
+    std::shared_ptr<Folder> Vault::CreateFolder() {
+        return std::make_shared<Folder>(*this);
+    }
+        
+    std::shared_ptr<CipherQuery> Vault::GetCipherQuery() {
+        return std::make_shared<CipherQuery>(*this);
+    }
 }
