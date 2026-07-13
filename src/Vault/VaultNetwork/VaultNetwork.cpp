@@ -73,7 +73,7 @@ namespace ClientWarden {
         return nlohmann::json::parse(res->body);
     }
 
-    std::optional<nlohmann::json> VaultNetwork::getTokenWTotp(std::string& email, std::string& masterPasswordHash, std::string& totp) {
+    std::optional<nlohmann::json> VaultNetwork::getTokenWTotp(std::string email, std::string& masterPasswordHash, std::string& totp) {
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
@@ -108,7 +108,7 @@ namespace ClientWarden {
         return nlohmann::json::parse(res->body);
     }
 
-    std::optional<nlohmann::json> VaultNetwork::getTokenWDeviceVerify(std::string& email, std::string& masterPasswordHash, std::string& code) {
+    std::optional<nlohmann::json> VaultNetwork::getTokenWDeviceVerify(std::string email, std::string& masterPasswordHash, std::string& code) {
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },

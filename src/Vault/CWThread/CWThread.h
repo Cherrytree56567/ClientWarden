@@ -10,8 +10,8 @@ namespace ClientWarden {
     public: 
         CWThread() = default;
 
-        template <typename Func, typename... Args>
-        explicit CWThread(Func&& func, Args&&... args) : m_func(std::bind(std::forward<Func>(func), std::forward<Args>(args)...)) {
+        template <typename Func>
+        explicit CWThread(Func&& func) : m_func(std::forward<Func>(func)) {
             
         }
 
@@ -20,9 +20,9 @@ namespace ClientWarden {
         /*
          * Templated func defs need to be in the class def file
         */
-        template <typename Func, typename... Args>
-        void setCallback(Func&& func, Args&&... args) {
-            m_func = std::bind(std::forward<Func>(func), std::forward<Args>(args)...);
+        template <typename Func>
+        void setCallback(Func&& func) {
+            m_func = std::forward<Func>(func);
         }
 
         void start();

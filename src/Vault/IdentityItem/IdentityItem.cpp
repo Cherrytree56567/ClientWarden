@@ -594,7 +594,7 @@ namespace ClientWarden {
         newdata["identity"]["username"] = localVault.crypto.Encrypt(oldUsername, newitemEncKey, newitemMacKey);
         Botan::secure_vector<uint8_t> mainKey(newitemEncKey.begin(), newitemEncKey.end());
         mainKey.insert(mainKey.end(), newitemMacKey.begin(), newitemMacKey.end());
-        newdata["key"] = localVault.crypto.Encrypt(mainKey, localVault.encKey, localVault.macKey);
+        newdata["key"] = localVault.crypto.Encrypt(mainKey, *localVault.session.encKey, *localVault.session.macKey);
         Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
         newdata["login"] = nullptr;
         newdata["name"] = localVault.crypto.Encrypt(oldName, newitemEncKey, newitemMacKey);
@@ -740,8 +740,8 @@ namespace ClientWarden {
             logger->warn("Failed to add New Item Online");
             newdata["createdOffline"] = true;
         } else {
-            if (result.contains("id") && result["id"].is_string()) {
-                newdata["id"] = result["id"];
+            if (result.value().contains("id") && result.value()["id"].is_string()) {
+                newdata["id"] = result.value()["id"];
             }
         }
         (*localVault.session.vaultData)["ciphers"].push_back(newdata);

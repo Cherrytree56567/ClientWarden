@@ -88,18 +88,18 @@
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = true;
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Unknown code type"];
+                    [[ToastStore instance] addToast:toast];
                 });
-                Toast* toast = [[Toast alloc] initWithMessage:@"Unknown code type"];
-                [[ToastStore instance] addToast:toast];
                 return false;
             }
 
             if (!result) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = true;
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Authenticate"];
+                    [[ToastStore instance] addToast:toast];
                 });
-                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Authenticate"];
-                [[ToastStore instance] addToast:toast];
                 return false;
             }
 

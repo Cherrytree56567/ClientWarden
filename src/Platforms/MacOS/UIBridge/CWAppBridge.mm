@@ -46,8 +46,7 @@
     ClientwardenWindow.instance.cb_lock = ^bool {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            v_inst.Lock();
-            return true;
+            return v_inst.Lock();
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Lock Vault"];

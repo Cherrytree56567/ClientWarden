@@ -282,7 +282,7 @@ namespace ClientWarden {
         newdata["identity"] = nullptr;
         Botan::secure_vector<uint8_t> mainKey(newitemEncKey.begin(), newitemEncKey.end());
         mainKey.insert(mainKey.end(), newitemMacKey.begin(), newitemMacKey.end());
-        newdata["key"] = localVault.InternalEncrypt(mainKey, *localVault.session.encKey, *localVault.sesson.macKey);
+        newdata["key"] = localVault.crypto.Encrypt(mainKey, *localVault.session.encKey, *localVault.session.macKey);
         Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
         newdata["login"] = nullptr;
         newdata["name"] = localVault.crypto.Encrypt(oldName, newitemEncKey, newitemMacKey);

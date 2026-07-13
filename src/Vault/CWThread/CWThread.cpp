@@ -1,13 +1,17 @@
 #include "CWThread.h"
 
 namespace ClientWarden {
+    CWThread::~CWThread() {
+        stop();
+    }
+
     void CWThread::start() {
         if (m_thread.joinable()) {
             return;
         }
 
         if (!m_func) {
-            logger->err("No callback set");
+            logger->error("No callback set");
             return;
         }
 

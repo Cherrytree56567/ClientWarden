@@ -152,12 +152,12 @@ namespace ClientWarden {
         } else {
             state = AuthState::Unlockable;
 
-            session.authData = std::make_shared<nlohmann::json>(nlohmann::json::parse(storage.read("data.json")));
-            session.vaultData = std::make_shared<nlohmann::json>(nlohmann::json::parse(storage.read("vault.json")));
+            *session.authData = nlohmann::json::parse(storage.read("data.json"));
+            *session.vaultData = nlohmann::json::parse(storage.read("vault.json"));
         }
 
         if (storage.exists("settings.json")) {
-            session.settingsData = std::make_shared<nlohmann::json>(nlohmann::json::parse(storage.read("settings.json")));
+            *session.settingsData = nlohmann::json::parse(storage.read("settings.json"));
         } else {
             (*session.settingsData)["clipboardClear"] = 30;
 
@@ -206,8 +206,7 @@ namespace ClientWarden {
             (*session.authData)["email"] = email;
         }
 
-        session.internalKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(crypto.makeKey(password, 
-            (*session.authData)["salt"], (*session.authData)["kdfIterations"])));
+        *session.internalKey = std::move(crypto.makeKey(password, (*session.authData)["salt"], (*session.authData)["kdfIterations"]));
         session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
         /*
@@ -247,8 +246,8 @@ namespace ClientWarden {
 
             auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
         
-            session.encKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(encKey));
-            session.macKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(macKey));
+            *session.encKey = std::move(encKey);
+            *session.macKey = std::move(macKey);
 
             session.wssThread.start();
             session.refreshThread.start();
@@ -262,10 +261,76 @@ namespace ClientWarden {
         }
     }
 
+    bool Vault::Login(std::string code) {
+        std::optional<nlohmann::json> token;
+        
+        if (state == AuthState::WaitingForTOTP) {
+            token = network.getTokenWTotp((*session.authData)["salt"], session.masterPasswordHash, code);
+        } else if (state == AuthState::WaitingForDeviceVerif) {
+            token = network.getTokenWDeviceVerify((*session.authData)["salt"], session.masterPasswordHash, code);
+        } else {
+            return false;
+        }
+
+        if (token.has_value()) {
+            if (!token.value().contains("access_token") || !token.value().contains("refresh_token") ||
+                !token.value().contains("expires_in")) {
+                return false;
+            }
+            if (token.value().contains("error_description")) {
+                if (token.value()["error_description"] == "Two factor required.") {
+                    state = AuthState::WaitingForTOTP;
+                    return true;
+                } else if (token.value()["error_description"] == "New device verification required") {
+                    state = AuthState::WaitingForDeviceVerif;
+                    return true;
+                }
+                return false;
+            }
+            (*session.authData)["accessString"] = token.value()["access_token"];
+            (*session.authData)["refreshToken"] = token.value()["refresh_token"];
+            (*session.authData)["expiresIn"] = token.value()["expires_in"];
+
+            std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
+            std::tm* localTime = std::localtime(&now);
+
+            std::ostringstream oss;
+            oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+            (*session.authData)["needsRefreshTime"] = oss.str();
+
+            storage.write("data.json", session.authData->dump(2));
+
+            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
+        
+            *session.encKey = std::move(encKey);
+            *session.macKey = std::move(macKey);
+
+            session.wssThread.start();
+            session.refreshThread.start();
+            session.connectivityThread.start();
+
+            state = AuthState::Unlocked;
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    bool Vault::Lock() {
+        Botan::secure_scrub_memory(session.internalKey->data(), session.internalKey->size());
+        OPENSSL_cleanse(session.masterPasswordHash.data(), session.masterPasswordHash.size());
+        Botan::secure_scrub_memory(session.encKey->data(), session.encKey->size());
+        Botan::secure_scrub_memory(session.macKey->data(), session.macKey->size());
+
+        session.masterPasswordHash.clear();
+
+        return true;
+    }
+
     bool Vault::Unlock(std::string& password) {
         try {
-            session.internalKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(crypto.makeKey(password, 
-                (*session.authData)["salt"], (*session.authData)["kdfIterations"])));
+            *session.internalKey = std::move(crypto.makeKey(password, (*session.authData)["salt"], (*session.authData)["kdfIterations"]));
             session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
             /*
@@ -274,10 +339,10 @@ namespace ClientWarden {
             OPENSSL_cleanse(password.data(), password.size());
             password.clear();
 
-            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
+            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"].get<std::string>());
 
-            session.encKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(encKey));
-            session.macKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(macKey));
+            *session.encKey = std::move(encKey);
+            *session.macKey = std::move(macKey);
 
             session.wssThread.start();
             session.refreshThread.start();
@@ -338,7 +403,7 @@ namespace ClientWarden {
         */
         if (!storage.exists("vault.json")) {
             storage.write("vault.json", body.dump(2));
-            session.vaultData = std::make_shared<nlohmann::json>(body);
+            *session.vaultData = body;
             return true;
         }
 

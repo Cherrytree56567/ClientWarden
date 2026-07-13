@@ -29,8 +29,8 @@ namespace ClientWarden {
 
         std::optional<nlohmann::json> preLogin(std::string& email);
         std::optional<nlohmann::json> getToken(std::string& email, std::string& masterPasswordHash);
-        std::optional<nlohmann::json> getTokenWTotp(std::string& email, std::string& masterPasswordHash, std::string& totp);
-        std::optional<nlohmann::json> getTokenWDeviceVerify(std::string& email, std::string& masterPasswordHash, std::string& code);
+        std::optional<nlohmann::json> getTokenWTotp(std::string email, std::string& masterPasswordHash, std::string& totp);
+        std::optional<nlohmann::json> getTokenWDeviceVerify(std::string email, std::string& masterPasswordHash, std::string& code);
         bool checkConnectivity();
         bool checkAccessTokenValidity(std::string accessString);
         std::optional<nlohmann::json> refreshToken(std::string refreshToken);
