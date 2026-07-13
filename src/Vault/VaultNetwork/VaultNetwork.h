@@ -1,9 +1,12 @@
 #pragma once
+#define CPPHTTPLIB_EXPECT_100_THRESHOLD 0
+#include <httplib.h>
 #include <optional>
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <msgpack.hpp>
+
+#include "Clientwarden.h"
+#include "VaultUtils/VaultUtils.h"
 
 namespace ClientWarden {
     enum class VaultConnectivity {
@@ -24,13 +27,13 @@ namespace ClientWarden {
 
         void initNetwork(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri);
 
-        std::optional<nlohmann::json> preLogin(std::string& email, std::string& masterPasswordHash);
+        std::optional<nlohmann::json> preLogin(std::string& email);
         std::optional<nlohmann::json> getToken(std::string& email, std::string& masterPasswordHash);
         std::optional<nlohmann::json> getTokenWTotp(std::string& email, std::string& masterPasswordHash, std::string& totp);
         std::optional<nlohmann::json> getTokenWDeviceVerify(std::string& email, std::string& masterPasswordHash, std::string& code);
         bool checkConnectivity();
         bool checkAccessTokenValidity(std::string accessString);
-        std::optional<nlohmann::json> refreshToken(std::string& refreshToken);
+        std::optional<nlohmann::json> refreshToken(std::string refreshToken);
         bool websocketLoop(std::function<void(int notifyType)> onNotification, std::string accessString, std::string wssURL,
             const std::atomic<bool>& shouldThread);
 
@@ -43,8 +46,8 @@ namespace ClientWarden {
         bool RestoreItem(std::string uuid, std::string accessString);
 
         std::optional<nlohmann::json> AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
-            std::string accessString, std::function<void(float)> onProgress = nullptr, std::string& attKeyStr);
-        bool RemoveAttachment(std::string uuid, std::string attachmentID);
+            std::string& attKeyStr, std::string accessString, std::function<void(float)> onProgress = nullptr);
+        bool RemoveAttachment(std::string uuid, std::string attachmentID, std::string accessString);
         std::optional<std::pair<std::string, nlohmann::json>> DownloadAttachment(std::string uuid, std::string attachmentID, std::string accessString, 
             std::function<void(float)> onProgress = nullptr);
         
@@ -60,10 +63,6 @@ namespace ClientWarden {
         std::shared_ptr<httplib::Client> vaultClient;
         std::shared_ptr<httplib::Client> iconClient;
 
-        std::shared_ptr<nlohmann::json> authData;
-
         VaultConnectivity connectivity;
-
-        inline static std::shared_ptr<spdlog::logger> logger;
     };
 }

@@ -1,9 +1,10 @@
 #pragma once
 #include <thread>
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <botan/secmem.h>
+
+#include "CWThread/CWThread.h"
+#include "Clientwarden.h"
 
 namespace ClientWarden {
     /*
@@ -21,7 +22,7 @@ namespace ClientWarden {
         std::shared_ptr<nlohmann::json> vaultData;
         std::shared_ptr<nlohmann::json> settingsData;
 
-        Botan::secure_vector<uint8_t> internalKey;
+        std::shared_ptr<Botan::secure_vector<uint8_t>> internalKey;
         std::string masterPasswordHash;
         std::shared_ptr<Botan::secure_vector<uint8_t>> encKey;
         std::shared_ptr<Botan::secure_vector<uint8_t>> macKey;
@@ -29,7 +30,5 @@ namespace ClientWarden {
         CWThread wssThread;
         CWThread refreshThread;
         CWThread connectivityThread;
-
-        inline static std::shared_ptr<spdlog::logger> logger;
     };
 }

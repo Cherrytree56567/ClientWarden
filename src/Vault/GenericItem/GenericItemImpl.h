@@ -1,129 +1,131 @@
 #pragma once
 #include "GenericItem/GenericItem.h"
 
+#include "VaultUtils/VaultUtils.h"
+
 namespace ClientWarden {
     template <typename Derived>
     class GenericItemImpl : public GenericItem {
     public:
-        Derived* SetName(std::string& name) override {
-            GenericItem::SetName(name);
+        using GenericItem::GenericItem;
+
+        Derived* SetName(std::string& name) {
+            GenericItem::SetNameImpl(name);
             return static_cast<Derived*>(this);
         }
         
-        Derived* SetNotes(std::string& notes) override {
-            GenericItem::SetNotes(notes);
+        Derived* SetNotes(std::string& notes) {
+            GenericItem::SetNotesImpl(notes);
             return static_cast<Derived*>(this);
         }
         
-        Derived* SetFolder(std::string folder) override {
-            GenericItem::SetFolder(folder);
+        Derived* SetFolder(std::string folder) {
+            GenericItem::SetFolderImpl(folder);
             return static_cast<Derived*>(this);
         }
         
-        Derived* RemoveFolder() override {
-            GenericItem::RemoveFolder();
+        Derived* RemoveFolder() {
+            GenericItem::RemoveFolderImpl();
             return static_cast<Derived*>(this);
         }
         
-        Derived* AddField(CustomFieldType field, std::string& name, std::string& value) override {
-            GenericItem::AddField(field, name, value);
+        Derived* AddField(CustomFieldType field, std::string& name, std::string& value) {
+            GenericItem::AddFieldImpl(field, name, value);
             return static_cast<Derived*>(this);
         }
         
-        Derived* RemoveField(std::string& name) override {
-            GenericItem::RemoveField(name);
+        Derived* RemoveField(std::string& name) {
+            GenericItem::RemoveFieldImpl(name);
             return static_cast<Derived*>(this);
         }
         
-        Derived* ClearFields() override {
-            GenericItem::ClearFields();
+        Derived* ClearFields() {
+            GenericItem::ClearFieldsImpl();
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetName(std::string& name) override {
-            GenericItem::GetName(name);
+        Derived* GetName(std::string& name) {
+            GenericItem::GetNameImpl(name);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetNotes(std::string& notes) override {
-            GenericItem::GetNotes(notes);
+        Derived* GetNotes(std::string& notes) {
+            GenericItem::GetNotesImpl(notes);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetFolder(std::string& folder) override {
-            GenericItem::GetFolder(folder);
+        Derived* GetFolder(std::string& folder) {
+            GenericItem::GetFolderImpl(folder);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value) override {
-            GenericItem::GetFields(value);
+        Derived* GetFields(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& value) {
+            GenericItem::GetFieldsImpl(value);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetId(std::string& value) override {
-            GenericItem::GetId(value);
+        Derived* GetId(std::string& value) {
+            GenericItem::GetIdImpl(value);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetCreation(std::string& value) override {
-            GenericItem::GetCreation(value);
+        Derived* GetCreation(std::string& value) {
+            GenericItem::GetCreationImpl(value);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetModification(std::string& value) override {
-            GenericItem::GetModification(value);
+        Derived* GetModification(std::string& value) {
+            GenericItem::GetModificationImpl(value);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetDeletion(std::string& value) override {
-            GenericItem::GetDeletion(value);
+        Derived* GetDeletion(std::string& value) {
+            GenericItem::GetDeletionImpl(value);
             return static_cast<Derived*>(this);
         }
         
-        Derived* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) 
-            override {
-            GenericItem::AddAttachment(name, content, id, onProgress);
+        Derived* AddAttachment(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress = nullptr) {
+            GenericItem::AddAttachmentImpl(name, content, id, onProgress);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetAttachmentIDs(std::vector<std::string>& ids) override {
-            GenericItem::GetAttachmentIDs(ids);
+        Derived* GetAttachmentIDs(std::vector<std::string>& ids) {
+            GenericItem::GetAttachmentIDsImpl(ids);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetAttachmentName(std::string id, std::string& name) override {
-            GenericItem::GetAttachmentName(id, name);
+        Derived* GetAttachmentName(std::string id, std::string& name) {
+            GenericItem::GetAttachmentNameImpl(id, name);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetAttachment(std::string id, std::string& content, std::function<void(float)> onProgress = nullptr) override {
-            GenericItem::GetAttachment(id, content, onProgress);
+        Derived* GetAttachment(std::string id, std::filesystem::path filePath, std::function<void(float)> onProgress = nullptr) {
+            GenericItem::GetAttachmentImpl(id, filePath, onProgress);
             return static_cast<Derived*>(this);
         }
         
-        Derived* RemoveAttachment(std::string id) override {
-            GenericItem::RemoveAttachment(id);
+        Derived* RemoveAttachment(std::string id) {
+            GenericItem::RemoveAttachmentImpl(id);
             return static_cast<Derived*>(this);
         }
         
-        
-        Derived* SetFavorite(bool val) override {
-            GenericItem::SetFavorite(value);
+        Derived* SetFavorite(bool val) {
+            GenericItem::SetFavoriteImpl(val);
             return static_cast<Derived*>(this);
         }
         
-        Derived* SetReprompt(bool val) override {
-            GenericItem::SetReprompt(val);
+        Derived* SetReprompt(bool val) {
+            GenericItem::SetRepromptImpl(val);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetFavorite(bool& val) override {
-            GenericItem::GetFavorite(val);
+        Derived* GetFavorite(bool& val) {
+            GenericItem::GetFavoriteImpl(val);
             return static_cast<Derived*>(this);
         }
         
-        Derived* GetReprompt(bool& val) override {
-            GenericItem::GetReprompt(val);
+        Derived* GetReprompt(bool& val) {
+            GenericItem::GetRepromptImpl(val);
             return static_cast<Derived*>(this);
         }
     };

@@ -31,21 +31,9 @@
             std::string c_email = email.UTF8String;
             std::string c_password = password.UTF8String;
 
-            ClientWarden::AuthState result = v_inst.Login(c_email, c_password);
+            bool result = v_inst.Login(c_email, c_password);
 
-            if (result == ClientWarden::AuthState::NeedsTOTP) {
-                v_inst.codeType = ClientWarden::AuthState::NeedsTOTP;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = false;
-                });
-                return true;
-            } else if (result == ClientWarden::AuthState::NeedsEmailVerification) {
-                v_inst.codeType = ClientWarden::AuthState::NeedsEmailVerification;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = false;
-                });
-                return true;
-            } else if (result != ClientWarden::AuthState::Authenticated) {
+            if (!result) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Toast* toast = [[Toast alloc] initWithMessage:@"Wrong Email or Password"];
                     [[ToastStore instance] addToast:toast];
@@ -53,17 +41,17 @@
                 return false;
             }
 
-            if (v_inst.postLogin() != ClientWarden::NetworkState::Success) {
+            if (v_inst.state == ClientWarden::AuthState::WaitingForTOTP) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    Toast* toast = [[Toast alloc] initWithMessage:@"Post Login Failed"];
-                    [[ToastStore instance] addToast:toast];
+                    Login.instance.EmailPasswordView = false;
                 });
-                return false;
+                return true;
+            } else if (v_inst.state == ClientWarden::AuthState::WaitingForDeviceVerif) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    Login.instance.EmailPasswordView = false;
+                });
+                return true;
             }
-
-            v_inst.startRefreshThread();
-            v_inst.startWSSLoop();
-            v_inst.Sync();
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 ClientwardenWindow.instance.state = WindowStateVault;
@@ -89,14 +77,14 @@
     Login.instance.cb_submitCode = ^bool(NSString* code) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::AuthState result;
 
             std::string c_code = code.UTF8String;
+            bool result;
 
-            if (v_inst.codeType == ClientWarden::AuthState::NeedsEmailVerification) {
-                result = v_inst.submitDeviceVerify(c_code);
-            } else if (v_inst.codeType == ClientWarden::AuthState::NeedsTOTP) {
-                result = v_inst.submitTOTP(c_code);
+            if (v_inst.state == ClientWarden::AuthState::WaitingForDeviceVerif) {
+                result = v_inst.Login(c_code);
+            } else if (v_inst.state == ClientWarden::AuthState::WaitingForTOTP) {
+                result = v_inst.Login(c_code);
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = true;
@@ -106,7 +94,7 @@
                 return false;
             }
 
-            if (result != ClientWarden::AuthState::Authenticated) {
+            if (!result) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = true;
                 });
@@ -114,19 +102,6 @@
                 [[ToastStore instance] addToast:toast];
                 return false;
             }
-
-            if (v_inst.postLogin() != ClientWarden::NetworkState::Success) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = true;
-                });
-                Toast* toast = [[Toast alloc] initWithMessage:@"Post Login Failed"];
-                [[ToastStore instance] addToast:toast];
-                return false;
-            }
-
-            v_inst.startRefreshThread();
-            v_inst.startWSSLoop();
-            v_inst.Sync();
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 Login.instance.EmailPasswordView = true;

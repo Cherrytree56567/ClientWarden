@@ -5,6 +5,7 @@
 #include "GenericItem/GenericItem.h"
 #include "LoginItem/LoginItem.h"
 #include "Folder/Folder.h"
+#include "Vault.h"
 
 #include <chrono>
 
@@ -63,10 +64,14 @@
                 cip.GetWebsites(loginUrl)->Close();
 
                 if (loginUrl.size() != 0) {
-                    std::string c_path = v_inst.downloadIcon(loginUrl[0]);
-                    NSString* path = [NSString stringWithUTF8String: c_path.c_str()];
+                    std::optional<std::string> result = v_inst.DownloadIcon(loginUrl[0]);
+                    if (result.has_value()) {
+                        NSString* path = [NSString stringWithUTF8String: result.value().c_str()];
 
-                    img = [[ClientwardenImage alloc] initWithType:ImageTypeAppSupport path:path];
+                        img = [[ClientwardenImage alloc] initWithType:ImageTypeAppSupport path:path];
+                    } else {
+                        img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
+                    }
                 } else {
                     img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
                 }

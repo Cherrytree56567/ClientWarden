@@ -2,17 +2,7 @@
 
 namespace ClientWarden {
     VaultNetwork::VaultNetwork() {
-        if (!logger) {
-            spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
 
-            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(storage.path.string() + "/cw.log", true);
-
-            logger = std::make_shared<spdlog::logger>("ClientWarden::VaultNetwork", spdlog::sinks_init_list{console_sink, file_sink});
-            logger->set_level(spdlog::level::trace);
-            logger->flush_on(spdlog::level::trace);
-            spdlog::register_logger(logger);
-        }
     }
 
     VaultNetwork::~VaultNetwork() {
@@ -27,14 +17,14 @@ namespace ClientWarden {
         iconClient->set_read_timeout(3);
     }
 
-    std::optional<nlohmann::json> VaultNetwork::preLogin(std::string& email, std::string& masterPasswordHash) {
+    std::optional<nlohmann::json> VaultNetwork::preLogin(std::string& email) {
         httplib::Headers headers = {
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "web" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Post("/identity/accounts/prelogin", headers, "{\"email\":\"" + email + "\"}", "application/json");
+        auto res = vaultClient->Post("/identity/accounts/prelogin", headers, "{\"email\":\"" + email + "\"}", "application/json");
 
         if (!res) {
             logger->error("preLogin request failed");
@@ -49,7 +39,7 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getToken(std::string& email, std::string& masterPasswordHash) {
-        vaultClient.set_default_headers({
+        vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
             { "bitwarden-client-name", "web" },
@@ -66,7 +56,7 @@ namespace ClientWarden {
         data.emplace("deviceIdentifier", uniqueGuid());
         data.emplace("deviceName", "firefox");
         
-        auto res = vaultClient.Post("/identity/connect/token", data);
+        auto res = vaultClient->Post("/identity/connect/token", data);
 
         if (!res) {
             logger->error("getToken request failed");
@@ -84,7 +74,7 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getTokenWTotp(std::string& email, std::string& masterPasswordHash, std::string& totp) {
-        vaultClient.set_default_headers({
+        vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
             { "bitwarden-client-name", "web" },
@@ -104,7 +94,7 @@ namespace ClientWarden {
         data.emplace("twoFactorProvider", "0");
         data.emplace("twoFactorRemember", "0");
         
-        auto res = vaultClient.Post("/identity/connect/token", data);
+        auto res = vaultClient->Post("/identity/connect/token", data);
 
         if (!res) {
             logger->error("getToken request failed");
@@ -119,7 +109,7 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getTokenWDeviceVerify(std::string& email, std::string& masterPasswordHash, std::string& code) {
-        vaultClient.set_default_headers({
+        vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
             { "bitwarden-client-name", "web" },
@@ -137,7 +127,7 @@ namespace ClientWarden {
         data.emplace("deviceName", "firefox");
         data.emplace("newDeviceOtp", code);
         
-        auto res = vaultClient.Post("/identity/connect/token", data);
+        auto res = vaultClient->Post("/identity/connect/token", data);
 
         if (!res) {
             logger->error("getToken request failed");
@@ -152,9 +142,9 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::checkConnectivity() {
-        apiClient.set_connection_timeout(1);
+        apiClient->set_connection_timeout(1);
 
-        auto res = client.Get("/alive");
+        auto res = apiClient->Get("/alive");
 
         bool alive = res && res->status == 200;
 
@@ -168,20 +158,20 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::checkAccessTokenValidity(std::string accessString) {
-        apiClient.set_connection_timeout(3);
+        apiClient->set_connection_timeout(3);
         
         httplib::Headers headers = {
             {"Authorization", "Bearer " + accessString}
         };
         
-        auto res = apiClient.Get("/api/accounts/profile", headers);
+        auto res = apiClient->Get("/api/accounts/profile", headers);
         return res && res->status != 401;
     }
 
-    std::optional<nlohmann::json> VaultNetwork::refreshToken(std::string& refreshToken) {
+    std::optional<nlohmann::json> VaultNetwork::refreshToken(std::string refreshToken) {
         boost::uuids::uuid guid = boost::uuids::random_generator()(); 
         std::string uniqueDeviceGuid = boost::lexical_cast<std::string>(guid);
-        vaultClient.set_default_headers({
+        vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
             { "bitwarden-client-name", "web" },
@@ -193,7 +183,7 @@ namespace ClientWarden {
         data.emplace("client_id", "web");
         data.emplace("refresh_token", refreshToken);
         
-        auto res = vaultClient.Post("/identity/connect/token", data);
+        auto res = vaultClient->Post("/identity/connect/token", data);
 
         if (!res) {
             logger->error("getToken request failed");
@@ -226,8 +216,8 @@ namespace ClientWarden {
 
         std::string msg;
 
-        while (ws.read(msg) && shouldThread) {
-            if (!shouldWSS) {
+        while (ws.read(msg)) {
+            if (!shouldThread) {
                 ws.close();
                 break;
             }
@@ -292,7 +282,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Get("/api/sync", headers);
+        auto res = vaultClient->Get("/api/sync", headers);
 
         if (!res) {
             logger->error("sync request failed");
@@ -314,7 +304,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Post("/api/ciphers", headers, encryptedData.dump(), "application/json");
+        auto res = vaultClient->Post("/api/ciphers", headers, encryptedData.dump(), "application/json");
 
         if (!res) {
             logger->error("newItem request failed");
@@ -342,7 +332,7 @@ namespace ClientWarden {
 
         std::string data = encryptedData.dump();
 
-        auto res = vaultClient.Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, data, "application/json");
+        auto res = vaultClient->Put("/api/ciphers/" + encryptedData["id"].get<std::string>(), headers, data, "application/json");
 
         if (!res) {
             logger->error("updateItem request failed");
@@ -364,7 +354,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Delete("/api/ciphers/" + uuid, headers);
+        auto res = vaultClient->Delete("/api/ciphers/" + uuid, headers);
 
         if (!res) {
             logger->error("deleteItem request failed");
@@ -386,7 +376,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Put("/api/ciphers/" + uuid + "/delete", headers, "", "application/json");
+        auto res = vaultClient->Put("/api/ciphers/" + uuid + "/delete", headers, "", "application/json");
 
         if (!res) {
             logger->error("softDeleteItem request failed");
@@ -408,7 +398,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Put("/api/ciphers/" + uuid + "/restore", headers, "", "application/json");
+        auto res = vaultClient->Put("/api/ciphers/" + uuid + "/restore", headers, "", "application/json");
 
         if (!res) {
             logger->error("restoreItem request failed");
@@ -423,8 +413,7 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::AddAttachment(std::string uuid, std::string& encryptedFileContents, 
-        std::string& encryptedFileName, std::function<void(float)> onProgress = nullptr, std::string accessString,
-        std::string& attKeyStr) {
+        std::string& encryptedFileName, std::string& attKeyStr, std::string accessString, std::function<void(float)> onProgress) {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "bitwarden-client-name", "web" },
@@ -438,7 +427,7 @@ namespace ClientWarden {
         requestData["key"] = attKeyStr;
         requestData["lastKnownRevisionDate"] = getBitwardenTime();
 
-        auto res = vaultClient.Post("/api/ciphers/" + uuid + "/attachment/v2", headers, requestData.dump(), "application/json");
+        auto res = vaultClient->Post("/api/ciphers/" + uuid + "/attachment/v2", headers, requestData.dump(), "application/json");
         if (!res) {
             logger->error("prepareAttachment request failed");
             return std::nullopt;
@@ -475,7 +464,7 @@ namespace ClientWarden {
             }
         };
 
-        auto uploadRes = vaultClient.Post("/api/ciphers/" + uuid + "/attachment/" + body["attachmentId"].get<std::string>(), headers, items, 
+        auto uploadRes = vaultClient->Post("/api/ciphers/" + uuid + "/attachment/" + body["attachmentId"].get<std::string>(), headers, items, 
             [&onProgress](uint64_t current, uint64_t total) -> bool {
                 if (onProgress && total > 0) {
                     onProgress(static_cast<float>(current) / static_cast<float>(total));
@@ -503,7 +492,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Delete("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
+        auto res = vaultClient->Delete("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
 
         if (!res) {
             logger->error("removeAttachment request failed");
@@ -518,7 +507,7 @@ namespace ClientWarden {
     }
 
     std::optional<std::pair<std::string, nlohmann::json>> VaultNetwork::DownloadAttachment(std::string uuid, std::string attachmentID, 
-        std::string accessString, std::function<void(float)> onProgress = nullptr) {
+        std::string accessString, std::function<void(float)> onProgress) {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
@@ -526,7 +515,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Get("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
+        auto res = vaultClient->Get("/api/ciphers/" + uuid + "/attachment/" + attachmentID, headers);
 
         if (!res) {
             logger->error("downloadAttachment request failed");
@@ -549,7 +538,7 @@ namespace ClientWarden {
             return std::nullopt;
         }
 
-        auto dlres = vaultClient.Get(body["url"], headers,
+        auto dlres = vaultClient->Get(body["url"], headers,
             [&onProgress](uint64_t current, uint64_t total) -> bool {
                 if (onProgress && total > 0) {
                     onProgress(static_cast<float>(current) / static_cast<float>(total));
@@ -566,7 +555,7 @@ namespace ClientWarden {
             return std::nullopt;
         }
 
-        const std::string& buf = dlres->body;
+        std::string buf = dlres->body;
         if (buf.size() < 1 + 16 + 32 + 1) {
             logger->error("Blob too short after decode: {}", buf.size());
             return std::nullopt;
@@ -576,7 +565,7 @@ namespace ClientWarden {
             return std::nullopt;
         }
 
-        return { std::move(buf), std::move(body) };
+        return std::make_pair(std::move(buf), std::move(body));
     }
 
     std::optional<nlohmann::json> VaultNetwork::CreateFolder(std::string encryptedFolderName, std::string accessString) {
@@ -587,7 +576,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Post("/api/folders", headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
+        auto res = vaultClient->Post("/api/folders", headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
 
         if (!res) {
             logger->error("createFolder request failed");
@@ -610,7 +599,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Put("/api/folders/" + folderUUID, headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
+        auto res = vaultClient->Put("/api/folders/" + folderUUID, headers, "{\"name\": \"" + encryptedFolderName + "\"}", "application/json");
 
         if (!res) {
             logger->error("renameFolder request failed");
@@ -632,7 +621,7 @@ namespace ClientWarden {
             { "bitwarden-client-version", "2026.3.0" },
         };
 
-        auto res = vaultClient.Delete("/api/folders/" + folderUUID, headers);
+        auto res = vaultClient->Delete("/api/folders/" + folderUUID, headers);
 
         if (!res) {
             logger->error("deleteFolder request failed");
@@ -654,7 +643,7 @@ namespace ClientWarden {
             uri = url.substr(7);
         }
 
-        auto res = iconClient.Get("/" + uri + "/icon.png");
+        auto res = iconClient->Get("/" + uri + "/icon.png");
 
         if (!res) {
             logger->error("downloadIcon request failed");

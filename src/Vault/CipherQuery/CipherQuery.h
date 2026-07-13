@@ -3,8 +3,14 @@
 #include <vector>
 #include <regex>
 #include <nlohmann/json.hpp>
+#include <botan/secmem.h>
+
+#include "Clientwarden.h"
+#include "VaultUtils/VaultUtils.h"
 
 namespace ClientWarden {
+    class Vault;
+
     class CipherQuery {
     public:
         CipherQuery(Vault& vault);
@@ -26,6 +32,5 @@ namespace ClientWarden {
         bool init;
         std::vector<nlohmann::json> ciphers;
         Vault& localVault;
-        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
     };
 }

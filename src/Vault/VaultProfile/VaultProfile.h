@@ -1,9 +1,8 @@
 #pragma once
 #include <string>
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
+
+#include "Clientwarden.h"
 
 namespace ClientWarden {
     class VaultProfile {
@@ -16,6 +15,5 @@ namespace ClientWarden {
 
     private:
         std::shared_ptr<nlohmann::json> vaultData;
-        inline static std::shared_ptr<spdlog::logger> logger;
     };
 }

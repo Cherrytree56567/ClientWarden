@@ -2,9 +2,6 @@
 
 namespace ClientWarden {
     PasswordGenerator::PasswordGenerator() : storage("") {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::PasswordGenerator");
-        }
         std::string file = storage.read("clientgen.txt");
 
         std::stringstream ss(file);
@@ -40,7 +37,7 @@ namespace ClientWarden {
 
         password.resize(Characters);
 
-        std::vector<uint8_t> randomBuf(Characters);
+        Botan::secure_vector<uint8_t> randomBuf(Characters);
         if (RAND_bytes(randomBuf.data(), Characters) != 1) {
             logger->error("RAND_bytes failed");
             return *this;
@@ -49,8 +46,8 @@ namespace ClientWarden {
         for (int i = 0; i < Characters; ++i) {
             password[i] = chars[randomBuf[i] % chars.size()][0];
         }
-
-        OPENSSL_cleanse(randomBuf.data(), randomBuf.size());
+        
+        Botan::secure_scrub_memory(randomBuf.data(), randomBuf.size());
         return *this;
     }
 
@@ -79,7 +76,7 @@ namespace ClientWarden {
         if (!init) return *this;
         pin.resize(Characters);
 
-        std::vector<uint8_t> randomBuf(Characters);
+        Botan::secure_vector<uint8_t> randomBuf(Characters);
         if (RAND_bytes(randomBuf.data(), Characters) != 1) {
             logger->error("RAND_bytes failed");
             return *this;
@@ -89,7 +86,7 @@ namespace ClientWarden {
             pin[i] = '0' + (randomBuf[i] % 10);
         }
 
-        OPENSSL_cleanse(randomBuf.data(), randomBuf.size());
+        Botan::secure_scrub_memory(randomBuf.data(), randomBuf.size());
         return *this;
     }
 }

@@ -3,6 +3,8 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
+#include "Clientwarden.h"
+
 namespace ClientWarden {
     class Vault;
 
@@ -25,6 +27,5 @@ namespace ClientWarden {
         bool init;
         nlohmann::json data;
         Vault& localVault;
-        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
     };
 }

@@ -4,6 +4,8 @@
 #include <nlohmann/json.hpp>
 #include "../GenericItem/GenericItemImpl.h"
 
+#include "Clientwarden.h"
+
 namespace ClientWarden {
     class CardItem : public GenericItemImpl<CardItem> {
     public:
@@ -30,7 +32,5 @@ namespace ClientWarden {
         CardItem* GetNumber(std::string& number);
 
         CardItem* GetType(CipherType& val);
-    private:
-        inline static std::shared_ptr<spdlog::logger> l_logger = nullptr;
     };
 }

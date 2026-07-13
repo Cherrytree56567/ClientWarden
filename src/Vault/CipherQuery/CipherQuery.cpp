@@ -1,11 +1,9 @@
 #include "CipherQuery.h"
+#include "Vault.h"
 
 namespace ClientWarden {
     CipherQuery::CipherQuery(Vault& vault) : localVault(vault) {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::Vault::CipherQuery");
-        }
-        for (auto& cip : localVault.vaultData["ciphers"]) {
+        for (auto& cip : (*localVault.session.vaultData)["ciphers"]) {
             ciphers.push_back(cip);
         }
     }
@@ -170,18 +168,18 @@ namespace ClientWarden {
              * Secret Data
             */
 
-            std::vector<uint8_t> itemEncKey;
-            std::vector<uint8_t> itemMacKey;
+            Botan::secure_vector<uint8_t> itemEncKey;
+            Botan::secure_vector<uint8_t> itemMacKey;
             if (!(*it)["key"].is_string()) {
-                itemEncKey = localVault.encKey;
-                itemMacKey = localVault.macKey;
+                itemEncKey = *localVault.session.encKey;
+                itemMacKey = *localVault.session.macKey;
             } else {
-                auto [itemEnc, itemMac] = localVault.getKeysFromCipher((*it)["key"].get<std::string>());
+                auto [itemEnc, itemMac] = localVault.crypto.getEncMacKey((*it)["key"].get<std::string>());
                 itemEncKey = std::move(itemEnc);
                 itemMacKey = std::move(itemMac);
             }
 
-            std::string name = localVault.Decrypt((*it)["name"].get<std::string>(), itemEncKey, itemMacKey);
+            std::string name = localVault.crypto.DecryptAsStr((*it)["name"].get<std::string>(), itemEncKey, itemMacKey);
             std::regex pattern(regex);
 
             if (!std::regex_search(name, pattern)) {

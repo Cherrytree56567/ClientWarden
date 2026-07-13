@@ -6,7 +6,7 @@ namespace ClientWarden {
      * load session data.
      * TODO: Add logger stuff
     */
-    Vault::Vault() : network(session.authData) {
+    Vault::Vault() : profile(session.vaultData), crypto(session.encKey, session.macKey, session.internalKey) {
         if (!logger) {
             spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
 
@@ -115,7 +115,7 @@ namespace ClientWarden {
                 std::time_t now = std::time(nullptr);
 
                 if (now >= expiry) {
-                    std::optional<nlohmann::json> refreshBody = network.refreshToken();
+                    std::optional<nlohmann::json> refreshBody = network.refreshToken((*session.authData)["refreshToken"].get<std::string>());
 
                     if (!refreshBody.has_value()) {
                         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -159,9 +159,9 @@ namespace ClientWarden {
         if (storage.exists("settings.json")) {
             session.settingsData = std::make_shared<nlohmann::json>(nlohmann::json::parse(storage.read("settings.json")));
         } else {
-            (*settingsData)["clipboardClear"] = 30;
+            (*session.settingsData)["clipboardClear"] = 30;
 
-            storage.write("settings.json", settingsData->dump(2));
+            storage.write("settings.json", session.settingsData->dump(2));
         }
     }
 
@@ -184,11 +184,11 @@ namespace ClientWarden {
     }
 
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
-        (*authData)["vaultURL"] = vaultUri;
-        (*authData)["mainURL"] = mainUri;
-        (*authData)["apiURL"] = apiUri;
-        (*authData)["iconURL"] = iconUri;
-        (*authData)["wssURL"] = wssUri;
+        (*session.authData)["vaultURL"] = vaultUri;
+        (*session.authData)["mainURL"] = mainUri;
+        (*session.authData)["apiURL"] = apiUri;
+        (*session.authData)["iconURL"] = iconUri;
+        (*session.authData)["wssURL"] = wssUri;
     }
 
     /*
@@ -196,18 +196,19 @@ namespace ClientWarden {
      * as a salt, we must lowercase the email using boost. Then
      * we can run the preLogin to get our KDF Iterations and salt.
     */
-    bool Vault::Login(std::string email, std::string password) {
+    bool Vault::Login(std::string& email, std::string& password) {
         boost::algorithm::to_lower(email);
         
-        std::optional<nlohmann::json> preLogin = network.prelogin(email);
+        std::optional<nlohmann::json> preLogin = network.preLogin(email);
         if (preLogin.has_value()) {
-            (*authData)["kdfIterations"] = preLogin.value()["kdfIterations"];
-            (*authData)["salt"] = email;
-            (*authData)["email"] = email;
+            (*session.authData)["kdfIterations"] = preLogin.value()["kdfIterations"];
+            (*session.authData)["salt"] = email;
+            (*session.authData)["email"] = email;
         }
 
-        session.internalKey = crypto.makeKey(password, (*authData)["salt"], (*authData)["kdfIterations"]);
-        session.masterPasswordHash = crypto.hashedPassword(password, internalKey);
+        session.internalKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(crypto.makeKey(password, 
+            (*session.authData)["salt"], (*session.authData)["kdfIterations"])));
+        session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
         /*
          * Erase the password safely
@@ -215,9 +216,9 @@ namespace ClientWarden {
         OPENSSL_cleanse(password.data(), password.size());
         password.clear();
 
-        std::optional<nlohmann::json> token = getToken(email, session.masterPasswordHash);
+        std::optional<nlohmann::json> token = network.getToken(email, session.masterPasswordHash);
         if (token.has_value()) {
-            if (!token.value().contains("access_token") || !token.value().contains("refresh_token")
+            if (!token.value().contains("access_token") || !token.value().contains("refresh_token") ||
                 !token.value().contains("expires_in")) {
                 return false;
             }
@@ -231,18 +232,23 @@ namespace ClientWarden {
                 }
                 return false;
             }
-            authData["accessString"] = token.value()["access_token"];
-            authData["refreshToken"] = token.value()["refresh_token"];
-            authData["expiresIn"] = token.value()["expires_in"];
+            (*session.authData)["accessString"] = token.value()["access_token"];
+            (*session.authData)["refreshToken"] = token.value()["refresh_token"];
+            (*session.authData)["expiresIn"] = token.value()["expires_in"];
 
-            std::time_t now = std::time(nullptr) + authData["expiresIn"].get<int>();
+            std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
             std::tm* localTime = std::localtime(&now);
 
             std::ostringstream oss;
             oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            authData["needsRefreshTime"] = oss.str();
+            (*session.authData)["needsRefreshTime"] = oss.str();
 
-            storage.write("data.json", authData.dump(2));
+            storage.write("data.json", session.authData->dump(2));
+
+            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
+        
+            session.encKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(encKey));
+            session.macKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(macKey));
 
             session.wssThread.start();
             session.refreshThread.start();
@@ -252,6 +258,34 @@ namespace ClientWarden {
 
             return true;
         } else {
+            return false;
+        }
+    }
+
+    bool Vault::Unlock(std::string& password) {
+        try {
+            session.internalKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(crypto.makeKey(password, 
+                (*session.authData)["salt"], (*session.authData)["kdfIterations"])));
+            session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
+
+            /*
+            * Erase the password safely
+            */
+            OPENSSL_cleanse(password.data(), password.size());
+            password.clear();
+
+            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
+
+            session.encKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(encKey));
+            session.macKey = std::make_shared<Botan::secure_vector<uint8_t>>(std::move(macKey));
+
+            session.wssThread.start();
+            session.refreshThread.start();
+            session.connectivityThread.start();
+
+            state = AuthState::Unlocked;
+            return true;
+        } catch (...) {
             return false;
         }
     }
@@ -304,26 +338,26 @@ namespace ClientWarden {
         */
         if (!storage.exists("vault.json")) {
             storage.write("vault.json", body.dump(2));
-            vaultData = body;
+            session.vaultData = std::make_shared<nlohmann::json>(body);
             return true;
         }
 
-        if (!vaultData.contains("deletedCiphers")) {
-            vaultData["deletedCiphers"] = nlohmann::json::array();
+        if (!session.vaultData->contains("deletedCiphers")) {
+            (*session.vaultData)["deletedCiphers"] = nlohmann::json::array();
         }
-        if (!vaultData.contains("deletedFolders")) {
-            vaultData["deletedFolders"] = nlohmann::json::array();
+        if (!session.vaultData->contains("deletedFolders")) {
+            (*session.vaultData)["deletedFolders"] = nlohmann::json::array();
         }
 
         std::vector<std::string> pendingFolderDeletes;
-        for (auto& id : vaultData["deletedFolders"]) {
+        for (auto& id : (*session.vaultData)["deletedFolders"]) {
             pendingFolderDeletes.push_back(id.get<std::string>());
         }
 
-        auto& deletedFolders = vaultData["deletedFolders"];
+        auto& deletedFolders = (*session.vaultData)["deletedFolders"];
         for (auto it = deletedFolders.begin(); it != deletedFolders.end();) {
-            auto hr = OnlineDeleteFolder(it->get<std::string>());
-            if (hr != NetworkState::Success) {
+            bool result = DeleteFolder(it->get<std::string>());
+            if (!result) {
                 logger->warn("Failed to Delete Online Folder");
                 return false;
             }
@@ -333,7 +367,7 @@ namespace ClientWarden {
         std::vector<std::string> localFolderIds;
         std::vector<std::string> removalFolderIds;
 
-        for (auto& folder : vaultData["folders"]) {
+        for (auto& folder : (*session.vaultData)["folders"]) {
             if (!folder.contains("id")) {
                 continue;
             }
@@ -363,8 +397,8 @@ namespace ClientWarden {
                     /*
                     * Update Online
                     */
-                    auto hr = OnlineRenameFolder(folder["id"], folder["name"]);
-                    if (!hr) {
+                    bool result = RenameFolder(folder["id"], folder["name"]);
+                    if (!result) {
                         logger->warn("Failed to Update Online Folder");
                         return false;
                     }
@@ -387,7 +421,7 @@ namespace ClientWarden {
             }
         }
 
-        auto& folders = vaultData["folders"];
+        auto& folders = (*session.vaultData)["folders"];
         for (auto it = folders.begin(); it != folders.end();) {
             if (!it->contains("id") || !(*it)["id"].is_string()) {
                 ++it;
@@ -410,20 +444,20 @@ namespace ClientWarden {
                     /*
                     * Add Locally
                     */
-                    vaultData["folders"].push_back(cipher);
+                    (*session.vaultData)["folders"].push_back(cipher);
                 }
             }
         }
 
         std::vector<std::string> pendingDeletes;
-        for (auto& id : vaultData["deletedCiphers"]) {
+        for (auto& id : (*session.vaultData)["deletedCiphers"]) {
             pendingDeletes.push_back(id.get<std::string>());
         }
 
-        auto& deletedCiphers = vaultData["deletedCiphers"];
+        auto& deletedCiphers = (*session.vaultData)["deletedCiphers"];
         for (auto it = deletedCiphers.begin(); it != deletedCiphers.end();) {
-            auto hr = OnlineDeleteItem(it->get<std::string>());
-            if (hr != NetworkState::Success) {
+            bool result = DeleteItem(it->get<std::string>());
+            if (!result) {
                 logger->warn("Failed to Delete Online Item");
                 return false;
             }
@@ -433,7 +467,7 @@ namespace ClientWarden {
         std::vector<std::string> localIds;
         std::vector<std::string> removalIds;
 
-        for (auto& cipher : vaultData["ciphers"]) {
+        for (auto& cipher : (*session.vaultData)["ciphers"]) {
             if (!cipher.contains("id")) {
                 continue;
             }
@@ -445,8 +479,8 @@ namespace ClientWarden {
                     /*
                     * Sync Online
                     */
-                    auto hr = OnlineNewItem(cipher);
-                    if (!hr) {
+                    std::optional<nlohmann::json> result = NewItem(cipher);
+                    if (!result.has_value()) {
                         logger->warn("Failed to Create Online Item");
                         return false;
                     }
@@ -507,7 +541,7 @@ namespace ClientWarden {
             }
         }
 
-        auto& ciphers = vaultData["ciphers"];
+        auto& ciphers = (*session.vaultData)["ciphers"];
         for (auto it = ciphers.begin(); it != ciphers.end();) {
             if (!it->contains("id") || !(*it)["id"].is_string()) {
                 ++it;
@@ -530,21 +564,21 @@ namespace ClientWarden {
                     /*
                     * Add Locally
                     */
-                    vaultData["ciphers"].push_back(cipher);
+                    (*session.vaultData)["ciphers"].push_back(cipher);
                 }
             }
         }
 
-        storage.write("vault.json", vaultData.dump(2));
+        storage.write("vault.json", session.vaultData->dump(2));
 
         return true;
     }
 
-    Botan::secure_vector<std::string> Vault::GetFolders() {
+    std::vector<std::string> Vault::GetFolders() {
         /*
          * Secret Data
         */
-        Botan::secure_vector<std::string> folders;
+        std::vector<std::string> folders;
 
         if (!session.vaultData->contains("folders") || !(*session.vaultData)["folders"].is_array()) {
             return folders;
@@ -557,13 +591,8 @@ namespace ClientWarden {
         return std::move(folders);
     }
 
-    bool Vault::NewItem(nlohmann::json encryptedData) {
-        std::optional<nlohmann::json> res = network.NewItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
-        if (res.has_value()) {
-            return true;
-        }
-
-        return false;
+    std::optional<nlohmann::json> Vault::NewItem(nlohmann::json encryptedData) {
+        return network.NewItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
     }
 
     bool Vault::UpdateItem(nlohmann::json encryptedData) {
@@ -576,21 +605,50 @@ namespace ClientWarden {
     }
 
     bool Vault::DeleteItem(std::string uuid) {
-        return network.DeleteItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+        return network.DeleteItem(uuid, (*session.authData)["accessString"].get<std::string>());
     }
 
     bool Vault::SoftDeleteItem(std::string uuid) {
-        return network.SoftDeleteItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+        return network.SoftDeleteItem(uuid, (*session.authData)["accessString"].get<std::string>());
     }
 
     bool Vault::RestoreItem(std::string uuid) {
-        return network.RestoreItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+        return network.RestoreItem(uuid, (*session.authData)["accessString"].get<std::string>());
     }
     
     std::optional<std::string> Vault::AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
-        std::function<void(float)> onProgress = nullptr, std::string attachmentKey) {
+        std::function<void(float)> onProgress) {
+        auto [attEncKey, attMacKey] = crypto.generateEncMacKeys();
+
+        Botan::secure_vector<uint8_t> attKey(attEncKey.begin(), attEncKey.end());
+        attKey.insert(attKey.end(), attMacKey.begin(), attMacKey.end());
+
+        Botan::secure_scrub_memory(attEncKey.data(), attEncKey.size());
+        Botan::secure_scrub_memory(attMacKey.data(), attMacKey.size());
+
+        Botan::secure_vector<uint8_t> cipEncKey = *session.encKey;
+        Botan::secure_vector<uint8_t> cipMacKey = *session.macKey;
+
+        for (auto& cipher : (*session.vaultData)["ciphers"]) {
+            if (cipher.contains("id") && cipher["id"] == uuid) {
+                if (!cipher["key"].is_null()) {
+                    auto [cipEnc, cipMac] = crypto.getEncMacKey(cipher["key"]);
+                    cipEncKey = cipEnc;
+                    cipMacKey = cipMac;
+                    Botan::secure_scrub_memory(cipEncKey.data(), cipEncKey.size());
+                    Botan::secure_scrub_memory(cipMacKey.data(), cipMacKey.size());
+                }
+                break;
+            }
+        }
+        
+        std::string attachmentKey = crypto.Encrypt(attKey, cipEncKey, cipMacKey);
+        Botan::secure_scrub_memory(attKey.data(), attKey.size());
+        Botan::secure_scrub_memory(cipEncKey.data(), cipEncKey.size());
+        Botan::secure_scrub_memory(cipMacKey.data(), cipMacKey.size());
+
         std::optional<nlohmann::json> res = network.AddAttachment(uuid, encryptedFileContents, encryptedFileName,
-            (*session.authData)["accessString"].get<std::string>(), onProgress, attachmentKey);
+            attachmentKey, (*session.authData)["accessString"].get<std::string>(), onProgress);
         if (res.has_value()) {
             if (!res.value().contains("attachmentId") || !res.value().contains("cipherResponse")) {
                 return std::nullopt;
@@ -599,7 +657,7 @@ namespace ClientWarden {
                 return std::nullopt;
             }
 
-            auto attachmentField = res["cipherResponse"]["attachments"];
+            auto attachmentField = res.value()["cipherResponse"]["attachments"];
 
             if (session.vaultData->contains("ciphers") && (*session.vaultData)["ciphers"].is_array()) {
                 for (auto& cipher : (*session.vaultData)["ciphers"]) {
@@ -619,8 +677,8 @@ namespace ClientWarden {
         return network.RestoreItem(uuid, (*session.authData)["accessString"].get<std::string>());
     }
 
-    bool Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath
-        Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress = nullptr) {
+    bool Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,
+        Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress) {
         std::optional<std::pair<std::string, nlohmann::json>> attachment = network.DownloadAttachment(uuid, attachmentID, 
             (*session.authData)["accessString"].get<std::string>(), onProgress);
         
@@ -639,7 +697,7 @@ namespace ClientWarden {
 
         Botan::secure_vector<uint8_t> vecBuf(attachment.value().first.begin(), attachment.value().first.end());
 
-        std::string decBody = DecryptRaw(vecBuf, decEnc, decMac);
+        std::string decBody = crypto.DecryptRaw(vecBuf, decEnc, decMac);
 
         attachment.value().first.clear();
         Botan::secure_scrub_memory(decEnc.data(), decEnc.size());
@@ -653,17 +711,8 @@ namespace ClientWarden {
         return true;
     }
 
-    std::optional<std::string> Vault::CreateFolder(std::string encryptedFolderName) {
-        std::optional<nlohmann::json> res = network.CreateFolder(encryptedFolderName, (*session.authData)["accessString"].get<std::string>());
-        if (!res.has_value()) {
-            return std::nullopt;
-        }
-
-        if (!res.value().contains("id") || !res.value()["id"].is_string()) {
-            return std::nullopt;
-        }
-
-        return res.value()["id"];
+    std::optional<nlohmann::json> Vault::CreateFolder(std::string encryptedFolderName) {
+        return network.CreateFolder(encryptedFolderName, (*session.authData)["accessString"].get<std::string>());
     }
 
     bool Vault::RenameFolder(std::string folderUUID, std::string encryptedFolderName) {
@@ -671,7 +720,34 @@ namespace ClientWarden {
     }
 
     bool Vault::DeleteFolder(std::string folderUUID) {
-        return network.RenameFolder(folderUUID, (*session.authData)["accessString"].get<std::string>());
+        return network.DeleteFolder(folderUUID, (*session.authData)["accessString"].get<std::string>());
+    }
+
+    std::optional<std::string> Vault::DownloadIcon(std::string url) {
+        Botan::secure_vector<uint8_t> urlVec(url.begin(), url.end());
+        std::string b64Url = b64Encode(urlVec)  + ".png";
+        std::string failFile = b64Url + ".failed";
+
+        if (network.getConnectivity() == VaultConnectivity::Offline) {
+            return std::nullopt;
+        }
+
+        if (storage.exists(failFile)) {
+            return std::nullopt;
+        }
+
+        if (!storage.exists(b64Url)) {
+            std::optional<std::vector<uint8_t>> result = network.DownloadIcon(url);
+            if (!result.has_value()) {
+                logger->error("Failed to download icon");
+                storage.write(failFile, std::vector<uint8_t>{});
+                return std::nullopt;
+            }
+            storage.write(b64Url, result.value());
+            return (storage.path / std::filesystem::path(b64Url)).string();
+        } else {
+            return (storage.path / std::filesystem::path(b64Url)).string();
+        }
     }
 
     std::shared_ptr<GenericItem> Vault::GetItem(std::string uuid) {

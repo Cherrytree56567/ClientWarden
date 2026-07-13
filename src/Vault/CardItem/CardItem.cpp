@@ -1,10 +1,8 @@
 #include "CardItem.h"
+#include "Vault.h"
 
 namespace ClientWarden {
     CardItem::CardItem(Vault& vault, std::string uuid) : GenericItemImpl<CardItem>(vault, uuid) {
-        if (!l_logger) {
-            l_logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
-        }
         init = false;
         if (data.contains("type") || data["type"].is_number()) {
             if (data["type"].get<int>() == 3) {
@@ -17,10 +15,7 @@ namespace ClientWarden {
     }
 
     CardItem::CardItem(Vault& vault) : GenericItemImpl<CardItem>(vault) {
-        if (!l_logger) {
-            l_logger = spdlog::stdout_color_mt("ClientWarden::Vault::CardItem");
-        }
-        auto keys = localVault.generateEncMacKeys();
+        auto keys = localVault.crypto.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;
 
@@ -43,12 +38,12 @@ namespace ClientWarden {
         data["folderId"] = nullptr;
         data["id"] = uniqueGuid();
         data["identity"] = nullptr;
-        std::vector<uint8_t> mainKey(itemEncKey.begin(), itemEncKey.end());
+        Botan::secure_vector<uint8_t> mainKey(itemEncKey.begin(), itemEncKey.end());
         mainKey.insert(mainKey.end(), itemMacKey.begin(), itemMacKey.end());
-        data["key"] = localVault.InternalEncrypt(mainKey, localVault.encKey, localVault.macKey);
-        OPENSSL_cleanse(mainKey.data(), mainKey.size());
+        data["key"] = localVault.crypto.Encrypt(mainKey, *localVault.session.encKey, *localVault.session.macKey);
+        Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
         data["login"] = nullptr;
-        data["name"] = localVault.Encrypt("", itemEncKey, itemMacKey);
+        data["name"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["notes"] = nullptr;
         data["object"] = "cipherDetails";
         data["organizationId"] = nullptr;
@@ -70,7 +65,7 @@ namespace ClientWarden {
         fieldData["ExpMonth"] = nullptr;
         fieldData["ExpYear"] = nullptr;
         fieldData["Code"] = nullptr;
-        fieldData["Name"] = localVault.Encrypt("", itemEncKey, itemMacKey);
+        fieldData["Name"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         fieldData["Notes"] = nullptr;
         fieldData["Fields"] = nlohmann::json::array();
 
@@ -80,8 +75,8 @@ namespace ClientWarden {
     CardItem* CardItem::SetBrand(std::string& brand) {
         if (!init) return this;
         if (!data.contains("card") || !data["card"].is_object()) return this;
-        fieldData["Brand"] = localVault.Encrypt(brand, itemEncKey, itemMacKey);
-        data["card"]["brand"] = localVault.Encrypt(brand, itemEncKey, itemMacKey);
+        fieldData["Brand"] = localVault.crypto.Encrypt(brand, itemEncKey, itemMacKey);
+        data["card"]["brand"] = localVault.crypto.Encrypt(brand, itemEncKey, itemMacKey);
         OPENSSL_cleanse(brand.data(), brand.size());
         brand.clear();
         return this;
@@ -90,8 +85,8 @@ namespace ClientWarden {
     CardItem* CardItem::SetCardholderName(std::string& cardholderName) {
         if (!init) return this;
         if (!data.contains("card") || !data["card"].is_object()) return this;
-        fieldData["CardholderName"] = localVault.Encrypt(cardholderName, itemEncKey, itemMacKey);
-        data["card"]["cardholderName"] = localVault.Encrypt(cardholderName, itemEncKey, itemMacKey);
+        fieldData["CardholderName"] = localVault.crypto.Encrypt(cardholderName, itemEncKey, itemMacKey);
+        data["card"]["cardholderName"] = localVault.crypto.Encrypt(cardholderName, itemEncKey, itemMacKey);
         OPENSSL_cleanse(cardholderName.data(), cardholderName.size());
         cardholderName.clear();
         return this;
@@ -100,8 +95,8 @@ namespace ClientWarden {
     CardItem* CardItem::SetCode(std::string& code) {
         if (!init) return this;
         if (!data.contains("card") || !data["card"].is_object()) return this;
-        fieldData["Code"] = localVault.Encrypt(code, itemEncKey, itemMacKey);
-        data["card"]["code"] = localVault.Encrypt(code, itemEncKey, itemMacKey);
+        fieldData["Code"] = localVault.crypto.Encrypt(code, itemEncKey, itemMacKey);
+        data["card"]["code"] = localVault.crypto.Encrypt(code, itemEncKey, itemMacKey);
         OPENSSL_cleanse(code.data(), code.size());
         code.clear();
         return this;
@@ -110,8 +105,8 @@ namespace ClientWarden {
     CardItem* CardItem::SetExpMonth(std::string& expMonth) {
         if (!init) return this;
         if (!data.contains("card") || !data["card"].is_object()) return this;
-        fieldData["ExpMonth"] = localVault.Encrypt(expMonth, itemEncKey, itemMacKey);
-        data["card"]["expMonth"] = localVault.Encrypt(expMonth, itemEncKey, itemMacKey);
+        fieldData["ExpMonth"] = localVault.crypto.Encrypt(expMonth, itemEncKey, itemMacKey);
+        data["card"]["expMonth"] = localVault.crypto.Encrypt(expMonth, itemEncKey, itemMacKey);
         OPENSSL_cleanse(expMonth.data(), expMonth.size());
         expMonth.clear();
         return this;
@@ -120,8 +115,8 @@ namespace ClientWarden {
     CardItem* CardItem::SetExpYear(std::string& expYear) {
         if (!init) return this;
         if (!data.contains("card") || !data["card"].is_object()) return this;
-        fieldData["ExpYear"] = localVault.Encrypt(expYear, itemEncKey, itemMacKey);
-        data["card"]["expYear"] = localVault.Encrypt(expYear, itemEncKey, itemMacKey);
+        fieldData["ExpYear"] = localVault.crypto.Encrypt(expYear, itemEncKey, itemMacKey);
+        data["card"]["expYear"] = localVault.crypto.Encrypt(expYear, itemEncKey, itemMacKey);
         OPENSSL_cleanse(expYear.data(), expYear.size());
         expYear.clear();
         return this;
@@ -130,8 +125,8 @@ namespace ClientWarden {
     CardItem* CardItem::SetNumber(std::string& number) {
         if (!init) return this;
         if (!data.contains("card") || !data["card"].is_object()) return this;
-        fieldData["Number"] = localVault.Encrypt(number, itemEncKey, itemMacKey);
-        data["card"]["number"] = localVault.Encrypt(number, itemEncKey, itemMacKey);
+        fieldData["Number"] = localVault.crypto.Encrypt(number, itemEncKey, itemMacKey);
+        data["card"]["number"] = localVault.crypto.Encrypt(number, itemEncKey, itemMacKey);
         OPENSSL_cleanse(number.data(), number.size());
         number.clear();
         return this;
@@ -142,7 +137,7 @@ namespace ClientWarden {
         if (!data["card"].is_object()) return this;
         if (!data["card"].contains("brand")) return this;
         if (!data["card"]["brand"].is_string()) return this;
-        brand = localVault.Decrypt(data["card"]["brand"], itemEncKey, itemMacKey);
+        brand = localVault.crypto.DecryptAsStr(data["card"]["brand"], itemEncKey, itemMacKey);
         return this;
     }
 
@@ -151,7 +146,7 @@ namespace ClientWarden {
         if (!data["card"].is_object()) return this;
         if (!data["card"].contains("cardholderName")) return this;
         if (!data["card"]["cardholderName"].is_string()) return this;
-        cardholderName = localVault.Decrypt(data["card"]["cardholderName"], itemEncKey, itemMacKey);
+        cardholderName = localVault.crypto.DecryptAsStr(data["card"]["cardholderName"], itemEncKey, itemMacKey);
         return this;
     }
 
@@ -160,7 +155,7 @@ namespace ClientWarden {
         if (!data["card"].is_object()) return this;
         if (!data["card"].contains("code")) return this;
         if (!data["card"]["code"].is_string()) return this;
-        code = localVault.Decrypt(data["card"]["code"], itemEncKey, itemMacKey);
+        code = localVault.crypto.DecryptAsStr(data["card"]["code"], itemEncKey, itemMacKey);
         return this;
     }
 
@@ -169,7 +164,7 @@ namespace ClientWarden {
         if (!data["card"].is_object()) return this;
         if (!data["card"].contains("expMonth")) return this;
         if (!data["card"]["expMonth"].is_string()) return this;
-        expMonth = localVault.Decrypt(data["card"]["expMonth"], itemEncKey, itemMacKey);
+        expMonth = localVault.crypto.DecryptAsStr(data["card"]["expMonth"], itemEncKey, itemMacKey);
         return this;
     }
 
@@ -178,7 +173,7 @@ namespace ClientWarden {
         if (!data["card"].is_object()) return this;
         if (!data["card"].contains("expYear")) return this;
         if (!data["card"]["expYear"].is_string()) return this;
-        expYear = localVault.Decrypt(data["card"]["expYear"], itemEncKey, itemMacKey);
+        expYear = localVault.crypto.DecryptAsStr(data["card"]["expYear"], itemEncKey, itemMacKey);
         return this;
     }
 
@@ -187,12 +182,12 @@ namespace ClientWarden {
         if (!data["card"].is_object()) return this;
         if (!data["card"].contains("number")) return this;
         if (!data["card"]["number"].is_string()) return this;
-        number = localVault.Decrypt(data["card"]["number"], itemEncKey, itemMacKey);
+        number = localVault.crypto.DecryptAsStr(data["card"]["number"], itemEncKey, itemMacKey);
         return this;
     }
 
     CardItem* CardItem::Duplicate(std::string& id) {
-        auto keys = localVault.generateEncMacKeys();
+        auto keys = localVault.crypto.generateEncMacKeys();
         auto newitemEncKey = keys.first;
         auto newitemMacKey = keys.second;
 
@@ -213,43 +208,43 @@ namespace ClientWarden {
         int oldReprompt = 0;
 
         if (data.contains("name") && data["name"].is_string()) {
-            oldName = localVault.Decrypt(data["name"], itemEncKey, itemMacKey);
+            oldName = localVault.crypto.DecryptAsStr(data["name"], itemEncKey, itemMacKey);
         }
 
         if (data.contains("card") && data["card"].is_object()) {
             if (data["card"].contains("brand") && data["card"]["brand"].is_string()) {
-                oldBrand = localVault.Decrypt(data["card"]["brand"], itemEncKey, itemMacKey);
+                oldBrand = localVault.crypto.DecryptAsStr(data["card"]["brand"], itemEncKey, itemMacKey);
             }
             if (data["card"].contains("cardholderName") && data["card"]["cardholderName"].is_string()) {
-                oldCardholderName = localVault.Decrypt(data["card"]["cardholderName"], itemEncKey, itemMacKey);
+                oldCardholderName = localVault.crypto.DecryptAsStr(data["card"]["cardholderName"], itemEncKey, itemMacKey);
             }
             if (data["card"].contains("code") && data["card"]["code"].is_string()) {
-                oldCode = localVault.Decrypt(data["card"]["code"], itemEncKey, itemMacKey);
+                oldCode = localVault.crypto.DecryptAsStr(data["card"]["code"], itemEncKey, itemMacKey);
             }
             if (data["card"].contains("expMonth") && data["card"]["expMonth"].is_string()) {
-                oldExpMonth = localVault.Decrypt(data["card"]["expMonth"], itemEncKey, itemMacKey);
+                oldExpMonth = localVault.crypto.DecryptAsStr(data["card"]["expMonth"], itemEncKey, itemMacKey);
             }
             if (data["card"].contains("expYear") && data["card"]["expYear"].is_string()) {
-                oldExpYear = localVault.Decrypt(data["card"]["expYear"], itemEncKey, itemMacKey);
+                oldExpYear = localVault.crypto.DecryptAsStr(data["card"]["expYear"], itemEncKey, itemMacKey);
             }
             if (data["card"].contains("number") && data["card"]["number"].is_string()) {
-                oldNumber = localVault.Decrypt(data["card"]["number"], itemEncKey, itemMacKey);
+                oldNumber = localVault.crypto.DecryptAsStr(data["card"]["number"], itemEncKey, itemMacKey);
             }
         }
 
         if (data.contains("notes") && data["notes"].is_string()) {
-            oldNotes = localVault.Decrypt(data["notes"], itemEncKey, itemMacKey);
+            oldNotes = localVault.crypto.DecryptAsStr(data["notes"], itemEncKey, itemMacKey);
         }
 
         if (data.contains("fields") && data["fields"].is_array()) {
             for (auto& field : data["fields"]) {
                 CustomFieldType type = static_cast<CustomFieldType>(field["type"].get<int>());
-                std::string fname = localVault.Decrypt(field["name"], itemEncKey, itemMacKey);
+                std::string fname = localVault.crypto.DecryptAsStr(field["name"], itemEncKey, itemMacKey);
                 std::string fval;
                 if (type == CustomFieldType::Linked) {
                     fval = field["linkedId"].is_null() ? "" : std::to_string(field["linkedId"].get<int>());
                 } else {
-                    fval = field["value"].is_null() ? "" : localVault.Decrypt(field["value"], itemEncKey, itemMacKey);
+                    fval = field["value"].is_null() ? "" : localVault.crypto.DecryptAsStr(field["value"], itemEncKey, itemMacKey);
                 }
                 oldFields.emplace_back(type, std::move(fname), std::move(fval));
             }
@@ -269,12 +264,12 @@ namespace ClientWarden {
         newdata["archivedDate"] = nullptr;
         newdata["attachments"] = nullptr;
         newdata["card"] = nlohmann::json::object();
-        newdata["card"]["brand"] = localVault.Encrypt(oldBrand, newitemEncKey, newitemMacKey);
-        newdata["card"]["cardholderName"] = localVault.Encrypt(oldCardholderName, newitemEncKey, newitemMacKey);
-        newdata["card"]["code"] = localVault.Encrypt(oldCode, newitemEncKey, newitemMacKey);
-        newdata["card"]["expMonth"] = localVault.Encrypt(oldExpMonth, newitemEncKey, newitemMacKey);
-        newdata["card"]["expYear"] = localVault.Encrypt(oldExpYear, newitemEncKey, newitemMacKey);
-        newdata["card"]["number"] = localVault.Encrypt(oldNumber, newitemEncKey, newitemMacKey);
+        newdata["card"]["brand"] = localVault.crypto.Encrypt(oldBrand, newitemEncKey, newitemMacKey);
+        newdata["card"]["cardholderName"] = localVault.crypto.Encrypt(oldCardholderName, newitemEncKey, newitemMacKey);
+        newdata["card"]["code"] = localVault.crypto.Encrypt(oldCode, newitemEncKey, newitemMacKey);
+        newdata["card"]["expMonth"] = localVault.crypto.Encrypt(oldExpMonth, newitemEncKey, newitemMacKey);
+        newdata["card"]["expYear"] = localVault.crypto.Encrypt(oldExpYear, newitemEncKey, newitemMacKey);
+        newdata["card"]["number"] = localVault.crypto.Encrypt(oldNumber, newitemEncKey, newitemMacKey);
         newdata["collectionIds"] = nlohmann::json::array();
         newdata["creationDate"] = getBitwardenTime();
         newdata["data"] = "";
@@ -285,13 +280,13 @@ namespace ClientWarden {
         newdata["folderId"] = data["folderId"];
         newdata["id"] = uniqueGuid();
         newdata["identity"] = nullptr;
-        std::vector<uint8_t> mainKey(newitemEncKey.begin(), newitemEncKey.end());
+        Botan::secure_vector<uint8_t> mainKey(newitemEncKey.begin(), newitemEncKey.end());
         mainKey.insert(mainKey.end(), newitemMacKey.begin(), newitemMacKey.end());
-        newdata["key"] = localVault.InternalEncrypt(mainKey, localVault.encKey, localVault.macKey);
-        OPENSSL_cleanse(mainKey.data(), mainKey.size());
+        newdata["key"] = localVault.InternalEncrypt(mainKey, *localVault.session.encKey, *localVault.sesson.macKey);
+        Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
         newdata["login"] = nullptr;
-        newdata["name"] = localVault.Encrypt(oldName, newitemEncKey, newitemMacKey);
-        newdata["notes"] = localVault.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
+        newdata["name"] = localVault.crypto.Encrypt(oldName, newitemEncKey, newitemMacKey);
+        newdata["notes"] = localVault.crypto.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
         newdata["object"] = "cipherDetails";
         newdata["organizationId"] = nullptr;
         newdata["organizationUseTotp"] = false;
@@ -306,14 +301,14 @@ namespace ClientWarden {
         newdata["type"] = 3;
         newdata["viewPassword"] = true;
 
-        newfieldData["CardholderName"] = localVault.Encrypt(oldCardholderName, newitemEncKey, newitemMacKey);
-        newfieldData["Brand"] = localVault.Encrypt(oldBrand, newitemEncKey, newitemMacKey);
-        newfieldData["Number"] = localVault.Encrypt(oldNumber, newitemEncKey, newitemMacKey);
-        newfieldData["ExpMonth"] = localVault.Encrypt(oldExpMonth, newitemEncKey, newitemMacKey);
-        newfieldData["ExpYear"] = localVault.Encrypt(oldExpYear, newitemEncKey, newitemMacKey);
-        newfieldData["Code"] = localVault.Encrypt(oldCode, newitemEncKey, newitemMacKey);
-        newfieldData["Name"] = localVault.Encrypt(oldName, newitemEncKey, newitemMacKey);
-        newfieldData["Notes"] = localVault.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
+        newfieldData["CardholderName"] = localVault.crypto.Encrypt(oldCardholderName, newitemEncKey, newitemMacKey);
+        newfieldData["Brand"] = localVault.crypto.Encrypt(oldBrand, newitemEncKey, newitemMacKey);
+        newfieldData["Number"] = localVault.crypto.Encrypt(oldNumber, newitemEncKey, newitemMacKey);
+        newfieldData["ExpMonth"] = localVault.crypto.Encrypt(oldExpMonth, newitemEncKey, newitemMacKey);
+        newfieldData["ExpYear"] = localVault.crypto.Encrypt(oldExpYear, newitemEncKey, newitemMacKey);
+        newfieldData["Code"] = localVault.crypto.Encrypt(oldCode, newitemEncKey, newitemMacKey);
+        newfieldData["Name"] = localVault.crypto.Encrypt(oldName, newitemEncKey, newitemMacKey);
+        newfieldData["Notes"] = localVault.crypto.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
         newfieldData["Fields"] = nlohmann::json::array();
 
         for (auto& [type, name, value] : oldFields) {
@@ -321,38 +316,38 @@ namespace ClientWarden {
             nlohmann::json dataFieldData;
             if (type == CustomFieldType::Text) {
                 addFieldData["linkedId"] = nullptr;
-                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 addFieldData["type"] = 0;
-                addFieldData["value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+                addFieldData["value"] = localVault.crypto.Encrypt(value, newitemEncKey, newitemMacKey);
 
-                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 dataFieldData["Type"] = 0;
-                dataFieldData["Value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+                dataFieldData["Value"] = localVault.crypto.Encrypt(value, newitemEncKey, newitemMacKey);
             } else if (type == CustomFieldType::Hidden) {
                 addFieldData["linkedId"] = nullptr;
-                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 addFieldData["type"] = 1;
-                addFieldData["value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+                addFieldData["value"] = localVault.crypto.Encrypt(value, newitemEncKey, newitemMacKey);
 
-                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 dataFieldData["Type"] = 1;
-                dataFieldData["Value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+                dataFieldData["Value"] = localVault.crypto.Encrypt(value, newitemEncKey, newitemMacKey);
             } else if (type == CustomFieldType::Checkbox) {
                 addFieldData["linkedId"] = nullptr;
-                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 addFieldData["type"] = 2;
-                addFieldData["value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey); // "true" or "false"
+                addFieldData["value"] = localVault.crypto.Encrypt(value, newitemEncKey, newitemMacKey); // "true" or "false"
 
-                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 dataFieldData["Type"] = 2;
-                dataFieldData["Value"] = localVault.Encrypt(value, newitemEncKey, newitemMacKey);
+                dataFieldData["Value"] = localVault.crypto.Encrypt(value, newitemEncKey, newitemMacKey);
             } else if (type == CustomFieldType::Linked) {
                 addFieldData["linkedId"] = std::stoi(value);
-                addFieldData["name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                addFieldData["name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 addFieldData["type"] = 3;
                 addFieldData["value"] = nullptr;
 
-                dataFieldData["Name"] = localVault.Encrypt(name, newitemEncKey, newitemMacKey);
+                dataFieldData["Name"] = localVault.crypto.Encrypt(name, newitemEncKey, newitemMacKey);
                 dataFieldData["Type"] = 3;
                 dataFieldData["LinkedId"] = std::stoi(value);
             }
@@ -392,17 +387,17 @@ namespace ClientWarden {
 
         newdata["revisionDate"] = getBitwardenTime();
         newdata["data"] = (std::string)newfieldData.dump();
-        auto hr = localVault.OnlineNewItem(newdata);
-        if (!hr) {
-            l_logger->warn("Failed to add New Item Online");
+        std::optional<nlohmann::json> result = localVault.NewItem(newdata);
+        if (!result.has_value()) {
+            logger->warn("Failed to add New Item Online");
             newdata["createdOffline"] = true;
         } else {
-            if (hr->contains("id") && (*hr)["id"].is_string()) {
-                newdata["id"] = (*hr)["id"];
+            if (result.value().contains("id") && result.value()["id"].is_string()) {
+                newdata["id"] = result.value()["id"];
             }
         }
-        localVault.vaultData["ciphers"].push_back(newdata);
-        localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+        (*localVault.session.vaultData)["ciphers"].push_back(newdata);
+        localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
 
         id = newdata["id"];
 

@@ -9,6 +9,8 @@
 #include <vector>
 #include "../GenericItem/GenericItemImpl.h"
 
+#include "Clientwarden.h"
+
 namespace ClientWarden {
     struct TOTPCode {
         std::string code;
@@ -45,8 +47,6 @@ namespace ClientWarden {
         LoginItem* GetPasskeyCurve(std::time_t& value);
         LoginItem* GetPasskeyCredId(std::time_t& value);
         LoginItem* GetPasskeyCounter(std::time_t& value);*/
-        LoginItem* GetType(CipherType& val) override;
-    private:
-        inline static std::shared_ptr<spdlog::logger> l_logger = nullptr;
+        LoginItem* GetType(CipherType& val);
     };
 }

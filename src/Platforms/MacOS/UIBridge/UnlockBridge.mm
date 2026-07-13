@@ -25,7 +25,7 @@
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-            std::string name = v_inst.GetName();
+            std::string name = v_inst.profile.profileName();
             NSString *n_name = [NSString stringWithUTF8String: name.c_str()];
 
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -65,10 +65,6 @@
                 });
                 return false;
             }
-
-            v_inst.startRefreshThread();
-            v_inst.startWSSLoop();
-            v_inst.Sync();
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 ClientwardenWindow.instance.state = WindowStateVault;

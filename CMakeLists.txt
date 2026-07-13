@@ -43,21 +43,22 @@ if (WIN32)
 endif()
 
 set(FILES
-    src/Vault/Vault.cpp 
-    src/Vault/VaultOnline.cpp 
-    src/Vault/VaultLogin.cpp 
-    src/Vault/VaultCrypto.cpp 
-    src/Vault/VaultRefresh.cpp 
-    src/Vault/VaultUtils/VaultUtils.cpp 
-    src/Vault/LoginItem/LoginItem.cpp 
-    src/Vault/GenericItem/GenericItem.cpp 
-    src/Vault/CardItem/CardItem.cpp 
-    src/Vault/NoteItem/NoteItem.cpp 
-    src/Vault/IdentityItem/IdentityItem.cpp 
-    src/Vault/Folder/Folder.cpp 
-    src/Vault/SSHKeyItem/SSHKeyItem.cpp 
-    src/Vault/CipherQuery/CipherQuery.cpp 
+    src/Vault/CardItem/CardItem.cpp
+    src/Vault/CipherQuery/CipherQuery.cpp
+    src/Vault/CWThread/CWThread.cpp
+    src/Vault/Folder/Folder.cpp
+    src/Vault/GenericItem/GenericItem.cpp
+    src/Vault/IdentityItem/IdentityItem.cpp
+    src/Vault/LoginItem/LoginItem.cpp
+    src/Vault/NoteItem/NoteItem.cpp
     src/Vault/PasswordGenerator/PasswordGenerator.cpp
+    src/Vault/SSHKeyItem/SSHKeyItem.cpp
+    src/Vault/VaultCrypto/VaultCrypto.cpp
+    src/Vault/VaultNetwork/VaultNetwork.cpp
+    src/Vault/VaultProfile/VaultProfile.cpp
+    src/Vault/VaultSession/VaultSession.cpp
+    src/Vault/VaultUtils/VaultUtils.cpp
+    src/Vault/Vault.cpp
 )
 
 if (WIN32)

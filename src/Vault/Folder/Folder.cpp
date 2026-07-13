@@ -1,13 +1,11 @@
 #include "Folder.h"
+#include "Vault/Vault.h"
 
 namespace ClientWarden {
     Folder::Folder(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");
-        }
         init = false;
         data["id"] = uuid;
-        for (auto& folder : localVault.vaultData["folders"]) {
+        for (auto& folder : (*localVault.session.vaultData)["folders"]) {
             if (!folder.contains("id")) {
                 continue;
             }
@@ -22,11 +20,8 @@ namespace ClientWarden {
     }
 
     Folder::Folder(Vault& vault) : localVault(vault), isBeingCreated(true) {
-        if (!logger) {
-            logger = spdlog::stdout_color_mt("ClientWarden::Vault::Folder");
-        }
         data["id"] = uniqueGuid();
-        data["name"] = localVault.Encrypt("", localVault.encKey, localVault.macKey);
+        data["name"] = localVault.crypto.Encrypt("", *localVault.session.encKey, *localVault.session.macKey);
         data["object"] = "folder";
         data["revisionDate"] = nullptr;
 
@@ -41,7 +36,7 @@ namespace ClientWarden {
 
     Folder& Folder::SetName(std::string& name) {
         if (!init) return *this;
-        data["name"] = localVault.Encrypt(name, localVault.encKey, localVault.macKey);
+        data["name"] = localVault.crypto.Encrypt(name, *localVault.session.encKey, *localVault.session.macKey);
         OPENSSL_cleanse(name.data(), name.size());
         name.clear();
         return *this;
@@ -50,23 +45,24 @@ namespace ClientWarden {
     std::string Folder::Commit() {
         if (!init) return "";
 
-        std::string idret;
-
         data["revisionDate"] = getBitwardenTime();
         if (isBeingCreated) {
-            auto hr = localVault.OnlineCreateFolder(data["name"]);
-            if (!hr) {
+            std::optional<nlohmann::json> o_result = localVault.CreateFolder(data["name"]);
+            if (!o_result.has_value()) {
                 logger->warn("Failed to add New Folder Online");
-                localVault.storage.write("vault.json", localVault.vaultData.dump(2));
+                localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
                 return "";
             }
-            nlohmann::json res = hr.value();
-            if (res.contains("id") && res["id"].is_string()) {
-                idret = res["id"];
+
+            nlohmann::json result = o_result.value();
+            std::string returnID;
+
+            if (result.contains("id") && result["id"].is_string()) {
+                returnID = result["id"];
             }
-            localVault.vaultData["folders"].push_back(res);
+            localVault.vaultData["folders"].push_back(result);
             localVault.storage.write("vault.json", localVault.vaultData.dump(2));
-            return idret;
+            return returnID;
         }
 
         auto& folders = localVault.vaultData["folders"];
@@ -78,7 +74,7 @@ namespace ClientWarden {
             *it = data;
         }
 
-        auto hr = localVault.OnlineRenameFolder(data["id"], data["name"]);
+        bool result = localVault.OnlineRenameFolder(data["id"], data["name"]);
         localVault.storage.write("vault.json", localVault.vaultData.dump(2));
         
         return data["id"];
@@ -101,8 +97,10 @@ namespace ClientWarden {
             if (it != folders.end()) {
                 folders.erase(it);
             }
-            auto hr = localVault.OnlineDeleteFolder(data["id"]);
-            if (hr != NetworkState::Success) {
+
+            bool result = localVault.OnlineDeleteFolder(data["id"]);
+
+            if (!result) {
                 logger->warn("Failed to Delete Online Folder");
                 localVault.vaultData["deletedFolders"].push_back(data["id"]);
             } 

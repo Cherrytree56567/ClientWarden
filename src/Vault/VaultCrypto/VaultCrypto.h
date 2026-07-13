@@ -1,9 +1,15 @@
 #pragma once
 #include <string>
+#include <algorithm>
 #include <botan/secmem.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <botan/mem_ops.h>
+#include <openssl/kdf.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+
+#include "Clientwarden.h"
+#include "VaultUtils/VaultUtils.h"
 
 namespace ClientWarden {
     /*
@@ -11,7 +17,8 @@ namespace ClientWarden {
     */
     class VaultCrypto {
     public:
-        VaultCrypto(std::shared_ptr<Botan::secure_vector<uint8_t>> encKey, std::shared_ptr<Botan::secure_vector<uint8_t>> macKey);
+        VaultCrypto(std::shared_ptr<Botan::secure_vector<uint8_t>> encKey, std::shared_ptr<Botan::secure_vector<uint8_t>> macKey,
+            std::shared_ptr<Botan::secure_vector<uint8_t>> internalKey);
 
         std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> getEncMacKey(std::string protectedKey);
 
@@ -25,6 +32,7 @@ namespace ClientWarden {
         Botan::secure_vector<uint8_t> Decrypt(const std::string& str, const Botan::secure_vector<uint8_t>& key, const Botan::secure_vector<uint8_t>& macKey);
         std::string DecryptAsStr(const std::string& str, const Botan::secure_vector<uint8_t>& itemEncKey, const Botan::secure_vector<uint8_t>& itemMacKey);
         std::string Encrypt(const Botan::secure_vector<uint8_t>& pt, const Botan::secure_vector<uint8_t>& key, const Botan::secure_vector<uint8_t>& macKey);
+        std::string Encrypt(std::string str, const Botan::secure_vector<uint8_t>& key, const Botan::secure_vector<uint8_t>& macKey);
 
         std::string EncryptRaw(const Botan::secure_vector<uint8_t>& pt, const Botan::secure_vector<uint8_t>& key, const Botan::secure_vector<uint8_t>& macKey);
         std::string DecryptRaw(const Botan::secure_vector<uint8_t>& pt, const Botan::secure_vector<uint8_t>& key, const Botan::secure_vector<uint8_t>& macKey);
@@ -38,7 +46,6 @@ namespace ClientWarden {
     private:
         std::shared_ptr<Botan::secure_vector<uint8_t>> encKey;
         std::shared_ptr<Botan::secure_vector<uint8_t>> macKey;
-
-        inline static std::shared_ptr<spdlog::logger> logger;
+        std::shared_ptr<Botan::secure_vector<uint8_t>> internalKey;
     };
 }

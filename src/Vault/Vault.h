@@ -5,8 +5,13 @@
 #include "VaultCrypto/VaultCrypto.h"
 #include "VaultNetwork/VaultNetwork.h"
 #include "VaultSession/VaultSession.h"
+#include "VaultProfile/VaultProfile.h"
+#include "Storage/Storage.h"
 
+#include "Folder/Folder.h"
+#include "CipherQuery/CipherQuery.h"
 #include "GenericItem/GenericItemImpl.h"
+#include "VaultUtils/VaultUtils.h"
 
 namespace ClientWarden {
     enum class AuthState {
@@ -41,10 +46,10 @@ namespace ClientWarden {
 
         static Vault& Instance();
 
-        bool Login(std::string email, std::string password);
+        bool Login(std::string& email, std::string& password);
         bool Login(std::string code);
 
-        bool Unlock(std::string password);
+        bool Unlock(std::string& password);
 
         bool Lock();
 
@@ -65,10 +70,10 @@ namespace ClientWarden {
         std::shared_ptr<GenericItem> GetItem(std::string uuid);
         std::shared_ptr<Folder> GetFolder(std::string uuid);
         std::shared_ptr<Folder> CreateFolder();
-        Botan::secure_vector<std::string> GetFolders();
+        std::vector<std::string> GetFolders();
         std::shared_ptr<CipherQuery> GetCipherQuery();
 
-        bool NewItem(nlohmann::json encryptedData);
+        std::optional<nlohmann::json> NewItem(nlohmann::json encryptedData);
         bool UpdateItem(nlohmann::json encryptedData);
         bool DeleteItem(std::string uuid);
         bool SoftDeleteItem(std::string uuid);
@@ -78,19 +83,16 @@ namespace ClientWarden {
         bool RemoveAttachment(std::string uuid, std::string attachmentID);
         bool DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,
             Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress = nullptr);
-        std::optional<std::string> CreateFolder(std::string encryptedFolderName);
+        std::optional<nlohmann::json> CreateFolder(std::string encryptedFolderName);
         bool RenameFolder(std::string folderUUID, std::string encryptedFolderName);
         bool DeleteFolder(std::string folderUUID);
+        std::optional<std::string> DownloadIcon(std::string url);
 
         VaultSession session;
         VaultCrypto crypto;
         VaultNetwork network;
         VaultProfile profile;
-    private:
         AuthState state;
-
         Storage storage;
-
-        inline static std::shared_ptr<spdlog::logger> logger;
     };
 }

@@ -2,7 +2,9 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include "../GenericItem/GenericItem.h"
+#include "../GenericItem/GenericItemImpl.h"
+
+#include "Clientwarden.h"
 
 namespace ClientWarden {
     class NoteItem : public GenericItemImpl<NoteItem> {
@@ -12,8 +14,6 @@ namespace ClientWarden {
 
         NoteItem* Duplicate(std::string& id);
 
-        NoteItem* GetType(CipherType& val) override;
-    private:
-        inline static std::shared_ptr<spdlog::logger> l_logger = nullptr;
+        NoteItem* GetType(CipherType& val);
     };
 }

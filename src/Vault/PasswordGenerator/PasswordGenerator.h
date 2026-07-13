@@ -4,9 +4,12 @@
 #include <regex>
 #include <openssl/rand.h>
 #include <nlohmann/json.hpp>
-#include "../CommonVault.h"
-#include "../VaultUtils/VaultUtils.h"
-#include "../Vault.h"
+#include <botan/secmem.h>
+#include <botan/mem_ops.h>
+#include "VaultUtils/VaultUtils.h"
+
+#include "Clientwarden.h"
+#include "Storage/Storage.h"
 
 namespace ClientWarden {
     class PasswordGenerator {
@@ -19,7 +22,6 @@ namespace ClientWarden {
         PasswordGenerator& Pin(int Characters, std::string& pin);
     private:
         Storage storage;
-        inline static std::shared_ptr<spdlog::logger> logger = nullptr;
 
         bool init = false;
 

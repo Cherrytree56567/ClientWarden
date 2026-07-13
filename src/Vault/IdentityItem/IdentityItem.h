@@ -2,7 +2,9 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include "../GenericItem/GenericItem.h"
+#include "../GenericItem/GenericItemImpl.h"
+
+#include "Clientwarden.h"
 
 namespace ClientWarden {
     class IdentityItem : public GenericItemImpl<IdentityItem> {
@@ -49,8 +51,6 @@ namespace ClientWarden {
         IdentityItem* GetState(std::string& state);
         IdentityItem* GetTitle(std::string& title);
         IdentityItem* GetUsername(std::string& username);
-        IdentityItem* GetType(CipherType& val) override;
-    private:
-        inline static std::shared_ptr<spdlog::logger> l_logger = nullptr;
+        IdentityItem* GetType(CipherType& val);
     };
 }

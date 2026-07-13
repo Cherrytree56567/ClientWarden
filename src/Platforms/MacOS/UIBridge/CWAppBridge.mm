@@ -24,10 +24,10 @@
     ClientwardenWindow.instance.cb_getState = ^WindowState {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            if (!v_inst.hasStoredSession()) {
-                return WindowStateLogin;
-            } else {
+            if (v_inst.state == ClientWarden::AuthState::Unlockable) {
                 return WindowStateUnlock;
+            } else {
+                return WindowStateLogin;
             }
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{

@@ -1,19 +1,10 @@
 #include "VaultCrypto.h"
 
 namespace ClientWarden {
-    VaultCrypto::VaultCrypto(std::shared_ptr<Botan::secure_vector<uint8_t>> encKey, std::shared_ptr<Botan::secure_vector<uint8_t>> macKey) :
-        encKey(encKey), macKey(macKey) {
-        if (!logger) {
-            spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
-
-            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(storage.path.string() + "/cw.log", true);
-
-            logger = std::make_shared<spdlog::logger>("ClientWarden::VaultCrypto", spdlog::sinks_init_list{console_sink, file_sink});
-            logger->set_level(spdlog::level::trace);
-            logger->flush_on(spdlog::level::trace);
-            spdlog::register_logger(logger);
-        }
+    VaultCrypto::VaultCrypto(std::shared_ptr<Botan::secure_vector<uint8_t>> encKey, std::shared_ptr<Botan::secure_vector<uint8_t>> macKey,
+        std::shared_ptr<Botan::secure_vector<uint8_t>> internalKey) :
+        encKey(encKey), macKey(macKey), internalKey(internalKey) {
+        
     }
 
     std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> VaultCrypto::getEncMacKey(std::string protectedKey) {
@@ -156,7 +147,7 @@ namespace ClientWarden {
 
         std::string rest = str.substr(2);
 
-        Botan::secure_vector<std::string> parts;
+        std::vector<std::string> parts;
         std::string current;
 
         for (char c : rest) {
@@ -174,11 +165,11 @@ namespace ClientWarden {
             throw std::runtime_error("invalid cipher string format");
         }
 
-        std::string iv = b64Decode(parts[0]);
-        std::string ct = b64Decode(parts[1]);
-        std::string mac = b64Decode(parts[2]);
+        Botan::secure_vector<uint8_t> iv = b64Decode(parts[0]);
+        Botan::secure_vector<uint8_t> ct = b64Decode(parts[1]);
+        Botan::secure_vector<uint8_t> mac = b64Decode(parts[2]);
 
-        Botan::secure_scrub_memory(parts.data(), parts.size());
+        parts.clear();
 
         Botan::secure_vector<uint8_t> ivct;
         ivct.insert(ivct.end(), iv.begin(), iv.end());
@@ -218,6 +209,10 @@ namespace ClientWarden {
             logger->error("invalid mac");
             throw std::runtime_error("invalid mac");
         }
+
+        Botan::secure_scrub_memory(iv.data(), iv.size());
+        Botan::secure_scrub_memory(ct.data(), ct.size());
+        Botan::secure_scrub_memory(mac.data(), mac.size());
         
         pt_len += len;
 
@@ -386,7 +381,7 @@ namespace ClientWarden {
         unsigned int len = 32;
 
         HMAC(EVP_sha256(),
-            internalKey.data(), internalKey.size(),
+            internalKey->data(), internalKey->size(),
             data.data(), data.size(),
             out.data(), &len);
         
@@ -420,15 +415,20 @@ namespace ClientWarden {
             hash.data()
         );
 
-        std::string checksum = Encrypt(b64Encode(hash), itemEncKey, itemMacKey);
+        std::string b64hash = b64Encode(hash);
+
+        Botan::secure_vector<uint8_t> vecHash(b64hash.begin(), b64hash.end());
+
+        std::string checksum = Encrypt(vecHash, itemEncKey, itemMacKey);
 
         Botan::secure_scrub_memory(hash.data(), hash.size());
+        Botan::secure_scrub_memory(vecHash.data(), vecHash.size());
 
         return checksum;
     }
 
     std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> VaultCrypto::splitKeys(std::string mainKey) {
-        Botan::secure_vector<uint8_t> itemKey = Decrypt(mainKey, encKey, macKey);
+        Botan::secure_vector<uint8_t> itemKey = Decrypt(mainKey, *encKey, *macKey);
 
         Botan::secure_vector<uint8_t> itemEncKey(itemKey.begin(), itemKey.begin() + 32);
         Botan::secure_vector<uint8_t> itemMacKey(itemKey.begin() + 32, itemKey.end());
@@ -436,5 +436,13 @@ namespace ClientWarden {
         Botan::secure_scrub_memory(itemKey.data(), itemKey.size());
 
         return { std::move(itemEncKey), std::move(itemMacKey) };
+    }
+
+    std::string VaultCrypto::Encrypt(std::string str, const Botan::secure_vector<uint8_t>& key, const Botan::secure_vector<uint8_t>& itemMacKey) {
+        Botan::secure_vector<uint8_t> item(str.begin(), str.end());
+        std::string enc = Encrypt(item, key, itemMacKey);
+        Botan::secure_scrub_memory(item.data(), item.size());
+
+        return enc;
     }
 }
