@@ -206,8 +206,13 @@ namespace ClientWarden {
         };
 
         httplib::ws::WebSocketClient ws(wsUri, headers);
-        
-        if (!ws.connect()) {
+
+        try {
+            if (!ws.connect()) {
+                logger->error("Websocket failed");
+                return false;
+            }
+        } catch (...) {
             logger->error("Websocket failed");
             return false;
         }

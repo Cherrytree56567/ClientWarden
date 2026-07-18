@@ -106,7 +106,7 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_favorite?(favorite, uuid) {
+        if let fav = cb_favorite?(!favorite, uuid) {
             if (fav) {
                 favorite.toggle()
             } else {

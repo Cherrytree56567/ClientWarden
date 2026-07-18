@@ -154,6 +154,16 @@ namespace ClientWarden {
 
             *session.authData = nlohmann::json::parse(storage.read("data.json"));
             *session.vaultData = nlohmann::json::parse(storage.read("vault.json"));
+
+            if (!(*session.authData).contains("apiURL") || !(*session.authData).contains("iconURL") || 
+                !(*session.authData).contains("mainURL") || !(*session.authData).contains("vaultURL") || 
+                !(*session.authData).contains("wssURL")) {
+                logger->info("URL Info Not Found in data.json");
+                state = AuthState::Failed;
+            }
+
+            network.initNetwork((*session.authData)["vaultURL"], (*session.authData)["mainURL"], (*session.authData)["apiURL"], 
+                (*session.authData)["iconURL"]);
         }
 
         if (storage.exists("settings.json")) {
@@ -189,6 +199,7 @@ namespace ClientWarden {
         (*session.authData)["apiURL"] = apiUri;
         (*session.authData)["iconURL"] = iconUri;
         (*session.authData)["wssURL"] = wssUri;
+        network.initNetwork(vaultUri, mainUri, apiUri, iconUri);
     }
 
     /*
@@ -244,7 +255,16 @@ namespace ClientWarden {
 
             storage.write("data.json", session.authData->dump(2));
 
-            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
+            if (!Sync()) {
+                return false;
+            }
+
+            std::string protectedKey = (*session.vaultData)["profile"]["key"];
+
+            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
         
             *session.encKey = std::move(encKey);
             *session.macKey = std::move(macKey);
@@ -300,7 +320,12 @@ namespace ClientWarden {
 
             storage.write("data.json", session.authData->dump(2));
 
-            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"]);
+            std::string protectedKey = (*session.vaultData)["profile"]["key"];
+
+            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
         
             *session.encKey = std::move(encKey);
             *session.macKey = std::move(macKey);
@@ -339,7 +364,15 @@ namespace ClientWarden {
             OPENSSL_cleanse(password.data(), password.size());
             password.clear();
 
-            auto [encKey, macKey] = crypto.getEncMacKey((*session.vaultData)["profile"]["key"].get<std::string>());
+            std::string protectedKey = (*session.vaultData)["profile"]["key"];
+
+            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
+
+            Botan::secure_scrub_memory(stretchedEncKey.data(), stretchedEncKey.size());
+            Botan::secure_scrub_memory(stretchedMacKey.data(), stretchedMacKey.size());
 
             *session.encKey = std::move(encKey);
             *session.macKey = std::move(macKey);
@@ -386,6 +419,7 @@ namespace ClientWarden {
      * Save Vault
     */
     bool Vault::Sync() {
+        network.checkConnectivity();
         if (network.getConnectivity() == VaultConnectivity::Offline) {
             return false;
         }
@@ -547,9 +581,21 @@ namespace ClientWarden {
                     std::optional<nlohmann::json> result = NewItem(cipher);
                     if (!result.has_value()) {
                         logger->warn("Failed to Create Online Item");
-                        return false;
+                        continue;
                     }
+
                     cipher["createdOffline"] = false;
+
+                    nlohmann::json r_json = result.value();
+
+                    if (r_json.contains("id")) {
+                        cipher["id"] = r_json["id"];
+                        localIds.push_back(cipher["id"]);
+                    }
+
+                    if (r_json.contains("revisionDate")) {
+                        cipher["revisionDate"] = r_json["revisionDate"];
+                    }
                     continue;
                 }
             }
@@ -656,8 +702,22 @@ namespace ClientWarden {
         return std::move(folders);
     }
 
-    std::optional<nlohmann::json> Vault::NewItem(nlohmann::json encryptedData) {
-        return network.NewItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+    std::optional<nlohmann::json> Vault::NewItem(nlohmann::json encryptedData, bool performVaultOps, nlohmann::json vaultOpsData) {
+        std::optional<nlohmann::json> result = network.NewItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+
+        if (performVaultOps) {
+            if (!result.has_value()) {
+                logger->warn("Failed to add New Item Online");
+                vaultOpsData["createdOffline"] = true;
+                (*session.vaultData)["ciphers"].push_back(vaultOpsData);
+                storage.write("vault.json", session.vaultData->dump(2));
+                return std::nullopt;
+            }
+            (*session.vaultData)["ciphers"].push_back(result.value());
+            storage.write("vault.json", session.vaultData->dump(2));
+        }
+
+        return result;
     }
 
     bool Vault::UpdateItem(nlohmann::json encryptedData) {
@@ -669,8 +729,15 @@ namespace ClientWarden {
         return false;
     }
 
-    bool Vault::DeleteItem(std::string uuid) {
-        return network.DeleteItem(uuid, (*session.authData)["accessString"].get<std::string>());
+    bool Vault::DeleteItem(std::string uuid, bool performVaultOps, nlohmann::json vaultOpsData) {
+        bool result = network.DeleteItem(uuid, (*session.authData)["accessString"].get<std::string>());
+        if (!result) {
+            logger->warn("Failed to Delete Online Item");
+            if (vaultOpsData.contains("id")) {
+                (*session.vaultData)["deletedCiphers"].push_back(vaultOpsData["id"]);
+            }
+        } 
+        storage.write("vault.json", session.vaultData->dump(2));
     }
 
     bool Vault::SoftDeleteItem(std::string uuid) {

@@ -73,9 +73,9 @@ namespace ClientWarden {
         std::vector<std::string> GetFolders();
         std::shared_ptr<CipherQuery> GetCipherQuery();
 
-        std::optional<nlohmann::json> NewItem(nlohmann::json encryptedData);
+        std::optional<nlohmann::json> NewItem(nlohmann::json encryptedData, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());
         bool UpdateItem(nlohmann::json encryptedData);
-        bool DeleteItem(std::string uuid);
+        bool DeleteItem(std::string uuid, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());
         bool SoftDeleteItem(std::string uuid);
         bool RestoreItem(std::string uuid);
         std::optional<std::string> AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 

@@ -21,6 +21,8 @@ namespace ClientWarden {
             std::shared_ptr<Botan::secure_vector<uint8_t>> internalKey);
 
         std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> getEncMacKey(std::string protectedKey);
+        std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> getEncMacKey(std::string protectedKey, 
+            Botan::secure_vector<uint8_t> itemEncKey, Botan::secure_vector<uint8_t> itemMacKey);
 
         Botan::secure_vector<uint8_t> makeKey(const std::string& password, const std::string& salt, int iterations);
         std::string cipherString(int encryptionType, const std::string& iv, const std::string& ct, const std::string& mac);

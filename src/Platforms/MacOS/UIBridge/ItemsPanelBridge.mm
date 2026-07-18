@@ -37,22 +37,22 @@
         for (auto& cipher : ciphers) {
             NSUUID* uuid = [[NSUUID alloc] initWithUUIDString:[NSString stringWithUTF8String: cipher.second.c_str()]];
 
-            ClientWarden::GenericItem item(v_inst, cipher.second);
-
             std::string c_name;
 
-            item.GetName(c_name)->Close();
+            v_inst.GetItem(cipher.second)
+                  .GetName(c_name)
+                 ->Close();
 
             NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
 
             ClientwardenImage* img = nil;
 
             if (cipher.first == ClientWarden::CipherType::Login) {
-                ClientWarden::LoginItem cip(v_inst, cipher.second);
-
                 std::vector<std::string> loginUrl;
 
-                cip.GetWebsites(loginUrl)->Close();
+                v_inst.GetItem<LoginItem>(cipher.second)
+                      .GetWebsites(loginUrl)
+                     ->Close();
 
                 if (loginUrl.size() != 0) {
                     std::optional<std::string> result = v_inst.DownloadIcon(loginUrl[0]);
@@ -132,9 +132,12 @@
 
             std::string c_name = name.UTF8String;
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterNameByRegex(c_name)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByUnbinned()
+                            .FilterNameByRegex(c_name)
+                            .GetCiphers();
 
             return [ItemsPanelBridge getItems:ciphers];
         } catch (...) {
@@ -157,25 +160,25 @@
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-            ClientWarden::GenericItem* item = nullptr;
+            std::shared_ptr<GenericItem> item;
 
             ClientwardenImage* img = nil;
             NSString* name = @"New Item";
             
             if (i_type == ItemTypeLogin) {
-                item = new ClientWarden::LoginItem(v_inst);
+                item = v_inst.CreateItem<LoginItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
             } else if (i_type == ItemTypeCard) {
-                item = new ClientWarden::CardItem(v_inst);
+                item = v_inst.CreateItem<CardItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
             } else if (i_type == ItemTypeIdentity) {
-                item = new ClientWarden::IdentityItem(v_inst);
+                item = v_inst.CreateItem<IdentityItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
             } else if (i_type == ItemTypeNote) {
-                item = new ClientWarden::NoteItem(v_inst);
+                item = v_inst.CreateItem<NoteItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (i_type == ItemTypeSSHKey) {
-                item = new ClientWarden::SSHKeyItem(v_inst);
+                item = v_inst.CreateItem<SSHKeyItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
             }
 

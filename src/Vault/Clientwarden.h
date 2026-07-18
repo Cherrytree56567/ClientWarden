@@ -18,5 +18,5 @@ namespace ClientWarden {
         Generic = 0
     };
 
-    inline static std::shared_ptr<spdlog::logger> logger = nullptr;
+    inline std::shared_ptr<spdlog::logger> logger = nullptr;
 }

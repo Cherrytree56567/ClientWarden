@@ -46,22 +46,22 @@
         for (auto& cipher : ciphers) {
             NSUUID* uuid = [[NSUUID alloc] initWithUUIDString:[NSString stringWithUTF8String: cipher.second.c_str()]];
 
-            ClientWarden::GenericItem item(v_inst, cipher.second);
-
             std::string c_name;
 
-            item.GetName(c_name)->Close();
+            v_inst.GetItem(cipher.second)
+                  .GetName(c_name)
+                 ->Close();
 
             NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
 
             ClientwardenImage* img = nil;
 
             if (cipher.first == ClientWarden::CipherType::Login) {
-                ClientWarden::LoginItem cip(v_inst, cipher.second);
-
                 std::vector<std::string> loginUrl;
 
-                cip.GetWebsites(loginUrl)->Close();
+                v_inst.GetItem<LoginItem>(cipher.second)
+                      .GetWebsites(loginUrl)
+                     ->Close();
 
                 if (loginUrl.size() != 0) {
                     std::optional<std::string> result = v_inst.DownloadIcon(loginUrl[0]);
@@ -137,10 +137,12 @@
     NavigationPanel.instance.cb_allItems = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByUnbinned()
+                            .GetCiphers();
             
             NSArray<ItemElement*>* items = [NavPanelBridge getItems:ciphers];
 
@@ -161,11 +163,12 @@
     NavigationPanel.instance.cb_favorites = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByFavorites()
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByFavorites()
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -184,10 +187,12 @@
     NavigationPanel.instance.cb_trash = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByBinned()
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByBinned()
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -206,11 +211,12 @@
     NavigationPanel.instance.cb_login = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByType(ClientWarden::CipherType::Login)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByType(ClientWarden::CipherType::Login)
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -229,11 +235,12 @@
     NavigationPanel.instance.cb_card = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByType(ClientWarden::CipherType::Card)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByType(ClientWarden::CipherType::Card)
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -252,11 +259,12 @@
     NavigationPanel.instance.cb_identity = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByType(ClientWarden::CipherType::Identity)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByType(ClientWarden::CipherType::Identity)
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -275,11 +283,12 @@
     NavigationPanel.instance.cb_note = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByType(ClientWarden::CipherType::Note)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByType(ClientWarden::CipherType::Note)
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -298,11 +307,12 @@
     NavigationPanel.instance.cb_SSHKey = ^NSArray* _Nonnull {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByType(ClientWarden::CipherType::SSHKey)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByType(ClientWarden::CipherType::SSHKey)
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -321,14 +331,12 @@
     NavigationPanel.instance.cb_folder = ^NSArray* _Nonnull(NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            ClientWarden::CipherQuery query(v_inst);
 
-            std::string c_uuid = uuid.UUIDString.UTF8String;
-            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
-
-            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers = query.FilterByUnbinned()
-                                                                                        .FilterByFolder(c_uuid)
-                                                                                        .GetCiphers();
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                            .FilterByFolder(c_uuid)
+                            .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
         } catch (...) {
@@ -357,19 +365,18 @@
 
                 NSUUID* uuid = [[NSUUID alloc] initWithUUIDString: s_uuid];
 
-                ClientWarden::Folder folder(v_inst, c_uuid);
-
                 std::string c_name;
 
-                folder.GetName(c_name)
-                    .Close();
+                v_inst.GetFolder(c_uuid)
+                      .GetName(c_name)
+                      .Close();
                 
                 NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
 
                 OPENSSL_cleanse(c_name.data(), c_name.size());
                 c_name.clear();
                 
-                Folder *f = [[Folder alloc] initWithUuid:uuid name:name];
+                Folder* f = [[Folder alloc] initWithUuid:uuid name:name];
                 [folders addObject:f];
             }
 
@@ -394,11 +401,10 @@
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-            ClientWarden::Folder folder(v_inst);
-
             std::string c_name = name.UTF8String;
-            std::string c_uuid = folder.SetName(c_name)
-                                    .Commit();
+            std::string c_uuid = v_inst.CreateFolder()
+                                       .SetName(c_name)
+                                       .Commit();
             
             if (c_uuid.empty()) {
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -439,9 +445,8 @@
                 return false;
             }
 
-            ClientWarden::Folder folder(v_inst, c_uuid);
-
-            folder.Delete();
+            v_inst.GetFolder(c_uuid)
+                  .Delete();
 
             return true;
         } catch (...) {
@@ -476,10 +481,9 @@
 
             std::string c_name = name.UTF8String;
 
-            ClientWarden::Folder folder(v_inst, c_uuid);
-
-            folder.SetName(c_name)
-                .Commit();
+            v_inst.GetFolder(c_uuid)
+                  .SetName(c_name)
+                  .Commit();
 
             return true;
         } catch (...) {

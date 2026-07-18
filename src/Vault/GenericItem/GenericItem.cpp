@@ -14,6 +14,7 @@ namespace ClientWarden {
                 break;
             }
         }
+        std::string dataStr = data.dump();
         if (data.contains("data")) {
             if (data["data"].is_string()) {
                 fieldData = nlohmann::json::parse(data["data"].get<std::string>());
@@ -226,14 +227,8 @@ namespace ClientWarden {
 
         data["revisionDate"] = getBitwardenTime();
         data["data"] = (std::string)fieldData.dump();
-        if (isBeingCreated) {
-            std::optional<nlohmann::json> result = localVault.NewItem(data);
-            if (!result.has_value()) {
-                logger->warn("Failed to add New Item Online");
-                data["createdOffline"] = true;
-            }
-            (*localVault.session.vaultData)["ciphers"].push_back(data);
-            localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        if (isBeingCreated || (data.contains("createdOffline") && data["createdOffline"] == true)) {
+            std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;
         }
 
@@ -251,6 +246,7 @@ namespace ClientWarden {
          * then the local one with have a higher revision Date
         */
         bool result = localVault.UpdateItem(data);
+        std::string dataStr = data.dump();
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
     }
 
@@ -270,14 +266,9 @@ namespace ClientWarden {
             if (it != ciphers.end()) {
                 ciphers.erase(it);
             }
-            bool result = localVault.DeleteItem(data["id"]);
-            if (!result) {
-                logger->warn("Failed to Delete Online Item");
-                (*localVault.session.vaultData)["deletedCiphers"].push_back(data["id"]);
-            } 
+            
+            localVault.DeleteItem(data["id"], true, data);
         }
-
-        localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
     }
 
     void GenericItem::Close() {
@@ -301,13 +292,7 @@ namespace ClientWarden {
         data["deletedDate"] = getBitwardenTime();
         data["data"] = (std::string)fieldData.dump();
         if (isBeingCreated) {
-            std::optional<nlohmann::json> result = localVault.NewItem(data);
-            if (!result.has_value()) {
-                logger->warn("Failed to add New Item Online");
-                data["createdOffline"] = true;
-            }
-            (*localVault.session.vaultData)["ciphers"].push_back(data);
-            localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+            std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;
         }
 
@@ -335,13 +320,7 @@ namespace ClientWarden {
         data["deletedDate"] = nullptr;
         data["data"] = (std::string)fieldData.dump();
         if (isBeingCreated) {
-            std::optional<nlohmann::json> result = localVault.NewItem(data);
-            if (!result.has_value()) {
-                logger->warn("Failed to add New Item Online");
-                data["createdOffline"] = true;
-            }
-            (*localVault.session.vaultData)["ciphers"].push_back(data);
-            localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+            std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;
         }
 

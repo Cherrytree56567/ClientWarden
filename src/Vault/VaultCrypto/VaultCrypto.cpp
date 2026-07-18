@@ -18,6 +18,18 @@ namespace ClientWarden {
         return { std::move(itemEncKey), std::move(itemMacKey) };
     }
 
+    std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> VaultCrypto::getEncMacKey(std::string protectedKey, 
+        Botan::secure_vector<uint8_t> dec_itemEncKey, Botan::secure_vector<uint8_t> dec_itemMacKey) {
+        Botan::secure_vector<uint8_t> itemKey = Decrypt(protectedKey, dec_itemEncKey, dec_itemMacKey);
+
+        Botan::secure_vector<uint8_t> itemEncKey(itemKey.begin(), itemKey.begin() + 32);
+        Botan::secure_vector<uint8_t> itemMacKey(itemKey.begin() + 32, itemKey.end());
+
+        Botan::secure_scrub_memory(itemKey.data(), itemKey.size());
+
+        return { std::move(itemEncKey), std::move(itemMacKey) };
+    }
+
     Botan::secure_vector<uint8_t> VaultCrypto::makeKey(const std::string& password, const std::string& salt, int iterations) {
         Botan::secure_vector<uint8_t> key(256 / 8);
 
@@ -103,9 +115,9 @@ namespace ClientWarden {
             hashed.size(), hashed.data()
         );
 
-        Botan::secure_scrub_memory(hashed.data(), hashed.size());
-
         std::string hashedPass = b64Encode(hashed);
+
+        Botan::secure_scrub_memory(hashed.data(), hashed.size());
 
         return hashedPass;
     }

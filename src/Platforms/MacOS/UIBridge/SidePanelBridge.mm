@@ -1,6 +1,7 @@
 #import "SidePanelBridge.h"
 #import <Cocoa/Cocoa.h>
 #import "clientwarden-Swift.h"
+#include <boost/algorithm/string.hpp>
 #include "CipherQuery/CipherQuery.h"
 #include "GenericItem/GenericItem.h"
 #include "LoginItem/LoginItem.h"
@@ -42,10 +43,9 @@
             std::string c_uuid = uuid.UUIDString.UTF8String;
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-            ClientWarden::GenericItem item(v_inst, c_uuid);
-
-            item.SetFavorite(fav)
-            ->Commit();
+            v_inst.GetItem(c_uuid)
+                  .SetFavorite(fav)
+                 ->Commit();
 
             return true;
         } catch (...) {
@@ -76,14 +76,13 @@
             ClientwardenImage* img = nil;
 
             if (i_type == ItemTypeLogin) {
-                ClientWarden::LoginItem item(v_inst, c_uuid);
-
                 std::vector<std::string> loginUrl;
 
-                item.GetWebsites(loginUrl)
-                ->GetName(c_name)
-                ->Duplicate(c_dupUUID)
-                ->Close();
+                v_inst.GetItem<LoginItem>(c_uuid)
+                      .GetWebsites(loginUrl)
+                     ->GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
                 
                 if (loginUrl.size() != 0) {
                     std::optional<std::string> result = v_inst.DownloadIcon(loginUrl[0]);
@@ -103,35 +102,31 @@
                     uri.clear();
                 }
             } else if (i_type == ItemTypeCard) {
-                ClientWarden::CardItem item(v_inst, c_uuid);
-
-                item.GetName(c_name)
-                ->Duplicate(c_dupUUID)
-                ->Close();
+                v_inst.GetItem<CardItem>(c_uuid)
+                      .GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
             } else if (i_type == ItemTypeIdentity) {
-                ClientWarden::IdentityItem item(v_inst, c_uuid);
-
-                item.GetName(c_name)
-                ->Duplicate(c_dupUUID)
-                ->Close();
+                v_inst.GetItem<IdentityItem>(c_uuid)
+                      .GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
             } else if (i_type == ItemTypeNote) {
-                ClientWarden::NoteItem item(v_inst, c_uuid);
-
-                item.GetName(c_name)
-                ->Duplicate(c_dupUUID)
-                ->Close();
+                v_inst.GetItem<NoteItem>(c_uuid)
+                      .GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (i_type == ItemTypeSSHKey) {
-                ClientWarden::SSHKeyItem item(v_inst, c_uuid);
-
-                item.GetName(c_name)
-                ->Duplicate(c_dupUUID)
-                ->Close();
+                v_inst.GetItem<SSHKeyItem>(c_uuid)
+                      .GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
             }
@@ -166,9 +161,8 @@
             std::string c_uuid = uuid.UUIDString.UTF8String;
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-            ClientWarden::GenericItem item(v_inst, c_uuid);
-
-            item.Bin();
+            v_inst.GetItem(c_uuid)
+                  .Bin();
 
             return true;
         } catch (...) {
@@ -193,9 +187,8 @@
             std::string c_uuid = uuid.UUIDString.UTF8String;
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-            ClientWarden::GenericItem item(v_inst, c_uuid);
-
-            item.UnBin();
+            v_inst.GetItem(c_uuid)
+                  .UnBin();
 
             return true;
         } catch (...) {
@@ -220,9 +213,8 @@
             std::string c_uuid = uuid.UUIDString.UTF8String;
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-            ClientWarden::GenericItem item(v_inst, c_uuid);
-
-            item.Delete();
+            v_inst.GetItem(c_uuid)
+                  .Delete();
 
             return true;
         } catch (...) {
@@ -259,7 +251,7 @@
             std::string c_uuid = uuid.UUIDString.UTF8String;
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
-            ClientWarden::GenericItem item(v_inst, c_uuid);
+            std::shared_ptr<ClientWarden::GenericItem> item = v_inst.GetItem(c_uuid);
 
             std::string c_name = "";
             ClientWarden::CipherType c_type;
@@ -272,13 +264,14 @@
             std::string c_notes;
 
             item.GetName(c_name)
-            ->GetFields(c_customFields)
-            ->GetCreation(c_creation)
-            ->GetModification(c_modification)
-            ->GetDeletion(c_deletion)
-            ->GetNotes(c_notes)
-            ->GetType(c_type)
-            ->GetAttachmentIDs(c_attachIds);
+              ->GetFavorite(favorite)
+              ->GetFields(c_customFields)
+              ->GetCreation(c_creation)
+              ->GetModification(c_modification)
+              ->GetDeletion(c_deletion)
+              ->GetNotes(c_notes)
+              ->GetType(c_type)
+              ->GetAttachmentIDs(c_attachIds);
             
             for (auto& c_id : c_attachIds) {
                 NSString* id = [NSString stringWithUTF8String: c_id.c_str()];
@@ -357,20 +350,19 @@
             c_notes.clear();
 
             if (c_type == ClientWarden::CipherType::Login) {
-                ClientWarden::LoginItem l_item(v_inst, c_uuid);
-
                 std::string c_username = "";
                 std::string c_password = "";
                 std::string c_totp = "";
                 std::vector<std::string> c_website;
                 std::vector<std::pair<std::time_t, std::string>> c_passHist;
 
-                l_item.GetUsername(c_username)
-                    ->GetPassword(c_password)
-                    ->GetTotpSecret(c_totp)
-                    ->GetWebsites(c_website)
-                    ->GetPasswordHistory(c_passHist)
-                    ->Close();
+                v_inst.GetItem<LoginItem>(c_uuid)
+                      .GetUsername(c_username)
+                     ->GetPassword(c_password)
+                     ->GetTotpSecret(c_totp)
+                     ->GetWebsites(c_website)
+                     ->GetPasswordHistory(c_passHist)
+                     ->Close();
 
                 NSString* username = [NSString stringWithUTF8String: c_username.c_str()];
                 NSString* password = [NSString stringWithUTF8String: c_password.c_str()];
@@ -390,12 +382,11 @@
                                                                     value: totp
                                                                     type:GenericItemTypeTotp
                 cb_getTOTP:^TOTPResult * _Nonnull {
-                    ClientWarden::LoginItem loginItem(v_inst, cc_uuid);
-
                     ClientWarden::TOTPCode code;
 
-                    loginItem.GetTotp(code)
-                            ->Close();
+                    v_inst.GetItem(cc_uuid)
+                          .GetTotp(code)
+                         ->Close();
                     
                     int64_t refreshDate = (int64_t)code.remaining;
                     NSInteger maxTimer = (NSInteger)code.period;
@@ -452,8 +443,6 @@
                 OPENSSL_cleanse(c_totp.data(), c_totp.size());
                 c_totp.clear();
             } else if (c_type == ClientWarden::CipherType::Card) {
-                ClientWarden::CardItem l_item(v_inst, c_uuid);
-
                 std::string c_brand = "";
                 std::string c_cardholderName = "";
                 std::string c_code = "";
@@ -461,13 +450,14 @@
                 std::string c_expYear = "";
                 std::string c_number = "";
 
-                l_item.GetBrand(c_brand)
-                    ->GetCardholderName(c_cardholderName)
-                    ->GetCode(c_code)
-                    ->GetExpMonth(c_expMonth)
-                    ->GetExpYear(c_expYear)
-                    ->GetNumber(c_number)
-                    ->Close();
+                v_inst.GetItem<CardItem>(c_uuid)
+                      .GetBrand(c_brand)
+                     ->GetCardholderName(c_cardholderName)
+                     ->GetCode(c_code)
+                     ->GetExpMonth(c_expMonth)
+                     ->GetExpYear(c_expYear)
+                     ->GetNumber(c_number)
+                     ->Close();
 
                 NSString* brand = [NSString stringWithUTF8String: c_brand.c_str()];
                 NSString* cardholderName = [NSString stringWithUTF8String: c_cardholderName.c_str()];
@@ -516,8 +506,6 @@
                 OPENSSL_cleanse(c_number.data(), c_number.size());
                 c_number.clear();
             } else if (c_type == ClientWarden::CipherType::Identity) {
-                ClientWarden::IdentityItem l_item(v_inst, c_uuid);
-
                 std::string c_addr1 = "";
                 std::string c_addr2 = "";
                 std::string c_addr3 = "";
@@ -537,25 +525,26 @@
                 std::string c_title = "";
                 std::string c_username = "";
 
-                l_item.GetAddress1(c_addr1)
-                    ->GetAddress2(c_addr2)
-                    ->GetAddress3(c_addr3)
-                    ->GetCity(c_city)
-                    ->GetCompany(c_company)
-                    ->GetCountry(c_country)
-                    ->GetEmail(c_email)
-                    ->GetFirstName(c_firstName)
-                    ->GetLastName(c_lastName)
-                    ->GetLicenceNumber(c_licenseNum)
-                    ->GetMiddleName(c_middleName)
-                    ->GetPassportNumber(c_passportNum)
-                    ->GetPhone(c_phone)
-                    ->GetPostalCode(c_postalCode)
-                    ->GetSSN(c_ssn)
-                    ->GetState(c_state)
-                    ->GetTitle(c_title)
-                    ->GetUsername(c_username)
-                    ->Close();
+                v_inst.GetItem<IdentityItem>(c_uuid)
+                      .GetAddress1(c_addr1)
+                     ->GetAddress2(c_addr2)
+                     ->GetAddress3(c_addr3)
+                     ->GetCity(c_city)
+                     ->GetCompany(c_company)
+                     ->GetCountry(c_country)
+                     ->GetEmail(c_email)
+                     ->GetFirstName(c_firstName)
+                     ->GetLastName(c_lastName)
+                     ->GetLicenceNumber(c_licenseNum)
+                     ->GetMiddleName(c_middleName)
+                     ->GetPassportNumber(c_passportNum)
+                     ->GetPhone(c_phone)
+                     ->GetPostalCode(c_postalCode)
+                     ->GetSSN(c_ssn)
+                     ->GetState(c_state)
+                     ->GetTitle(c_title)
+                     ->GetUsername(c_username)
+                     ->Close();
 
                 NSString* addr1 = [NSString stringWithUTF8String: c_addr1.c_str()];
                 NSString* addr2 = [NSString stringWithUTF8String: c_addr2.c_str()];
@@ -672,16 +661,15 @@
             } else if (c_type == ClientWarden::CipherType::Note) {
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (c_type == ClientWarden::CipherType::SSHKey) {
-                ClientWarden::SSHKeyItem l_item(v_inst, c_uuid);
-
                 std::string c_fingerprint = "";
                 std::string c_privKey = "";
                 std::string c_pubKey = "";
 
-                l_item.GetFingerprint(c_fingerprint)
-                    ->GetPrivateKey(c_privKey)
-                    ->GetPublicKey(c_pubKey)
-                    ->Close();
+                v_inst.GetItem<SSHKeyItem>(c_uuid)
+                      .GetFingerprint(c_fingerprint)
+                     ->GetPrivateKey(c_privKey)
+                     ->GetPublicKey(c_pubKey)
+                     ->Close();
 
                 NSString* fingerprint = [NSString stringWithUTF8String: c_fingerprint.c_str()];
                 NSString* privKey = [NSString stringWithUTF8String: c_privKey.c_str()];
@@ -991,9 +979,16 @@
             }
 
             std::string c_notes = notes.UTF8String;
+            std::string c_name = name.UTF8String;
 
             item.SetNotes(c_notes)
+               ->SetName(c_name)
                ->Commit();
+
+            OPENSSL_cleanse((void*)c_name.data(), c_name.size());
+            c_name.clear();
+            OPENSSL_cleanse((void*)c_notes.data(), c_notes.size());
+            c_notes.clear();
 
             if (type == ItemTypeLogin) {
                 ClientWarden::LoginItem litem(v_inst, c_uuid);
@@ -1011,8 +1006,6 @@
                     } else if (itemField.title == @"Two Factor Authentication") {
                         c_totp = itemField.value.UTF8String;
                     } else if (itemField.title == @"Websites") {
-                        c_totp = itemField.value.UTF8String;
-
                         std::istringstream stream(itemField.value.UTF8String);
                         std::string line;
 
@@ -1052,6 +1045,199 @@
                 c_password.clear();
                 OPENSSL_cleanse((void*)c_totp.data(), c_totp.size());
                 c_totp.clear();
+            } else if (type == ItemTypeCard) {
+                ClientWarden::CardItem citem(v_inst, c_uuid);
+
+                std::string c_brand = "";
+                std::string c_cardholderName = "";
+                std::string c_number = "";
+                std::string c_code = "";
+                std::string c_expYear = "";
+                std::string c_expMonth = "";
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Brand") {
+                        c_brand = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Cardholder Name") {
+                        c_cardholderName = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Number") {
+                        c_number = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Code") {
+                        c_code = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Expiration Date") {
+                        std::string c_field = itemField.value.UTF8String;
+                        size_t pos = c_field.find('/');
+                        if (pos != std::string::npos) {
+                            c_expMonth = c_field.substr(0, pos);
+                            c_expYear = c_field.substr(pos + 1);
+                        }
+                    }
+                }
+
+                citem.SetBrand(c_brand)
+                    ->SetCardholderName(c_cardholderName)
+                    ->SetCode(c_code)
+                    ->SetExpMonth(c_expMonth)
+                    ->SetExpYear(c_expYear)
+                    ->SetNumber(c_number)
+                    ->Commit();
+
+                OPENSSL_cleanse((void*)c_brand.data(), c_brand.size());
+                c_brand.clear();
+                OPENSSL_cleanse((void*)c_cardholderName.data(), c_cardholderName.size());
+                c_cardholderName.clear();
+                OPENSSL_cleanse((void*)c_code.data(), c_code.size());
+                c_code.clear();
+                OPENSSL_cleanse((void*)c_expMonth.data(), c_expMonth.size());
+                c_expMonth.clear();
+                OPENSSL_cleanse((void*)c_expYear.data(), c_expYear.size());
+                c_expYear.clear();
+                OPENSSL_cleanse((void*)c_number.data(), c_number.size());
+                c_number.clear();
+            } else if (type == ItemTypeIdentity) {
+                ClientWarden::IdentityItem iitem(v_inst, c_uuid);
+
+                std::string c_addr1 = "";
+                std::string c_addr2 = "";
+                std::string c_addr3 = "";
+                std::string c_city = "";
+                std::string c_company = "";
+                std::string c_country = "";
+                std::string c_email = "";
+                std::string c_firstName = "";
+                std::string c_middleName = "";
+                std::string c_lastName = "";
+                std::string c_licenseNum = "";
+                std::string c_passportNum = "";
+                std::string c_phone = "";
+                std::string c_postalCode = "";
+                std::string c_ssn = "";
+                std::string c_state = "";
+                std::string c_title = "";
+                std::string c_username = "";
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Email") {
+                        c_email = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Name") {
+                        std::vector<std::string> parts;
+                        boost::split(parts, itemField.value.UTF8String, boost::is_any_of(" "), boost::token_compress_on);
+                        c_title = (parts.size() > 0) ? parts[0] : "";
+                        c_firstName = (parts.size() > 1) ? parts[1] : "";
+                        c_middleName = (parts.size() > 2) ? parts[2] : "";
+                        c_lastName = (parts.size() > 3) ? parts[3] : "";
+                    } else if (itemField.title == @"Username") {
+                        c_username = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Company") {
+                        c_company = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Phone") {
+                        c_phone = itemField.value.UTF8String;
+                    } else if (itemField.title == @"SSN") {
+                        c_ssn = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Passport Number") {
+                        c_passportNum = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Licence Number") {
+                        c_licenseNum = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Address 1") {
+                        c_addr1 = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Address 2") {
+                        c_addr2 = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Address 3") {
+                        c_addr3 = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Locality") {
+                        std::vector<std::string> parts;
+                        boost::split(parts, itemField.value.UTF8String, boost::is_any_of(", "), boost::token_compress_on);
+                        c_postalCode = (parts.size() > 0) ? parts[0] : "";
+                        c_city = (parts.size() > 1) ? parts[1] : "";
+                        c_state = (parts.size() > 2) ? parts[2] : "";
+                        c_country = (parts.size() > 3) ? parts[3] : "";
+                    }
+                }
+
+                iitem.SetAddress1(c_addr1)
+                    ->SetAddress2(c_addr2)
+                    ->SetAddress3(c_addr3)
+                    ->SetCity(c_city)
+                    ->SetCompany(c_company)
+                    ->SetCountry(c_country)
+                    ->SetEmail(c_email)
+                    ->SetFirstName(c_firstName)
+                    ->SetLastName(c_lastName)
+                    ->SetLicenceNumber(c_licenseNum)
+                    ->SetMiddleName(c_middleName)
+                    ->SetPassportNumber(c_passportNum)
+                    ->SetPhone(c_phone)
+                    ->SetPostalCode(c_postalCode)
+                    ->SetSSN(c_ssn)
+                    ->SetState(c_state)
+                    ->SetTitle(c_title)
+                    ->SetUsername(c_username)
+                    ->Commit();
+
+                OPENSSL_cleanse((void*)c_addr1.data(), c_addr1.size());
+                c_addr1.clear();
+                OPENSSL_cleanse((void*)c_addr2.data(), c_addr2.size());
+                c_addr2.clear();
+                OPENSSL_cleanse((void*)c_addr3.data(), c_addr3.size());
+                c_addr3.clear();
+                OPENSSL_cleanse((void*)c_city.data(), c_city.size());
+                c_city.clear();
+                OPENSSL_cleanse((void*)c_company.data(), c_company.size());
+                c_company.clear();
+                OPENSSL_cleanse((void*)c_country.data(), c_country.size());
+                c_country.clear();
+                OPENSSL_cleanse((void*)c_email.data(), c_email.size());
+                c_email.clear();
+                OPENSSL_cleanse((void*)c_firstName.data(), c_firstName.size());
+                c_firstName.clear();
+                OPENSSL_cleanse((void*)c_lastName.data(), c_lastName.size());
+                c_lastName.clear();
+                OPENSSL_cleanse((void*)c_licenseNum.data(), c_licenseNum.size());
+                c_licenseNum.clear();
+                OPENSSL_cleanse((void*)c_middleName.data(), c_middleName.size());
+                c_middleName.clear();
+                OPENSSL_cleanse((void*)c_passportNum.data(), c_passportNum.size());
+                c_passportNum.clear();
+                OPENSSL_cleanse((void*)c_phone.data(), c_phone.size());
+                c_phone.clear();
+                OPENSSL_cleanse((void*)c_postalCode.data(), c_postalCode.size());
+                c_postalCode.clear();
+                OPENSSL_cleanse((void*)c_ssn.data(), c_ssn.size());
+                c_ssn.clear();
+                OPENSSL_cleanse((void*)c_state.data(), c_state.size());
+                c_state.clear();
+                OPENSSL_cleanse((void*)c_title.data(), c_title.size());
+                c_title.clear();
+                OPENSSL_cleanse((void*)c_username.data(), c_username.size());
+                c_username.clear();
+            } else if (type == ItemTypeSSHKey) {
+                ClientWarden::SSHKeyItem skitem(v_inst, c_uuid);
+
+                std::string c_fingerprint = "";
+                std::string c_privKey = "";
+                std::string c_pubKey = "";
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Fingerprint") {
+                        c_fingerprint = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Private Key") {
+                        c_privKey = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Public Key") {
+                        c_pubKey = itemField.value.UTF8String;
+                    }
+                }
+
+                skitem.SetFingerprint(c_fingerprint)
+                     ->SetPrivateKey(c_privKey)
+                     ->SetPublicKey(c_pubKey)
+                     ->Commit();
+
+                OPENSSL_cleanse((void*)c_fingerprint.data(), c_fingerprint.size());
+                c_fingerprint.clear();
+                OPENSSL_cleanse((void*)c_privKey.data(), c_privKey.size());
+                c_privKey.clear();
+                OPENSSL_cleanse((void*)c_pubKey.data(), c_pubKey.size());
+                c_pubKey.clear();
             }
 
             return true;
