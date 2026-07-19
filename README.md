@@ -137,8 +137,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [ ] UI Bridge
       - [X] Nav Panel Bridge
       - [X] Items Panel Bridge
-      - [ ] Side Panel Bridge
-        - [ ] Save Support
+      - [X] Side Panel Bridge
+        - [X] Save Support
       - [ ] Settings Bridge
         - [ ] Add ScreenShot Option
     - [X] Add Errors on Bridge
