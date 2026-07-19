@@ -44,7 +44,7 @@
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
             v_inst.GetItem(c_uuid)
-                  .SetFavorite(fav)
+                 ->SetFavorite(fav)
                  ->Commit();
 
             return true;
@@ -78,8 +78,8 @@
             if (i_type == ItemTypeLogin) {
                 std::vector<std::string> loginUrl;
 
-                v_inst.GetItem<LoginItem>(c_uuid)
-                      .GetWebsites(loginUrl)
+                v_inst.GetItem<ClientWarden::LoginItem>(c_uuid)
+                     ->GetWebsites(loginUrl)
                      ->GetName(c_name)
                      ->Duplicate(c_dupUUID)
                      ->Close();
@@ -102,29 +102,29 @@
                     uri.clear();
                 }
             } else if (i_type == ItemTypeCard) {
-                v_inst.GetItem<CardItem>(c_uuid)
-                      .GetName(c_name)
+                v_inst.GetItem<ClientWarden::CardItem>(c_uuid)
+                     ->GetName(c_name)
                      ->Duplicate(c_dupUUID)
                      ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
             } else if (i_type == ItemTypeIdentity) {
-                v_inst.GetItem<IdentityItem>(c_uuid)
-                      .GetName(c_name)
+                v_inst.GetItem<ClientWarden::IdentityItem>(c_uuid)
+                     ->GetName(c_name)
                      ->Duplicate(c_dupUUID)
                      ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
             } else if (i_type == ItemTypeNote) {
-                v_inst.GetItem<NoteItem>(c_uuid)
-                      .GetName(c_name)
+                v_inst.GetItem<ClientWarden::NoteItem>(c_uuid)
+                     ->GetName(c_name)
                      ->Duplicate(c_dupUUID)
                      ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (i_type == ItemTypeSSHKey) {
-                v_inst.GetItem<SSHKeyItem>(c_uuid)
-                      .GetName(c_name)
+                v_inst.GetItem<ClientWarden::SSHKeyItem>(c_uuid)
+                     ->GetName(c_name)
                      ->Duplicate(c_dupUUID)
                      ->Close();
                 
@@ -162,7 +162,7 @@
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
             v_inst.GetItem(c_uuid)
-                  .Bin();
+                 ->Bin();
 
             return true;
         } catch (...) {
@@ -188,7 +188,7 @@
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
             v_inst.GetItem(c_uuid)
-                  .UnBin();
+                 ->UnBin();
 
             return true;
         } catch (...) {
@@ -214,7 +214,7 @@
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
             v_inst.GetItem(c_uuid)
-                  .Delete();
+                 ->Delete();
 
             return true;
         } catch (...) {
@@ -263,22 +263,22 @@
             std::vector<std::string> c_attachIds;
             std::string c_notes;
 
-            item.GetName(c_name)
-              ->GetFavorite(favorite)
-              ->GetFields(c_customFields)
-              ->GetCreation(c_creation)
-              ->GetModification(c_modification)
-              ->GetDeletion(c_deletion)
-              ->GetNotes(c_notes)
-              ->GetType(c_type)
-              ->GetAttachmentIDs(c_attachIds);
+            item->GetName(c_name)
+                ->GetFavorite(favorite)
+                ->GetFields(c_customFields)
+                ->GetCreation(c_creation)
+                ->GetModification(c_modification)
+                ->GetDeletion(c_deletion)
+                ->GetNotes(c_notes)
+                ->GetType(c_type)
+                ->GetAttachmentIDs(c_attachIds);
             
             for (auto& c_id : c_attachIds) {
                 NSString* id = [NSString stringWithUTF8String: c_id.c_str()];
 
                 std::string c_attach_name;
 
-                item.GetAttachmentName(c_id, c_attach_name);
+                item->GetAttachmentName(c_id, c_attach_name);
 
                 NSString* attach_name = [NSString stringWithUTF8String: c_attach_name.c_str()];
 
@@ -292,7 +292,7 @@
                 [attachments addObject: attachment];
             }
             
-            item.Close();
+            item->Close();
             
             name = [NSString stringWithUTF8String: c_name.c_str()];
 
@@ -356,8 +356,8 @@
                 std::vector<std::string> c_website;
                 std::vector<std::pair<std::time_t, std::string>> c_passHist;
 
-                v_inst.GetItem<LoginItem>(c_uuid)
-                      .GetUsername(c_username)
+                v_inst.GetItem<ClientWarden::LoginItem>(c_uuid)
+                     ->GetUsername(c_username)
                      ->GetPassword(c_password)
                      ->GetTotpSecret(c_totp)
                      ->GetWebsites(c_website)
@@ -384,8 +384,8 @@
                 cb_getTOTP:^TOTPResult * _Nonnull {
                     ClientWarden::TOTPCode code;
 
-                    v_inst.GetItem(cc_uuid)
-                          .GetTotp(code)
+                    v_inst.GetItem<ClientWarden::LoginItem>(cc_uuid)
+                         ->GetTotp(code)
                          ->Close();
                     
                     int64_t refreshDate = (int64_t)code.remaining;
@@ -450,8 +450,8 @@
                 std::string c_expYear = "";
                 std::string c_number = "";
 
-                v_inst.GetItem<CardItem>(c_uuid)
-                      .GetBrand(c_brand)
+                v_inst.GetItem<ClientWarden::CardItem>(c_uuid)
+                     ->GetBrand(c_brand)
                      ->GetCardholderName(c_cardholderName)
                      ->GetCode(c_code)
                      ->GetExpMonth(c_expMonth)
@@ -525,8 +525,8 @@
                 std::string c_title = "";
                 std::string c_username = "";
 
-                v_inst.GetItem<IdentityItem>(c_uuid)
-                      .GetAddress1(c_addr1)
+                v_inst.GetItem<ClientWarden::IdentityItem>(c_uuid)
+                     ->GetAddress1(c_addr1)
                      ->GetAddress2(c_addr2)
                      ->GetAddress3(c_addr3)
                      ->GetCity(c_city)
@@ -665,8 +665,8 @@
                 std::string c_privKey = "";
                 std::string c_pubKey = "";
 
-                v_inst.GetItem<SSHKeyItem>(c_uuid)
-                      .GetFingerprint(c_fingerprint)
+                v_inst.GetItem<ClientWarden::SSHKeyItem>(c_uuid)
+                     ->GetFingerprint(c_fingerprint)
                      ->GetPrivateKey(c_privKey)
                      ->GetPublicKey(c_pubKey)
                      ->Close();
@@ -733,11 +733,11 @@
 
             std::string c_attachID = attachID.UTF8String;
 
-            ClientWarden::GenericItem item(v_inst, c_uuid);
-
             std::string c_attachName = "";
 
-            item.GetAttachmentName(c_attachID, c_attachName)->Close();
+            v_inst.GetItem(c_uuid)
+                 ->GetAttachmentName(c_attachID, c_attachName)
+                 ->Close();
 
             NSSavePanel* panel = [NSSavePanel savePanel];
             panel.nameFieldStringValue = [NSString stringWithUTF8String: c_attachName.c_str()];
@@ -752,11 +752,13 @@
 
                         ClientWarden::GenericItem item(v_inst, c_uuid);
 
-                        item.GetAttachment(c_attachID, c_content, [attachID](float progress) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [SidePanel.instance updateProgressWithId:attachID progress:(double)progress];
-                            });
-                        })->Close();
+                        v_inst.GetItem(c_uuid)
+                             ->GetAttachment(c_attachID, c_content, [attachID](float progress) {
+                                   dispatch_async(dispatch_get_main_queue(), ^{
+                                       [SidePanel.instance updateProgressWithId:attachID progress:(double)progress];
+                                   });
+                             })
+                             ->Close();
 
                         dispatch_async(dispatch_get_main_queue(), ^{
                             [SidePanel.instance updateProgressWithId:attachID progress:0.0];
@@ -866,15 +868,15 @@
                         std::string c_content((const char*)fileData.bytes, fileData.length);
                         std::string c_fileName = fileName.UTF8String;
 
-                        ClientWarden::GenericItem item(v_inst, c_uuid);
-
                         std::string c_newAttachID = "";
 
-                        item.AddAttachment(c_fileName, c_content, c_newAttachID, [tempAttachID](float progress) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [SidePanel.instance updateProgressWithId:tempAttachID progress:(double)progress];
-                            });
-                        })->Close();
+                        v_inst.GetItem<ClientWarden::IdentityItem>(c_uuid)
+                             ->AddAttachment(c_fileName, c_content, c_newAttachID, [tempAttachID](float progress) {
+                               dispatch_async(dispatch_get_main_queue(), ^{
+                                   [SidePanel.instance updateProgressWithId:tempAttachID progress:(double)progress];
+                               });
+                             })
+                             ->Close();
 
                         OPENSSL_cleanse((void*)c_content.data(), c_content.size());
                         c_content.clear();
@@ -923,7 +925,9 @@
 
             ClientWarden::GenericItem item(v_inst, c_uuid);
 
-            item.RemoveAttachment(c_attachID)->Commit();
+            v_inst.GetItem(c_uuid)
+                 ->RemoveAttachment(c_attachID)
+                 ->Commit();
 
             [SidePanel.instance deleteAttachmentViewWithId:attachID];
 
@@ -951,15 +955,15 @@
 + (void)cb_save {
     SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, NSArray<GenericItemData*>* itemFields, 
                                        NSArray<FieldItemData*>* customFields, NSString* notes) {
-
+        try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
             std::string c_uuid = uuid.UUIDString.UTF8String;
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
             
-            ClientWarden::GenericItem item(v_inst, c_uuid);
+            std::shared_ptr<ClientWarden::GenericItem> item = v_inst.GetItem(c_uuid);
 
-            item.ClearFields();
+            item->ClearFields();
 
             for (FieldItemData* field in customFields) {
                 std::string c_title;
@@ -970,7 +974,7 @@
                 c_value = field.value.UTF8String;
                 c_type = (ClientWarden::CustomFieldType)((int)field.type);
 
-                item.AddField(c_type, c_title, c_value);
+                item->AddField(c_type, c_title, c_value);
 
                 OPENSSL_cleanse((void*)c_title.data(), c_title.size());
                 c_title.clear();
@@ -981,9 +985,9 @@
             std::string c_notes = notes.UTF8String;
             std::string c_name = name.UTF8String;
 
-            item.SetNotes(c_notes)
-               ->SetName(c_name)
-               ->Commit();
+            item->SetNotes(c_notes)
+                ->SetName(c_name)
+                ->Commit();
 
             OPENSSL_cleanse((void*)c_name.data(), c_name.size());
             c_name.clear();
@@ -991,7 +995,7 @@
             c_notes.clear();
 
             if (type == ItemTypeLogin) {
-                ClientWarden::LoginItem litem(v_inst, c_uuid);
+                std::shared_ptr<ClientWarden::LoginItem> litem = v_inst.GetItem<ClientWarden::LoginItem>(c_uuid);
 
                 std::string c_username = "";
                 std::string c_password = "";
@@ -1015,29 +1019,29 @@
                     }
                 }
 
-                litem.SetUsername(c_username)
-                    ->SetPassword(c_password)
-                    ->SetTotp(c_totp);
+                litem->SetUsername(c_username)
+                     ->SetPassword(c_password)
+                     ->SetTotp(c_totp);
                 
                 std::vector<std::string> c_oWebsites;
 
-                litem.GetWebsites(c_oWebsites);
+                litem->GetWebsites(c_oWebsites);
 
                 for (auto& website : c_oWebsites) {
-                    litem.RemoveWebsite(website);
+                    litem->RemoveWebsite(website);
 
                     OPENSSL_cleanse((void*)website.data(), website.size());
                     website.clear();
                 }
 
                 for (auto& website : c_website) {
-                    litem.AddWebsite(website);
+                    litem->AddWebsite(website);
 
                     OPENSSL_cleanse((void*)website.data(), website.size());
                     website.clear();
                 }
 
-                litem.Commit();
+                litem->Commit();
 
                 OPENSSL_cleanse((void*)c_username.data(), c_username.size());
                 c_username.clear();
@@ -1046,8 +1050,6 @@
                 OPENSSL_cleanse((void*)c_totp.data(), c_totp.size());
                 c_totp.clear();
             } else if (type == ItemTypeCard) {
-                ClientWarden::CardItem citem(v_inst, c_uuid);
-
                 std::string c_brand = "";
                 std::string c_cardholderName = "";
                 std::string c_number = "";
@@ -1074,13 +1076,14 @@
                     }
                 }
 
-                citem.SetBrand(c_brand)
-                    ->SetCardholderName(c_cardholderName)
-                    ->SetCode(c_code)
-                    ->SetExpMonth(c_expMonth)
-                    ->SetExpYear(c_expYear)
-                    ->SetNumber(c_number)
-                    ->Commit();
+                v_inst.GetItem<ClientWarden::CardItem>(c_uuid)
+                     ->SetBrand(c_brand)
+                     ->SetCardholderName(c_cardholderName)
+                     ->SetCode(c_code)
+                     ->SetExpMonth(c_expMonth)
+                     ->SetExpYear(c_expYear)
+                     ->SetNumber(c_number)
+                     ->Commit();
 
                 OPENSSL_cleanse((void*)c_brand.data(), c_brand.size());
                 c_brand.clear();
@@ -1095,8 +1098,6 @@
                 OPENSSL_cleanse((void*)c_number.data(), c_number.size());
                 c_number.clear();
             } else if (type == ItemTypeIdentity) {
-                ClientWarden::IdentityItem iitem(v_inst, c_uuid);
-
                 std::string c_addr1 = "";
                 std::string c_addr2 = "";
                 std::string c_addr3 = "";
@@ -1154,25 +1155,26 @@
                     }
                 }
 
-                iitem.SetAddress1(c_addr1)
-                    ->SetAddress2(c_addr2)
-                    ->SetAddress3(c_addr3)
-                    ->SetCity(c_city)
-                    ->SetCompany(c_company)
-                    ->SetCountry(c_country)
-                    ->SetEmail(c_email)
-                    ->SetFirstName(c_firstName)
-                    ->SetLastName(c_lastName)
-                    ->SetLicenceNumber(c_licenseNum)
-                    ->SetMiddleName(c_middleName)
-                    ->SetPassportNumber(c_passportNum)
-                    ->SetPhone(c_phone)
-                    ->SetPostalCode(c_postalCode)
-                    ->SetSSN(c_ssn)
-                    ->SetState(c_state)
-                    ->SetTitle(c_title)
-                    ->SetUsername(c_username)
-                    ->Commit();
+                v_inst.GetItem<ClientWarden::IdentityItem>(c_uuid)
+                     ->SetAddress1(c_addr1)
+                     ->SetAddress2(c_addr2)
+                     ->SetAddress3(c_addr3)
+                     ->SetCity(c_city)
+                     ->SetCompany(c_company)
+                     ->SetCountry(c_country)
+                     ->SetEmail(c_email)
+                     ->SetFirstName(c_firstName)
+                     ->SetLastName(c_lastName)
+                     ->SetLicenceNumber(c_licenseNum)
+                     ->SetMiddleName(c_middleName)
+                     ->SetPassportNumber(c_passportNum)
+                     ->SetPhone(c_phone)
+                     ->SetPostalCode(c_postalCode)
+                     ->SetSSN(c_ssn)
+                     ->SetState(c_state)
+                     ->SetTitle(c_title)
+                     ->SetUsername(c_username)
+                     ->Commit();
 
                 OPENSSL_cleanse((void*)c_addr1.data(), c_addr1.size());
                 c_addr1.clear();
@@ -1211,8 +1213,6 @@
                 OPENSSL_cleanse((void*)c_username.data(), c_username.size());
                 c_username.clear();
             } else if (type == ItemTypeSSHKey) {
-                ClientWarden::SSHKeyItem skitem(v_inst, c_uuid);
-
                 std::string c_fingerprint = "";
                 std::string c_privKey = "";
                 std::string c_pubKey = "";
@@ -1227,7 +1227,8 @@
                     }
                 }
 
-                skitem.SetFingerprint(c_fingerprint)
+                v_inst.GetItem<ClientWarden::SSHKeyItem>(c_uuid)
+                     ->SetFingerprint(c_fingerprint)
                      ->SetPrivateKey(c_privKey)
                      ->SetPublicKey(c_pubKey)
                      ->Commit();
@@ -1241,6 +1242,14 @@
             }
 
             return true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Save Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return false;
+        }
     };
 }
 

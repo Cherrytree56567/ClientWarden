@@ -40,7 +40,7 @@
             std::string c_name;
 
             v_inst.GetItem(cipher.second)
-                  .GetName(c_name)
+                 ->GetName(c_name)
                  ->Close();
 
             NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
@@ -50,8 +50,8 @@
             if (cipher.first == ClientWarden::CipherType::Login) {
                 std::vector<std::string> loginUrl;
 
-                v_inst.GetItem<LoginItem>(cipher.second)
-                      .GetWebsites(loginUrl)
+                v_inst.GetItem<ClientWarden::LoginItem>(cipher.second)
+                     ->GetWebsites(loginUrl)
                      ->Close();
 
                 if (loginUrl.size() != 0) {
@@ -135,7 +135,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
 
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByUnbinned()
+                           ->FilterByUnbinned()
                             .FilterNameByRegex(c_name)
                             .GetCiphers();
 
@@ -160,26 +160,33 @@
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-            std::shared_ptr<GenericItem> item;
+            std::shared_ptr<ClientWarden::GenericItem> item;
 
             ClientwardenImage* img = nil;
             NSString* name = @"New Item";
             
             if (i_type == ItemTypeLogin) {
-                item = v_inst.CreateItem<LoginItem>();
+                item = v_inst.CreateItem<ClientWarden::LoginItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"globe"];
             } else if (i_type == ItemTypeCard) {
-                item = v_inst.CreateItem<CardItem>();
+                item = v_inst.CreateItem<ClientWarden::CardItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"creditcard"];
             } else if (i_type == ItemTypeIdentity) {
-                item = v_inst.CreateItem<IdentityItem>();
+                item = v_inst.CreateItem<ClientWarden::IdentityItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"person.text.rectangle"];
             } else if (i_type == ItemTypeNote) {
-                item = v_inst.CreateItem<NoteItem>();
+                item = v_inst.CreateItem<ClientWarden::NoteItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (i_type == ItemTypeSSHKey) {
-                item = v_inst.CreateItem<SSHKeyItem>();
+                item = v_inst.CreateItem<ClientWarden::SSHKeyItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            } else {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Failed to create new item: Invalid Item Type"];
+                    [[ToastStore instance] addToast:toast];
+                });
+
+                return nil;
             }
 
             std::string c_name = "New Item";

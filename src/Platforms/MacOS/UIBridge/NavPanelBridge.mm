@@ -49,7 +49,7 @@
             std::string c_name;
 
             v_inst.GetItem(cipher.second)
-                  .GetName(c_name)
+                 ->GetName(c_name)
                  ->Close();
 
             NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
@@ -59,8 +59,8 @@
             if (cipher.first == ClientWarden::CipherType::Login) {
                 std::vector<std::string> loginUrl;
 
-                v_inst.GetItem<LoginItem>(cipher.second)
-                      .GetWebsites(loginUrl)
+                v_inst.GetItem<ClientWarden::LoginItem>(cipher.second)
+                     ->GetWebsites(loginUrl)
                      ->Close();
 
                 if (loginUrl.size() != 0) {
@@ -88,6 +88,8 @@
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (cipher.first == ClientWarden::CipherType::SSHKey) {
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            } else {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"questionmark.app.dashed"];
             }
 
             ItemType i_type;
@@ -141,7 +143,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByUnbinned()
+                           ->FilterByUnbinned()
                             .GetCiphers();
             
             NSArray<ItemElement*>* items = [NavPanelBridge getItems:ciphers];
@@ -167,7 +169,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByFavorites()
+                           ->FilterByFavorites()
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -191,7 +193,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByBinned()
+                           ->FilterByBinned()
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -215,7 +217,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByType(ClientWarden::CipherType::Login)
+                           ->FilterByType(ClientWarden::CipherType::Login)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -239,7 +241,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByType(ClientWarden::CipherType::Card)
+                           ->FilterByType(ClientWarden::CipherType::Card)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -263,7 +265,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByType(ClientWarden::CipherType::Identity)
+                           ->FilterByType(ClientWarden::CipherType::Identity)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -287,7 +289,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByType(ClientWarden::CipherType::Note)
+                           ->FilterByType(ClientWarden::CipherType::Note)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -311,7 +313,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByType(ClientWarden::CipherType::SSHKey)
+                           ->FilterByType(ClientWarden::CipherType::SSHKey)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -333,9 +335,22 @@
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            if (c_uuid.empty()) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Empty UUID"];
+                    [[ToastStore instance] addToast:toast];
+                });
+
+                NSMutableArray<ItemElement*>* items = [NSMutableArray array];
+                return items;
+            }
             
             ciphers = v_inst.GetCipherQuery()
-                            .FilterByFolder(c_uuid)
+                           ->FilterByFolder(c_uuid)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -368,7 +383,7 @@
                 std::string c_name;
 
                 v_inst.GetFolder(c_uuid)
-                      .GetName(c_name)
+                     ->GetName(c_name)
                       .Close();
                 
                 NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
@@ -403,7 +418,7 @@
 
             std::string c_name = name.UTF8String;
             std::string c_uuid = v_inst.CreateFolder()
-                                       .SetName(c_name)
+                                      ->SetName(c_name)
                                        .Commit();
             
             if (c_uuid.empty()) {
@@ -446,7 +461,7 @@
             }
 
             v_inst.GetFolder(c_uuid)
-                  .Delete();
+                 ->Delete();
 
             return true;
         } catch (...) {
@@ -482,7 +497,7 @@
             std::string c_name = name.UTF8String;
 
             v_inst.GetFolder(c_uuid)
-                  .SetName(c_name)
+                 ->SetName(c_name)
                   .Commit();
 
             return true;

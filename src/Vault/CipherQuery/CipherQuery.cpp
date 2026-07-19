@@ -180,7 +180,7 @@ namespace ClientWarden {
             }
 
             std::string name = localVault.crypto.DecryptAsStr((*it)["name"].get<std::string>(), itemEncKey, itemMacKey);
-            std::regex pattern(regex);
+            std::regex pattern(regex, std::regex_constants::icase);
 
             if (!std::regex_search(name, pattern)) {
                 OPENSSL_cleanse(name.data(), name.size());
