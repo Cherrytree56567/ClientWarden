@@ -282,7 +282,7 @@ struct GenericItem: View {
                          * Since I wanted to have a UI and UI Bridge, I decided to use a totp
                          * callback which gets called everytime the totp needs to be refreshed.
                          */
-                        if (data.cb_getTOTP != nil && totpMax > 0) {
+                        if (data.cb_getTOTP != nil && totpMax > 0 && !data.value.isEmpty) {
                             let progress = totpMax > 0 ? totpLeft / Double(totpMax) : 0
                             let slabel = String(Int(totpLeft))
                             Gauge(value: progress) {
