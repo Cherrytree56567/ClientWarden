@@ -65,6 +65,43 @@ final class NavigationPanel: NSObject {
     func refreshItems() {
         self.refresh += 1
     }
+
+    func loadCurrentTab(refresh: Bool = false) -> Bool {
+        var elements: [ItemElement]?
+        
+        switch selection {
+            case .all_items:
+                elements = cb_allItems?()
+            case .favorites:
+                elements = cb_favorites?()
+            case .trash:
+                elements = cb_trash?()
+            case .login:
+                elements = cb_login?()
+            case .card:
+                elements = cb_card?()
+            case .identity:
+                elements = cb_identity?()
+            case .note:
+                elements = cb_note?()
+            case .sshkey:
+                elements = cb_SSHKey?()
+            case .folder(let uuid):
+                elements = cb_folder?(uuid)
+        }
+        
+        if let elements {
+            if (refresh) {
+                ItemsPanel.instance.refresh(data: elements)
+            } else {
+                ItemsPanel.instance.update(data: elements)
+            }
+            return true
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for \(selection)"))
+            return false
+        }
+    }
 }
 
 struct NavigationPanelView: View {
@@ -76,33 +113,7 @@ struct NavigationPanelView: View {
     @Bindable var data: NavigationPanel = NavigationPanel.instance
     
     private func loadTabElements(tab: NavItems, prev: NavItems) {
-        var elements: [ItemElement]?
-        
-        switch tab {
-            case .all_items:
-                elements = data.cb_allItems?()
-            case .favorites:
-                elements = data.cb_favorites?()
-            case .trash:
-                elements = data.cb_trash?()
-            case .login:
-                elements = data.cb_login?()
-            case .card:
-                elements = data.cb_card?()
-            case .identity:
-                elements = data.cb_identity?()
-            case .note:
-                elements = data.cb_note?()
-            case .sshkey:
-                elements = data.cb_SSHKey?()
-            case .folder(let uuid):
-                elements = data.cb_folder?(uuid)
-        }
-        
-        if let elements {
-            ItemsPanel.instance.update(data: elements)
-        } else {
-            ToastStore.instance.toasts.append(Toast(message: "No callback set for \(tab)"))
+        if (!data.loadCurrentTab()) {
             data.selection = prev
         }
     }

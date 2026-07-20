@@ -79,16 +79,16 @@ final class SidePanel: NSObject {
     
     func saveSnapshot() {
         s_name = name
-        s_itemFields = itemFields
+        s_itemFields = itemFields.map { $0._copy() }
         s_customFields = customFields
-        s_notes = notes
+        s_notes = notes._copy()
     }
     
     func pullSnapshot() {
         name = s_name
-        itemFields = s_itemFields
+        itemFields = s_itemFields.map { $0._copy() }
         customFields = s_customFields
-        notes = s_notes
+        notes = s_notes._copy()
     }
     
     func deleteSnapshot() {
@@ -124,6 +124,7 @@ final class SidePanel: NSObject {
          */
         if let sav = cb_save?(uuid, name, type, itemFields, customFields, notes.value) {
             if (sav) {
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
                 return true
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to save item"))
@@ -142,7 +143,7 @@ final class SidePanel: NSObject {
         if let dup = cb_duplicate?(uuid, type) {
             if (dup != nil) {
                 ItemsPanel.instance.elements.append(dup)
-                ItemsPanel.instance.query()
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
             }
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for duplicate Item"))
@@ -156,7 +157,7 @@ final class SidePanel: NSObject {
          */
         if let del = cb_delete?(uuid) {
             if (del) {
-                ItemsPanel.instance.query()
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to delete item"))
             }
@@ -234,6 +235,7 @@ final class SidePanel: NSObject {
             if (fav) {
                 editable = false
                 viewable = false
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to restore item"))
             }
@@ -251,6 +253,7 @@ final class SidePanel: NSObject {
             if (fav) {
                 editable = false
                 viewable = false
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to Permanantly Delete Item"))
             }

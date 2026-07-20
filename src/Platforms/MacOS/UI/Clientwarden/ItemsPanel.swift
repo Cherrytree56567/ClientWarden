@@ -18,11 +18,15 @@ final class ItemsPanel: NSObject {
         searchQuery = ""
     }
 
+    func refresh(data: [ItemElement]) {
+        elements = data
+        query()
+    }
+
     func query() {
-        if (searchQuery == "") {
+        if (searchQuery.isEmpty) {
             filteredElements = elements
-        }
-        if let results = cb_query?(searchQuery) {
+        } else if let results = cb_query?(searchQuery) {
             filteredElements = results
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for query"))
@@ -147,6 +151,14 @@ struct ItemsPanelView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: data.elements)
         .onAppear {
             ItemsPanelBridge.setupCallbacks()
+        }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                if (!Task.isCancelled) {
+                    NavigationPanel.instance.loadCurrentTab(refresh: true)
+                }
+            }
         }
     }
 }

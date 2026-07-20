@@ -40,11 +40,11 @@ class TOTPResult: NSObject {
 }
 
 @objcMembers
-class GenericItemData : NSObject, Identifiable {
+class GenericItemData : NSObject, Identifiable, ObservableObject {
     let id = UUID()
-    @objc public var title: String
-    @objc public var value: String
-    @objc public var type: GenericItemType
+    @objc @Published public var title: String
+    @objc @Published public var value: String
+    @objc @Published public var type: GenericItemType
     @objc public var cb_getTOTP: (() -> TOTPResult)?
     
     init(title: String, value: String, type: GenericItemType) {
@@ -79,6 +79,10 @@ class GenericItemData : NSObject, Identifiable {
         } else {
             return value.replacingOccurrences(of: "\n", with: " ")
         }
+    }
+
+    func _copy() -> GenericItemData {
+        GenericItemData(title: title, value: value, type: type, cb_getTOTP: cb_getTOTP)
     }
 }
 
@@ -120,7 +124,7 @@ struct TOTPTimerModifier: ViewModifier {
 }
 
 struct GenericItem: View {
-    @Binding var data: GenericItemData
+    @ObservedObject var data: GenericItemData
     @State private var revealed: Bool
     
     @State private var totpValue: String = ""
@@ -150,7 +154,7 @@ struct GenericItem: View {
     }
     
     init(data: Binding<GenericItemData>, edit: Bool) {
-        self._data = data
+        self.data = data.wrappedValue
         self.revealed = false
         self.editable = edit
     }
@@ -208,7 +212,7 @@ struct GenericItem: View {
                             Button {
                                 var val = websiteBinding.wrappedValue
                                 val.append("")
-                                data.value = val.joined(separator: "\n")
+                                websiteBinding.wrappedValue = val
                             } label: {
                                 Label("Add website", systemImage: "plus.circle")
                                     .font(.caption)

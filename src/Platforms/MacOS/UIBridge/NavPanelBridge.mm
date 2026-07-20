@@ -169,7 +169,8 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByFavorites()
+                           ->FilterByUnbinned()
+                            .FilterByFavorites()
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -217,7 +218,8 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByType(ClientWarden::CipherType::Login)
+                           ->FilterByUnbinned()
+                            .FilterByType(ClientWarden::CipherType::Login)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -241,7 +243,8 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByType(ClientWarden::CipherType::Card)
+                           ->FilterByUnbinned()
+                            .FilterByType(ClientWarden::CipherType::Card)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -265,7 +268,8 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByType(ClientWarden::CipherType::Identity)
+                           ->FilterByUnbinned()
+                            .FilterByType(ClientWarden::CipherType::Identity)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -289,7 +293,8 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByType(ClientWarden::CipherType::Note)
+                           ->FilterByUnbinned()
+                            .FilterByType(ClientWarden::CipherType::Note)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -313,7 +318,8 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByType(ClientWarden::CipherType::SSHKey)
+                           ->FilterByUnbinned()
+                            .FilterByType(ClientWarden::CipherType::SSHKey)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -350,7 +356,8 @@
             }
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByFolder(c_uuid)
+                           ->FilterByUnbinned()
+                            .FilterByFolder(c_uuid)
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
