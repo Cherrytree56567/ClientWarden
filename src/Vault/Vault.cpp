@@ -748,15 +748,12 @@ namespace ClientWarden {
         return network.RestoreItem(uuid, (*session.authData)["accessString"].get<std::string>());
     }
     
-    std::optional<std::string> Vault::AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
+    std::optional<nlohmann::json> Vault::AddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, 
         std::function<void(float)> onProgress) {
         auto [attEncKey, attMacKey] = crypto.generateEncMacKeys();
 
         Botan::secure_vector<uint8_t> attKey(attEncKey.begin(), attEncKey.end());
         attKey.insert(attKey.end(), attMacKey.begin(), attMacKey.end());
-
-        Botan::secure_scrub_memory(attEncKey.data(), attEncKey.size());
-        Botan::secure_scrub_memory(attMacKey.data(), attMacKey.size());
 
         Botan::secure_vector<uint8_t> cipEncKey = *session.encKey;
         Botan::secure_vector<uint8_t> cipMacKey = *session.macKey;
@@ -767,8 +764,8 @@ namespace ClientWarden {
                     auto [cipEnc, cipMac] = crypto.getEncMacKey(cipher["key"]);
                     cipEncKey = cipEnc;
                     cipMacKey = cipMac;
-                    Botan::secure_scrub_memory(cipEncKey.data(), cipEncKey.size());
-                    Botan::secure_scrub_memory(cipMacKey.data(), cipMacKey.size());
+                    Botan::secure_scrub_memory(cipEnc.data(), cipEnc.size());
+                    Botan::secure_scrub_memory(cipMac.data(), cipMac.size());
                 }
                 break;
             }
@@ -776,37 +773,26 @@ namespace ClientWarden {
         
         std::string attachmentKey = crypto.Encrypt(attKey, cipEncKey, cipMacKey);
         Botan::secure_scrub_memory(attKey.data(), attKey.size());
+
+        Botan::secure_vector<uint8_t> a_encryptedFileContents(decryptedFileContents.begin(), decryptedFileContents.end());
+        std::string encryptedFileContents = crypto.EncryptRaw(a_encryptedFileContents, attEncKey, attMacKey);
+        Botan::secure_scrub_memory(a_encryptedFileContents.data(), a_encryptedFileContents.size());
+
+        std::string encryptedFileName = crypto.Encrypt(decryptedFileName, cipEncKey, cipMacKey);
+
+        Botan::secure_scrub_memory(attEncKey.data(), attEncKey.size());
+        Botan::secure_scrub_memory(attMacKey.data(), attMacKey.size());
         Botan::secure_scrub_memory(cipEncKey.data(), cipEncKey.size());
         Botan::secure_scrub_memory(cipMacKey.data(), cipMacKey.size());
 
         std::optional<nlohmann::json> res = network.AddAttachment(uuid, encryptedFileContents, encryptedFileName,
             attachmentKey, (*session.authData)["accessString"].get<std::string>(), onProgress);
-        if (res.has_value()) {
-            if (!res.value().contains("attachmentId") || !res.value().contains("cipherResponse")) {
-                return std::nullopt;
-            }
-            if (!res.value()["cipherResponse"].contains("attachments")) {
-                return std::nullopt;
-            }
 
-            auto attachmentField = res.value()["cipherResponse"]["attachments"];
-
-            if (session.vaultData->contains("ciphers") && (*session.vaultData)["ciphers"].is_array()) {
-                for (auto& cipher : (*session.vaultData)["ciphers"]) {
-                    if (cipher.contains("id") && cipher["id"] == uuid) {
-                        cipher["attachments"] = attachmentField;
-                        break;
-                    }
-                }
-            }
-            return res.value()["attachmentId"];
-        }
-
-        return std::nullopt;
+        return res;
     }
 
     bool Vault::RemoveAttachment(std::string uuid, std::string attachmentID) {
-        return network.RestoreItem(uuid, (*session.authData)["accessString"].get<std::string>());
+        return network.RemoveAttachment(uuid, attachmentID, (*session.authData)["accessString"].get<std::string>());
     }
 
     bool Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,

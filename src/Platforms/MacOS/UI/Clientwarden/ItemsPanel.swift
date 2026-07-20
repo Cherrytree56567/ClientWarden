@@ -156,7 +156,7 @@ struct ItemsPanelView: View {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
                 if (!Task.isCancelled) {
-                    NavigationPanel.instance.loadCurrentTab(refresh: true)
+                    //NavigationPanel.instance.loadCurrentTab(refresh: true)
                 }
             }
         }

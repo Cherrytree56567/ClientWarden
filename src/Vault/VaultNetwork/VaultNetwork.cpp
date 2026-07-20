@@ -444,8 +444,6 @@ namespace ClientWarden {
 
         nlohmann::json body = nlohmann::json::parse(res->body);
 
-        std::string attachmentBody = body["cipherResponse"]["attachments"];
-
         if (!body.contains("cipherResponse")) {
             return std::nullopt;
         }

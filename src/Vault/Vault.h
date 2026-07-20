@@ -78,7 +78,7 @@ namespace ClientWarden {
         bool DeleteItem(std::string uuid, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());
         bool SoftDeleteItem(std::string uuid);
         bool RestoreItem(std::string uuid);
-        std::optional<std::string> AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
+        std::optional<nlohmann::json> AddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, 
             std::function<void(float)> onProgress = nullptr);
         bool RemoveAttachment(std::string uuid, std::string attachmentID);
         bool DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,

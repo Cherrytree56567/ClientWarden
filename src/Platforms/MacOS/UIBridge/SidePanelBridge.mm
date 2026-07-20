@@ -745,15 +745,12 @@
 
             [panel beginWithCompletionHandler:^(NSModalResponse result) {
                 if (result == NSModalResponseOK && panel.URL) {
-                    NSString* path = panel.URL.path;
+                    std::string path = panel.URL.path.UTF8String;
 
                     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                        std::string c_content = "";
-
-                        ClientWarden::GenericItem item(v_inst, c_uuid);
 
                         v_inst.GetItem(c_uuid)
-                             ->GetAttachment(c_attachID, c_content, [attachID](float progress) {
+                             ->GetAttachment(c_attachID, path, [attachID](float progress) {
                                    dispatch_async(dispatch_get_main_queue(), ^{
                                        [SidePanel.instance updateProgressWithId:attachID progress:(double)progress];
                                    });
@@ -763,20 +760,6 @@
                         dispatch_async(dispatch_get_main_queue(), ^{
                             [SidePanel.instance updateProgressWithId:attachID progress:0.0];
                         });
-
-                        NSData* content = [NSData dataWithBytes:c_content.data() length:c_content.size()];
-                        NSError* writeError = nil;
-                        BOOL success = [content writeToFile:path options:NSDataWritingAtomic error:&writeError];
-
-                        if (!success) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Write Attachment"];
-                                [[ToastStore instance] addToast:toast];
-                            });
-                        }
-
-                        OPENSSL_cleanse(c_content.data(), c_content.size());
-                        c_content.clear();
                     });
                 } else {
                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -870,16 +853,13 @@
 
                         std::string c_newAttachID = "";
 
-                        v_inst.GetItem<ClientWarden::IdentityItem>(c_uuid)
+                        v_inst.GetItem(c_uuid)
                              ->AddAttachment(c_fileName, c_content, c_newAttachID, [tempAttachID](float progress) {
                                dispatch_async(dispatch_get_main_queue(), ^{
                                    [SidePanel.instance updateProgressWithId:tempAttachID progress:(double)progress];
                                });
                              })
-                             ->Close();
-
-                        OPENSSL_cleanse((void*)c_content.data(), c_content.size());
-                        c_content.clear();
+                             ->Commit();
 
                         NSString* attachID = [NSString stringWithUTF8String: c_newAttachID.c_str()];
 
@@ -922,8 +902,6 @@
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
             std::string c_attachID = attachID.UTF8String;
-
-            ClientWarden::GenericItem item(v_inst, c_uuid);
 
             v_inst.GetItem(c_uuid)
                  ->RemoveAttachment(c_attachID)

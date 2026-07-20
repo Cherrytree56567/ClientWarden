@@ -9,7 +9,7 @@ namespace ClientWarden {
                 init = true;
             }
         }
-        if (!data.contains("sshKey")) {
+        if (!data.contains("sshKey") || data["sshKey"].is_null() || !data["sshKey"].is_object()) {
             init = false;
         }
     }

@@ -51,6 +51,7 @@ namespace ClientWarden {
             }
         } else {
             init = false;
+            return;
         }
         init = true;
     }
@@ -72,46 +73,46 @@ namespace ClientWarden {
     void GenericItem::GetIdImpl(std::string& value) {
         value = data["id"];
 
-        return this;
+        return;
     }
 
     void GenericItem::SetNameImpl(std::string& name) {
-        if (!init) return this;
+        if (!init) return;
         fieldData["Name"] = localVault.crypto.Encrypt(name, itemEncKey, itemMacKey);
         data["name"] = localVault.crypto.Encrypt(name, itemEncKey, itemMacKey);
         OPENSSL_cleanse(name.data(), name.size());
         name.clear();
-        return this;
+        return;
     }
 
     void GenericItem::SetNotesImpl(std::string& notes) {
-        if (!init) return this;
+        if (!init) return;
         fieldData["Notes"] = localVault.crypto.Encrypt(notes, itemEncKey, itemMacKey);
         data["notes"] = localVault.crypto.Encrypt(notes, itemEncKey, itemMacKey);
         OPENSSL_cleanse(notes.data(), notes.size());
         notes.clear();
-        return this;
+        return;
     }
 
     void GenericItem::SetFolderImpl(std::string folderUUID) {
-        if (!init) return this;
+        if (!init) return;
         if (folderUUID == "") {
             data["folderId"] = nullptr;
         } else {
             data["folderId"] = folderUUID;
         }
-        return this;
+        return;
     }
 
     void GenericItem::RemoveFolderImpl() {
-        if (!init) return this;
+        if (!init) return;
         data["folderId"] = nullptr;
-        return this;
+        return;
     }
 
     void GenericItem::AddFieldImpl(CustomFieldType field, std::string& name, std::string& value) {
-        if (!init) return this;
-        if (!data.contains("fields") || !fieldData.contains("Fields")) return this;
+        if (!init) return;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return;
         if (fieldData["Fields"].is_null() || !data["fields"].is_array()) {
             fieldData["Fields"] = nlohmann::json::array();
         }
@@ -163,12 +164,12 @@ namespace ClientWarden {
         OPENSSL_cleanse(value.data(), value.size());
         value.clear();
 
-        return this;
+        return;
     }
 
     void GenericItem::RemoveFieldImpl(std::string& name) {
-        if (!init) return this;
-        if (!data.contains("fields") || !fieldData.contains("Fields")) return this;
+        if (!init) return;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return;
         if (fieldData["Fields"].is_null() || !data["fields"].is_array()) {
             fieldData["Fields"] = nlohmann::json::array();
         }
@@ -202,12 +203,12 @@ namespace ClientWarden {
 
         OPENSSL_cleanse(name.data(), name.size());
         name.clear();
-        return this;
+        return;
     }
 
     void GenericItem::ClearFieldsImpl() {
-        if (!init) return this;
-        if (!data.contains("fields") || !fieldData.contains("Fields")) return this;
+        if (!init) return;
+        if (!data.contains("fields") || !fieldData.contains("Fields")) return;
         if (fieldData["Fields"].is_null() || !data["fields"].is_array()) {
             fieldData["Fields"] = nlohmann::json::array();
         }
@@ -215,7 +216,7 @@ namespace ClientWarden {
         fieldData["Fields"] = nlohmann::json::array();
         data["fields"] = nlohmann::json::array();
 
-        return this;
+        return;
     }
 
     void GenericItem::Commit() {
@@ -338,33 +339,33 @@ namespace ClientWarden {
     }
 
     void GenericItem::GetNameImpl(std::string& name) {
-        if (!init) return this;
-        if (!data.contains("name")) return this;
-        if (!data["name"].is_string()) return this;
+        if (!init) return;
+        if (!data.contains("name")) return;
+        if (!data["name"].is_string()) return;
         name = localVault.crypto.DecryptAsStr(data["name"], itemEncKey, itemMacKey);
-        return this;
+        return;
     }
 
     void GenericItem::GetNotesImpl(std::string& notes) {
-        if (!init) return this;
-        if (!data.contains("notes")) return this;
-        if (!data["notes"].is_string()) return this;
+        if (!init) return;
+        if (!data.contains("notes")) return;
+        if (!data["notes"].is_string()) return;
         notes = localVault.crypto.DecryptAsStr(data["notes"], itemEncKey, itemMacKey);
-        return this;
+        return;
     }
 
     void GenericItem::GetFolderImpl(std::string& folder) {
-        if (!init) return this;
-        if (!data.contains("folderId")) return this;
-        if (!data["folderId"].is_string()) return this;
+        if (!init) return;
+        if (!data.contains("folderId")) return;
+        if (!data["folderId"].is_string()) return;
         folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
-        return this;
+        return;
     }
 
     void GenericItem::GetFieldsImpl(std::vector<std::tuple<CustomFieldType, std::string, std::string>>& fields) {
-        if (!init) return this;
-        if (!data.contains("fields")) return this;
-        if (!data["fields"].is_array()) return this;
+        if (!init) return;
+        if (!data.contains("fields")) return;
+        if (!data["fields"].is_array()) return;
         fields.clear();
         for (auto& f : data["fields"]) {
             CustomFieldType type = static_cast<CustomFieldType>(f["type"].get<int>());
@@ -377,108 +378,108 @@ namespace ClientWarden {
             std::string name = localVault.crypto.DecryptAsStr(f["name"], itemEncKey, itemMacKey);
             fields.emplace_back(type, std::move(name), std::move(value));
         }
-        return this;
+        return;
     }
 
     void GenericItem::SetFavoriteImpl(bool val) {
-        if (!init) return this;
+        if (!init) return;
         data["favorite"] = val;
-        return this;
+        return;
     }
 
     void GenericItem::SetRepromptImpl(bool val) {
-        if (!init) return this;
+        if (!init) return;
         if (val) {
             data["reprompt"] = 1;
         } else {
             data["reprompt"] = 0;
         }
-        return this;
+        return;
     }
 
     void GenericItem::GetFavoriteImpl(bool& val) {
-        if (!init) return this;
-        if (!data.contains("favorite")) return this;
-        if (!data["favorite"].is_boolean()) return this;
+        if (!init) return;
+        if (!data.contains("favorite")) return;
+        if (!data["favorite"].is_boolean()) return;
         val = data["favorite"];
-        return this;
+        return;
     }
 
     void GenericItem::GetRepromptImpl(bool& val) {
-        if (!init) return this;
-        if (!data.contains("reprompt")) return this;
-        if (!data["reprompt"].is_number()) return this;
+        if (!init) return;
+        if (!data.contains("reprompt")) return;
+        if (!data["reprompt"].is_number()) return;
         if (data["reprompt"].get<int>() == 1) {
             val = true;
         }
         if (data["reprompt"].get<int>() == 0) {
             val = false;
         }
-        return this;
+        return;
     }
 
     void GenericItem::GetAttachmentIDsImpl(std::vector<std::string>& ids) {
-        if (!init) return this;
-        if (!data.contains("attachments")) return this;
-        if (!data["attachments"].is_array()) return this;
+        if (!init) return;
+        if (!data.contains("attachments")) return;
+        if (!data["attachments"].is_array()) return;
 
         for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return this;
-            if (!attach["id"].is_string()) return this;
+            if (!attach.is_object()) return;
+            if (!attach["id"].is_string()) return;
             ids.push_back(attach["id"]);
         }
-        return this;
+        return;
     }
 
     void GenericItem::GetAttachmentNameImpl(std::string id, std::string& name) {
-        if (!init) return this;
-        if (!data.contains("attachments")) return this;
-        if (!data["attachments"].is_array()) return this;
+        if (!init) return;
+        if (!data.contains("attachments")) return;
+        if (!data["attachments"].is_array()) return;
 
         for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return this;
-            if (!attach.contains("id")) return this;
-            if (!attach["id"].is_string()) return this;
-            if (!attach.contains("fileName")) return this;
-            if (!attach["fileName"].is_string()) return this;
+            if (!attach.is_object()) return;
+            if (!attach.contains("id")) return;
+            if (!attach["id"].is_string()) return;
+            if (!attach.contains("fileName")) return;
+            if (!attach["fileName"].is_string()) return;
             if (attach["id"] != id) continue;
 
             name = localVault.crypto.DecryptAsStr(attach["fileName"], itemEncKey, itemMacKey);
             break;
         }
-        return this;
+        return;
     }
 
     void GenericItem::GetAttachmentImpl(std::string id, std::filesystem::path filePath, std::function<void(float)> onProgress) {
-        if (!init) return this;
-        if (!data.contains("attachments")) return this;
-        if (!data["attachments"].is_array()) return this;
+        if (!init) return;
+        if (!data.contains("attachments")) return;
+        if (!data["attachments"].is_array()) return;
 
         for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return this;
-            if (!attach["id"].is_string()) return this;
+            if (!attach.is_object()) return;
+            if (!attach["id"].is_string()) return;
             if (attach["id"] != id) continue;
 
             bool result = localVault.DownloadAttachment(data["id"].get<std::string>(), id, filePath, itemEncKey, 
                 itemMacKey, onProgress);
-            if (!result) return this;
+            if (!result) return;
             break;
         }
-        return this;
+        return;
     }
 
     void GenericItem::RemoveAttachmentImpl(std::string id) {
-        if (!init) return this;
-        if (!data.contains("attachments")) return this;
-        if (!data["attachments"].is_array()) return this;
+        if (!init) return;
+        if (!data.contains("attachments")) return;
+        if (!data["attachments"].is_array()) return;
 
         for (auto& attach : data["attachments"]) {
-            if (!attach.is_object()) return this;
-            if (!attach["id"].is_string()) return this;
+            if (!attach.is_object()) return;
+            if (!attach["id"].is_string()) return;
             if (attach["id"] != id) continue;
 
             bool result = localVault.RemoveAttachment(data["id"].get<std::string>(), id);
-            if (!result) return this;
+            if (!result) return;
             auto& attachments = data["attachments"];
             attachments.erase(std::remove_if(attachments.begin(), attachments.end(),
                 [&id](const nlohmann::json& a) {
@@ -486,25 +487,32 @@ namespace ClientWarden {
                 }), attachments.end());
             break;
         }
-        return this;
+        return;
     }
 
     void GenericItem::AddAttachmentImpl(std::string& name, std::string& content, std::string& id, std::function<void(float)> onProgress) {
-        if (!init) return this;
-        if (!data.contains("attachments")) return this;
+        if (!init) return;
+        if (!data.contains("attachments")) return;
         if (!data["attachments"].is_array()) {
             data["attachments"] = nlohmann::json::array();
         }
 
-        /*
-         * ENCRYPT HERE TODO
-        */
-
-        std::optional<std::string> result = localVault.AddAttachment(data["id"].get<std::string>(), content, name, onProgress);
+        std::optional<nlohmann::json> result = localVault.AddAttachment(data["id"].get<std::string>(), content, name, onProgress);
+        
         if (result.has_value()) {
-            id = result.value();
+            if (!result.value().contains("attachmentId") || !result.value().contains("cipherResponse")) {
+                return;
+            }
+            if (!result.value()["cipherResponse"].contains("attachments")) {
+                return;
+            }
+
+            auto attachmentField = result.value()["cipherResponse"]["attachments"];
+
+            data["attachments"] = attachmentField;
+            id = result.value()["attachmentId"];
         }
-        return this;
+        return;
     }
 
     GenericItem* GenericItem::GetType(CipherType& val) {
@@ -516,9 +524,9 @@ namespace ClientWarden {
     }
 
     void GenericItem::GetCreationImpl(std::string& value) {
-        if (!init) return this;
-        if (!data.contains("creationDate")) return this;
-        if (!data["creationDate"].is_string()) return this;
+        if (!init) return;
+        if (!data.contains("creationDate")) return;
+        if (!data["creationDate"].is_string()) return;
 
         std::time_t time = BitwardenTime(data["creationDate"]);
 
@@ -532,13 +540,13 @@ namespace ClientWarden {
         std::ostringstream oss;
         oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S");
         value = oss.str();
-        return this;
+        return;
     }
 
     void GenericItem::GetModificationImpl(std::string& value) {
-        if (!init) return this;
-        if (!data.contains("revisionDate")) return this;
-        if (!data["revisionDate"].is_string()) return this;
+        if (!init) return;
+        if (!data.contains("revisionDate")) return;
+        if (!data["revisionDate"].is_string()) return;
 
         std::time_t time = BitwardenTime(data["revisionDate"]);
 
@@ -552,15 +560,15 @@ namespace ClientWarden {
         std::ostringstream oss;
         oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S");
         value = oss.str();
-        return this;
+        return;
     }
 
     void GenericItem::GetDeletionImpl(std::string& value) {
-        if (!init) return this;
-        if (!data.contains("GetDeletion")) return this;
+        if (!init) return;
+        if (!data.contains("GetDeletion")) return;
         if (!data["GetDeletion"].is_string()) {
             value = "none";
-            return this;
+            return;
         }
 
         std::time_t time = BitwardenTime(data["GetDeletion"]);
@@ -575,7 +583,7 @@ namespace ClientWarden {
         std::ostringstream oss;
         oss << std::put_time(&tmStruct, "%Y-%m-%d %H:%M:%S");
         value = oss.str();
-        return this;
+        return;
     }
 
     GenericItem* GenericItem::SetName(std::string& name) {
