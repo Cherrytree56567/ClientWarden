@@ -33,8 +33,8 @@ struct PreviewData {
                         "Created: Today lol",
                     ]
                     SidePanel.instance.passwordHistory = [
-                        "Password 1",
-                        "Some Old Password"
+                        PasswordHistoryItem(date: "21 Jan", password: "Password 1"),
+                        PasswordHistoryItem(date: "21 Jan", password: "Some Old Password")
                     ]
                     SidePanel.instance.viewable = true
                     SidePanel.instance.notes = GenericItemData(title: "Notes", value: "Some Notes ig\nClientwarden avail soon", type: GenericItemType.ml_generic)

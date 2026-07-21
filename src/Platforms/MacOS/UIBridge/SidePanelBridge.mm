@@ -244,7 +244,7 @@
             NSArray<GenericItemData*>* itemFields = [NSMutableArray array];
             NSArray<FieldItemData*>* customFields = [NSMutableArray array];
             NSArray<NSString*>* itemHistory = [NSMutableArray array];
-            NSArray<NSString*>* passwordHistory = [NSMutableArray array];
+            NSArray<PasswordHistoryItem*>* passwordHistory = [NSMutableArray array];
             NSArray<AttachmentItemData*>* attachments = [NSMutableArray array];
             NSString* notes = nil;
 
@@ -431,7 +431,13 @@
                 passwordHistory = [NSMutableArray arrayWithCapacity: c_passHist.size()];
                 for (auto& c_pass : c_passHist) {
                     NSString* pass = [NSString stringWithUTF8String: c_pass.second.c_str()];
-                    [passwordHistory addObject: pass];
+                    NSDate* date = [NSDate dateWithTimeIntervalSince1970: (NSTimeInterval)c_pass.first];
+                    NSString* s_date = [NSDateFormatter localizedStringFromDate:date
+                                                        dateStyle:NSDateFormatterMediumStyle
+                                                        timeStyle:NSDateFormatterShortStyle];
+                    
+                    PasswordHistoryItem* item = [[PasswordHistoryItem alloc] initWithDate:s_date password:pass];
+                    [passwordHistory addObject: item];
                     OPENSSL_cleanse(c_pass.second.data(), c_pass.second.size());
                     c_pass.second.clear();
                 }

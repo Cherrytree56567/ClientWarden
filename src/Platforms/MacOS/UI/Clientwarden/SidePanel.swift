@@ -8,6 +8,17 @@ import SwiftUI
  */
 
 @objcMembers
+final class PasswordHistoryItem: NSObject {
+    public var date: String
+    public var password: String
+
+    public init(date: String, password: String) {
+        self.date = date
+        self.password = password
+    }
+}
+
+@objcMembers
 @Observable
 final class SidePanel: NSObject {
     static let instance = SidePanel()
@@ -26,7 +37,7 @@ final class SidePanel: NSObject {
     public var itemFields: [GenericItemData] = []
     public var customFields: [FieldItemData] = []
     public var itemHistory: [String] = []
-    public var passwordHistory: [String] = []
+    public var passwordHistory: [PasswordHistoryItem] = []
     public var attachmentItems: [AttachmentItemData] = []
     public var notes: GenericItemData = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     
@@ -52,7 +63,7 @@ final class SidePanel: NSObject {
         viewable = false
     }
     
-    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [String], attachmentItems: [AttachmentItemData], notes: String) {
+    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [PasswordHistoryItem], attachmentItems: [AttachmentItemData], notes: String) {
         self.viewable = true
         self.editable = false
         self.name = name
@@ -482,8 +493,8 @@ struct SidePanelView: View {
                                     }
                                     .buttonStyle(BorderlessButtonStyle())
                                 }
-                                ForEach($data.passwordHistory, id: \.self) {$password in
-                                    GenericItem(data: .constant(GenericItemData(title: "Password", value: password, type: .password)), edit: false)
+                                ForEach($data.passwordHistory, id: \.self) {$val in
+                                    GenericItem(data: .constant(GenericItemData(title: val.date, value: val.password, type: .password)), edit: false)
                                 }
                             }
                             .padding()
