@@ -570,13 +570,13 @@ namespace ClientWarden {
 
     void GenericItem::GetDeletionImpl(std::string& value) {
         if (!init) return;
-        if (!data.contains("GetDeletion")) return;
-        if (!data["GetDeletion"].is_string()) {
+        if (!data.contains("deletedDate")) return;
+        if (!data["deletedDate"].is_string()) {
             value = "none";
             return;
         }
 
-        std::time_t time = BitwardenTime(data["GetDeletion"]);
+        std::time_t time = BitwardenTime(data["deletedDate"]);
 
         std::tm tmStruct{};
         #if defined(_WIN32)
