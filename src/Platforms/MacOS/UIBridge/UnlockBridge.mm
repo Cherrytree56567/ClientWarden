@@ -56,9 +56,7 @@
 
             std::string c_password = password.UTF8String;
 
-            try {
-                v_inst.Unlock(c_password);
-            } catch (...) {
+            if (!v_inst.Unlock(c_password)) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Toast* toast = [[Toast alloc] initWithMessage:@"Invalid Password"];
                     [[ToastStore instance] addToast:toast];

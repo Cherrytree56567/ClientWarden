@@ -49,6 +49,9 @@ final class Login: NSObject {
     }
     
     @objc public var EmailPasswordView: Bool = true
+
+    public var selectedTab: Int = 0
+    public var defaults: Bool = false
     
     public var email: String = ""
     public var password: String = ""
@@ -74,6 +77,8 @@ final class Login: NSObject {
         let apiURL = self.apiURL
         let wssURL = self.wssURL
         let iconURL = self.iconURL
+        self.password = ""
+        self.code = ""
         ClientwardenWindow.instance.state = WindowState.Empty
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -96,6 +101,8 @@ final class Login: NSObject {
     
     func submitCode() {
         let code = self.code
+        self.password = ""
+        self.code = ""
         ClientwardenWindow.instance.state = WindowState.Empty
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -123,23 +130,14 @@ struct LoginView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                TabView {
-                    Tab("Bitwarden", systemImage: "lock.open") {
+                TabView(selection: $data.selectedTab) {
+                    Tab("Bitwarden", systemImage: "lock.open", value: 0) {
                         Text("Vault URL")
                             .padding(.leading, 4)
                             .padding(.top, 4)
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Vault URL", text: $data.vaultURL)
-                            .onAppear {
-                                data.vaultURL = "https://vault.bitwarden.com"
-                                data._mainURL = "https://bitwarden.com"
-                                data._apiURL = "https://api.bitwarden.com"
-                                data._wssURL = "wss://vault.bitwarden.com"
-                                data.mainChanged = true
-                                data.apiChanged = true
-                                data.wssChanged = true
-                            }
                         
                         Text("Main URL")
                             .padding(.leading, 4)
@@ -170,22 +168,13 @@ struct LoginView: View {
                         TextField("WebSocket URL", text: $data.wssURL)
                         Spacer()
                     }
-                    Tab("Server", systemImage: "server.rack") {
+                    Tab("Server", systemImage: "server.rack", value: 1) {
                         Text("Vault URL")
                             .padding(.leading, 4)
                             .padding(.top, 4)
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Vault URL", text: $data.vaultURL)
-                            .onAppear {
-                                data.vaultURL = "https://someVault.com"
-                                data._mainURL = "https://someVault.com"
-                                data._apiURL = "https://someVault.com"
-                                data._wssURL = "wss://someVault.com"
-                                data.mainChanged = false
-                                data.apiChanged = false
-                                data.wssChanged = false
-                            }
                         
                         Text("Main URL")
                             .padding(.leading, 4)
@@ -218,6 +207,26 @@ struct LoginView: View {
                     }
                 }
                 .tabViewStyle(.automatic)
+                .onChange(of: data.selectedTab) { _, newTab in
+                    if newTab == 0 {
+                        data.vaultURL = "https://vault.bitwarden.com"
+                        data._mainURL = "https://bitwarden.com"
+                        data._apiURL = "https://api.bitwarden.com"
+                        data._wssURL = "wss://vault.bitwarden.com"
+                        data.mainChanged = true
+                        data.apiChanged = true
+                        data.wssChanged = true
+                    } else if newTab == 1 {
+                        data.vaultURL = "https://someVault.com"
+                        data._mainURL = "https://someVault.com"
+                        data._apiURL = "https://someVault.com"
+                        data._wssURL = "wss://someVault.com"
+                        data.mainChanged = false
+                        data.apiChanged = false
+                        data.wssChanged = false
+                    }
+                    data.defaults = true
+                }
             }
             .frame(maxWidth: 200, maxHeight: .infinity)
             .padding(8)
@@ -260,7 +269,7 @@ struct LoginView: View {
                 } else {
                     Text("Clientwarden")
                         .font(.largeTitle.bold())
-                    TextField("Code", text: .constant(""))
+                    TextField("Code", text: $data.code)
                         .font(.subheadline)
                         .padding(6)
                         .textFieldStyle(.plain)

@@ -35,6 +35,7 @@ final class Unlock: NSObject {
     
     func unlock() {
         let password = self.password
+        self.password = ""
         ClientwardenWindow.instance.state = WindowState.Empty
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
