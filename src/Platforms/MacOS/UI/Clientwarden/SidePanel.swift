@@ -157,6 +157,8 @@ final class SidePanel: NSObject {
          */
         if let del = cb_delete?(uuid) {
             if (del) {
+                editable = false
+                viewable = false
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to delete item"))

@@ -39,6 +39,7 @@ final class ItemsPanel: NSObject {
                 elements.append(res)
                 query()
                 SidePanel.instance.viewItem(cb_uuid: res.uuid)
+                SidePanel.instance.editable = true
             }
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for New Item"))

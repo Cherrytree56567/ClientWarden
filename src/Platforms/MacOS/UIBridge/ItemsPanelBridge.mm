@@ -193,8 +193,9 @@
             std::string c_uuid = "";
 
             item->SetName(c_name)
-                ->GetId(c_uuid)
                 ->Commit();
+            
+            item->GetId(c_uuid);
             
             NSString* s_uuid = [NSString stringWithUTF8String: c_uuid.c_str()];
             NSUUID* uuid = [[NSUUID alloc] initWithUUIDString: s_uuid];

@@ -230,6 +230,11 @@ namespace ClientWarden {
         data["data"] = (std::string)fieldData.dump();
         if (isBeingCreated || (data.contains("createdOffline") && data["createdOffline"] == true)) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
+            if (result.has_value()) {
+                if (result.value().contains("id") && result.value()["id"].is_string()) {
+                    data["id"] = result.value()["id"];
+                }
+            }
             return;
         }
 
