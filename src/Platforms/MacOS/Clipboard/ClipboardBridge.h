@@ -7,6 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)copy:(NSString *)str;
 - (NSString *)paste;
 - (void)setDelay:(NSInteger)delay;
+- (NSInteger)getDelay;
 
 @end
 

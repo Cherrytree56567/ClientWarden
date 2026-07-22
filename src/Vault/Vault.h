@@ -12,6 +12,7 @@
 #include "CipherQuery/CipherQuery.h"
 #include "GenericItem/GenericItemImpl.h"
 #include "VaultUtils/VaultUtils.h"
+#include "Clipboard/Clipboard.h"
 
 namespace ClientWarden {
     enum class AuthState {
@@ -50,8 +51,8 @@ namespace ClientWarden {
         bool Login(std::string code);
 
         bool Unlock(std::string& password);
-
         bool Lock();
+        bool Logout();
 
         bool Sync();
 
@@ -94,5 +95,6 @@ namespace ClientWarden {
         VaultProfile profile;
         AuthState state;
         Storage storage;
+        Clipboard clipboard;
     };
 }

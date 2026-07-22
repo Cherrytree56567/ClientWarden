@@ -1,44 +1,29 @@
 import SwiftUI
 
+@objcMembers
+final class SettingsData: NSObject {
+    public var clipboardDelay: Int
+
+    public init(clipboardDelay: Int) {
+        self.clipboardDelay = clipboardDelay
+    }
+}
+
+@objcMembers
 @Observable
-final class SettingsPanel {
+final class SettingsPanel: NSObject {
     static let instance = SettingsPanel()
     
-    public var clipboardDelay: String = "30"
+    public var clipboardDelay: Int = 30
     
-    public var cb_getInfo: (() -> (String, Bool))?
-    public var cb_setDelay: ((String) -> Bool)?
-    public var cb_logout: (() -> Bool)?
+    @objc public var cb_logout: (() -> Bool)?
     
     func getInfo() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
-        if let info = cb_getInfo?() {
-            if (info.1) {
-                clipboardDelay = info.0
-            } else {
-                ToastStore.instance.toasts.append(Toast(message: "Failed to Get Info"))
-            }
-        } else {
-            ToastStore.instance.toasts.append(Toast(message: "No callback set for getInfo"))
-        }
+        clipboardDelay = Clipboard.instance.getDelay()
     }
     
     func setDelay() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
-        if let info = cb_setDelay?(clipboardDelay) {
-            if (info) {
-            } else {
-                ToastStore.instance.toasts.append(Toast(message: "Failed to Set Clipboard Delay"))
-            }
-        } else {
-            ToastStore.instance.toasts.append(Toast(message: "No callback set for setClipboardDelay"))
-        }
+        Clipboard.instance.setDelay(clipboardDelay)
     }
     
     func logOut() {
@@ -48,6 +33,7 @@ final class SettingsPanel {
          */
         if let info = cb_logout?() {
             if (info) {
+                ClientwardenWindow.instance.getState()
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to Log Out"))
             }
@@ -57,24 +43,36 @@ final class SettingsPanel {
     }
 }
 
+struct WindowAccessor: NSViewRepresentable {
+    @Binding var window: NSWindow?
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            self.window = view.window
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
 struct SettingsView: View {
     @Bindable var data: SettingsPanel = SettingsPanel.instance
+    @Environment(\.dismissWindow) private var dismissWindow
     @State private var showLogout: Bool = false
     @FocusState private var isFocused: Bool
+    @State private var thisWindow: NSWindow?
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Clipboard Delay")
-                .padding(.leading, 4)
-            TextField("Clipboard Delay", text:
-                Binding(
-                    get: { data.clipboardDelay },
-                    set: {
-                        data.clipboardDelay = $0
-                        data.setDelay()
-                    }
-                )
-            )
+            Stepper("Clipboard Delay: \(data.clipboardDelay)s", value: Binding(
+                get: { data.clipboardDelay },
+                set: {
+                    data.clipboardDelay = $0
+                    data.setDelay()
+                }
+            ), in: 0...3600)
             .padding(6)
             .padding(.leading, 4)
             .textFieldStyle(.plain)
@@ -95,7 +93,9 @@ struct SettingsView: View {
             .alert("Are you sure you want to log out?", isPresented: $showLogout) {
                 Button("Cancel", role: .cancel) { }
                 Button("Log Out", role: .destructive) {
+                    let windowToClose = thisWindow
                     data.logOut()
+                    windowToClose?.close()
                 }
             } message: {
                 Text("This will remove your local vault and force you to sign back in!")
@@ -103,10 +103,20 @@ struct SettingsView: View {
             
             Spacer()
         }
+        .background(WindowAccessor(window: $thisWindow))
         .padding(8)
         .frame(minWidth: 300, maxWidth: 300, minHeight: 400, maxHeight: 400, alignment: .leading)
         .onAppear {
+            SettingsBridge.setupCallbacks()
             data.getInfo()
+        }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                if (!Task.isCancelled) {
+                    data.getInfo()
+                }
+            }
         }
     }
 }

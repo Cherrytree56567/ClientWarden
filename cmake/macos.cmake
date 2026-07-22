@@ -35,6 +35,7 @@ function(buildUI _target)
         src/Platforms/MacOS/UIBridge/NavPanelBridge.mm
         src/Platforms/MacOS/UIBridge/ItemsPanelBridge.mm
         src/Platforms/MacOS/UIBridge/SidePanelBridge.mm
+        src/Platforms/MacOS/UIBridge/SettingsBridge.mm
     )
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets})
     target_include_directories(${_target} PRIVATE src/Platforms/MacOS src/Vault)

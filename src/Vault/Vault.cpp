@@ -6,7 +6,7 @@ namespace ClientWarden {
      * load session data.
      * TODO: Add logger stuff
     */
-    Vault::Vault() : profile(session.vaultData), crypto(session.encKey, session.macKey, session.internalKey) {
+    Vault::Vault() : profile(session.vaultData), crypto(session.encKey, session.macKey, session.internalKey), clipboard(session.settingsData) {
         if (!logger) {
             spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
 
@@ -382,6 +382,22 @@ namespace ClientWarden {
             session.connectivityThread.start();
 
             state = AuthState::Unlocked;
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+
+    bool Vault::Logout() {
+        try {
+            Lock();
+
+            storage.remove("vault.json");
+            storage.remove("settings.json");
+            storage.remove("data.json");
+            storage.remove("cw.log");
+
+            state = AuthState::LoggedOut;
             return true;
         } catch (...) {
             return false;

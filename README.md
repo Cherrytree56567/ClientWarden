@@ -139,7 +139,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
       - [X] Items Panel Bridge
       - [X] Side Panel Bridge
         - [X] Save Support
-      - [ ] Settings Bridge
+      - [X] Settings Bridge
         - [ ] Add ScreenShot Option
     - [X] Add Errors on Bridge
     - [X] Fix Login Crashes

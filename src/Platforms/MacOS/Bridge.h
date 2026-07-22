@@ -5,3 +5,4 @@
 #import "UIBridge/NavPanelBridge.h"
 #import "UIBridge/ItemsPanelBridge.h"
 #import "UIBridge/SidePanelBridge.h"
+#import "UIBridge/SettingsBridge.h"

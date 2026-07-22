@@ -18,4 +18,8 @@ final class Clipboard {
     func setDelay(_ seconds: Int) {
         bridge.setDelay(seconds)
     }
+    
+    func getDelay() -> Int {
+        return bridge.getDelay()
+    }
 }
