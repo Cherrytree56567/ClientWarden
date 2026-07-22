@@ -321,6 +321,7 @@ struct GenericItem: View {
             /*
              * TODO: X1FD - Use Clipboard Swift Bridge to copy the value
              */
+            Clipboard.instance.copy(data.value)
             ToastStore.instance.toasts.append(Toast(message: "Copied to clipboard", icon: "document.on.document").setColor(color: Color.clear))
         }
         .modifier(
