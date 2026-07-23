@@ -1,16 +1,31 @@
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private var screenCaptureTimer: Timer?
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applyScreenCaptureSetting() {
         DispatchQueue.main.async {
-            if let window = NSApplication.shared.windows.first {
-                //window.sharingType = .none
-                // TODO: Remove ScreenSHaring thing before release
+            for window in NSApplication.shared.windows {
+                window.sharingType = SettingsPanel.instance.getScrshot() ? .readOnly : .none
             }
+        }
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        /*
+         * We need to call this here since its used here before the Settings View
+         */
+        SettingsBridge.setupCallbacks()
+        SettingsPanel.instance.getInfo()
+
+        applyScreenCaptureSetting()
+
+        screenCaptureTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.applyScreenCaptureSetting()
         }
     }
 }

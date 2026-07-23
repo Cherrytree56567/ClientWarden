@@ -15,7 +15,7 @@ namespace ClientWarden {
         [pasteboard setString:@"" forType:@"org.nspasteboard.ConcealedType"];
 
         NSInteger targetedChangeCount = [pasteboard changeCount];
-        int delay = secureDelayClear;
+        int delay = GetDelay();
 
         std::thread([delay, targetedChangeCount]() {
             std::this_thread::sleep_for(std::chrono::seconds(delay));

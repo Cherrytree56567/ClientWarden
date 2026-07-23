@@ -134,20 +134,20 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Bin Page
     - [X] Settings Support
     - [X] Lock Support
-    - [ ] UI Bridge
+    - [X] UI Bridge
       - [X] Nav Panel Bridge
       - [X] Items Panel Bridge
       - [X] Side Panel Bridge
         - [X] Save Support
       - [X] Settings Bridge
-        - [ ] Add ScreenShot Option
+        - [X] Add ScreenShot Option
     - [X] Add Errors on Bridge
     - [X] Fix Login Crashes
     - [X] Fix Freezing Issue
     - [X] Fix Vault Signouts
     - [X] Code Review
-    - [ ] Show Deletion Date
-    - [ ] Show Password History Date
+    - [X] Show Deletion Date
+    - [X] Show Password History Date
     - [ ] Reprompt Support
     - [ ] Add Password Generator
     - [ ] Support PFP

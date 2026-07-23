@@ -15,11 +15,15 @@ final class SettingsPanel: NSObject {
     static let instance = SettingsPanel()
     
     public var clipboardDelay: Int = 30
+    public var allowScreenshots: Bool = false
     
     @objc public var cb_logout: (() -> Bool)?
+    @objc public var cb_getScrshot: (() -> Bool)?
+    @objc public var cb_setScrshot: ((Bool) -> Bool)?
     
     func getInfo() {
         clipboardDelay = Clipboard.instance.getDelay()
+        allowScreenshots = getScrshot()
     }
     
     func setDelay() {
@@ -40,6 +44,32 @@ final class SettingsPanel: NSObject {
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for logOut"))
         }
+    }
+    
+    func setScrshot(option: Bool) {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let res = cb_setScrshot?(option) {
+            if (res) {
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Set Screenshot Value"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for Set Screenshot Option"))
+        }
+    }
+    
+    func getScrshot() -> Bool {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let res = cb_getScrshot?() {
+            return res
+        }
+        return false
     }
 }
 
@@ -75,13 +105,21 @@ struct SettingsView: View {
             ), in: 0...3600)
             .padding(6)
             .padding(.leading, 4)
-            .textFieldStyle(.plain)
-            .frame(width: 200)
-            .glassEffect(.regular.interactive())
             .focused($isFocused)
             .onExitCommand {
                 isFocused = false
             }
+
+            Toggle("Allow Screenshots", isOn: Binding(
+                get: {
+                    return data.allowScreenshots
+                },
+                set: { 
+                    data.setScrshot(option: $0)
+                    data.allowScreenshots = data.getScrshot()
+                }
+            ))
+            .padding(2)
             
             Button {
                 showLogout = true
@@ -106,10 +144,6 @@ struct SettingsView: View {
         .background(WindowAccessor(window: $thisWindow))
         .padding(8)
         .frame(minWidth: 300, maxWidth: 300, minHeight: 400, maxHeight: 400, alignment: .leading)
-        .onAppear {
-            SettingsBridge.setupCallbacks()
-            data.getInfo()
-        }
         .task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))

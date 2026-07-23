@@ -12,6 +12,8 @@
  */
 + (void)setupCallbacks {
     [self cb_logout];
+    [self cb_getScrshot];
+    [self cb_setScrshot];
 }
 
 /*
@@ -24,6 +26,41 @@
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
             
             return v_inst.Logout();
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return false;
+        }
+    };
+}
+
++ (void)cb_getScrshot {
+    SettingsPanel.instance.cb_getScrshot = ^bool() {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+            
+            return v_inst.GetScreenshotOption();
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return false;
+        }
+    };
+}
++ (void)cb_setScrshot {
+    SettingsPanel.instance.cb_setScrshot = ^bool(bool value) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+            
+            v_inst.SetScreenshotOption(value);
+
+            return true;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];

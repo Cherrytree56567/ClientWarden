@@ -15,7 +15,7 @@ namespace ClientWarden {
         winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContentWithOptions(dataPackage, options);
 
         DWORD targetedSequenceNumber = ::GetClipboardSequenceNumber();
-        int delay = secureDelayClear;
+        int delay = GetDelay();
 
         std::thread([delay, targetedSequenceNumber]() {
             std::this_thread::sleep_for(std::chrono::seconds(delay));

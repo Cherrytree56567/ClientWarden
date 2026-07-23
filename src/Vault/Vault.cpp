@@ -388,6 +388,20 @@ namespace ClientWarden {
         }
     }
 
+    void Vault::SetScreenshotOption(bool value) {
+        (*session.settingsData)["allowScreenshots"] = value;
+        storage.write("settings.json", session.settingsData->dump(2));
+    }
+
+    bool Vault::GetScreenshotOption() {
+        if (!session.settingsData->contains("allowScreenshots") || !(*session.settingsData)["allowScreenshots"].is_boolean()) {
+            (*session.settingsData)["allowScreenshots"] = false;
+            storage.write("settings.json", session.settingsData->dump(2));
+        }
+
+        return (*session.settingsData)["allowScreenshots"];
+    }
+
     bool Vault::Logout() {
         try {
             Lock();

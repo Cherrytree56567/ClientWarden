@@ -17,14 +17,21 @@ namespace ClientWarden {
         void Copy(std::string& str);
         void Paste(std::string& str);
 
+        
+
         void SetDelay(int delay) { 
             secureDelayClear = delay; 
             (*settingsData)["clipboardClear"] = secureDelayClear;
             storage.write("settings.json", settingsData->dump(2));
         }
-        int GetDelay() { return secureDelayClear; }
+        int GetDelay() { 
+            if (!settingsData->contains("clipboardClear") || !(*settingsData)["clipboardClear"].is_number()) {
+                (*settingsData)["clipboardClear"] = 30;
+            }
+
+            return (*settingsData)["clipboardClear"];
+        }
     private:
-        int secureDelayClear = 30;
         std::shared_ptr<nlohmann::json> settingsData;
         Storage storage;
     };

@@ -58,6 +58,9 @@ namespace ClientWarden {
 
         void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
 
+        void SetScreenshotOption(bool value);
+        bool GetScreenshotOption();
+
         template <typename Derived>
         std::shared_ptr<Derived> GetItem(std::string uuid) {
             return std::make_shared<Derived>(*this, uuid);
