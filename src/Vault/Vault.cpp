@@ -89,10 +89,7 @@ namespace ClientWarden {
                         */
                         break;
                     case 11:
-                        /*
-                        * Log out
-                        * TODO: Log out
-                        */
+                        LogOut();
                         break;
                     default:
                         logger->info("Unhandled type: {}", notifyType);
@@ -388,6 +385,12 @@ namespace ClientWarden {
         }
     }
 
+    /*
+     * While the Logout func removes the vault data
+     * and removes any secret data, the vault UI should
+     * also return to the Login View and remove any
+     * secret data avaliable on the Vault View
+    */
     bool Vault::Logout() {
         try {
             Lock();
