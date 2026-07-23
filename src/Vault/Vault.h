@@ -77,6 +77,11 @@ namespace ClientWarden {
         std::vector<std::string> GetFolders();
         std::shared_ptr<CipherQuery> GetCipherQuery();
 
+        /*
+         * Uses Vault Crypto and Vault Network.
+         * Aims to put crypto and networking stuff in the
+         * Vault.
+        */
         std::optional<nlohmann::json> NewItem(nlohmann::json encryptedData, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());
         bool UpdateItem(nlohmann::json encryptedData);
         bool DeleteItem(std::string uuid, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());

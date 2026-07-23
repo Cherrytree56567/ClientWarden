@@ -38,6 +38,10 @@ final class SettingsPanel: NSObject {
         if let info = cb_logout?() {
             if (info) {
                 ClientwardenWindow.instance.getState()
+                SidePanel.instance.closeItem()
+                ItemsPanel.instance.elements = []
+                ItemsPanel.instance.filteredElements = []
+                ItemsPanel.instance.searchQuery = ""
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to Log Out"))
             }
@@ -136,7 +140,7 @@ struct SettingsView: View {
                     windowToClose?.close()
                 }
             } message: {
-                Text("This will remove your local vault and force you to sign back in!")
+                Text("This will remove your local vault (and all your local changes) and force you to sign back in!")
             }
             
             Spacer()

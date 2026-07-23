@@ -61,6 +61,20 @@ final class SidePanel: NSObject {
     
     func closeItem() {
         viewable = false
+        editable = false
+        name = ""
+        type = ItemType.Login
+        icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+        favorite = false
+        itemFields = []
+        customFields = []
+        itemHistory = []
+        passwordHistory = []
+        notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+        s_name = ""
+        s_itemFields = []
+        s_customFields = []
+        s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     }
     
     func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [PasswordHistoryItem], attachmentItems: [AttachmentItemData], notes: String) {

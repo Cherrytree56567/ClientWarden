@@ -89,10 +89,7 @@ namespace ClientWarden {
                         */
                         break;
                     case 11:
-                        /*
-                        * Log out
-                        * TODO: Log out
-                        */
+                        LogOut();
                         break;
                     default:
                         logger->info("Unhandled type: {}", notifyType);
