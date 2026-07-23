@@ -105,7 +105,9 @@ struct UnlockView: View {
         }
         .frame(minWidth: 300, maxWidth: 300, minHeight: 400, maxHeight: 400)
         .onAppear {
-            UnlockBridge.setupCallbacks()
+            #if NON_XCODE_BUILD
+                UnlockBridge.setupCallbacks()
+            #endif
             data.getInfo()
         }
     }

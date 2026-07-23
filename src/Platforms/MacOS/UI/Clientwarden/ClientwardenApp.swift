@@ -19,7 +19,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         /*
          * We need to call this here since its used here before the Settings View
          */
-        SettingsBridge.setupCallbacks()
+        #if NON_XCODE_BUILD
+            SettingsBridge.setupCallbacks()
+        #endif
         SettingsPanel.instance.getInfo()
 
         applyScreenCaptureSetting()
@@ -128,7 +130,9 @@ struct ClientwardenApp: App {
                 }
             }
             .onAppear {
-                CWAppBridge.setupCallbacks()
+                #if NON_XCODE_BUILD
+                    CWAppBridge.setupCallbacks()
+                #endif
                 data.getState()
             }
         }
@@ -144,7 +148,7 @@ struct ClientwardenApp: App {
             }
         }
         
-        Settings {
+        Settings("Settings") {
             SettingsView()
         }
     }

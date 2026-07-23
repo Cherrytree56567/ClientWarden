@@ -21,6 +21,14 @@ final class SettingsPanel: NSObject {
     @objc public var cb_getScrshot: (() -> Bool)?
     @objc public var cb_setScrshot: ((Bool) -> Bool)?
     
+    var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+    }
+
+    var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+    }
+    
     func getInfo() {
         clipboardDelay = Clipboard.instance.getDelay()
         allowScreenshots = getScrshot()
@@ -100,50 +108,98 @@ struct SettingsView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Stepper("Clipboard Delay: \(data.clipboardDelay)s", value: Binding(
-                get: { data.clipboardDelay },
-                set: {
-                    data.clipboardDelay = $0
-                    data.setDelay()
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("Clipboard Delay")
+                        .padding(12)
+                    
+                    Spacer()
+                    
+                    TextField("", text: Binding(
+                        get: { String(data.clipboardDelay) },
+                        set: { newValue in
+                            if let value = Int(newValue) {
+                                data.clipboardDelay = value
+                                data.setDelay()
+                            } else if newValue.isEmpty {
+                                data.clipboardDelay = 30
+                                data.setDelay()
+                            }
+                        }
+                    ))
+                    .frame(width: 60, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+                    .textFieldStyle(.plain)
+                    .padding(.trailing, 12)
+                    .focused($isFocused)
+                    .onExitCommand {
+                        isFocused = false
+                    }
                 }
-            ), in: 0...3600)
-            .padding(6)
-            .padding(.leading, 4)
-            .focused($isFocused)
-            .onExitCommand {
-                isFocused = false
-            }
-
-            Toggle("Allow Screenshots", isOn: Binding(
-                get: {
-                    return data.allowScreenshots
-                },
-                set: { 
-                    data.setScrshot(option: $0)
-                    data.allowScreenshots = data.getScrshot()
+                .padding(.bottom, -10)
+                
+                Divider()
+                
+                HStack {
+                    Text("Allow Screenshots")
+                        .padding(12)
+                    
+                    Spacer()
+                    
+                    Toggle("Allow Screenshots", isOn: Binding(
+                        get: {
+                            return data.allowScreenshots
+                        },
+                        set: {
+                            data.setScrshot(option: $0)
+                            data.allowScreenshots = data.getScrshot()
+                        }
+                    ))
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .padding(.trailing, 12)
                 }
-            ))
-            .padding(2)
-            
-            Button {
-                showLogout = true
-            } label: {
-                Label("Log Out", systemImage: "")
-            }
-            .padding(.leading, -4)
-            .buttonStyle(BorderlessButtonStyle())
-            .alert("Are you sure you want to log out?", isPresented: $showLogout) {
-                Button("Cancel", role: .cancel) { }
-                Button("Log Out", role: .destructive) {
-                    let windowToClose = thisWindow
-                    data.logOut()
-                    windowToClose?.close()
+                .padding(.top, -10)
+                .padding(.bottom, -10)
+                
+                Divider()
+                
+                Button {
+                    showLogout = true
+                } label: {
+                    Label("Log Out", systemImage: "")
                 }
-            } message: {
-                Text("This will remove your local vault (and all your local changes) and force you to sign back in!")
+                .padding(.leading, -4)
+                .buttonStyle(BorderlessButtonStyle())
+                .alert("Are you sure you want to log out?", isPresented: $showLogout) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Log Out", role: .destructive) {
+                        let windowToClose = thisWindow
+                        data.logOut()
+                        windowToClose?.close()
+                    }
+                } message: {
+                    Text("This will remove your local vault (and all your local changes) and force you to sign back in!")
+                }
+                .padding(10)
+                .padding(.top, -10)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             
             Spacer()
+            
+            HStack {
+                Text("Clientwarden \(data.buildNumber)")
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .font(.caption)
+                    .foregroundStyle(.gray)
+                Text("Made By CT5")
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .foregroundStyle(.gray)
+                    .font(.caption)
+            }
         }
         .background(WindowAccessor(window: $thisWindow))
         .padding(8)

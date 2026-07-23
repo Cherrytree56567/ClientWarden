@@ -1,3 +1,5 @@
+include(cmake/versioning.cmake)
+
 function(buildUI _target)
     set(SwiftUI
         src/Platforms/MacOS/UI/Clientwarden/Clientwarden.swift
@@ -37,14 +39,15 @@ function(buildUI _target)
         src/Platforms/MacOS/UIBridge/SidePanelBridge.mm
         src/Platforms/MacOS/UIBridge/SettingsBridge.mm
     )
+
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets})
     target_include_directories(${_target} PRIVATE src/Platforms/MacOS src/Vault)
     target_link_libraries(${_target} "-framework Cocoa")
-    target_compile_definitions(${_target} PRIVATE MSGPACK_DISABLE_LEGACY_NIL)
+    target_compile_definitions(${_target} PRIVATE MSGPACK_DISABLE_LEGACY_NIL NON_XCODE_BUILD)
     set_target_properties(${_target} PROPERTIES
         MACOSX_BUNDLE_GUI_IDENTIFIER ${CW_IDENTIFIER}
-        MACOSX_BUNDLE_BUNDLE_VERSION 1
-        MACOSX_BUNDLE_SHORT_VERSION_STRING ${CW_VERSION}
+        MACOSX_BUNDLE_BUNDLE_VERSION "${CW_BUILD_STRING}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${CW_BUILD_STRING}"
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Bridge.h"
     )
 endfunction()

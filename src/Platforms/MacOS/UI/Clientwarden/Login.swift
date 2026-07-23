@@ -297,7 +297,9 @@ struct LoginView: View {
         }
         .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
         .onAppear {
-            LoginBridge.setupCallbacks()
+            #if NON_XCODE_BUILD
+                LoginBridge.setupCallbacks()
+            #endif
         }
     }
 }

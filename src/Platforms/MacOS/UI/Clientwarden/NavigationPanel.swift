@@ -230,7 +230,9 @@ struct NavigationPanelView: View {
             loadTabElements(tab: newValue, prev: oldValue)
         }
         .onAppear() {
-            NavPanelBridge.setupCallbacks()
+            #if NON_XCODE_BUILD
+                NavPanelBridge.setupCallbacks()
+            #endif
             data.getFolders()
             loadTabElements(tab: data.selection, prev: data.selection)
         }

@@ -629,7 +629,9 @@ struct SidePanelView: View {
             Text("This action cannot be undone.")
         }
         .onAppear {
-            SidePanelBridge.setupCallbacks()
+            #if NON_XCODE_BUILD
+                SidePanelBridge.setupCallbacks()
+            #endif
         }
     }
 }

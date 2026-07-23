@@ -151,7 +151,9 @@ struct ItemsPanelView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: data.elements)
         .onAppear {
-            ItemsPanelBridge.setupCallbacks()
+            #if NON_XCODE_BUILD
+                ItemsPanelBridge.setupCallbacks()
+            #endif
         }
         .task {
             while !Task.isCancelled {
