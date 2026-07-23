@@ -1,7 +1,13 @@
 #import "CWAppBridge.h"
 #import <Cocoa/Cocoa.h>
+#include <thread>
 #import "clientwarden-Swift.h"
 #include "Vault.h"
+#include "CBridge.h"
+
+extern "C" void SetLoginPage() {
+    ClientwardenWindow.instance.state = WindowStateLogin;
+}
 
 @implementation CWAppBridge
 
@@ -24,6 +30,7 @@
     ClientwardenWindow.instance.cb_getState = ^WindowState {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
             if (v_inst.state == ClientWarden::AuthState::Unlockable) {
                 return WindowStateUnlock;
             } else {

@@ -20,7 +20,7 @@ namespace ClientWarden {
     std::optional<nlohmann::json> VaultNetwork::preLogin(std::string& email) {
         httplib::Headers headers = {
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -42,7 +42,7 @@ namespace ClientWarden {
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         });
 
@@ -51,8 +51,8 @@ namespace ClientWarden {
         data.emplace("username", email);
         data.emplace("password", masterPasswordHash);
         data.emplace("scope", "api offline_access");
-        data.emplace("client_id", "web");
-        data.emplace("deviceType", "10");
+        data.emplace("client_id", "desktop");
+        data.emplace("deviceType", "7");
         data.emplace("deviceIdentifier", uniqueGuid());
         data.emplace("deviceName", "firefox");
         
@@ -77,7 +77,7 @@ namespace ClientWarden {
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         });
 
@@ -86,8 +86,8 @@ namespace ClientWarden {
         data.emplace("username", email);
         data.emplace("password", masterPasswordHash);
         data.emplace("scope", "api offline_access");
-        data.emplace("client_id", "web");
-        data.emplace("deviceType", "10");
+        data.emplace("client_id", "desktop");
+        data.emplace("deviceType", "7");
         data.emplace("deviceIdentifier", uniqueGuid());
         data.emplace("deviceName", "firefox");
         data.emplace("twoFactorToken", totp);
@@ -112,7 +112,7 @@ namespace ClientWarden {
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         });
 
@@ -121,8 +121,8 @@ namespace ClientWarden {
         data.emplace("username", email);
         data.emplace("password", masterPasswordHash);
         data.emplace("scope", "api offline_access");
-        data.emplace("client_id", "web");
-        data.emplace("deviceType", "10");
+        data.emplace("client_id", "desktop");
+        data.emplace("deviceType", "7");
         data.emplace("deviceIdentifier", uniqueGuid());
         data.emplace("deviceName", "firefox");
         data.emplace("newDeviceOtp", code);
@@ -174,13 +174,13 @@ namespace ClientWarden {
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
             { "Content-Type", "application/x-www-form-urlencoded; charset=utf-8" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         });
 
         httplib::Params data;
         data.emplace("grant_type", "refresh_token");
-        data.emplace("client_id", "web");
+        data.emplace("deviceType", "10");
         data.emplace("refresh_token", refreshToken);
         
         auto res = vaultClient->Post("/identity/connect/token", data);
@@ -283,7 +283,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Accept", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -305,7 +305,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -327,7 +327,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -355,7 +355,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -377,7 +377,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -399,7 +399,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -421,7 +421,7 @@ namespace ClientWarden {
         std::string& encryptedFileName, std::string& attKeyStr, std::string accessString, std::function<void(float)> onProgress) {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -491,7 +491,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -514,7 +514,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -575,7 +575,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -598,7 +598,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 
@@ -620,7 +620,7 @@ namespace ClientWarden {
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
-            { "bitwarden-client-name", "web" },
+            { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
 

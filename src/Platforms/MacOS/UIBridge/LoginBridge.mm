@@ -44,11 +44,13 @@
             if (v_inst.state == ClientWarden::AuthState::WaitingForTOTP) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = false;
+                    ClientwardenWindow.instance.state = WindowStateLogin;
                 });
                 return true;
             } else if (v_inst.state == ClientWarden::AuthState::WaitingForDeviceVerif) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = false;
+                    ClientwardenWindow.instance.state = WindowStateLogin;
                 });
                 return true;
             }

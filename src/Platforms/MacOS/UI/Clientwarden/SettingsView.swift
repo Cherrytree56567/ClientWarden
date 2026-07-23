@@ -212,6 +212,9 @@ struct SettingsView: View {
                 }
             }
         }
+        .onChange(of: thisWindow) { _, newWindow in
+            newWindow?.title = "Settings"
+        }
     }
 }
 

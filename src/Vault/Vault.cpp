@@ -1,4 +1,5 @@
 #include "Vault.h"
+#include "UIBridge/CBridge.h"
 
 namespace ClientWarden {
     /*
@@ -32,8 +33,8 @@ namespace ClientWarden {
                         /*
                         * Cipher is created
                         */
-                    Sync();
-                    break;
+                        Sync();
+                        break;
                     case 2:
                         /*
                         * Cipher is deleted
@@ -51,12 +52,14 @@ namespace ClientWarden {
                         * All Ciphers changed
                         * TODO: Update whole vault.json file
                         */
+                        Sync(true);
                         break;
                     case 5:
                         /*
                         * Whole Vault Changed
                         * TODO: Update whole vault.json file
                         */
+                        Sync(true);
                         break;
                     case 6:
                         /*
@@ -90,6 +93,7 @@ namespace ClientWarden {
                         break;
                     case 11:
                         Logout();
+                        SetLoginPage();
                         break;
                     default:
                         logger->info("Unhandled type: {}", notifyType);
@@ -225,10 +229,6 @@ namespace ClientWarden {
 
         std::optional<nlohmann::json> token = network.getToken(email, session.masterPasswordHash);
         if (token.has_value()) {
-            if (!token.value().contains("access_token") || !token.value().contains("refresh_token") ||
-                !token.value().contains("expires_in")) {
-                return false;
-            }
             if (token.value().contains("error_description")) {
                 if (token.value()["error_description"] == "Two factor required.") {
                     state = AuthState::WaitingForTOTP;
@@ -237,6 +237,10 @@ namespace ClientWarden {
                     state = AuthState::WaitingForDeviceVerif;
                     return true;
                 }
+                return false;
+            }
+            if (!token.value().contains("access_token") || !token.value().contains("refresh_token") ||
+                !token.value().contains("expires_in")) {
                 return false;
             }
             (*session.authData)["accessString"] = token.value()["access_token"];
@@ -316,6 +320,10 @@ namespace ClientWarden {
             (*session.authData)["needsRefreshTime"] = oss.str();
 
             storage.write("data.json", session.authData->dump(2));
+
+            if (!Sync()) {
+                return false;
+            }
 
             std::string protectedKey = (*session.vaultData)["profile"]["key"];
 
@@ -445,7 +453,7 @@ namespace ClientWarden {
      *    - Add Locally
      * Save Vault
     */
-    bool Vault::Sync() {
+    bool Vault::Sync(bool fullSync) {
         network.checkConnectivity();
         if (network.getConnectivity() == VaultConnectivity::Offline) {
             return false;
@@ -462,7 +470,7 @@ namespace ClientWarden {
          * TODO: Put this into refresh Vault or smth
          * basically start from scratch
         */
-        if (!storage.exists("vault.json")) {
+        if (!storage.exists("vault.json") || fullSync) {
             storage.write("vault.json", body.dump(2));
             *session.vaultData = body;
             return true;

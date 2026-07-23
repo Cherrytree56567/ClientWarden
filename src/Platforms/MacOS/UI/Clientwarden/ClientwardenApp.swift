@@ -148,7 +148,7 @@ struct ClientwardenApp: App {
             }
         }
         
-        Settings("Settings") {
+        Settings {
             SettingsView()
         }
     }
