@@ -22,7 +22,7 @@ final class NavigationPanel: NSObject {
     
     public var folders: [Folder] = []
     
-    @objc public var cb_createFolder: ((String) -> UUID)?
+    @objc public var cb_createFolder: ((String) -> UUID?)?
     @objc public var cb_deleteFolder: ((UUID) -> Bool)?
     @objc public var cb_renameFolder: ((UUID, String) -> Bool)?
     
@@ -207,9 +207,11 @@ struct NavigationPanelView: View {
                  * Check if the var has a callback and check if
                  * the callback was successful
                  */
-                if let folderUUID = data.cb_createFolder?("New Folder") {
-                    if (folderUUID != nil) {
+                if (data.cb_createFolder != nil) {
+                    if let folderUUID = data.cb_createFolder!("New Folder") {
                         data.folders.append(Folder(uuid: folderUUID, name: "New Folder"))
+                    } else {
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to create folder"))
                     }
                 } else {
                     ToastStore.instance.toasts.append(Toast(message: "No callback set for createFolder"))
@@ -244,6 +246,14 @@ struct NavigationPanelView: View {
             }
         } message: {
             Text("Rename Folder.")
+        }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                if (!Task.isCancelled) {
+                    data.getFolders()
+                }
+            }
         }
     }
 }

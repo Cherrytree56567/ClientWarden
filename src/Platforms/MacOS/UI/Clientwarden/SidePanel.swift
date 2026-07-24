@@ -19,6 +19,17 @@ final class PasswordHistoryItem: NSObject {
 }
 
 @objcMembers
+final class FolderItem: NSObject {
+    public var name: String
+    public var uuid: String
+
+    public init(name: String, uuid: String) {
+        self.name = name
+        self.uuid = uuid
+    }
+}
+
+@objcMembers
 @Observable
 final class SidePanel: NSObject {
     static let instance = SidePanel()
@@ -28,6 +39,7 @@ final class SidePanel: NSObject {
     
     public var name: String = ""
     public var uuid: UUID = UUID()
+    public var folderUUID: UUID = UUID.empty
     public var type: ItemType = ItemType.Login
     public var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     public var editable: Bool = false
@@ -48,7 +60,7 @@ final class SidePanel: NSObject {
     
     @objc public var cb_duplicate: ((UUID, ItemType) -> ItemElement)?
     @objc public var cb_delete: ((UUID) -> Bool)?
-    @objc public var cb_save: ((UUID, String, ItemType, [GenericItemData], [FieldItemData], String) -> Bool)?
+    @objc public var cb_save: ((UUID, String, ItemType, UUID, [GenericItemData], [FieldItemData], String) -> Bool)?
     
     @objc public var cb_restore: ((UUID) -> Bool)?
     @objc public var cb_permDel: ((UUID) -> Bool)?
@@ -65,6 +77,7 @@ final class SidePanel: NSObject {
         name = ""
         type = ItemType.Login
         icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+        folderUUID = UUID.empty
         favorite = false
         itemFields = []
         customFields = []
@@ -77,13 +90,14 @@ final class SidePanel: NSObject {
         s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     }
     
-    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [PasswordHistoryItem], attachmentItems: [AttachmentItemData], notes: String) {
+    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, folderUUID: UUID, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [PasswordHistoryItem], attachmentItems: [AttachmentItemData], notes: String) {
         self.viewable = true
         self.editable = false
         self.name = name
         self.uuid = uuid
         self.type = type
         self.icon = icon
+        self.folderUUID = folderUUID
         self.favorite = favorite
         self.itemFields = itemFields
         self.customFields = customFields
@@ -101,12 +115,14 @@ final class SidePanel: NSObject {
     public var s_itemFields: [GenericItemData] = []
     public var s_customFields: [FieldItemData] = []
     public var s_notes: GenericItemData = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+    public var s_folderUUID: UUID = UUID.empty
     
     func saveSnapshot() {
         s_name = name
         s_itemFields = itemFields.map { $0._copy() }
         s_customFields = customFields
         s_notes = notes._copy()
+        s_folderUUID = folderUUID
     }
     
     func pullSnapshot() {
@@ -114,6 +130,7 @@ final class SidePanel: NSObject {
         itemFields = s_itemFields.map { $0._copy() }
         customFields = s_customFields
         notes = s_notes._copy()
+        folderUUID = s_folderUUID
     }
     
     func deleteSnapshot() {
@@ -121,6 +138,7 @@ final class SidePanel: NSObject {
         s_itemFields = []
         s_customFields = []
         s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
+        s_folderUUID = UUID.empty
     }
     
     /*
@@ -147,7 +165,7 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let sav = cb_save?(uuid, name, type, itemFields, customFields, notes.value) {
+        if let sav = cb_save?(uuid, name, type, folderUUID, itemFields, customFields, notes.value) {
             if (sav) {
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
                 return true
@@ -381,6 +399,17 @@ struct SidePanelView: View {
                         .buttonStyle(.plain)
                         .glassEffect(.regular.interactive(), in: Circle())
                     }
+                    
+                    Picker("Folder Picker", selection: $data.folderUUID) {
+                        ForEach(NavigationPanel.instance.folders, id: \.uuid) { option in
+                            Text(option.name).tag(option.uuid)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .pickerStyle(.menu)
+                    .padding(.top, 4)
+                    .disabled(!data.editable)
                     
                     Divider()
                         .padding(.top, 4)

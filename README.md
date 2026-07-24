@@ -150,7 +150,6 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Show Password History Date
     - [ ] Reprompt Support
     - [ ] Add Password Generator
-    - [ ] Support PFP
     - [ ] Highlight selected item
     - [ ] Add Animation for extending window
     - [ ] Folder Tree View

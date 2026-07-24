@@ -240,6 +240,7 @@
             NSString* name = nil;
             ItemType type = ItemTypeLogin;
             ClientwardenImage* img = nil;
+            NSUUID* folderUUID = nil;
             bool favorite = false;
             NSArray<GenericItemData*>* itemFields = [NSMutableArray array];
             NSArray<FieldItemData*>* customFields = [NSMutableArray array];
@@ -254,6 +255,7 @@
             std::shared_ptr<ClientWarden::GenericItem> item = v_inst.GetItem(c_uuid);
 
             std::string c_name = "";
+            std::string c_folderID = "00000000-0000-0000-0000-000000000000";
             ClientWarden::CipherType c_type;
             std::vector<std::tuple<ClientWarden::CustomFieldType, std::string, std::string>> c_customFields;
             std::string c_creation = "";
@@ -264,6 +266,7 @@
             std::string c_notes;
 
             item->GetName(c_name)
+                ->GetFolder(c_folderID)
                 ->GetFavorite(favorite)
                 ->GetFields(c_customFields)
                 ->GetCreation(c_creation)
@@ -272,6 +275,9 @@
                 ->GetNotes(c_notes)
                 ->GetType(c_type)
                 ->GetAttachmentIDs(c_attachIds);
+            
+            NSString* s_folderUUID = [NSString stringWithUTF8String: c_folderID.c_str()];
+            folderUUID = [[NSUUID alloc] initWithUUIDString: s_folderUUID];
             
             for (auto& c_id : c_attachIds) {
                 NSString* id = [NSString stringWithUTF8String: c_id.c_str()];
@@ -707,8 +713,8 @@
                 c_pubKey.clear();
             }
 
-            [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img favorite:favorite itemFields:itemFields 
-                                customFields:customFields itemHistory:itemHistory passwordHistory:passwordHistory 
+            [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img folderUUID:folderUUID favorite:favorite 
+                                itemFields:itemFields customFields:customFields itemHistory:itemHistory passwordHistory:passwordHistory 
                                 attachmentItems:attachments notes:notes];
 
             return true;
@@ -937,8 +943,8 @@
  * less efficient.
  */
 + (void)cb_save {
-    SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, NSArray<GenericItemData*>* itemFields, 
-                                       NSArray<FieldItemData*>* customFields, NSString* notes) {
+    SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, NSUUID* folderUUID, 
+                                       NSArray<GenericItemData*>* itemFields, NSArray<FieldItemData*>* customFields, NSString* notes) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -969,8 +975,12 @@
             std::string c_notes = notes.UTF8String;
             std::string c_name = name.UTF8String;
 
+            std::string c_folderUUID = folderUUID.UUIDString.UTF8String;
+            std::transform(c_folderUUID.begin(), c_folderUUID.end(), c_folderUUID.begin(), ::tolower);
+
             item->SetNotes(c_notes)
                 ->SetName(c_name)
+                ->SetFolder(c_folderUUID)
                 ->Commit();
 
             OPENSSL_cleanse((void*)c_name.data(), c_name.size());
