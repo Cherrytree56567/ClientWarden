@@ -58,6 +58,8 @@ namespace ClientWarden {
 
         void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
 
+        bool checkReprompt(std::string password);
+
         void SetScreenshotOption(bool value);
         bool GetScreenshotOption();
 

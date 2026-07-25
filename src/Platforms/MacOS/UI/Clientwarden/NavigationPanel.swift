@@ -169,32 +169,34 @@ struct NavigationPanelView: View {
                  * a Folder struct that contains a name and uuid.
                  */
                 ForEach(data.folders) { folder in
-                    Tab(folder.name, systemImage: "folder", value: NavItems.folder(folder.id)) {
-                        ItemsPanelView()
-                            .id(refreshToken)
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            if let folderUUID = data.cb_deleteFolder?(folder.id) {
-                                if (folderUUID) {
-                                    data.folders.removeAll { $0.id == folder.id }
-                                } else {
-                                    ToastStore.instance.toasts.append(Toast(message: "Failed to delete folder"))
-                                }
-                            } else {
-                                ToastStore.instance.toasts.append(Toast(message: "No callback set for deleteFolder"))
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "minus.circle")
-                                .labelStyle(TitleAndIconLabelStyle())
+                    if (folder.id != UUID.empty) {
+                        Tab(folder.name, systemImage: "folder", value: NavItems.folder(folder.id)) {
+                            ItemsPanelView()
+                                .id(refreshToken)
                         }
-                        Button {
-                            showRenameAlert = true
-                            renameAlertId = folder.id
-                            folderName = folder.name
-                        } label: {
-                            Label("Rename", systemImage: "character.cursor.ibeam")
-                                .labelStyle(TitleAndIconLabelStyle())
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                if let folderUUID = data.cb_deleteFolder?(folder.id) {
+                                    if (folderUUID) {
+                                        data.folders.removeAll { $0.id == folder.id }
+                                    } else {
+                                        ToastStore.instance.toasts.append(Toast(message: "Failed to delete folder"))
+                                    }
+                                } else {
+                                    ToastStore.instance.toasts.append(Toast(message: "No callback set for deleteFolder"))
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "minus.circle")
+                                    .labelStyle(TitleAndIconLabelStyle())
+                            }
+                            Button {
+                                showRenameAlert = true
+                                renameAlertId = folder.id
+                                folderName = folder.name
+                            } label: {
+                                Label("Rename", systemImage: "character.cursor.ibeam")
+                                    .labelStyle(TitleAndIconLabelStyle())
+                            }
                         }
                     }
                 }

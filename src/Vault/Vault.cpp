@@ -720,6 +720,17 @@ namespace ClientWarden {
         return true;
     }
 
+    bool Vault::checkReprompt(std::string password) {
+        Botan::secure_vector<uint8_t> r_internalKey = std::move(crypto.makeKey(password, (*session.authData)["salt"], (*session.authData)["kdfIterations"]));
+        std::string r_masterPasswordHash = crypto.hashedPassword(password, r_internalKey);
+
+        if (r_internalKey == *session.internalKey && r_masterPasswordHash == session.masterPasswordHash) {
+            return true;
+        }
+
+        return false;
+    }
+
     std::vector<std::string> Vault::GetFolders() {
         /*
          * Secret Data

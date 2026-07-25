@@ -37,6 +37,10 @@ final class SidePanel: NSObject {
         super.init()
     }
     
+    public var repromptPassword: String = ""
+    public var isReprompt: Bool = false
+    public var repromptFailed: Bool = false
+    
     public var name: String = ""
     public var uuid: UUID = UUID()
     public var folderUUID: UUID = UUID.empty
@@ -66,6 +70,7 @@ final class SidePanel: NSObject {
     @objc public var cb_permDel: ((UUID) -> Bool)?
     
     @objc public var cb_sidebar: ((UUID) -> Bool)?
+    @objc public var cb_sidebarReprompt: ((UUID, String) -> Bool)?
     
     @objc public var cb_downloadAttachment: ((UUID, String) -> Bool)?
     @objc public var cb_removeAttachment: ((UUID, String) -> Bool)?
@@ -149,8 +154,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_favorite?(!favorite, uuid) {
-            if (fav) {
+        if let result = cb_favorite?(!favorite, uuid) {
+            if (result) {
                 favorite.toggle()
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to set favorite"))
@@ -165,8 +170,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let sav = cb_save?(uuid, name, type, folderUUID, itemFields, customFields, notes.value) {
-            if (sav) {
+        if let result = cb_save?(uuid, name, type, folderUUID, itemFields, customFields, notes.value) {
+            if (result) {
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
                 return true
             } else {
@@ -183,9 +188,9 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let dup = cb_duplicate?(uuid, type) {
-            if (dup != nil) {
-                ItemsPanel.instance.elements.append(dup)
+        if let result = cb_duplicate?(uuid, type) {
+            if (result != nil) {
+                ItemsPanel.instance.elements.append(result)
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
             }
         } else {
@@ -198,8 +203,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let del = cb_delete?(uuid) {
-            if (del) {
+        if let result = cb_delete?(uuid) {
+            if (result) {
                 editable = false
                 viewable = false
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
@@ -216,8 +221,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let side = cb_sidebar?(cb_uuid) {
-            if (side) {
+        if let result = cb_sidebar?(cb_uuid) {
+            if (result) {
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to view item"))
             }
@@ -226,13 +231,30 @@ final class SidePanel: NSObject {
         }
     }
     
+    func viewItemReprompt() {
+        /*
+         * Check if the var has a callback and check if
+         * the callback was successful
+         */
+        if let result = cb_sidebarReprompt?(uuid, repromptPassword) {
+            if (result) {
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to view item"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for view Item"))
+        }
+        
+        repromptPassword = ""
+    }
+    
     func downloadAttachment(id: String) {
         /*
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_downloadAttachment?(uuid, id) {
-            if (fav) {
+        if let result = cb_downloadAttachment?(uuid, id) {
+            if (result) {
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to download Attachment"))
             }
@@ -246,8 +268,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_removeAttachment?(uuid, id) {
-            if (fav) {
+        if let result = cb_removeAttachment?(uuid, id) {
+            if (result) {
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to remove Attachment"))
             }
@@ -261,8 +283,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let attach = cb_uploadAttachment?(uuid) {
-            if (attach) {
+        if let result = cb_uploadAttachment?(uuid) {
+            if (result) {
             } else {
                 ToastStore.instance.toasts.append(Toast(message: "Failed to upload Attachment"))
             }
@@ -276,8 +298,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_restore?(uuid) {
-            if (fav) {
+        if let result = cb_restore?(uuid) {
+            if (result) {
                 editable = false
                 viewable = false
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
@@ -294,8 +316,8 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let fav = cb_permDel?(uuid) {
-            if (fav) {
+        if let result = cb_permDel?(uuid) {
+            if (result) {
                 editable = false
                 viewable = false
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
@@ -661,6 +683,32 @@ struct SidePanelView: View {
             #if NON_XCODE_BUILD
                 SidePanelBridge.setupCallbacks()
             #endif
+        }
+        .sheet(isPresented: $data.isReprompt) {
+            VStack {
+                Text("Enter Password to see Item")
+                    .padding(.top, 8)
+                SecureField("Password", text: $data.repromptPassword)
+                    .padding(.leading, 4)
+                    .padding(.trailing, 4)
+                    .frame(width: 180)
+                Text("Wrong Password")
+                    .font(.caption)
+                    .foregroundColor(data.repromptFailed ? .red : .clear)
+                HStack {
+                    Spacer()
+                    Button("Cancel", role: .cancel) {
+                        data.isReprompt = false
+                    }
+                    Button("Confirm") {
+                        data.viewItemReprompt()
+                    }
+                    Spacer()
+                }
+                .padding(.trailing, 4)
+                .padding(.bottom, 8)
+            }
+            .frame(width: 200)
         }
     }
 }

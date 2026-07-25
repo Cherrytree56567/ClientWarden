@@ -382,6 +382,10 @@
 
             NSMutableArray<Folder*>* folders = [NSMutableArray array];
 
+            NSUUID* emptyUUID = [[NSUUID alloc] initWithUUIDString:@"00000000-0000-0000-0000-000000000000"];
+            Folder* emptyFolder = [[Folder alloc] initWithUuid:emptyUUID name:@""];
+            [folders addObject:emptyFolder];
+
             for (auto& c_uuid : c_folders) {
                 NSString* s_uuid = [NSString stringWithUTF8String: c_uuid.c_str()];
 
