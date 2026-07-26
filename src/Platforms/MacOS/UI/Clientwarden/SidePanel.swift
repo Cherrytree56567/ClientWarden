@@ -44,6 +44,7 @@ final class SidePanel: NSObject {
     public var name: String = ""
     public var uuid: UUID = UUID()
     public var folderUUID: UUID = UUID.empty
+    public var repromptItem: Bool = false
     public var type: ItemType = ItemType.Login
     public var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     public var editable: Bool = false
@@ -64,7 +65,7 @@ final class SidePanel: NSObject {
     
     @objc public var cb_duplicate: ((UUID, ItemType) -> ItemElement)?
     @objc public var cb_delete: ((UUID) -> Bool)?
-    @objc public var cb_save: ((UUID, String, ItemType, UUID, [GenericItemData], [FieldItemData], String) -> Bool)?
+    @objc public var cb_save: ((UUID, String, ItemType, Bool, UUID, [GenericItemData], [FieldItemData], String) -> Bool)?
     
     @objc public var cb_restore: ((UUID) -> Bool)?
     @objc public var cb_permDel: ((UUID) -> Bool)?
@@ -82,6 +83,7 @@ final class SidePanel: NSObject {
         name = ""
         type = ItemType.Login
         icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+        repromptItem = false
         folderUUID = UUID.empty
         favorite = false
         itemFields = []
@@ -95,7 +97,7 @@ final class SidePanel: NSObject {
         s_notes = GenericItemData(title: "Notes", value: "", type: GenericItemType.ml_generic)
     }
     
-    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, folderUUID: UUID, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [PasswordHistoryItem], attachmentItems: [AttachmentItemData], notes: String) {
+    func viewItem(name: String, uuid: UUID, type: ItemType, icon: ClientwardenImage, repromptItem: Bool, folderUUID: UUID, favorite: Bool, itemFields: [GenericItemData], customFields: [FieldItemData], itemHistory: [String], passwordHistory: [PasswordHistoryItem], attachmentItems: [AttachmentItemData], notes: String) {
         self.viewable = true
         self.editable = false
         self.name = name
@@ -103,6 +105,7 @@ final class SidePanel: NSObject {
         self.type = type
         self.icon = icon
         self.folderUUID = folderUUID
+        self.repromptItem = repromptItem
         self.favorite = favorite
         self.itemFields = itemFields
         self.customFields = customFields
@@ -170,7 +173,7 @@ final class SidePanel: NSObject {
          * Check if the var has a callback and check if
          * the callback was successful
          */
-        if let result = cb_save?(uuid, name, type, folderUUID, itemFields, customFields, notes.value) {
+        if let result = cb_save?(uuid, name, type, repromptItem, folderUUID, itemFields, customFields, notes.value) {
             if (result) {
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
                 return true
@@ -446,6 +449,20 @@ struct SidePanelView: View {
                     }
                     
                     GenericItem(data: $data.notes, edit: data.editable)
+                    
+                    if (data.editable) {
+                        HStack {
+                            Text("Reprompt Master Password")
+                                .padding(.leading, 4)
+                            
+                            Spacer()
+                            
+                            Toggle("Reprompt Master Password", isOn: $data.repromptItem)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                        }
+                        .padding(.top, 4)
+                    }
                     
                     Divider()
                         .padding(.top, 4)

@@ -241,6 +241,7 @@ static bool sidebar(NSUUID* uuid) {
         ClientwardenImage* img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"questionmark.app.dashed"];
         NSUUID* folderUUID = nil;
         bool favorite = false;
+        bool reprompt = false;
         NSArray<GenericItemData*>* itemFields = [NSMutableArray array];
         NSArray<FieldItemData*>* customFields = [NSMutableArray array];
         NSArray<NSString*>* itemHistory = [NSMutableArray array];
@@ -265,6 +266,7 @@ static bool sidebar(NSUUID* uuid) {
         std::string c_notes;
 
         item->GetName(c_name)
+            ->GetReprompt(reprompt)
             ->GetFolder(c_folderID)
             ->GetFavorite(favorite)
             ->GetFields(c_customFields)
@@ -712,7 +714,7 @@ static bool sidebar(NSUUID* uuid) {
             c_pubKey.clear();
         }
 
-        [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img folderUUID:folderUUID favorite:favorite 
+        [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img repromptItem:reprompt folderUUID:folderUUID favorite:favorite 
                             itemFields:itemFields customFields:customFields itemHistory:itemHistory passwordHistory:passwordHistory 
                             attachmentItems:attachments notes:notes];
 
@@ -988,7 +990,7 @@ static bool sidebar(NSUUID* uuid) {
  * less efficient.
  */
 + (void)cb_save {
-    SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, NSUUID* folderUUID, 
+    SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, bool reprompt, NSUUID* folderUUID, 
                                        NSArray<GenericItemData*>* itemFields, NSArray<FieldItemData*>* customFields, NSString* notes) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
@@ -1031,6 +1033,7 @@ static bool sidebar(NSUUID* uuid) {
 
             item->SetNotes(c_notes)
                 ->SetName(c_name)
+                ->SetReprompt(reprompt)
                 ->Commit();
 
             OPENSSL_cleanse((void*)c_name.data(), c_name.size());
