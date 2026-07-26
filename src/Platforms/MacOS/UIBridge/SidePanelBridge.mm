@@ -10,6 +10,7 @@
 #include "NoteItem/NoteItem.h"
 #include "SSHKeyItem/SSHKeyItem.h"
 #include "Folder/Folder.h"
+#include "PasswordGenerator/PasswordGenerator.h"
 #include "Vault.h"
 
 @implementation SidePanelBridge
@@ -30,6 +31,9 @@
     [self cb_uploadAttachment];
     [self cb_removeAttachment];
     [self cb_save];
+    [self cb_genRandPasswd];
+    [self cb_genSimplPasswd];
+    [self cb_genPinPasswd];
 }
 
 /*
@@ -1296,6 +1300,94 @@ static bool sidebar(NSUUID* uuid) {
             });
 
             return false;
+        }
+    };
+}
+
+/*
+ * Generate a random Password using Letters, Symbols (optional),
+ * Capital Letters (optional) and numbers (optional) using a size.
+ * EG:
+ * Numbers = True, Symbols = True, Caps = True, Size = 8
+ * = iG4h!uC#
+ */
++ (void)cb_genRandPasswd {
+    SidePanel.instance.cb_genRandPasswd = ^NSString* (bool numbers, bool symbols, bool caps, NSInteger size) {
+        try {
+            ClientWarden::PasswordGenerator passwordGen;
+
+            std::string c_password = "";
+            
+            passwordGen.Random(size, numbers, symbols, caps, c_password);
+
+            NSString* password = [NSString stringWithUTF8String:c_password.c_str()];
+
+            return password;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Generate Random Password"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return @"";
+        }
+    };
+}
+
+/*
+ * Generate a memorable Password using Words using a size.
+ * EG:
+ * Caps = True, Size = 4
+ * = Cats-password-heart-elephant
+ */
++ (void)cb_genSimplPasswd {
+    SidePanel.instance.cb_genSimplPasswd = ^NSString* (bool caps, NSInteger size) {
+        try {
+            ClientWarden::PasswordGenerator passwordGen;
+
+            std::string c_password = "";
+            
+            passwordGen.Memorable(size, caps, c_password);
+
+            NSString* password = [NSString stringWithUTF8String:c_password.c_str()];
+
+            return password;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Generate Simple Password"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return @"";
+        }
+    };
+}
+
+/*
+ * Generate a memorable Password using Words using a size.
+ * EG:
+ * Caps = True, Size = 4
+ * = Cats-password-heart-elephant
+ */
++ (void)cb_genPinPasswd {
+    SidePanel.instance.cb_genPinPasswd = ^NSString* (NSInteger size) {
+        try {
+            ClientWarden::PasswordGenerator passwordGen;
+
+            std::string c_password = "";
+            
+            passwordGen.Pin(size, c_password);
+
+            NSString* password = [NSString stringWithUTF8String:c_password.c_str()];
+
+            return password;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Generate Pin"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return @"";
         }
     };
 }

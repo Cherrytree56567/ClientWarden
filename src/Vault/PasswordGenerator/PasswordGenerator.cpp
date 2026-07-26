@@ -2,7 +2,7 @@
 
 namespace ClientWarden {
     PasswordGenerator::PasswordGenerator() : storage("") {
-        std::string file = storage.read("clientgen.txt");
+        std::string file = storage.read("clientgen.txt"); // TODO: Add clientgen.txt to bundle
 
         std::stringstream ss(file);
         std::string line;

@@ -77,6 +77,34 @@ final class SidePanel: NSObject {
     @objc public var cb_removeAttachment: ((UUID, String) -> Bool)?
     @objc public var cb_uploadAttachment: ((UUID) -> Bool)?
     
+    @objc public var cb_genRandPasswd: ((Bool, Bool, Bool, Int) -> String)?
+    @objc public var cb_genSimplPasswd: ((Bool, Int) -> String)?
+    @objc public var cb_genPinPasswd: ((Int) -> String)?
+    
+    func generatePassword(passwordType: Int, numbers: Bool, symbols: Bool, caps: Bool, size: Int) -> String {
+        if (passwordType == 0) {
+            if let result = cb_genRandPasswd?(numbers, symbols, caps, size) {
+                return result
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "No callback set for Generate Random Password"))
+            }
+        } else if (passwordType == 1) {
+            if let result = cb_genSimplPasswd?(caps, size) {
+                return result
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "No callback set for Generate Simple Password"))
+            }
+        } else if (passwordType == 2) {
+            if let result = cb_genPinPasswd?(size) {
+                return result
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "No callback set for Generate Pin"))
+            }
+        }
+        
+        return ""
+    }
+    
     func closeItem() {
         viewable = false
         editable = false
