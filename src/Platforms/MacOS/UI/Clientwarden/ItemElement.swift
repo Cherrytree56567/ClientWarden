@@ -26,6 +26,7 @@ class ItemElement: NSObject, Identifiable {
 
 struct ItemElementView: View {
     @State var data: ItemElement
+    var selected: Bool = false
     
     var body: some View {
         Button {
@@ -66,11 +67,24 @@ struct ItemElementView: View {
             }
             .padding(4)
             .contentShape(Rectangle())
+            .background {
+                GeometryReader { geo in
+                    Circle()
+                        .fill(Color.blue.opacity(0.6))
+                        .frame(width: geo.size.height * 1.4, height: geo.size.height * 1.4)
+                        .blur(radius: 24)
+                        .position(x: geo.size.width, y: geo.size.height / 2)
+                        .opacity(selected ? 1 : 0)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .animation(.easeInOut(duration: 0.25), value: selected)
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
 #Preview {
-    ItemElementView(data: ItemElement(name: "Item1", uuid: UUID(), type: ItemType.Login, image: ClientwardenImage(type: ImageType.bundle, path: "profile1")))
+    //ItemElementView(data: ItemElement(name: "Item1", uuid: UUID(), type: ItemType.Login, image: ClientwardenImage(type: ImageType.bundle, path: "profile1")))
+    PreviewData().test1()
 }

@@ -148,9 +148,10 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Code Review
     - [X] Show Deletion Date
     - [X] Show Password History Date
-    - [ ] Reprompt Support
+    - [X] Reprompt Support
+    - [ ] Add Reprompt Toggle
     - [ ] Add Password Generator
-    - [ ] Highlight selected item
+    - [X] Highlight selected item
     - [ ] Add Animation for extending window
     - [ ] Folder Tree View
     - [ ] Passkey Support

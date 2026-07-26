@@ -129,7 +129,7 @@ struct ItemsPanelView: View {
                     } else {
                         VStack {
                             ForEach(data.filteredElements) { item in
-                                ItemElementView(data: item)
+                                ItemElementView(data: item, selected: SidePanel.instance.viewable && SidePanel.instance.uuid == item.uuid)
                             }
                         }
                         .padding(12)
