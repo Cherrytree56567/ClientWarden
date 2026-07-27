@@ -252,7 +252,9 @@ struct LoginView: View {
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     Button {
-                        data.login()
+                        withAnimation {
+                            data.login()
+                        }
                     } label: {
                         Text(verbatim: "Login")
                             .font(.subheadline)
@@ -276,7 +278,9 @@ struct LoginView: View {
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     Button {
-                        data.submitCode()
+                        withAnimation {
+                            data.submitCode()
+                        }
                     } label: {
                         Text(verbatim: "Submit")
                             .font(.subheadline)

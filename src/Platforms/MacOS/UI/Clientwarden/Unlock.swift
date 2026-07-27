@@ -85,7 +85,9 @@ struct UnlockView: View {
                     .frame(width: 200)
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                 Button {
-                    data.unlock()
+                    withAnimation {
+                        data.unlock()
+                    }
                 } label: {
                     Text(verbatim: "Unlock")
                         .font(.subheadline)

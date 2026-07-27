@@ -152,7 +152,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Add Reprompt Toggle
     - [X] Add Password Generator
     - [X] Highlight selected item
-    - [ ] Add Animation for extending window
+    - [X] Add Animation for extending window
     - [ ] Folder Tree View
     - [ ] Passkey Support
 - [X] Derive Item Classes from Generic Item

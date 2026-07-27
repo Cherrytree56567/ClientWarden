@@ -41,6 +41,9 @@ final class NavigationPanel: NSObject {
     @objc public var cb_getFolders: (() -> [Folder])?
 
     func getFolders() {
+        if (ClientwardenWindow.instance.state != .Vault) {
+            return
+        }
         if let c_folders = cb_getFolders?() {
             folders = c_folders
         } else {
@@ -67,6 +70,9 @@ final class NavigationPanel: NSObject {
     }
 
     func loadCurrentTab(refresh: Bool = false) -> Bool {
+        if (ClientwardenWindow.instance.state != .Vault) {
+            return true // It should return false, but I dont want it to show the callback thign
+        }
         var elements: [ItemElement]?
         
         switch selection {

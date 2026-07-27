@@ -141,7 +141,9 @@ struct ClientwardenApp: App {
             if (data.state == WindowState.Vault) {
                 CommandMenu("Vault") {
                     Button("Lock") {
-                        data.lock()
+                        withAnimation {
+                            data.lock()
+                        }
                     }
                     .keyboardShortcut("L", modifiers: [.command])
                 }
