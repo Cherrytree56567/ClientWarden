@@ -46,6 +46,9 @@ final class NavigationPanel: NSObject {
         }
         if let c_folders = cb_getFolders?() {
             folders = c_folders
+            folders
+                .filter { $0.id != UUID.empty }
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for getFolders"))
         }

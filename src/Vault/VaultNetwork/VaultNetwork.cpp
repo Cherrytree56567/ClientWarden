@@ -11,7 +11,9 @@ namespace ClientWarden {
 
     void VaultNetwork::initNetwork(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri) {
         apiClient = std::make_shared<httplib::Client>(apiUri);
+        apiClient->set_connection_timeout(5);
         vaultClient = std::make_shared<httplib::Client>(vaultUri);
+        vaultClient->set_connection_timeout(5);
         iconClient = std::make_shared<httplib::Client>(iconUri);
         iconClient->set_connection_timeout(2);
         iconClient->set_read_timeout(3);

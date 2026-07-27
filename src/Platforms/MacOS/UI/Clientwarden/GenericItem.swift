@@ -167,7 +167,7 @@ struct GenericItem: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            if (data.type == GenericItemType.password && editable) {
+            if (data.type == GenericItemType.password && editable && data.title == "Password") {
                 HStack {
                     Text("Password Generator")
                         .padding(.leading, 8)
@@ -310,7 +310,7 @@ struct GenericItem: View {
                                 .frame(minHeight: 100)
                                 .scrollContentBackground(.hidden)
                         } else {
-                            TextField("Title", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
+                            TextField("Value", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
                                 .lineLimit(6)
                                 .padding(-4)
                         }

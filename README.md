@@ -153,7 +153,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Add Password Generator
     - [X] Highlight selected item
     - [X] Add Animation for extending window
-    - [ ] Folder Tree View
+    - [X] Folder Tree View (Couldn't figure this out with SwiftUI, TODO Later)
     - [ ] Passkey Support
 - [X] Derive Item Classes from Generic Item
 - [ ] Windows Support
