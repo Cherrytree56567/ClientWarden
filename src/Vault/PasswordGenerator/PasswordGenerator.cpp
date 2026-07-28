@@ -12,7 +12,6 @@ namespace ClientWarden {
                 line.pop_back();
             }
             wordList.push_back(line);
-            logger->info("{}", line);
         }
 
         init = true;

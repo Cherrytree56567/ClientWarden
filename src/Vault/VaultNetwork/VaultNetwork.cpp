@@ -229,13 +229,17 @@ namespace ClientWarden {
                 break;
             }
 
-            if (msg == "{}\x1e") continue;
+            if (msg == "{}\x1e") {
+                continue;
+            }
 
             size_t headerLen = 0;
             const auto* raw = reinterpret_cast<const uint8_t*>(msg.data());
             for (size_t i = 0; i < msg.size() && i < 5; i++) {
                 headerLen++;
-                if (!(raw[i] & 0x80)) break;
+                if (!(raw[i] & 0x80)) {
+                    break;
+                }
             }
 
             msgpack::object_handle oh = msgpack::unpack(
@@ -246,12 +250,19 @@ namespace ClientWarden {
 
             auto& arr = obj.via.array;
 
-            if (arr.size < 5) continue;
+            if (arr.size < 5) {
+                continue;
+            }
+
             int signalrType = arr.ptr[0].as<int>();
-            if (signalrType != 1) continue;
+            if (signalrType != 1) {
+                continue;
+            }
 
             auto& args = arr.ptr[4].via.array;
-            if (args.size < 1) continue;
+            if (args.size < 1) {
+                continue;
+            }
 
             auto& notification = args.ptr[0].via.map;
 

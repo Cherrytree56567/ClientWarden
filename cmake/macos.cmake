@@ -24,6 +24,7 @@ function(buildUI _target)
     set(SwiftUIAssets
         src/Platforms/MacOS/UI/Clientwarden/Assets.xcassets
         src/Platforms/MacOS/UI/Clientwarden/Resources/MacOSIcon.icon
+        ClientWarden/clientgen.txt
     )
 
     set_source_files_properties(${SwiftUIAssets} PROPERTIES

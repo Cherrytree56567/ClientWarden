@@ -16,8 +16,6 @@ Storage::Storage() {
     path = std::filesystem::path(as_dir);
     path.append("ClientWarden");
 
-    spdlog::info("config stored at : {}", path.string());
-
     /*
      * Create a Dir
      * https://en.cppreference.com/w/cpp/filesystem/create_directory.html
@@ -44,9 +42,8 @@ Storage::Storage(std::string) {
         path = std::filesystem::path(appDir).parent_path();
     }
 
-    path.append("ClientWarden");
-
-    spdlog::info("config stored at : {}", path.string());
+    path.append("Contents");
+    path.append("Resources");
 }
 
 std::string Storage::read(std::filesystem::path file) {

@@ -161,6 +161,7 @@ struct ClientwardenApp: App {
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
+        .restorationBehavior(.disabled)
         
         Settings {
             SettingsView()
