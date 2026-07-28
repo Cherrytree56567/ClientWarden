@@ -220,6 +220,7 @@ namespace ClientWarden {
         }
 
         ws.send("{\"protocol\":\"messagepack\",\"version\":1}\x1e");
+        ws.set_websocket_ping_interval(0.1);
 
         std::string msg;
 

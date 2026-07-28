@@ -135,7 +135,7 @@ namespace ClientWarden {
 
                     storage.write("data.json", session.authData->dump(4));
                 }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             return true;
         });
@@ -143,7 +143,7 @@ namespace ClientWarden {
         session.connectivityThread.setCallback([this](const std::atomic<bool>& shouldThread) {
             while (shouldThread.load()) {
                 network.checkConnectivity();
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             return true;
         });
@@ -177,6 +177,7 @@ namespace ClientWarden {
     }
 
     Vault::~Vault() {
+        Lock();
         session.wssThread.stop();
         session.refreshThread.stop();
         session.connectivityThread.stop();
