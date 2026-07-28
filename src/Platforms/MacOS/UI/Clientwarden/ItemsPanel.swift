@@ -8,6 +8,7 @@ final class ItemsPanel: NSObject {
     public var elements: [ItemElement] = []
     public var filteredElements: [ItemElement] = []
     public var searchQuery: String = ""
+    public var refreshNum: Int = 0
 
     @objc public var cb_query: ((String) -> [ItemElement])?
     @objc public var cb_new: ((ItemType) -> ItemElement)?
@@ -19,6 +20,7 @@ final class ItemsPanel: NSObject {
     }
 
     func refresh(data: [ItemElement]) {
+        refreshItems()
         elements = data
         query()
     }
@@ -31,6 +33,10 @@ final class ItemsPanel: NSObject {
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for query"))
         }
+    }
+    
+    func refreshItems() {
+        self.refreshNum += 1
     }
 
     func newItem(itemType: ItemType) {
@@ -47,6 +53,7 @@ final class ItemsPanel: NSObject {
     }
 }
 struct ItemsPanelView: View {
+    @State private var refreshToken: Int = 0
     @Bindable var data: ItemsPanel = ItemsPanel.instance
     @FocusState private var isFocused: Bool
     @State private var showNewItemCallout: Bool = false
@@ -162,6 +169,9 @@ struct ItemsPanelView: View {
                     NavigationPanel.instance.loadCurrentTab(refresh: true)
                 }
             }
+        }
+        .onChange(of: data.refreshNum) { _, newVal in
+            refreshToken = newVal
         }
     }
 }

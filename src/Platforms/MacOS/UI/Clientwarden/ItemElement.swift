@@ -25,7 +25,7 @@ class ItemElement: NSObject, Identifiable {
 }
 
 struct ItemElementView: View {
-    @State var data: ItemElement
+    var data: ItemElement
     var selected: Bool = false
     
     var body: some View {

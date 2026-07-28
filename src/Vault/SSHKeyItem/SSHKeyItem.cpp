@@ -50,15 +50,15 @@ namespace ClientWarden {
         data["revisionDate"] = nullptr;
         data["secureNote"] = nullptr;
         data["sshKey"] = nlohmann::json::object();
-        data["sshKey"]["keyFingerprint"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
-        data["sshKey"]["privateKey"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
-        data["sshKey"]["publicKey"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["sshKey"]["keyFingerprint"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
+        data["sshKey"]["privateKey"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
+        data["sshKey"]["publicKey"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
         data["type"] = 5;
         data["viewPassword"] = true;
 
-        fieldData["PrivateKey"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
-        fieldData["PublicKey"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
-        fieldData["KeyFingerprint"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        fieldData["PrivateKey"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
+        fieldData["PublicKey"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
+        fieldData["KeyFingerprint"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
         fieldData["Name"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         fieldData["Notes"] = nullptr;
         fieldData["Fields"] = nlohmann::json::array();
@@ -69,6 +69,7 @@ namespace ClientWarden {
     SSHKeyItem* SSHKeyItem::SetFingerprint(std::string& fingerprint) {
         if (!init) return this;
         if (!data.contains("sshKey") || !data["sshKey"].is_object()) return this;
+        if (fingerprint == "") fingerprint = " ";
         fieldData["KeyFingerprint"] = localVault.crypto.Encrypt(fingerprint, itemEncKey, itemMacKey);
         data["sshKey"]["keyFingerprint"] = localVault.crypto.Encrypt(fingerprint, itemEncKey, itemMacKey);
         OPENSSL_cleanse(fingerprint.data(), fingerprint.size());
@@ -79,6 +80,7 @@ namespace ClientWarden {
     SSHKeyItem* SSHKeyItem::SetPrivateKey(std::string& privateKey) {
         if (!init) return this;
         if (!data.contains("sshKey") || !data["sshKey"].is_object()) return this;
+        if (privateKey == "") privateKey = " ";
         fieldData["PrivateKey"] = localVault.crypto.Encrypt(privateKey, itemEncKey, itemMacKey);
         data["sshKey"]["privateKey"] = localVault.crypto.Encrypt(privateKey, itemEncKey, itemMacKey);
         OPENSSL_cleanse(privateKey.data(), privateKey.size());
@@ -89,6 +91,7 @@ namespace ClientWarden {
     SSHKeyItem* SSHKeyItem::SetPublicKey(std::string& publicKey) {
         if (!init) return this;
         if (!data.contains("sshKey") || !data["sshKey"].is_object()) return this;
+        if (publicKey == "") publicKey = " ";
         fieldData["PublicKey"] = localVault.crypto.Encrypt(publicKey, itemEncKey, itemMacKey);
         data["sshKey"]["publicKey"] = localVault.crypto.Encrypt(publicKey, itemEncKey, itemMacKey);
         OPENSSL_cleanse(publicKey.data(), publicKey.size());
@@ -101,6 +104,7 @@ namespace ClientWarden {
         if (!data["sshKey"].is_object()) return this;
         if (!data["sshKey"].contains("keyFingerprint")) return this;
         if (!data["sshKey"]["keyFingerprint"].is_string()) return this;
+
         fingerprint = localVault.crypto.DecryptAsStr(data["sshKey"]["keyFingerprint"], itemEncKey, itemMacKey);
         return this;
     }
