@@ -187,6 +187,18 @@ struct GenericItem: View {
                     .labelsHidden()
                     .controlSize(.small)
                     .padding(.trailing, 8)
+                    .onChange(of: passwordGenTab) { _, newTab in
+                        switch newTab {
+                            case 0: 
+                                size = 16
+                            case 1: 
+                                size = 4
+                            case 2: 
+                                size = 8
+                            default: 
+                                break
+                        }
+                    }
                 }
                 
                 HStack(alignment: .center) {
@@ -231,7 +243,6 @@ struct GenericItem: View {
                         Toggle("Caps", isOn: $caps)
                             .transition(.opacity.combined(with: .move(edge: .leading)))
                     }
-                    
                 }
                 .padding(.leading, 8)
                 .padding(.trailing, 8)

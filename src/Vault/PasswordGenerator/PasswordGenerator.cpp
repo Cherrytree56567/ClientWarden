@@ -50,7 +50,7 @@ namespace ClientWarden {
         return *this;
     }
 
-    PasswordGenerator& PasswordGenerator::Memorable(int Characters, bool capFirsrLetter, std::string& password) {
+    PasswordGenerator& PasswordGenerator::Memorable(int Characters, bool capFirstLetter, std::string& password) {
         if (!init) return *this;
         password.clear();
         for (int i = 0; i < Characters; i++) {
@@ -64,7 +64,7 @@ namespace ClientWarden {
         if (!password.empty() && password.back() == '-') {
             password.pop_back();
         }
-        if (!password.empty()) {
+        if (!password.empty() && capFirstLetter) {
             password[0] = std::toupper(password[0]);
         }
 
