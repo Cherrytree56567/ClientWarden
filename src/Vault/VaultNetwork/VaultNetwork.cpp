@@ -223,12 +223,14 @@ namespace ClientWarden {
 
         std::string msg;
 
-        while (ws.read(msg)) {
-            if (!shouldThread) {
-                ws.close();
-                break;
+        std::jthread reader([&](std::stop_token) {
+            while (shouldThread) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
+            ws.close(httplib::ws::CloseStatus::GoingAway, "shutting down");
+        });
 
+        while (ws.read(msg)) {
             if (msg == "{}\x1e") {
                 continue;
             }
@@ -289,6 +291,7 @@ namespace ClientWarden {
                 onNotification(notifyType);
             }
         }
+
         return true;
     }
 

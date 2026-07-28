@@ -177,10 +177,9 @@ namespace ClientWarden {
     }
 
     Vault::~Vault() {
-        /*
-         * Background Threads will be automatically stopped
-         * in the VaultSession Destructor
-        */
+        session.wssThread.stop();
+        session.refreshThread.stop();
+        session.connectivityThread.stop();
     }
 
     /*

@@ -11,8 +11,8 @@ namespace ClientWarden {
     }
 
     VaultSession::~VaultSession() {
-        wssThread.stop();
-        refreshThread.stop();
-        connectivityThread.stop();
+        /*
+         * Background Threads should be stopped by Vault
+        */
     }
 }
