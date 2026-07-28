@@ -2,6 +2,7 @@ include(cmake/versioning.cmake)
 
 function(buildUI _target)
     set(SwiftUI
+        src/Platforms/MacOS/UI/Clientwarden/AboutView.swift
         src/Platforms/MacOS/UI/Clientwarden/Clientwarden.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenApp.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenImage.swift
@@ -22,7 +23,9 @@ function(buildUI _target)
 
     set(SwiftUIAssets
         src/Platforms/MacOS/UI/Clientwarden/Assets.xcassets
+        src/Platforms/MacOS/UI/Clientwarden/Resources/MacOSIcon.icon
     )
+
     set_source_files_properties(${SwiftUIAssets} PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
@@ -39,8 +42,8 @@ function(buildUI _target)
         src/Platforms/MacOS/UIBridge/SidePanelBridge.mm
         src/Platforms/MacOS/UIBridge/SettingsBridge.mm
     )
-
-    target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets})
+    
+    target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets} ${ICON_FILE})
     target_include_directories(${_target} PRIVATE src/Platforms/MacOS src/Vault)
     target_link_libraries(${_target} "-framework Cocoa")
     target_compile_definitions(${_target} PRIVATE MSGPACK_DISABLE_LEGACY_NIL NON_XCODE_BUILD)
@@ -49,5 +52,6 @@ function(buildUI _target)
         MACOSX_BUNDLE_BUNDLE_VERSION "${CW_BUILD_STRING}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${CW_BUILD_STRING}"
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Bridge.h"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "MacOSIcon"
     )
 endfunction()

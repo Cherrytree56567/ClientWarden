@@ -88,6 +88,7 @@ final class ClientwardenWindow: NSObject {
 struct ClientwardenApp: App {
     private var data: ClientwardenWindow = ClientwardenWindow.instance
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.openWindow) private var openWindow
     
     var body: some Scene {
         WindowGroup("Clientwarden") {
@@ -138,6 +139,11 @@ struct ClientwardenApp: App {
         }
         .windowResizability(.contentSize)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About ClientWarden") {
+                    openWindow(id: "about")
+                }
+            }
             if (data.state == WindowState.Vault) {
                 CommandMenu("Vault") {
                     Button("Lock") {
@@ -149,6 +155,12 @@ struct ClientwardenApp: App {
                 }
             }
         }
+
+        Window("About ClientWarden", id: "about") {
+            AboutView()
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
         
         Settings {
             SettingsView()
