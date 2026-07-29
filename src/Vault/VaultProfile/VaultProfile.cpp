@@ -10,6 +10,9 @@ namespace ClientWarden {
     }
 
     std::string VaultProfile::profileName() {
+        /*
+         * We probably dont need a mutex for this
+        */
         if (!vaultData->contains("profile")) {
             return "Unknown";
         }

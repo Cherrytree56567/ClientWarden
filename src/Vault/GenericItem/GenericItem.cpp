@@ -3,9 +3,21 @@
 
 namespace ClientWarden {
     GenericItem::GenericItem(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
-        if (!localVault.session.vaultData->contains("ciphers") || (*localVault.session.vaultData)["ciphers"].is_null()) return;
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
+        bool result = !localVault.session.vaultData->contains("ciphers") || (*localVault.session.vaultData)["ciphers"].is_null();
+        lock_vdget.unlock();
+
+        if (result) {
+            return;
+        }
+        
         data["id"] = uuid;
-        for (auto& cipher : (*localVault.session.vaultData)["ciphers"]) {
+
+        std::unique_lock<std::recursive_mutex> lock_vdget1(localVault.session.vaultDataMutex);
+        auto& l_ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget1.unlock();
+        
+        for (auto& cipher : l_ciphers) {
             if (!cipher.contains("id")) {
                 continue;
             }
@@ -229,7 +241,7 @@ namespace ClientWarden {
         data["revisionDate"] = getBitwardenTime();
         data["data"] = (std::string)fieldData.dump();
         if (isBeingCreated || (data.contains("createdOffline") && data["createdOffline"] == true)) {
-            std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
+            std::optional<nlohmann::json> result = localVault.NewItem(data, !(data.contains("createdOffline") && data["createdOffline"] == true), data);
             if (result.has_value()) {
                 if (result.value().contains("id") && result.value()["id"].is_string()) {
                     data["id"] = result.value()["id"];
@@ -238,7 +250,10 @@ namespace ClientWarden {
             return;
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
         auto& ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+
         auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
             return cipher["id"] == data["id"];
         });
@@ -253,7 +268,10 @@ namespace ClientWarden {
         */
         bool result = localVault.UpdateItem(data);
         std::string dataStr = data.dump();
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     void GenericItem::Delete() {
@@ -263,7 +281,11 @@ namespace ClientWarden {
             itemEncKey.clear();
             OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
             itemMacKey.clear();
+
+            std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
             auto& ciphers = (*localVault.session.vaultData)["ciphers"];
+            lock_vdget.unlock();
+
             auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
                 if (!cipher.contains("id") || cipher["id"].is_null()) return false;
                 return cipher["id"].get<std::string>() == data["id"].get<std::string>();
@@ -284,7 +306,9 @@ namespace ClientWarden {
         OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
         itemMacKey.clear();
 
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     void GenericItem::Bin() {
@@ -302,7 +326,10 @@ namespace ClientWarden {
             return;
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
         auto& ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+
         auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
             return cipher["id"] == data["id"];
         });
@@ -312,7 +339,10 @@ namespace ClientWarden {
         }
 
         bool result = localVault.SoftDeleteItem(data["id"]);
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     void GenericItem::UnBin() {
@@ -330,7 +360,10 @@ namespace ClientWarden {
             return;
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
         auto& ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+
         auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
             return cipher["id"] == data["id"];
         });
@@ -340,7 +373,10 @@ namespace ClientWarden {
         }
 
         bool result = localVault.RestoreItem(data["id"]);
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     void GenericItem::GetNameImpl(std::string& name) {

@@ -3,7 +3,11 @@
 
 namespace ClientWarden {
     CipherQuery::CipherQuery(Vault& vault) : localVault(vault) {
-        for (auto& cip : (*localVault.session.vaultData)["ciphers"]) {
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
+        auto& l_ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+        
+        for (auto& cip : l_ciphers) {
             ciphers.push_back(cip);
         }
     }

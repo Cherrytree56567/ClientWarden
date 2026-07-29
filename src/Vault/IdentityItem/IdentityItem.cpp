@@ -744,8 +744,10 @@ namespace ClientWarden {
                 newdata["id"] = result.value()["id"];
             }
         }
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         (*localVault.session.vaultData)["ciphers"].push_back(newdata);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
 
         id = newdata["id"];
 

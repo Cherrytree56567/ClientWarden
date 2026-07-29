@@ -5,7 +5,11 @@ namespace ClientWarden {
     Folder::Folder(Vault& vault, std::string uuid) : localVault(vault), isBeingCreated(false) {
         init = false;
         data["id"] = uuid;
-        for (auto& folder : (*localVault.session.vaultData)["folders"]) {
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
+        auto& l_folders = (*localVault.session.vaultData)["folders"];
+        lock_vdget.unlock();
+
+        for (auto& folder : l_folders) {
             if (!folder.contains("id")) {
                 continue;
             }
@@ -50,7 +54,11 @@ namespace ClientWarden {
             std::optional<nlohmann::json> o_result = localVault.CreateFolder(data["name"]);
             if (!o_result.has_value()) {
                 logger->warn("Failed to add New Folder Online");
+
+                std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
                 localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+                lock_vdset.unlock();
+
                 return "";
             }
 
@@ -60,12 +68,19 @@ namespace ClientWarden {
             if (result.contains("id") && result["id"].is_string()) {
                 returnID = result["id"];
             }
+
+            std::unique_lock<std::recursive_mutex> lock_vdgetset(localVault.session.vaultDataMutex);
             (*localVault.session.vaultData)["folders"].push_back(result);
             localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+            lock_vdgetset.unlock();
+
             return returnID;
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
         auto& folders = (*localVault.session.vaultData)["folders"];
+        lock_vdget.unlock();
+
         auto it = std::find_if(folders.begin(), folders.end(), [&](const nlohmann::json& folder) {
             return folder["id"] == data["id"];
         });
@@ -75,7 +90,10 @@ namespace ClientWarden {
         }
 
         bool result = localVault.RenameFolder(data["id"], data["name"]);
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
         
         return data["id"];
     }
@@ -88,7 +106,10 @@ namespace ClientWarden {
     void Folder::Delete() {
         if (!init) return;
         if (!isBeingCreated) {
+            std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
             auto& folders = (*localVault.session.vaultData)["folders"];
+            lock_vdget.unlock();
+
             auto it = std::find_if(folders.begin(), folders.end(), [&](const nlohmann::json& folder) {
                 if (!folder.contains("id") || folder["id"].is_null()) return false;
                 return folder["id"].get<std::string>() == data["id"].get<std::string>();
@@ -102,16 +123,23 @@ namespace ClientWarden {
 
             if (!result) {
                 logger->warn("Failed to Delete Online Folder");
+                std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
                 (*localVault.session.vaultData)["deletedFolders"].push_back(data["id"]);
+                lock_vdset.unlock();
             } 
         }
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     void Folder::Close() {
         if (!init) return;
 
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
         localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     Folder& Folder::GetName(std::string& name) {

@@ -88,7 +88,11 @@ final class Login: NSObject {
                 if let r_res = res {
                     if (r_res) {
                     } else {
-                        ToastStore.instance.toasts.append(Toast(message: "Failed to submit Code"))
+                        /*
+                         * We shouldn't need to put up a toast here
+                         * since the toast will be handled by the func
+                         * and there are diff toasts for diff situations
+                        */
                         ClientwardenWindow.instance.state = WindowState.Login
                     }
                 } else {

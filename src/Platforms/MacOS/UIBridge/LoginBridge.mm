@@ -62,7 +62,8 @@
             return true;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                Toast *toast = [[Toast alloc] initWithMessage:@"Login failed to Authenticate"];
+                Login.instance.EmailPasswordView = true;
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Authenticate"];
                 [[ToastStore instance] addToast:toast];
             });
 

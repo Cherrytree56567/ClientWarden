@@ -1,11 +1,15 @@
 #include "Vault.h"
 #include "UIBridge/CBridge.h"
 
+/*
+ * The code is a bit messier since I had to fix race conditions
+*/
 namespace ClientWarden {
     /*
      * Check if the user is Logged in or not and
      * load session data.
-     * TODO: Add logger stuff
+     * TODO: Add logger stuff, I think I already did this
+     * idk tho.
     */
     Vault::Vault() : profile(session.vaultData), crypto(session.encKey, session.macKey, session.internalKey), clipboard(session.settingsData) {
         if (!logger) {
@@ -21,6 +25,13 @@ namespace ClientWarden {
         }
 
         session.wssThread.setCallback([this](const std::atomic<bool>& shouldThread) {
+            std::unique_lock<std::recursive_mutex> lock(session.authDataMutex);
+
+            std::string accessString = (*session.authData)["accessString"].get<std::string>();
+            std::string wssString = (*session.authData)["wssURL"].get<std::string>();
+
+            lock.unlock();
+
             return network.websocketLoop([this](int notifyType) {
                 switch (notifyType) {
                     case 0: 
@@ -99,7 +110,7 @@ namespace ClientWarden {
                         logger->info("Unhandled type: {}", notifyType);
                         break;
                 }
-            }, (*session.authData)["accessString"].get<std::string>(), (*session.authData)["wssURL"].get<std::string>(), shouldThread);
+            }, accessString, wssString, shouldThread);
         });
 
         session.refreshThread.setCallback([this](const std::atomic<bool>& shouldThread) {
@@ -108,21 +119,31 @@ namespace ClientWarden {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     continue;
                 }
+
+                std::unique_lock<std::recursive_mutex> lock_rt(session.authDataMutex);
+                std::string needsRefreshTime = (*session.authData)["needsRefreshTime"].get<std::string>();
+                lock_rt.unlock();
+
                 std::tm tm = {};
-                std::istringstream ss((*session.authData)["needsRefreshTime"].get<std::string>());
+                std::istringstream ss(needsRefreshTime);
                 ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
                 tm.tm_isdst = -1;
                 std::time_t expiry = std::mktime(&tm);
                 std::time_t now = std::time(nullptr);
 
                 if (now >= expiry) {
-                    std::optional<nlohmann::json> refreshBody = network.refreshToken((*session.authData)["refreshToken"].get<std::string>());
+                    std::unique_lock<std::recursive_mutex> lock_ref(session.authDataMutex);
+                    std::string refreshTime = (*session.authData)["refreshToken"].get<std::string>();
+                    lock_ref.unlock();
+
+                    std::optional<nlohmann::json> refreshBody = network.refreshToken(refreshTime);
 
                     if (!refreshBody.has_value()) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(500));
                         continue;
                     }
 
+                    std::unique_lock<std::recursive_mutex> lock_as(session.authDataMutex);
                     (*session.authData)["accessString"] = refreshBody.value()["access_token"];
                     (*session.authData)["expiresIn"] = refreshBody.value()["expires_in"];
 
@@ -134,6 +155,7 @@ namespace ClientWarden {
                     (*session.authData)["needsRefreshTime"] = oss.str();
 
                     storage.write("data.json", session.authData->dump(4));
+                    lock_as.unlock();
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
@@ -152,27 +174,44 @@ namespace ClientWarden {
             state = AuthState::LoggedOut;
         } else {
             state = AuthState::Unlockable;
-
+            
+            std::unique_lock<std::recursive_mutex> lock_adSet(session.authDataMutex);
             *session.authData = nlohmann::json::parse(storage.read("data.json"));
-            *session.vaultData = nlohmann::json::parse(storage.read("vault.json"));
+            lock_adSet.unlock();
 
+            std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
+            *session.vaultData = nlohmann::json::parse(storage.read("vault.json"));
+            lock_vdset.unlock();
+
+            std::unique_lock<std::recursive_mutex> lock_check(session.authDataMutex);
             if (!(*session.authData).contains("apiURL") || !(*session.authData).contains("iconURL") || 
                 !(*session.authData).contains("mainURL") || !(*session.authData).contains("vaultURL") || 
                 !(*session.authData).contains("wssURL")) {
                 logger->info("URL Info Not Found in data.json");
                 state = AuthState::Failed;
             }
+            lock_check.unlock();
 
-            network.initNetwork((*session.authData)["vaultURL"], (*session.authData)["mainURL"], (*session.authData)["apiURL"], 
-                (*session.authData)["iconURL"]);
+            std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+            std::string vaultURL = (*session.authData)["vaultURL"];
+            std::string mainURL = (*session.authData)["mainURL"];
+            std::string apiURL = (*session.authData)["apiURL"];
+            std::string iconURL = (*session.authData)["iconURL"];
+            lock_adget.unlock();
+
+            network.initNetwork(vaultURL, mainURL, apiURL, iconURL);
         }
 
         if (storage.exists("settings.json")) {
+            std::unique_lock<std::recursive_mutex> lock_sdset(session.vaultDataMutex);
             *session.settingsData = nlohmann::json::parse(storage.read("settings.json"));
+            lock_sdset.unlock();
         } else {
+            std::unique_lock<std::recursive_mutex> lock_sdset(session.vaultDataMutex);
             (*session.settingsData)["clipboardClear"] = 30;
 
             storage.write("settings.json", session.settingsData->dump(2));
+            lock_sdset.unlock();
         }
     }
 
@@ -195,11 +234,14 @@ namespace ClientWarden {
     }
 
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
+        std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
         (*session.authData)["vaultURL"] = vaultUri;
         (*session.authData)["mainURL"] = mainUri;
         (*session.authData)["apiURL"] = apiUri;
         (*session.authData)["iconURL"] = iconUri;
         (*session.authData)["wssURL"] = wssUri;
+        lock_adset.unlock();
+
         network.initNetwork(vaultUri, mainUri, apiUri, iconUri);
     }
 
@@ -212,13 +254,22 @@ namespace ClientWarden {
         boost::algorithm::to_lower(email);
         
         std::optional<nlohmann::json> preLogin = network.preLogin(email);
-        if (preLogin.has_value()) {
-            (*session.authData)["kdfIterations"] = preLogin.value()["kdfIterations"];
-            (*session.authData)["salt"] = email;
-            (*session.authData)["email"] = email;
+        if (!preLogin.has_value()) {
+            return false;
         }
 
-        *session.internalKey = std::move(crypto.makeKey(password, (*session.authData)["salt"], (*session.authData)["kdfIterations"]));
+        std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
+        (*session.authData)["kdfIterations"] = preLogin.value()["kdfIterations"];
+        (*session.authData)["salt"] = email;
+        (*session.authData)["email"] = email;
+        lock_adset.unlock();
+
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string salt = (*session.authData)["salt"];
+        int kdfIterations = (*session.authData)["kdfIterations"];
+        lock_adget.unlock();
+
+        *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
         session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
         /*
@@ -243,6 +294,7 @@ namespace ClientWarden {
                 !token.value().contains("expires_in")) {
                 return false;
             }
+            std::unique_lock<std::recursive_mutex> lock_adset1(session.authDataMutex);
             (*session.authData)["accessString"] = token.value()["access_token"];
             (*session.authData)["refreshToken"] = token.value()["refresh_token"];
             (*session.authData)["expiresIn"] = token.value()["expires_in"];
@@ -255,12 +307,15 @@ namespace ClientWarden {
             (*session.authData)["needsRefreshTime"] = oss.str();
 
             storage.write("data.json", session.authData->dump(2));
+            lock_adset1.unlock();
 
             if (!Sync()) {
                 return false;
             }
 
+            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
             std::string protectedKey = (*session.vaultData)["profile"]["key"];
+            lock_vdget.unlock();
 
             Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
             Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
@@ -284,11 +339,15 @@ namespace ClientWarden {
 
     bool Vault::Login(std::string code) {
         std::optional<nlohmann::json> token;
+
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string salt = (*session.authData)["salt"];
+        lock_adget.unlock();
         
         if (state == AuthState::WaitingForTOTP) {
-            token = network.getTokenWTotp((*session.authData)["salt"], session.masterPasswordHash, code);
+            token = network.getTokenWTotp(salt, session.masterPasswordHash, code);
         } else if (state == AuthState::WaitingForDeviceVerif) {
-            token = network.getTokenWDeviceVerify((*session.authData)["salt"], session.masterPasswordHash, code);
+            token = network.getTokenWDeviceVerify(salt, session.masterPasswordHash, code);
         } else {
             return false;
         }
@@ -308,6 +367,7 @@ namespace ClientWarden {
                 }
                 return false;
             }
+            std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
             (*session.authData)["accessString"] = token.value()["access_token"];
             (*session.authData)["refreshToken"] = token.value()["refresh_token"];
             (*session.authData)["expiresIn"] = token.value()["expires_in"];
@@ -320,12 +380,15 @@ namespace ClientWarden {
             (*session.authData)["needsRefreshTime"] = oss.str();
 
             storage.write("data.json", session.authData->dump(2));
+            lock_adset.unlock();
 
             if (!Sync()) {
                 return false;
             }
 
+            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
             std::string protectedKey = (*session.vaultData)["profile"]["key"];
+            lock_vdget.unlock();
 
             Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
             Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
@@ -360,7 +423,12 @@ namespace ClientWarden {
 
     bool Vault::Unlock(std::string& password) {
         try {
-            *session.internalKey = std::move(crypto.makeKey(password, (*session.authData)["salt"], (*session.authData)["kdfIterations"]));
+            std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+            std::string salt = (*session.authData)["salt"];
+            int kdfIterations = (*session.authData)["kdfIterations"];
+            lock_adget.unlock();
+
+            *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
             session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
             /*
@@ -369,7 +437,9 @@ namespace ClientWarden {
             OPENSSL_cleanse(password.data(), password.size());
             password.clear();
 
+            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
             std::string protectedKey = (*session.vaultData)["profile"]["key"];
+            lock_vdget.unlock();
 
             Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
             Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
@@ -386,6 +456,10 @@ namespace ClientWarden {
             session.refreshThread.start();
             session.connectivityThread.start();
 
+            std::jthread t([&] {
+                Sync();
+            });
+
             state = AuthState::Unlocked;
             return true;
         } catch (...) {
@@ -394,17 +468,24 @@ namespace ClientWarden {
     }
 
     void Vault::SetScreenshotOption(bool value) {
+        std::unique_lock<std::recursive_mutex> lock_sdset(session.vaultDataMutex);
         (*session.settingsData)["allowScreenshots"] = value;
         storage.write("settings.json", session.settingsData->dump(2));
+        lock_sdset.unlock();
     }
 
     bool Vault::GetScreenshotOption() {
+        std::unique_lock<std::recursive_mutex> lock_sdget(session.vaultDataMutex);
         if (!session.settingsData->contains("allowScreenshots") || !(*session.settingsData)["allowScreenshots"].is_boolean()) {
             (*session.settingsData)["allowScreenshots"] = false;
             storage.write("settings.json", session.settingsData->dump(2));
         }
 
-        return (*session.settingsData)["allowScreenshots"];
+        bool result = (*session.settingsData)["allowScreenshots"];
+
+        lock_sdget.unlock();
+
+        return result;
     }
 
     bool Vault::Logout() {
@@ -459,23 +540,28 @@ namespace ClientWarden {
             return false;
         }
 
-        std::optional<nlohmann::json> vaultResult = network.getVault((*session.authData)["accessString"]);
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"];
+        lock_adget.unlock();
+
+        std::optional<nlohmann::json> vaultResult = network.getVault(accessString);
 
         if (!vaultResult.has_value()) {
             return false;
         }
         nlohmann::json body = vaultResult.value();
 
-        /*
-         * TODO: Put this into refresh Vault or smth
-         * basically start from scratch
-        */
         if (!storage.exists("vault.json") || fullSync) {
             storage.write("vault.json", body.dump(2));
+
+            std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
             *session.vaultData = body;
+            lock_vdset.unlock();
+
             return true;
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdsetget(session.vaultDataMutex);
         if (!session.vaultData->contains("deletedCiphers")) {
             (*session.vaultData)["deletedCiphers"] = nlohmann::json::array();
         }
@@ -489,6 +575,8 @@ namespace ClientWarden {
         }
 
         auto& deletedFolders = (*session.vaultData)["deletedFolders"];
+        lock_vdsetget.unlock();
+
         for (auto it = deletedFolders.begin(); it != deletedFolders.end();) {
             bool result = DeleteFolder(it->get<std::string>());
             if (!result) {
@@ -501,7 +589,11 @@ namespace ClientWarden {
         std::vector<std::string> localFolderIds;
         std::vector<std::string> removalFolderIds;
 
-        for (auto& folder : (*session.vaultData)["folders"]) {
+        std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+        auto l_folders = (*session.vaultData)["folders"];
+        lock_vdget.unlock();
+
+        for (auto& folder : l_folders) {
             if (!folder.contains("id")) {
                 continue;
             }
@@ -555,7 +647,10 @@ namespace ClientWarden {
             }
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdget1(session.vaultDataMutex);
         auto& folders = (*session.vaultData)["folders"];
+        lock_vdget1.unlock();
+
         for (auto it = folders.begin(); it != folders.end();) {
             if (!it->contains("id") || !(*it)["id"].is_string()) {
                 ++it;
@@ -578,17 +673,23 @@ namespace ClientWarden {
                     /*
                     * Add Locally
                     */
+                    std::unique_lock<std::recursive_mutex> lock_vdset1(session.vaultDataMutex);
                     (*session.vaultData)["folders"].push_back(cipher);
+                    lock_vdset1.unlock();
                 }
             }
         }
 
         std::vector<std::string> pendingDeletes;
+
+        std::unique_lock<std::recursive_mutex> lock_vdget2(session.vaultDataMutex);
         for (auto& id : (*session.vaultData)["deletedCiphers"]) {
             pendingDeletes.push_back(id.get<std::string>());
         }
 
         auto& deletedCiphers = (*session.vaultData)["deletedCiphers"];
+        lock_vdget2.unlock();
+
         for (auto it = deletedCiphers.begin(); it != deletedCiphers.end();) {
             bool result = DeleteItem(it->get<std::string>());
             if (!result) {
@@ -601,7 +702,11 @@ namespace ClientWarden {
         std::vector<std::string> localIds;
         std::vector<std::string> removalIds;
 
-        for (auto& cipher : (*session.vaultData)["ciphers"]) {
+        std::unique_lock<std::recursive_mutex> lock_vdget3(session.vaultDataMutex);
+        auto l_ciphers = (*session.vaultData)["ciphers"];
+        lock_vdget3.unlock();
+
+        for (auto& cipher : l_ciphers) {
             if (!cipher.contains("id")) {
                 continue;
             }
@@ -687,7 +792,10 @@ namespace ClientWarden {
             }
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdget4(session.vaultDataMutex);
         auto& ciphers = (*session.vaultData)["ciphers"];
+        lock_vdget4.unlock();
+
         for (auto it = ciphers.begin(); it != ciphers.end();) {
             if (!it->contains("id") || !(*it)["id"].is_string()) {
                 ++it;
@@ -710,18 +818,27 @@ namespace ClientWarden {
                     /*
                     * Add Locally
                     */
+                    std::unique_lock<std::recursive_mutex> lock_vdset1(session.vaultDataMutex);
                     (*session.vaultData)["ciphers"].push_back(cipher);
+                    lock_vdset1.unlock();
                 }
             }
         }
 
+        std::unique_lock<std::recursive_mutex> lock_vdset2(session.vaultDataMutex);
         storage.write("vault.json", session.vaultData->dump(2));
+        lock_vdset2.unlock();
 
         return true;
     }
 
     bool Vault::checkReprompt(std::string password) {
-        Botan::secure_vector<uint8_t> r_internalKey = std::move(crypto.makeKey(password, (*session.authData)["salt"], (*session.authData)["kdfIterations"]));
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string salt = (*session.authData)["salt"];
+        int kdfIterations = (*session.authData)["kdfIterations"];
+        lock_adget.unlock();
+        
+        Botan::secure_vector<uint8_t> r_internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
         std::string r_masterPasswordHash = crypto.hashedPassword(password, r_internalKey);
 
         if (r_internalKey == *session.internalKey && r_masterPasswordHash == session.masterPasswordHash) {
@@ -737,11 +854,19 @@ namespace ClientWarden {
         */
         std::vector<std::string> folders;
 
-        if (!session.vaultData->contains("folders") || !(*session.vaultData)["folders"].is_array()) {
+        std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+        bool result = !session.vaultData->contains("folders") || !(*session.vaultData)["folders"].is_array();
+        lock_vdget.unlock();
+
+        if (result) {
             return folders;
         }
 
-        for (auto& folder : (*session.vaultData)["folders"]) {
+        std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
+        auto l_folders = (*session.vaultData)["folders"];
+        lock_vdset.unlock();
+
+        for (auto& folder : l_folders) {
             folders.push_back(folder["id"]);
         }
 
@@ -749,25 +874,39 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> Vault::NewItem(nlohmann::json encryptedData, bool performVaultOps, nlohmann::json vaultOpsData) {
-        std::optional<nlohmann::json> result = network.NewItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        std::optional<nlohmann::json> result = network.NewItem(encryptedData, accessString);
 
         if (performVaultOps) {
             if (!result.has_value()) {
                 logger->warn("Failed to add New Item Online");
                 vaultOpsData["createdOffline"] = true;
+
+                std::unique_lock<std::recursive_mutex> lock_vdsetget(session.vaultDataMutex);
                 (*session.vaultData)["ciphers"].push_back(vaultOpsData);
                 storage.write("vault.json", session.vaultData->dump(2));
+                lock_vdsetget.unlock();
+
                 return std::nullopt;
             }
+            std::unique_lock<std::recursive_mutex> lock_vdsetget(session.vaultDataMutex);
             (*session.vaultData)["ciphers"].push_back(result.value());
             storage.write("vault.json", session.vaultData->dump(2));
+            lock_vdsetget.unlock();
         }
 
         return result;
     }
 
     bool Vault::UpdateItem(nlohmann::json encryptedData) {
-        std::optional<nlohmann::json> res = network.UpdateItem(encryptedData, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        std::optional<nlohmann::json> res = network.UpdateItem(encryptedData, accessString);
         if (res.has_value()) {
             return true;
         }
@@ -776,22 +915,39 @@ namespace ClientWarden {
     }
 
     bool Vault::DeleteItem(std::string uuid, bool performVaultOps, nlohmann::json vaultOpsData) {
-        bool result = network.DeleteItem(uuid, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        bool result = network.DeleteItem(uuid, accessString);
         if (!result) {
             logger->warn("Failed to Delete Online Item");
             if (vaultOpsData.contains("id")) {
+                std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
                 (*session.vaultData)["deletedCiphers"].push_back(vaultOpsData["id"]);
+                lock_vdset.unlock();
             }
-        } 
+        }
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
         storage.write("vault.json", session.vaultData->dump(2));
+        lock_vdset.unlock();
     }
 
     bool Vault::SoftDeleteItem(std::string uuid) {
-        return network.SoftDeleteItem(uuid, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        return network.SoftDeleteItem(uuid, accessString);
     }
 
     bool Vault::RestoreItem(std::string uuid) {
-        return network.RestoreItem(uuid, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        return network.RestoreItem(uuid, accessString);
     }
     
     std::optional<nlohmann::json> Vault::AddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, 
@@ -804,7 +960,11 @@ namespace ClientWarden {
         Botan::secure_vector<uint8_t> cipEncKey = *session.encKey;
         Botan::secure_vector<uint8_t> cipMacKey = *session.macKey;
 
-        for (auto& cipher : (*session.vaultData)["ciphers"]) {
+        std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+        auto l_ciphers = (*session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+        
+        for (auto& cipher : l_ciphers) {
             if (cipher.contains("id") && cipher["id"] == uuid) {
                 if (!cipher["key"].is_null()) {
                     auto [cipEnc, cipMac] = crypto.getEncMacKey(cipher["key"]);
@@ -831,20 +991,32 @@ namespace ClientWarden {
         Botan::secure_scrub_memory(cipEncKey.data(), cipEncKey.size());
         Botan::secure_scrub_memory(cipMacKey.data(), cipMacKey.size());
 
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
         std::optional<nlohmann::json> res = network.AddAttachment(uuid, encryptedFileContents, encryptedFileName,
-            attachmentKey, (*session.authData)["accessString"].get<std::string>(), onProgress);
+            attachmentKey, accessString, onProgress);
 
         return res;
     }
 
     bool Vault::RemoveAttachment(std::string uuid, std::string attachmentID) {
-        return network.RemoveAttachment(uuid, attachmentID, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        return network.RemoveAttachment(uuid, attachmentID, accessString);
     }
 
     bool Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,
         Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress) {
-        std::optional<std::pair<std::string, nlohmann::json>> attachment = network.DownloadAttachment(uuid, attachmentID, 
-            (*session.authData)["accessString"].get<std::string>(), onProgress);
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        std::optional<std::pair<std::string, nlohmann::json>> attachment = network.DownloadAttachment(uuid, attachmentID, accessString, 
+            onProgress);
         
         if (!attachment.has_value()) {
             return false;
@@ -876,15 +1048,27 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> Vault::CreateFolder(std::string encryptedFolderName) {
-        return network.CreateFolder(encryptedFolderName, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        return network.CreateFolder(encryptedFolderName, accessString);
     }
 
     bool Vault::RenameFolder(std::string folderUUID, std::string encryptedFolderName) {
-        return network.RenameFolder(folderUUID, encryptedFolderName, (*session.authData)["accessString"].get<std::string>()).has_value();
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        return network.RenameFolder(folderUUID, encryptedFolderName, accessString).has_value();
     }
 
     bool Vault::DeleteFolder(std::string folderUUID) {
-        return network.DeleteFolder(folderUUID, (*session.authData)["accessString"].get<std::string>());
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string accessString = (*session.authData)["accessString"].get<std::string>();
+        lock_adget.unlock();
+
+        return network.DeleteFolder(folderUUID, accessString);
     }
 
     std::optional<std::string> Vault::DownloadIcon(std::string url) {
