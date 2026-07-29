@@ -1,12 +1,18 @@
 import SwiftUI
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var screenCaptureTimer: Timer?
 
+    /*
+     * Close Application when a window is closed
+    */
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
 
+    /*
+     * Screen Capture stuff.
+    */
     func applyScreenCaptureSetting() {
         DispatchQueue.main.async {
             for window in NSApplication.shared.windows {
@@ -15,6 +21,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /*
+     * Screen Capture stuff + Window Closing Anim
+    */
     func applicationDidFinishLaunching(_ notification: Notification) {
         /*
          * We need to call this here since its used here before the Settings View
@@ -29,6 +38,59 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         screenCaptureTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.applyScreenCaptureSetting()
         }
+
+        /*
+         * Window Closing Anim
+         */
+        for window in NSApplication.shared.windows {
+            assignDelegate(window)
+        }
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowSelected(_:)),
+            name: NSWindow.didBecomeKeyNotification,
+            object: nil
+        )
+    }
+
+    /*
+     * Needs to be exposed
+     * argument of '#selector' refers to instance method 'windowSelected' that is not exposed to Objective-C
+    */
+    @objc func windowSelected(_ notification: Notification) {
+        if let window = notification.object as? NSWindow {
+            assignDelegate(window)
+        }
+    }
+
+    func assignDelegate(_ window: NSWindow) {
+        if (window.delegate !== self && window.title == "Clientwarden") {
+            window.delegate = self
+        }
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if (sender.frame.width <= 1) {
+            return true
+        }
+
+        sender.titleVisibility = .hidden
+        
+        var frame = sender.frame
+
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.3
+            context.timingFunction = CAMediaTimingFunction(name: "easeIn")
+
+            frame.size.width = 0
+
+            sender.animator().setFrame(frame, display: true)
+        }, completionHandler: {
+            sender.close()
+        })
+
+        return false
     }
 }
 

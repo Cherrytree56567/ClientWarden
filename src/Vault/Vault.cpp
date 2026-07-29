@@ -119,7 +119,7 @@ namespace ClientWarden {
                     std::optional<nlohmann::json> refreshBody = network.refreshToken((*session.authData)["refreshToken"].get<std::string>());
 
                     if (!refreshBody.has_value()) {
-                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        std::this_thread::sleep_for(std::chrono::milliseconds(500));
                         continue;
                     }
 

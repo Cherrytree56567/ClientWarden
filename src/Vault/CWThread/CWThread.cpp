@@ -22,6 +22,9 @@ namespace ClientWarden {
     }
 
     void CWThread::stop() {
+        if (shouldThread == false) {
+            return;
+        }
         shouldThread = false;
         if (m_thread.joinable()) {
             m_thread.join();
