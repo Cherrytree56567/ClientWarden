@@ -81,7 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
-            context.timingFunction = CAMediaTimingFunction(name: "easeIn")
+            //context.timingFunction = CAMediaTimingFunction(name: "easeIn")
 
             frame.size.width = 0
 

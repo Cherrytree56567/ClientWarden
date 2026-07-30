@@ -569,7 +569,10 @@ static bool sidebar(NSUUID* uuid) {
             NSString* locality = [NSString stringWithUTF8String: (c_postalCode + ", " + c_city + ", " + c_state + ", " + c_country).c_str()];
             NSString* company = [NSString stringWithUTF8String: c_company.c_str()];
             NSString* email = [NSString stringWithUTF8String: c_email.c_str()];
-            NSString* i_name = [NSString stringWithUTF8String: (c_title + " " + c_firstName + " " + c_middleName + " " + c_lastName).c_str()];
+            NSString* title = [NSString stringWithUTF8String: c_title.c_str()];
+            NSString* firstName = [NSString stringWithUTF8String: c_firstName.c_str()];
+            NSString* middleName = [NSString stringWithUTF8String: c_middleName.c_str()];
+            NSString* lastName = [NSString stringWithUTF8String: c_lastName.c_str()];
             NSString* licenseNum = [NSString stringWithUTF8String: c_licenseNum.c_str()];
             NSString* passportNum = [NSString stringWithUTF8String: c_passportNum.c_str()];
             NSString* phone = [NSString stringWithUTF8String: c_phone.c_str()];
@@ -581,8 +584,10 @@ static bool sidebar(NSUUID* uuid) {
                                                                   type:GenericItemTypeGeneric];
 
             GenericItemData* nameItem = [[GenericItemData alloc] initWithTitle: @"Name"
-                                                                 value: i_name
-                                                                 type:GenericItemTypeGeneric];
+                                                                 value: title
+                                                                 value_1: firstName
+                                                                 value_2: middleName
+                                                                 value_3: lastName];
 
             GenericItemData* usernameItem = [[GenericItemData alloc] initWithTitle: @"Username"
                                                                      value: username
@@ -1172,12 +1177,10 @@ static bool sidebar(NSUUID* uuid) {
                     if (itemField.title == @"Email") {
                         c_email = itemField.value.UTF8String;
                     } else if (itemField.title == @"Name") {
-                        std::vector<std::string> parts;
-                        boost::split(parts, itemField.value.UTF8String, boost::is_any_of(" "), boost::token_compress_on);
-                        c_title = (parts.size() > 0) ? parts[0] : "";
-                        c_firstName = (parts.size() > 1) ? parts[1] : "";
-                        c_middleName = (parts.size() > 2) ? parts[2] : "";
-                        c_lastName = (parts.size() > 3) ? parts[3] : "";
+                        c_title = itemField.value.UTF8String;
+                        c_firstName = itemField.value_1.UTF8String;
+                        c_middleName = itemField.value_2.UTF8String;
+                        c_lastName = itemField.value_3.UTF8String;
                     } else if (itemField.title == @"Username") {
                         c_username = itemField.value.UTF8String;
                     } else if (itemField.title == @"Company") {

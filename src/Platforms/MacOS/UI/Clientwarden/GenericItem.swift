@@ -19,6 +19,7 @@ import Combine
 @objc
 enum GenericItemType: Int {
     case generic
+    case generic_4
     case password
     case totp
     case website
@@ -45,6 +46,9 @@ class GenericItemData : NSObject, Identifiable, ObservableObject {
     let id = UUID()
     @objc @Published public var title: String
     @objc @Published public var value: String
+    @objc @Published public var value_1: String = ""
+    @objc @Published public var value_2: String = ""
+    @objc @Published public var value_3: String = ""
     @objc @Published public var type: GenericItemType
     @objc public var cb_getTOTP: (() -> TOTPResult)?
     
@@ -52,6 +56,15 @@ class GenericItemData : NSObject, Identifiable, ObservableObject {
         self.title = title
         self.value = value
         self.type = type
+    }
+    
+    init(title: String, value: String, value_1: String, value_2: String, value_3: String) {
+        self.title = title
+        self.value = value
+        self.value_1 = value_1
+        self.value_2 = value_2
+        self.value_3 = value_3
+        self.type = .generic_4
     }
     
     init(title: String, value: String, type: GenericItemType, cb_getTOTP: (() -> TOTPResult)?) {
@@ -320,6 +333,34 @@ struct GenericItem: View {
                             TextEditor(text: Binding(get: { data.f_value() }, set: { data.value = $0 }))
                                 .frame(minHeight: 100)
                                 .scrollContentBackground(.hidden)
+                        } else if (data.type == .generic_4) {
+                            TextField("Value", text: Binding(get: {
+                                data.value.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value = $0 }), axis: .vertical)
+                                .lineLimit(1)
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                            
+                            TextField("Value", text: Binding(get: {
+                                data.value_1.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value_1 = $0 }), axis: .vertical)
+                                .lineLimit(1)
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                            
+                            TextField("Value", text: Binding(get: {
+                                data.value_2.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value_2 = $0 }), axis: .vertical)
+                                .lineLimit(1)
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                            
+                            TextField("Value", text: Binding(get: {
+                                data.value_3.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value_3 = $0 }), axis: .vertical)
+                                .lineLimit(1)
+                                .padding(-4)
+                                .padding(.trailing, 4)
                         } else {
                             TextField("Value", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
                                 .lineLimit(6)
@@ -388,6 +429,9 @@ struct GenericItem: View {
                                 .padding(.trailing, 4)
                                 .tint(totpLeft < 10 ? Color.red.opacity(0.8) : .accentColor)
                             }
+                        } else if (data.type == GenericItemType.generic_4) {
+                            Text(verbatim: "\(data.value) \(data.value_1) \(data.value_2) \(data.value_3)"
+                                .trimmingCharacters(in: .whitespaces))
                         } else {
                             Text(verbatim: data.f_value())
                         }

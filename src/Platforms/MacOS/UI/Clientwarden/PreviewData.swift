@@ -11,6 +11,7 @@ struct PreviewData {
                     SidePanel.instance.icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
                     SidePanel.instance.favorite = false
                     SidePanel.instance.itemFields = [
+                        GenericItemData(title: "Name", value: "Mr John Jones Smith", type: GenericItemType.generic_4),
                         GenericItemData(title: "Email", value: "test@example.com", type: GenericItemType.generic),
                         GenericItemData(title: "Password", value: "pass123", type:GenericItemType.password),
                         GenericItemData(title: "Two Factor Auth", value: "SFDD", type: GenericItemType.totp, cb_getTOTP: {
@@ -37,6 +38,7 @@ struct PreviewData {
                         PasswordHistoryItem(date: "21 Jan", password: "Some Old Password")
                     ]
                     SidePanel.instance.viewable = true
+                    SidePanel.instance.editable = true
                     SidePanel.instance.notes = GenericItemData(title: "Notes", value: "Some Notes ig\nClientwarden avail soon", type: GenericItemType.ml_generic)
                     SidePanel.instance.cb_favorite = {_,_ in
                         return true
