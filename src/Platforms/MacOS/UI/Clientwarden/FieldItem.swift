@@ -31,6 +31,7 @@ struct FieldItem: View {
     @State private var revealed: Bool
     private var itemType: ItemType
     public var editable: Bool
+    var onRemove: (() -> Void)?
     
     private var loginLinkedBinding: Binding<LoginLinkedIDs> {
         Binding(
@@ -68,11 +69,12 @@ struct FieldItem: View {
         )
     }
     
-    init(data: Binding<FieldItemData>, itemType: ItemType, edit: Bool) {
+    init(data: Binding<FieldItemData>, itemType: ItemType, edit: Bool, onRemove: (() -> Void)?) {
         self._data = data
         self.revealed = false
         self.itemType = itemType
         self.editable = edit
+        self.onRemove = onRemove
     }
     
     var body: some View {
@@ -115,7 +117,15 @@ struct FieldItem: View {
                         .labelsHidden()
                         .padding(.trailing, -2)
                         if (editable) {
-                            TextField("Value", text: $data.title)
+                            HStack {
+                                TextField("Value", text: $data.title)
+                                Button {
+                                    onRemove?()
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                }
+                                .buttonStyle(.plain)
+                            }
                         } else {
                             Text(verbatim: data.title)
                         }
@@ -123,9 +133,17 @@ struct FieldItem: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else if (data.type == FieldItemType.hidden) {
                     if (editable) {
-                        TextField("Value", text: $data.value, axis: .vertical)
-                            .lineLimit(6)
-                            .padding(.top, -4)
+                        HStack {
+                            TextField("Value", text: $data.value, axis: .vertical)
+                                .lineLimit(6)
+                                .padding(.top, -4)
+                            Button {
+                                onRemove?()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                            }
+                            .buttonStyle(.plain)
+                        }
                     } else {
                         Text(verbatim: revealed ? data.value : String(repeating: "•", count: data.value.count))
                             .font(.system(.body, design: .monospaced))
@@ -171,8 +189,9 @@ struct FieldItem: View {
                         /*
                          * Create a Picker that used bindings for each type of item
                          */
-                        if (itemType == ItemType.Login) {
-                            Picker("", selection: loginLinkedBinding) {
+                        HStack {
+                            if (itemType == ItemType.Login) {
+                                Picker("", selection: loginLinkedBinding) {
                                     ForEach(LoginLinkedIDs.allCases, id: \.self) { id in
                                         Text(id.description).tag(id)
                                     }
@@ -180,8 +199,8 @@ struct FieldItem: View {
                                 .pickerStyle(.menu)
                                 .labelsHidden()
                                 .padding(-4)
-                        } else if (itemType == ItemType.Card) {
-                            Picker("", selection: cardLinkedBinding) {
+                            } else if (itemType == ItemType.Card) {
+                                Picker("", selection: cardLinkedBinding) {
                                     ForEach(CardLinkedIDs.allCases, id: \.self) { id in
                                         Text(id.description).tag(id)
                                     }
@@ -189,8 +208,8 @@ struct FieldItem: View {
                                 .pickerStyle(.menu)
                                 .labelsHidden()
                                 .padding(-4)
-                        } else if (itemType == ItemType.Identity) {
-                            Picker("", selection: identityLinkedBinding) {
+                            } else if (itemType == ItemType.Identity) {
+                                Picker("", selection: identityLinkedBinding) {
                                     ForEach(IdentityLinkedIDs.allCases, id: \.self) { id in
                                         Text(id.description).tag(id)
                                     }
@@ -198,6 +217,16 @@ struct FieldItem: View {
                                 .pickerStyle(.menu)
                                 .labelsHidden()
                                 .padding(-4)
+                            }
+                            
+                            Spacer()
+                            
+                            Button {
+                                onRemove?()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                            }
+                            .buttonStyle(.plain)
                         }
                     } else {
                         /*
@@ -232,9 +261,18 @@ struct FieldItem: View {
                     }
                 } else {
                     if (editable) {
-                        TextField("Value", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
-                            .lineLimit(6)
-                            .padding(.top, -4)
+                        HStack {
+                            TextField("Value", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
+                                .lineLimit(6)
+                                .padding(.top, -4)
+                            
+                            Button {
+                                onRemove?()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                            }
+                            .buttonStyle(.plain)
+                        }
                     } else {
                         Text(verbatim: data.value)
                     }

@@ -541,7 +541,16 @@ struct SidePanelView: View {
                     }
                     
                     ForEach($data.customFields) { $customField in
-                        FieldItem(data: $customField, itemType: data.type, edit: data.editable)
+                        if let index = data.customFields.firstIndex(where: { $0.id == customField.id }) {
+                            FieldItem(
+                                data: $data.customFields[index],
+                                itemType: data.type,
+                                edit: data.editable,
+                                onRemove: {
+                                    data.customFields.remove(at: index)
+                                }
+                            )
+                        }
                     }
                     
                     if (!data.customFields.isEmpty || data.editable) {
