@@ -524,9 +524,11 @@ struct SidePanelView: View {
                                         data.customFields.append(FieldItemData(title: "New Field", value: "false", type: .checkbox))
                                         showNewFieldCallout = false
                                     }
-                                    Button("Linked Field") {
-                                        data.customFields.append(FieldItemData(title: "New Field", value: "", type: .linked))
-                                        showNewFieldCallout = false
+                                    if (data.type != ItemType.SSHKey && data.type != ItemType.Note) {
+                                        Button("Linked Field") {
+                                            data.customFields.append(FieldItemData(title: "New Field", value: "", type: .linked))
+                                            showNewFieldCallout = false
+                                        }
                                     }
                                 } label: {
                                     Label("Add field", systemImage: "plus.circle")
