@@ -581,16 +581,19 @@ namespace ClientWarden {
             bool result = DeleteFolder(it->get<std::string>());
             if (!result) {
                 logger->warn("Failed to Delete Online Folder");
-                return false;
+                ++it;
+                continue;
             }
+            lock_vdsetget.lock();
             it = deletedFolders.erase(it);
+            lock_vdsetget.unlock();
         }
 
         std::vector<std::string> localFolderIds;
         std::vector<std::string> removalFolderIds;
 
         std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
-        auto l_folders = (*session.vaultData)["folders"];
+        auto& l_folders = (*session.vaultData)["folders"];
         lock_vdget.unlock();
 
         for (auto& folder : l_folders) {
@@ -626,14 +629,15 @@ namespace ClientWarden {
                     bool result = RenameFolder(folder["id"], folder["name"]);
                     if (!result) {
                         logger->warn("Failed to Update Online Folder");
-                        return false;
                     }
                     continue;
                 } else if (onlineRevDate > localRevDate) {
                     /*
                     * Overwrite Local
                     */
+                    lock_vdget.lock();
                     folder = onlineFolder;
+                    lock_vdget.unlock();
                     continue;
                 }
             }
@@ -660,21 +664,27 @@ namespace ClientWarden {
             std::string id = (*it)["id"].get<std::string>();
 
             if (std::find(removalFolderIds.begin(), removalFolderIds.end(), id) != removalFolderIds.end()) {
+                lock_vdget1.lock();
                 it = folders.erase(it);
+                lock_vdget1.unlock();
             } else {
                 ++it;
             }
         }
 
-        for (auto& cipher : body["folders"]) {
-            std::string id = cipher["id"].get<std::string>();
+        for (auto& folder : body["folders"]) {
+            if (!folder.contains("id")) {
+                continue;
+            }
+
+            std::string id = folder["id"].get<std::string>();
             if (std::find(localFolderIds.begin(), localFolderIds.end(), id) == localFolderIds.end()) {
                 if (std::find(pendingFolderDeletes.begin(), pendingFolderDeletes.end(), id) == pendingFolderDeletes.end()) {
                     /*
                     * Add Locally
                     */
                     std::unique_lock<std::recursive_mutex> lock_vdset1(session.vaultDataMutex);
-                    (*session.vaultData)["folders"].push_back(cipher);
+                    (*session.vaultData)["folders"].push_back(folder);
                     lock_vdset1.unlock();
                 }
             }
@@ -694,16 +704,19 @@ namespace ClientWarden {
             bool result = DeleteItem(it->get<std::string>());
             if (!result) {
                 logger->warn("Failed to Delete Online Item");
-                return false;
+                ++it;
+                continue;
             }
+            lock_vdget2.lock();
             it = deletedCiphers.erase(it);
+            lock_vdget2.unlock();
         }
 
         std::vector<std::string> localIds;
         std::vector<std::string> removalIds;
 
         std::unique_lock<std::recursive_mutex> lock_vdget3(session.vaultDataMutex);
-        auto l_ciphers = (*session.vaultData)["ciphers"];
+        auto& l_ciphers = (*session.vaultData)["ciphers"];
         lock_vdget3.unlock();
 
         for (auto& cipher : l_ciphers) {
@@ -724,6 +737,7 @@ namespace ClientWarden {
                         continue;
                     }
 
+                    lock_vdget3.lock();
                     cipher["createdOffline"] = false;
 
                     nlohmann::json r_json = result.value();
@@ -736,6 +750,8 @@ namespace ClientWarden {
                     if (r_json.contains("revisionDate")) {
                         cipher["revisionDate"] = r_json["revisionDate"];
                     }
+
+                    lock_vdget3.unlock();
                     continue;
                 }
             }
@@ -765,15 +781,16 @@ namespace ClientWarden {
                     */
                     auto hr = UpdateItem(cipher);
                     if (!hr) {
-                        logger->warn("Failed to Create Online Item");
-                        return false;
+                        logger->warn("Failed to Update Online Item");
                     }
                     continue;
                 } else if (onlineRevDate > localRevDate) {
                     /*
                     * Overwrite Local
                     */
+                    lock_vdget3.lock();
                     cipher = onlineCipher;
+                    lock_vdget3.unlock();
                     continue;
                 }
             }
@@ -805,13 +822,19 @@ namespace ClientWarden {
             std::string id = (*it)["id"].get<std::string>();
 
             if (std::find(removalIds.begin(), removalIds.end(), id) != removalIds.end()) {
+                lock_vdget4.lock();
                 it = ciphers.erase(it);
+                lock_vdget4.unlock();
             } else {
                 ++it;
             }
         }
 
         for (auto& cipher : body["ciphers"]) {
+            if (!cipher.contains("id")) {
+                continue;
+            }
+
             std::string id = cipher["id"].get<std::string>();
             if (std::find(localIds.begin(), localIds.end(), id) == localIds.end()) {
                 if (std::find(pendingDeletes.begin(), pendingDeletes.end(), id) == pendingDeletes.end()) {
@@ -863,7 +886,7 @@ namespace ClientWarden {
         }
 
         std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
-        auto l_folders = (*session.vaultData)["folders"];
+        auto& l_folders = (*session.vaultData)["folders"];
         lock_vdset.unlock();
 
         for (auto& folder : l_folders) {
