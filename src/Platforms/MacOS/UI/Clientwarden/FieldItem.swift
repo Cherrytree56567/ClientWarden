@@ -115,7 +115,7 @@ struct FieldItem: View {
                         .labelsHidden()
                         .padding(.trailing, -2)
                         if (editable) {
-                            TextField("Title", text: $data.title)
+                            TextField("Value", text: $data.title)
                         } else {
                             Text(verbatim: data.title)
                         }
@@ -123,7 +123,7 @@ struct FieldItem: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else if (data.type == FieldItemType.hidden) {
                     if (editable) {
-                        TextField("Title", text: $data.value, axis: .vertical)
+                        TextField("Value", text: $data.value, axis: .vertical)
                             .lineLimit(6)
                             .padding(.top, -4)
                     } else {
@@ -232,7 +232,7 @@ struct FieldItem: View {
                     }
                 } else {
                     if (editable) {
-                        TextField("Title", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
+                        TextField("Value", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
                             .lineLimit(6)
                             .padding(.top, -4)
                     } else {
