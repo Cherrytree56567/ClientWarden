@@ -423,7 +423,7 @@ struct GenericItem: View {
                 )
             )
         }
-        .padding(.top, data.type == GenericItemType.password && editable ? 8 : 0)
+        .padding(.top, (data.type == GenericItemType.password && editable && data.title == "Password") ? 8 : 0)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(lineWidth: 0)
