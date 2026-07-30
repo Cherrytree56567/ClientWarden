@@ -848,6 +848,45 @@ namespace ClientWarden {
             }
         }
 
+        /*
+         * Purge multiple copies
+        */
+        std::unordered_map<std::string, std::time_t> newestCipher;
+        for (auto& cipher : l_ciphers) {
+            if (!cipher.contains("id") || !cipher.contains("revisionDate")) {
+                continue;
+            }
+
+            std::string id = cipher["id"].get<std::string>();
+            std::time_t revDate = BitwardenTime(cipher["revisionDate"]);
+
+            auto found = newestCipher.find(id);
+            if (found == newestCipher.end() || revDate > found->second) {
+                newestCipher[id] = revDate;
+            }
+        }
+
+        std::unordered_set<std::string> nonDupCiphers;
+
+        for (auto it = l_ciphers.begin(); it != l_ciphers.end();) {
+            if (!it->contains("id") || !(*it)["id"].is_string() || !it->contains("revisionDate")) {
+                ++it;
+                continue;
+            }
+
+            std::string id = (*it)["id"].get<std::string>();
+            std::time_t revDate = BitwardenTime((*it)["revisionDate"]);
+
+            if (revDate == newestCipher[id] && !nonDupCiphers.count(id)) {
+                nonDupCiphers.insert(id);
+                ++it;
+            } else {
+                lock_vdget3.lock();
+                it = l_ciphers.erase(it);
+                lock_vdget3.unlock();
+            }
+        }
+
         std::unique_lock<std::recursive_mutex> lock_vdset2(session.vaultDataMutex);
         storage.write("vault.json", session.vaultData->dump(2));
         lock_vdset2.unlock();
