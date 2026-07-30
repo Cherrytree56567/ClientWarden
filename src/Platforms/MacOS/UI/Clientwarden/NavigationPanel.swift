@@ -116,6 +116,8 @@ final class NavigationPanel: NSObject {
 struct NavigationPanelView: View {
     @State private var refreshToken: Int = 0
     @State private var showRenameAlert: Bool = false
+    @State private var showDeleteAlert: Bool = false
+    @State private var showDeleteFolder: Folder = Folder(uuid: UUID.empty, name: "")
     @State private var renameAlertId: UUID = UUID()
     @State private var folderName: String = ""
     
@@ -185,15 +187,8 @@ struct NavigationPanelView: View {
                         }
                         .contextMenu {
                             Button(role: .destructive) {
-                                if let folderUUID = data.cb_deleteFolder?(folder.id) {
-                                    if (folderUUID) {
-                                        data.folders.removeAll { $0.id == folder.id }
-                                    } else {
-                                        ToastStore.instance.toasts.append(Toast(message: "Failed to delete folder"))
-                                    }
-                                } else {
-                                    ToastStore.instance.toasts.append(Toast(message: "No callback set for deleteFolder"))
-                                }
+                                showDeleteFolder = folder
+                                showDeleteAlert = true
                             } label: {
                                 Label("Delete", systemImage: "minus.circle")
                                     .labelStyle(TitleAndIconLabelStyle())
@@ -256,7 +251,23 @@ struct NavigationPanelView: View {
                 data.renameFolder(folderId: renameAlertId, str: folderName)
             }
         } message: {
-            Text("Rename Folder.")
+            Text("Rename a folder")
+        }
+        .alert("Delete", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let result = data.cb_deleteFolder?(showDeleteFolder.id) {
+                    if (result) {
+                        data.folders.removeAll { $0.id == showDeleteFolder.id }
+                    } else {
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to delete folder"))
+                    }
+                } else {
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for deleteFolder"))
+                }
+            }
+        } message: {
+            Text("Are you sure you would like to delete this folder? This will move all items out of your folder!")
         }
         .task {
             while !Task.isCancelled {
