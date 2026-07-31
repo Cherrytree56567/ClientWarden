@@ -7,19 +7,19 @@ final class Login: NSObject {
     
     public var vaultURL: String = "https://vault.bitwarden.com" {
         didSet {
-            if (!mainChanged) {
+            if (!mainChanged && selectedTab == 1) {
                 _mainURL = vaultURL
             }
-            if (!apiChanged) {
+            if (!apiChanged && selectedTab == 1) {
                 _apiURL = vaultURL
             }
-            if (!wssChanged) {
+            if (!wssChanged && selectedTab == 1) {
                 _wssURL = "wss://" + removeProt(url: vaultURL) + "/notifications"
             }
         }
     }
     
-    public var _mainURL: String = "https://bitwarden.com"
+    public var _mainURL: String = "https://vault.bitwarden.com"
     public var _apiURL: String = "https://api.bitwarden.com"
     public var _wssURL: String = "wss://notifications.bitwarden.com"
     
