@@ -14,14 +14,14 @@ final class Login: NSObject {
                 _apiURL = vaultURL
             }
             if (!wssChanged) {
-                _wssURL = "wss://" + removeProt(url: vaultURL)
+                _wssURL = "wss://" + removeProt(url: vaultURL) + "/notifications"
             }
         }
     }
     
     public var _mainURL: String = "https://bitwarden.com"
     public var _apiURL: String = "https://api.bitwarden.com"
-    public var _wssURL: String = "wss://vault.bitwarden.com"
+    public var _wssURL: String = "wss://notifications.bitwarden.com"
     
     public var mainChanged: Bool = false
     public var apiChanged: Bool = false
@@ -224,7 +224,7 @@ struct LoginView: View {
                         data.vaultURL = "https://someVault.com"
                         data._mainURL = "https://someVault.com"
                         data._apiURL = "https://someVault.com"
-                        data._wssURL = "wss://someVault.com"
+                        data._wssURL = "wss://someVault.com/notifications"
                         data.mainChanged = false
                         data.apiChanged = false
                         data.wssChanged = false

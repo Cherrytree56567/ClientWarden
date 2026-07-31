@@ -201,7 +201,7 @@ namespace ClientWarden {
 
     bool VaultNetwork::websocketLoop(std::function<void(int notifyType)> onNotification, std::string accessString, std::string wssURL,
         const std::atomic<bool>& shouldThread) {
-        std::string wsUri = wssURL + "/notifications/hub";
+        std::string wsUri = wssURL + "/hub";
 
         httplib::Headers headers = {
             { "Authorization", "Bearer " + accessString }
