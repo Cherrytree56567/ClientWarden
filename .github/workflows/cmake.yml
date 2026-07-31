@@ -30,7 +30,6 @@ jobs:
       
     - name: Install Dependencies
       run: |
-          ls -R
           mkdir -p build
           conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
       
