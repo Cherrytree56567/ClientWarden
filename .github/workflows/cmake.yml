@@ -45,5 +45,5 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: ClientWarden-Release
+        name: ClientWarden-Release.app
         path: build/Release/clientwarden.app
