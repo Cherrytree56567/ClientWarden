@@ -5,9 +5,8 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let button = UIButton(type: .system)
-        button.setTitle("Dismiss", for: .normal)
-        button.addTarget(self, action: #selector(cancel(_:)), for: .touchUpInside)
+        let button = NSButton(title: "Dismiss", target: self, action: #selector(cancel(_:)))
+        button.bezelStyle = .rounded
         button.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(button)
         
