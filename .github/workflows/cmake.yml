@@ -30,12 +30,12 @@ jobs:
       
     - name: Install Dependencies
       run: |
-          mkdir build -p
+          ls -R
+          mkdir -p build
           conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
       
     - name: Configure CMake
       run: |
-          ls -R
           cd build
           cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -G Xcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
