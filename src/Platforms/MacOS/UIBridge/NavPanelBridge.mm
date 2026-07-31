@@ -434,7 +434,7 @@
             
             if (c_uuid.empty()) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    Toast* toast = [[Toast alloc] initWithMessage:@"Empty UUID"];
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Unable to create folder offline"];
                     [[ToastStore instance] addToast:toast];
                 });
                 return nil;

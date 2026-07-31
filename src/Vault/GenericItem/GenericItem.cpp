@@ -399,7 +399,19 @@ namespace ClientWarden {
         if (!init) return;
         if (!data.contains("folderId")) return;
         if (!data["folderId"].is_string()) return;
-        folder = data["folderId"].is_null() ? "" : data["folderId"].get<std::string>();
+
+        /*
+         * Remove from folder if it doesnt exist
+        */
+        std::vector<std::string> folders = localVault.GetFolders();
+
+        if (std::find(folders.begin(), folders.end(), folder) == folders.end()) {
+            data["folderId"] = nullptr;
+            return;
+        }
+
+        folder = data["folderId"].get<std::string>();
+
         return;
     }
 

@@ -216,8 +216,6 @@ struct NavigationPanelView: View {
                 if (data.cb_createFolder != nil) {
                     if let folderUUID = data.cb_createFolder!("New Folder") {
                         data.folders.append(Folder(uuid: folderUUID, name: "New Folder"))
-                    } else {
-                        ToastStore.instance.toasts.append(Toast(message: "Failed to create folder"))
                     }
                 } else {
                     ToastStore.instance.toasts.append(Toast(message: "No callback set for createFolder"))
