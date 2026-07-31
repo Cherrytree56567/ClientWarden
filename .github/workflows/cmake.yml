@@ -21,11 +21,18 @@ jobs:
       with:
           cache_packages: true
 
+    - name: Cache Cmake
+      uses: actions/cache@v5
+      with: 
+        path: build
+        key: cmake-${{ hashFiles('**/CMakeLists.txt', '**/macos.cmake', '**/windows.cmake', '**/versioning.cmake') }}
+        restore-keys: cmake-
+      
     - name: Install Dependencies
       run: |
           mkdir build
           conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
-          
+      
     - name: Configure CMake
       run: |
           ls -R
