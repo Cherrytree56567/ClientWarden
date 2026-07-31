@@ -30,7 +30,7 @@ jobs:
       
     - name: Install Dependencies
       run: |
-          mkdir build
+          mkdir build -p
           conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
       
     - name: Configure CMake
@@ -42,4 +42,9 @@ jobs:
     - name: Build
       run: |
           cmake --build build --config ${{env.BUILD_TYPE}}
-          ls build/Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ClientWarden-Release
+        path: build/Release/clientwarden.app
