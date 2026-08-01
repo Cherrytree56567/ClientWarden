@@ -100,8 +100,8 @@ jobs:
       uses: actions/cache@v5
       with: 
         path: build
-        key: cmake-codeql-${{ hashFiles('**/CMakeLists.txt', '**/macos.cmake', '**/windows.cmake', '**/versioning.cmake') }}
-        restore-keys: cmake-codeql-
+        key: cmake-${{ hashFiles('**/CMakeLists.txt', '**/macos.cmake', '**/windows.cmake', '**/versioning.cmake') }}
+        restore-keys: cmake-
       
     - name: Run manual build steps
       if: matrix.build-mode == 'manual'
