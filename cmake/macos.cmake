@@ -1,21 +1,21 @@
 include(cmake/versioning.cmake)
 
 function(buildUI _target)
-    add_library(ClientwardenAutoFill MODULE
-        src/Platforms/MacOS/ClientwardenAutofill/CredentialProviderViewController.swift
-    )
+#    add_library(ClientwardenAutoFill MODULE
+#        src/Platforms/MacOS/ClientwardenAutofill/CredentialProviderViewController.swift
+#    )
 
-    set_target_properties(ClientwardenAutoFill PROPERTIES
-        BUNDLE TRUE
-        XCODE_ATTRIBUTE_PRODUCT_NAME "ClientwardenAutoFill"
-        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "appex"
-        XCODE_ATTRIBUTE_PRODUCT_TYPE "com.apple.product-type.app-extension"
-        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
-        XCODE_ATTRIBUTE_SDKROOT "macosx"
-        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
-        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/ClientwardenAutofill.entitlements"
-        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/Info.plist"
-    )
+#    set_target_properties(ClientwardenAutoFill PROPERTIES
+#        BUNDLE TRUE
+#        XCODE_ATTRIBUTE_PRODUCT_NAME "ClientwardenAutoFill"
+#        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "appex"
+#        XCODE_ATTRIBUTE_PRODUCT_TYPE "com.apple.product-type.app-extension"
+#        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
+#        XCODE_ATTRIBUTE_SDKROOT "macosx"
+#        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
+#        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/ClientwardenAutofill.entitlements"
+#        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/Info.plist"
+#    )
 
     set(SwiftUI
         src/Platforms/MacOS/UI/Clientwarden/AboutView.swift
