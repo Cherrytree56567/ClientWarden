@@ -80,6 +80,11 @@ namespace ClientWarden {
         std::shared_ptr<CipherQuery> GetCipherQuery();
 
         /*
+         * Auto Fill Stuff
+        */
+        std::vector<std::string> getAutoFillCiphers(std::string url);
+
+        /*
          * Uses Vault Crypto and Vault Network.
          * Aims to put crypto and networking stuff in the
          * Vault.
