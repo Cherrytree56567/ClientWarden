@@ -243,7 +243,9 @@ namespace ClientWarden {
     }
 
     std::vector<std::string> Vault::getAutoFillCiphers(std::string url) {
+        std::vector<std::string> cipherIDs;
 
+        return cipherIDs;
     }
 
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
