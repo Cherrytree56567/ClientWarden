@@ -21,7 +21,7 @@
  * profile picture (WIP)
  */
 + (void)cb_getInfo {
-    Unlock.instance.cb_getInfo = ^bool {
+    Unlock.instance.cb_getInfo = ^BOOL {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -32,14 +32,14 @@
                 Unlock.instance.username = n_name;
             });
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get Info"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -50,7 +50,7 @@
  * bool.
  */
 + (void)cb_unlock {
-    Unlock.instance.cb_unlock = ^bool(NSString* password) {
+    Unlock.instance.cb_unlock = ^BOOL(NSString* password) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -61,21 +61,21 @@
                     Toast* toast = [[Toast alloc] initWithMessage:@"Invalid Password"];
                     [[ToastStore instance] addToast:toast];
                 });
-                return false;
+                return NO;
             }
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 ClientwardenWindow.instance.state = WindowStateVault;
             });
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Unlock Vault"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
