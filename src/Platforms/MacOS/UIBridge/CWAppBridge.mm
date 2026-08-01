@@ -50,16 +50,16 @@ extern "C" void SetLoginPage() {
  * lock, just asks the vault to clear passwordHashes and stuff.
  */
 + (void)cb_lock {
-    ClientwardenWindow.instance.cb_lock = ^bool {
+    ClientwardenWindow.instance.cb_lock = ^BOOL {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
-            return v_inst.Lock();
+            return (BOOL)v_inst.Lock();
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Lock Vault"];
                 [[ToastStore instance] addToast:toast];
             });
-            return false;
+            return NO;
         }
     };
 }

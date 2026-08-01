@@ -40,7 +40,7 @@
  * Favorite uses a bool and a UUID to apply favorite status to an item
  */
 + (void)cb_favorite {
-    SidePanel.instance.cb_favorite = ^bool(bool fav, NSUUID* uuid) {
+    SidePanel.instance.cb_favorite = ^BOOL(BOOL fav, NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -48,17 +48,17 @@
             std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
 
             v_inst.GetItem(c_uuid)
-                 ->SetFavorite(fav)
+                 ->SetFavorite((bool)fav)
                  ->Commit();
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Favorite Item"];
                 [[ToastStore instance] addToast:toast];
             });
             
-            return false;
+            return NO;
         }
     };
 }
@@ -158,7 +158,7 @@
  * Delete moves the item with the UUID in the bin and passes back a result bool
  */
 + (void)cb_delete {
-    SidePanel.instance.cb_delete = ^bool(NSUUID* uuid) {
+    SidePanel.instance.cb_delete = ^BOOL(NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -168,14 +168,14 @@
             v_inst.GetItem(c_uuid)
                  ->Bin();
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Delete Item"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -184,7 +184,7 @@
  * Restore moves the item with the UUID out of the bin and passes back a result bool
  */
 + (void)cb_restore {
-    SidePanel.instance.cb_restore = ^bool(NSUUID* uuid) {
+    SidePanel.instance.cb_restore = ^BOOL(NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -194,14 +194,14 @@
             v_inst.GetItem(c_uuid)
                  ->UnBin();
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Restore Item"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -210,7 +210,7 @@
  * Permanantly Delete deletes the item with the UUID and passes back a result bool
  */
 + (void)cb_permDel {
-    SidePanel.instance.cb_permDel = ^bool(NSUUID* uuid) {
+    SidePanel.instance.cb_permDel = ^BOOL(NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -220,14 +220,14 @@
             v_inst.GetItem(c_uuid)
                  ->Delete();
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Permanently Delete Item"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -739,7 +739,7 @@ static bool sidebar(NSUUID* uuid) {
 }
 
 + (void)cb_sidebar {
-    SidePanel.instance.cb_sidebar = ^bool(NSUUID* uuid) {
+    SidePanel.instance.cb_sidebar = ^BOOL(NSUUID* uuid) {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
         std::string c_uuid = uuid.UUIDString.UTF8String;
@@ -757,12 +757,12 @@ static bool sidebar(NSUUID* uuid) {
             SidePanel.instance.repromptFailed = false;
             SidePanel.instance.uuid = uuid;
             SidePanel.instance.repromptPassword = @"";
-            return true;
+            return YES;
         }
-        return sidebar(uuid);
+        return (BOOL)sidebar(uuid);
     };
 
-    SidePanel.instance.cb_sidebarReprompt = ^bool(NSUUID* uuid, NSString* password) {
+    SidePanel.instance.cb_sidebarReprompt = ^BOOL(NSUUID* uuid, NSString* password) {
         ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
         std::string c_password = password.UTF8String;
 
@@ -773,14 +773,14 @@ static bool sidebar(NSUUID* uuid) {
             SidePanel.instance.isReprompt = false;
             SidePanel.instance.repromptFailed = false;
 
-            return sidebar(uuid);
+            return (BOOL)sidebar(uuid);
         } else {
             OPENSSL_cleanse(c_password.data(), c_password.size());
             c_password.clear();
             
             SidePanel.instance.repromptFailed = true;
 
-            return true;
+            return YES;
         }
     };
 }
@@ -792,7 +792,7 @@ static bool sidebar(NSUUID* uuid) {
  * while updating the progress bar of the download
  */
 + (void)cb_downloadAttachment {
-    SidePanel.instance.cb_downloadAttachment = ^bool(NSUUID* uuid, NSString* attachID) {
+    SidePanel.instance.cb_downloadAttachment = ^BOOL(NSUUID* uuid, NSString* attachID) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -837,14 +837,14 @@ static bool sidebar(NSUUID* uuid) {
                 }
             }];
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Download Attachment"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -856,7 +856,7 @@ static bool sidebar(NSUUID* uuid) {
  * If the item is over 500MB, it will not be uploaded.
  */
 + (void)cb_uploadAttachment {
-    SidePanel.instance.cb_uploadAttachment = ^bool(NSUUID* uuid) {
+    SidePanel.instance.cb_uploadAttachment = ^BOOL(NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -944,14 +944,14 @@ static bool sidebar(NSUUID* uuid) {
                 }
             }];
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Remove Attachment"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -962,7 +962,7 @@ static bool sidebar(NSUUID* uuid) {
  * returning a result bool
  */
 + (void)cb_removeAttachment {
-    SidePanel.instance.cb_removeAttachment = ^bool(NSUUID* uuid, NSString* attachID) {
+    SidePanel.instance.cb_removeAttachment = ^BOOL(NSUUID* uuid, NSString* attachID) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -977,14 +977,14 @@ static bool sidebar(NSUUID* uuid) {
 
             [SidePanel.instance deleteAttachmentViewWithId:attachID];
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Remove Attachment"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -999,7 +999,7 @@ static bool sidebar(NSUUID* uuid) {
  * less efficient.
  */
 + (void)cb_save {
-    SidePanel.instance.cb_save = ^bool(NSUUID* uuid, NSString* name, ItemType type, bool reprompt, NSUUID* folderUUID, 
+    SidePanel.instance.cb_save = ^BOOL(NSUUID* uuid, NSString* name, ItemType type, BOOL reprompt, NSUUID* folderUUID, 
                                        NSArray<GenericItemData*>* itemFields, NSArray<FieldItemData*>* customFields, NSString* notes) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
@@ -1042,7 +1042,7 @@ static bool sidebar(NSUUID* uuid) {
 
             item->SetNotes(c_notes)
                 ->SetName(c_name)
-                ->SetReprompt(reprompt)
+                ->SetReprompt((bool)reprompt)
                 ->Commit();
 
             OPENSSL_cleanse((void*)c_name.data(), c_name.size());
@@ -1295,14 +1295,14 @@ static bool sidebar(NSUUID* uuid) {
                 c_pubKey.clear();
             }
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Save Item"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -1315,13 +1315,13 @@ static bool sidebar(NSUUID* uuid) {
  * = iG4h!uC#
  */
 + (void)cb_genRandPasswd {
-    SidePanel.instance.cb_genRandPasswd = ^NSString* (bool numbers, bool symbols, bool caps, NSInteger size) {
+    SidePanel.instance.cb_genRandPasswd = ^NSString* (BOOL numbers, BOOL symbols, BOOL caps, NSInteger size) {
         try {
             ClientWarden::PasswordGenerator passwordGen;
 
             std::string c_password = "";
             
-            passwordGen.Random(size, numbers, symbols, caps, c_password);
+            passwordGen.Random(size, (bool)numbers, (bool)symbols, (bool)caps, c_password);
 
             NSString* password = [NSString stringWithUTF8String:c_password.c_str()];
 
@@ -1344,13 +1344,13 @@ static bool sidebar(NSUUID* uuid) {
  * = Cats-password-heart-elephant
  */
 + (void)cb_genSimplPasswd {
-    SidePanel.instance.cb_genSimplPasswd = ^NSString* (bool caps, NSInteger size) {
+    SidePanel.instance.cb_genSimplPasswd = ^NSString* (BOOL caps, NSInteger size) {
         try {
             ClientWarden::PasswordGenerator passwordGen;
 
             std::string c_password = "";
             
-            passwordGen.Memorable(size, caps, c_password);
+            passwordGen.Memorable(size, (bool)caps, c_password);
 
             NSString* password = [NSString stringWithUTF8String:c_password.c_str()];
 

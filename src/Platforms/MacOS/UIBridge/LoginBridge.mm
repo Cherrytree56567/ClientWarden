@@ -21,7 +21,7 @@
  * in the vault and sets up the vault for the new user.
  */
 + (void)cb_login {
-    Login.instance.cb_login = ^bool(NSString* email, NSString* password, NSString* vaultURL, NSString* mainURL, 
+    Login.instance.cb_login = ^BOOL(NSString* email, NSString* password, NSString* vaultURL, NSString* mainURL, 
                                                 NSString* apiURL, NSString* wssURL, NSString* iconURL) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
@@ -38,7 +38,7 @@
                     Toast* toast = [[Toast alloc] initWithMessage:@"Wrong Email or Password"];
                     [[ToastStore instance] addToast:toast];
                 });
-                return false;
+                return NO;
             }
 
             if (v_inst.state == ClientWarden::AuthState::WaitingForTOTP) {
@@ -46,20 +46,20 @@
                     Login.instance.EmailPasswordView = false;
                     ClientwardenWindow.instance.state = WindowStateLogin;
                 });
-                return true;
+                return YES;
             } else if (v_inst.state == ClientWarden::AuthState::WaitingForDeviceVerif) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Login.instance.EmailPasswordView = false;
                     ClientwardenWindow.instance.state = WindowStateLogin;
                 });
-                return true;
+                return YES;
             }
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 ClientwardenWindow.instance.state = WindowStateVault;
             });
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Login.instance.EmailPasswordView = true;
@@ -67,7 +67,7 @@
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -77,7 +77,7 @@
  * code or a Device Verification code.
  */
 + (void)cb_submitCode {
-    Login.instance.cb_submitCode = ^bool(NSString* code) {
+    Login.instance.cb_submitCode = ^BOOL(NSString* code) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -94,7 +94,7 @@
                     Toast* toast = [[Toast alloc] initWithMessage:@"Unknown code type"];
                     [[ToastStore instance] addToast:toast];
                 });
-                return false;
+                return NO;
             }
 
             if (!result) {
@@ -103,7 +103,7 @@
                     Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Authenticate"];
                     [[ToastStore instance] addToast:toast];
                 });
-                return false;
+                return NO;
             }
 
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -111,13 +111,13 @@
                 ClientwardenWindow.instance.state = WindowStateVault;
             });
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to submit code"];
                 [[ToastStore instance] addToast:toast];
             });
-            return false;
+            return NO;
         }
     };
 }

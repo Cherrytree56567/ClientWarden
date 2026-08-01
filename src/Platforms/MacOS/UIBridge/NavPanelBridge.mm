@@ -456,7 +456,7 @@
  * DeleteFolder uses a UUID and passes back a result bool
  */
 + (void)cb_DeleteFolder {
-    NavigationPanel.instance.cb_deleteFolder = ^bool(NSUUID* uuid) {
+    NavigationPanel.instance.cb_deleteFolder = ^BOOL(NSUUID* uuid) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -468,20 +468,20 @@
                     Toast* toast = [[Toast alloc] initWithMessage:@"Empty UUID"];
                     [[ToastStore instance] addToast:toast];
                 });
-                return false;
+                return NO;
             }
 
             v_inst.GetFolder(c_uuid)
                  ->Delete();
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Delete Folder"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }
@@ -490,7 +490,7 @@
  * RenameFolder uses a UUID and name and passes back a result bool
  */
 + (void)cb_RenameFolder {
-    NavigationPanel.instance.cb_renameFolder = ^bool(NSUUID *uuid, NSString *name) {
+    NavigationPanel.instance.cb_renameFolder = ^BOOL(NSUUID *uuid, NSString *name) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
@@ -502,7 +502,7 @@
                     Toast* toast = [[Toast alloc] initWithMessage:@"Empty UUID"];
                     [[ToastStore instance] addToast:toast];
                 });
-                return false;
+                return NO;
             }
 
             std::string c_name = name.UTF8String;
@@ -511,14 +511,14 @@
                  ->SetName(c_name)
                   .Commit();
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Rename Folder"];
                 [[ToastStore instance] addToast:toast];
             });
 
-            return false;
+            return NO;
         }
     };
 }

@@ -21,53 +21,53 @@
  * and sets the state to LogOut
  */
 + (void)cb_logout {
-    SettingsPanel.instance.cb_logout = ^bool() {
+    SettingsPanel.instance.cb_logout = ^BOOL() {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
             
-            return v_inst.Logout();
+            return (BOOL)v_inst.Logout();
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
                 [[ToastStore instance] addToast:toast];
             });
             
-            return false;
+            return NO;
         }
     };
 }
 
 + (void)cb_getScrshot {
-    SettingsPanel.instance.cb_getScrshot = ^bool() {
+    SettingsPanel.instance.cb_getScrshot = ^BOOL() {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
             
-            return v_inst.GetScreenshotOption();
+            return (BOOL)v_inst.GetScreenshotOption();
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
                 [[ToastStore instance] addToast:toast];
             });
             
-            return false;
+            return NO;
         }
     };
 }
 + (void)cb_setScrshot {
-    SettingsPanel.instance.cb_setScrshot = ^bool(bool value) {
+    SettingsPanel.instance.cb_setScrshot = ^BOOL(BOOL value) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
             
-            v_inst.SetScreenshotOption(value);
+            v_inst.SetScreenshotOption((bool)value);
 
-            return true;
+            return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
                 [[ToastStore instance] addToast:toast];
             });
             
-            return false;
+            return NO;
         }
     };
 }
