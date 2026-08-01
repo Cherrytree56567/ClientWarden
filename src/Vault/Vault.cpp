@@ -32,7 +32,7 @@ namespace ClientWarden {
 
             lock.unlock();
 
-            return network.websocketLoop([this](int notifyType) {
+            std::function<void(int notifyType)> websocketLambda = [this](int notifyType) {
                 switch (notifyType) {
                     case 0: 
                         /*
@@ -110,7 +110,16 @@ namespace ClientWarden {
                         logger->info("Unhandled type: {}", notifyType);
                         break;
                 }
-            }, accessString, wssString, shouldThread);
+            };
+            
+            bool lastResult = true;
+
+            while (shouldThread) {
+                lastResult = network.websocketLoop(websocketLambda, accessString, wssString, shouldThread);
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+
+            return lastResult;
         });
 
         session.refreshThread.setCallback([this](const std::atomic<bool>& shouldThread) {
