@@ -242,6 +242,10 @@ namespace ClientWarden {
         return inst;
     }
 
+    std::vector<std::string> Vault::getAutoFillCiphers(std::string url) {
+
+    }
+
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
         std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
         (*session.authData)["vaultURL"] = vaultUri;
