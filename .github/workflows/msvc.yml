@@ -46,7 +46,7 @@ jobs:
         run: conan install . --output-folder=${{ env.build }} --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
       
       - name: Configure CMake
-        run: cmake -B ${{ env.build }} -DCMAKE_TOOLCHAIN_FILE=${{env.build}}/build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        run: cmake -B ${{ env.build }} -DCMAKE_TOOLCHAIN_FILE=${{env.build}}/build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
       # Build is not required unless generated source files are used
       # - name: Build CMake
