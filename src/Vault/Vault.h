@@ -54,6 +54,8 @@ namespace ClientWarden {
         bool Lock();
         bool Logout();
 
+        bool UnlockUsingKeys();
+
         bool Sync(bool fullSync = false);
 
         void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);

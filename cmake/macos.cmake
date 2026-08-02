@@ -17,6 +17,8 @@ function(buildUI _target)
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/Info.plist"
     )
 
+    add_dependencies(${_target} ClientwardenAutoFill)
+
     set(SwiftUI
         src/Platforms/MacOS/UI/Clientwarden/AboutView.swift
         src/Platforms/MacOS/UI/Clientwarden/Clientwarden.swift
@@ -68,7 +70,9 @@ function(buildUI _target)
         MACOSX_BUNDLE_GUI_IDENTIFIER ${CW_IDENTIFIER}
         MACOSX_BUNDLE_BUNDLE_VERSION "${CW_BUILD_STRING}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${CW_BUILD_STRING}"
+        #XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Clientwarden.entitlements"
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Bridge.h"
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "MacOSIcon"
+        XCODE_EMBED_APP_EXTENSIONS ClientwardenAutoFill
     )
 endfunction()

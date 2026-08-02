@@ -33,6 +33,8 @@ extern "C" void SetLoginPage() {
 
             if (v_inst.state == ClientWarden::AuthState::Unlockable) {
                 return WindowStateUnlock;
+            } else if (v_inst.state == ClientWarden::AuthState::Unlocked) {
+                return WindowStateVault;
             } else {
                 return WindowStateLogin;
             }

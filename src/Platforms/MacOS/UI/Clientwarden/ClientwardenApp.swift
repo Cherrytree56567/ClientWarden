@@ -4,13 +4,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var screenCaptureTimer: Timer?
 
     /*
-     * Close Application when a window is closed
-    */
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
-    }
-
-    /*
      * Screen Capture stuff.
     */
     func applyScreenCaptureSetting() {
@@ -201,6 +194,7 @@ struct ClientwardenApp: App {
         }
         .windowResizability(.contentSize)
         .commands {
+            CommandGroup(replacing: .newItem) { } 
             CommandGroup(replacing: .appInfo) {
                 Button("About ClientWarden") {
                     openWindow(id: "about")

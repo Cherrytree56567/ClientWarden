@@ -2,6 +2,36 @@ import AuthenticationServices
 
 class CredentialProviderViewController: ASCredentialProviderViewController {
 
+    /*
+     * Clientwarden extension API stuff
+     */
+    func clientwardenAppRunning() -> Bool {
+        return NSWorkspace.shared.runningApplications.contains {
+            $0.bundleIdentifier == "com.ct5.clientwarden"
+        }
+    }
+
+    func launchClientwardenApp() {
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.ct5.clientwarden") else {
+            /*
+             * Failed to locate Clientwarden App
+             */
+            return
+        }
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+
+        NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { app, error in
+            if let error {
+                /*
+                 * Failed to launch Clientwarden App
+                 */
+                return
+            }
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
