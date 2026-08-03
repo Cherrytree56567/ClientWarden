@@ -138,7 +138,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [ ] Ask CW App for Ciphers with Domain/URL
     - [ ] Display Ciphers
     - [ ] Autofill Cipher
-  - [ ] Passkey Support
+  - [ ] Passkey AutoFill Support
+  - [ ] Passkey Login Support
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
