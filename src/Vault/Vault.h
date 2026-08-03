@@ -64,6 +64,8 @@ namespace ClientWarden {
 
         void SetScreenshotOption(bool value);
         bool GetScreenshotOption();
+        void SetAutoLockDelay(int value);
+        int GetAutoLockDelay();
 
         template <typename Derived>
         std::shared_ptr<Derived> GetItem(std::string uuid) {
@@ -105,6 +107,9 @@ namespace ClientWarden {
         bool RenameFolder(std::string folderUUID, std::string encryptedFolderName);
         bool DeleteFolder(std::string folderUUID);
         std::optional<std::string> DownloadIcon(std::string url);
+
+        std::recursive_mutex inactivityTimerMutex;
+        std::optional<time_t> inactivityTimer;
 
         VaultSession session;
         VaultCrypto crypto;

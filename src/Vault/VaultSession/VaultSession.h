@@ -34,5 +34,6 @@ namespace ClientWarden {
         CWThread wssThread;
         CWThread refreshThread;
         CWThread connectivityThread;
+        CWThread autoLockThread;
     };
 }

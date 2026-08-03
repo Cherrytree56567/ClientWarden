@@ -179,6 +179,24 @@ namespace ClientWarden {
             return true;
         });
 
+        session.autoLockThread.setCallback([this](const std::atomic<bool>& shouldThread) {
+            while (shouldThread.load()) {
+                std::unique_lock<std::recursive_mutex> lock_chk(inactivityTimerMutex);
+                if (state == AuthState::Unlocked && inactivityTimer.has_value()) {
+                    time_t now = time(nullptr);
+                    double elapsed = difftime(now, *inactivityTimer);
+                    if (elapsed >= static_cast<double>(GetAutoLockDelay())) {
+                        inactivityTimer = std::nullopt;
+                        SetLockPage();
+                        Lock();
+                    }
+                }
+                lock_chk.unlock();
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+            return true;
+        });
+
         if (!storage.exists("data.json") || !storage.exists("vault.json")) {
             state = AuthState::LoggedOut;
         } else {
@@ -229,6 +247,7 @@ namespace ClientWarden {
         session.wssThread.stop();
         session.refreshThread.stop();
         session.connectivityThread.stop();
+        session.autoLockThread.stop();
     }
 
     /*
@@ -343,6 +362,7 @@ namespace ClientWarden {
             session.wssThread.start();
             session.refreshThread.start();
             session.connectivityThread.start();
+            session.autoLockThread.start();
 
             state = AuthState::Unlocked;
 
@@ -416,6 +436,7 @@ namespace ClientWarden {
             session.wssThread.start();
             session.refreshThread.start();
             session.connectivityThread.start();
+            session.autoLockThread.start();
 
             state = AuthState::Unlocked;
 
@@ -470,6 +491,7 @@ namespace ClientWarden {
             session.wssThread.start();
             session.refreshThread.start();
             session.connectivityThread.start();
+            session.autoLockThread.start();
 
             std::jthread t([&] {
                 Sync();
@@ -497,6 +519,30 @@ namespace ClientWarden {
         }
 
         bool result = (*session.settingsData)["allowScreenshots"];
+
+        lock_sdget.unlock();
+
+        return result;
+    }
+
+    void Vault::SetAutoLockDelay(int value) {
+        std::unique_lock<std::recursive_mutex> lock_sdset(session.vaultDataMutex);
+        (*session.settingsData)["autoLockDelay"] = value;
+        storage.write("settings.json", session.settingsData->dump(2));
+        lock_sdset.unlock();
+    }
+
+    /*
+     * TODO: TEST + Check if user is inactive, and then run autolock
+    */
+    int Vault::GetAutoLockDelay() {
+        std::unique_lock<std::recursive_mutex> lock_sdget(session.vaultDataMutex);
+        if (!session.settingsData->contains("autoLockDelay") || !(*session.settingsData)["autoLockDelay"].is_number() || (*session.settingsData)["autoLockDelay"] < 5) {
+            (*session.settingsData)["autoLockDelay"] = 300;
+            storage.write("settings.json", session.settingsData->dump(2));
+        }
+
+        int result = (*session.settingsData)["autoLockDelay"];
 
         lock_sdget.unlock();
 

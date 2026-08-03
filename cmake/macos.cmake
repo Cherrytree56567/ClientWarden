@@ -21,6 +21,7 @@ function(buildUI _target)
 
     set(SwiftUI
         src/Platforms/MacOS/UI/Clientwarden/AboutView.swift
+        src/Platforms/MacOS/UI/Clientwarden/ActivityMonitor.swift
         src/Platforms/MacOS/UI/Clientwarden/Clientwarden.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenApp.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenImage.swift
@@ -60,6 +61,7 @@ function(buildUI _target)
         src/Platforms/MacOS/UIBridge/ItemsPanelBridge.mm
         src/Platforms/MacOS/UIBridge/SidePanelBridge.mm
         src/Platforms/MacOS/UIBridge/SettingsBridge.mm
+        src/Platforms/MacOS/UIBridge/ActivityMonitorBridge.mm
     )
     
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets} ${ICON_FILE})

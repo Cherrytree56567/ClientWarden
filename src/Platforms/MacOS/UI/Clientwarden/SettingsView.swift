@@ -15,11 +15,14 @@ final class SettingsPanel: NSObject {
     static let instance = SettingsPanel()
     
     public var clipboardDelay: Int = 30
+    public var autoLockDelay: Int = 300
     public var allowScreenshots: Bool = false
     
     @objc public var cb_logout: (() -> Bool)?
     @objc public var cb_getScrshot: (() -> Bool)?
     @objc public var cb_setScrshot: ((Bool) -> Bool)?
+    @objc public var cb_getLockDelay: (() -> Int)?
+    @objc public var cb_setLockDelay: ((Int) -> Bool)?
     
     var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
@@ -32,6 +35,11 @@ final class SettingsPanel: NSObject {
     func getInfo() {
         clipboardDelay = Clipboard.instance.getDelay()
         allowScreenshots = getScrshot()
+        if let res = cb_getLockDelay?() {
+            autoLockDelay = res
+        } else {
+            autoLockDelay = 300
+        }
     }
     
     func setDelay() {
@@ -39,10 +47,6 @@ final class SettingsPanel: NSObject {
     }
     
     func logOut() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let info = cb_logout?() {
             if (info) {
                 ClientwardenWindow.instance.getState()
@@ -59,10 +63,6 @@ final class SettingsPanel: NSObject {
     }
     
     func setScrshot(option: Bool) {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let res = cb_setScrshot?(option) {
             if (res) {
             } else {
@@ -74,14 +74,21 @@ final class SettingsPanel: NSObject {
     }
     
     func getScrshot() -> Bool {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let res = cb_getScrshot?() {
             return res
         }
         return false
+    }
+    
+    func setLockDelay() {
+        if let res = cb_setLockDelay?(autoLockDelay) {
+            if (res) {
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Set Auto Lock Delay"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for Set Auto Lock Delay"))
+        }
     }
 }
 
@@ -104,6 +111,7 @@ struct SettingsView: View {
     @Environment(\.dismissWindow) private var dismissWindow
     @State private var showLogout: Bool = false
     @FocusState private var isFocused: Bool
+    @FocusState private var isFocused2: Bool
     @State private var thisWindow: NSWindow?
     
     var body: some View {
@@ -137,6 +145,38 @@ struct SettingsView: View {
                     }
                 }
                 .padding(.bottom, -10)
+                
+                Divider()
+                
+                HStack {
+                    Text("Automatic Lock Delay")
+                        .padding(12)
+                    
+                    Spacer()
+                    
+                    TextField("", text: Binding(
+                        get: { String(data.autoLockDelay) },
+                        set: { newValue in
+                            if let value = Int(newValue) {
+                                data.autoLockDelay = value
+                                data.setLockDelay()
+                            } else if newValue.isEmpty {
+                                data.autoLockDelay = 300
+                                data.setLockDelay()
+                            }
+                        }
+                    ))
+                    .frame(width: 60, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+                    .textFieldStyle(.plain)
+                    .padding(.trailing, 12)
+                    .focused($isFocused2)
+                    .onExitCommand {
+                        isFocused2 = false
+                    }
+                }
+                .padding(.bottom, -10)
+                .padding(.top, -10)
                 
                 Divider()
                 

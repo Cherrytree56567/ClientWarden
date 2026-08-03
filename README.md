@@ -131,7 +131,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
 
 - [ ] V1.1.0
   - [X] Clientwarden stays open in the background
-  - [ ] Auto Lock Support
+  - [X] Auto Lock Support
   - [ ] AutoFill Support
     - [X] Check if CW App is open
     - [ ] Ask CW App for AutoFill Unlock Window

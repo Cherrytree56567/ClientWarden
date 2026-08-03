@@ -9,6 +9,10 @@ extern "C" void SetLoginPage() {
     ClientwardenWindow.instance.state = WindowStateLogin;
 }
 
+extern "C" void SetLockPage() {
+    ClientwardenWindow.instance.state = WindowStateUnlock;
+}
+
 @implementation CWAppBridge
 
 /*

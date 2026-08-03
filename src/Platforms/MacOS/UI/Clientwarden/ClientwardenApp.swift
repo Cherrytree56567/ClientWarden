@@ -99,8 +99,19 @@ enum WindowState: Int {
 @Observable
 final class ClientwardenWindow: NSObject {
     static let instance = ClientwardenWindow()
+
+    private var p_state: WindowState = .Empty
     
-    @objc public var state: WindowState = .Empty
+    @objc public var state: WindowState {
+        get { p_state }
+        set {
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    self.p_state = newValue
+                }
+            }
+        }
+    }
     
     @objc public var cb_getState: (() -> WindowState)?
     @objc public var cb_lock: (() -> Bool)?
@@ -188,6 +199,7 @@ struct ClientwardenApp: App {
             .onAppear {
                 #if NON_XCODE_BUILD
                     CWAppBridge.setupCallbacks()
+                    ActivityMonitorBridge.setupCallbacks()
                 #endif
                 data.getState()
             }

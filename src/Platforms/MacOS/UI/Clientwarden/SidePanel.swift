@@ -739,6 +739,7 @@ struct SidePanelView: View {
             #if NON_XCODE_BUILD
                 SidePanelBridge.setupCallbacks()
             #endif
+            ActivityMonitor.instance.start()
         }
         .sheet(isPresented: $data.isReprompt) {
             VStack {
