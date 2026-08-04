@@ -13,6 +13,7 @@
 + (void)setupCallbacks {
     [self cb_login];
     [self cb_submitCode];
+    [self cb_usePasskey];
 }
 
 /*
@@ -43,13 +44,19 @@
 
             if (v_inst.state == ClientWarden::AuthState::WaitingForTOTP) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = false;
+                    Login.instance.ViewType = LoginViewTypeTOTP;
                     ClientwardenWindow.instance.state = WindowStateLogin;
                 });
                 return YES;
             } else if (v_inst.state == ClientWarden::AuthState::WaitingForDeviceVerif) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = false;
+                    Login.instance.ViewType = LoginViewTypeTOTP;
+                    ClientwardenWindow.instance.state = WindowStateLogin;
+                });
+                return YES;
+            } else if (v_inst.state == ClientWarden::AuthState::WaitingForPasskey) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    Login.instance.ViewType = LoginViewTypePasskey;
                     ClientwardenWindow.instance.state = WindowStateLogin;
                 });
                 return YES;
@@ -62,7 +69,7 @@
             return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                Login.instance.EmailPasswordView = true;
+                Login.instance.ViewType = LoginViewTypeLogin;
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Authenticate"];
                 [[ToastStore instance] addToast:toast];
             });
@@ -90,7 +97,7 @@
                 result = v_inst.Login(c_code);
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = true;
+                    Login.instance.ViewType = LoginViewTypeLogin;
                     Toast* toast = [[Toast alloc] initWithMessage:@"Unknown code type"];
                     [[ToastStore instance] addToast:toast];
                 });
@@ -99,7 +106,7 @@
 
             if (!result) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    Login.instance.EmailPasswordView = true;
+                    Login.instance.ViewType = LoginViewTypeLogin;
                     Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Authenticate"];
                     [[ToastStore instance] addToast:toast];
                 });
@@ -107,7 +114,7 @@
             }
 
             dispatch_async(dispatch_get_main_queue(), ^{
-                Login.instance.EmailPasswordView = true;
+                Login.instance.ViewType = LoginViewTypeLogin;
                 ClientwardenWindow.instance.state = WindowStateVault;
             });
 
@@ -120,6 +127,104 @@
             return NO;
         }
     };
+}
+
+static LoginBridge* p_loginBridge = nil;
+
+/*
+ * usePasskey is used when BitWarden requests a Passkey
+ * to be used to login.
+ */
++ (void)cb_usePasskey {
+    Login.instance.cb_usePasskey = ^BOOL() {
+        try {
+            p_loginBridge = [LoginBridge new];
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::unique_lock<std::recursive_mutex> lock_adset(v_inst.session.authDataMutex);
+            NSData* challenge = [NSData dataWithBytes:v_inst.passkeyChallenge.data() length:v_inst.passkeyChallenge.size()];
+            NSString* rpID = [NSString stringWithUTF8String:(*v_inst.session.authData)["vaultURL"].get<std::string>().c_str()];
+            lock_adset.unlock();
+            
+            ASAuthorizationPlatformPublicKeyCredentialProvider* provider = 
+                [[ASAuthorizationPlatformPublicKeyCredentialProvider alloc] initWithRelyingPartyIdentifier:rpID];
+
+            ASAuthorizationPlatformPublicKeyCredentialAssertionRequest* request =
+                [provider createCredentialAssertionRequestWithChallenge:challenge];
+
+            ASAuthorizationController* controller = [[ASAuthorizationController alloc] initWithAuthorizationRequests:@[request]];
+            controller.delegate = p_loginBridge;
+            controller.presentationContextProvider = p_loginBridge;
+            [controller performRequests];
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to use passkey"];
+                [[ToastStore instance] addToast:toast];
+            });
+            return NO;
+        }
+    };
+}
+
+#pragma mark - ASAuthorizationControllerDelegate
+
+- (void)authorizationController:(ASAuthorizationController *)controller
+    didCompleteWithAuthorization:(ASAuthorization *)authorization {
+    ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+    ASAuthorizationPlatformPublicKeyCredentialAssertion* cred =
+        (ASAuthorizationPlatformPublicKeyCredentialAssertion *)authorization.credential;
+
+    NSData* credentialID = cred.credentialID;
+    NSData* authData = cred.rawAuthenticatorData;
+    NSData* clientData = cred.rawClientDataJSON;
+    NSData* signature = cred.signature;
+    
+    std::string c_id = std::string((const char*)credentialID.bytes, credentialID.length);
+    std::string c_authData = std::string((const char*)authData.bytes, authData.length);
+    std::string c_clientData = std::string((const char*)clientData.bytes, clientData.length);
+    std::string c_signature = std::string((const char*)signature.bytes, signature.length);
+
+    bool result;
+
+    if (v_inst.state == ClientWarden::AuthState::WaitingForPasskey) {
+        result = v_inst.Login(c_id, c_authData, c_clientData, c_signature);
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            Toast* toast = [[Toast alloc] initWithMessage:@"Failed to use passkey"];
+            [[ToastStore instance] addToast:toast];
+        });
+        return;
+    }
+
+    if (!result) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            Toast* toast = [[Toast alloc] initWithMessage:@"Failed to use passkey"];
+            [[ToastStore instance] addToast:toast];
+        });
+        return;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        Login.instance.ViewType = LoginViewTypeLogin;
+        ClientwardenWindow.instance.state = WindowStateVault;
+    });
+}
+
+- (void)authorizationController:(ASAuthorizationController *)controller
+            didCompleteWithError:(NSError *)error {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        Toast* toast = [[Toast alloc] initWithMessage:@"Failed to use passkey"];
+        [[ToastStore instance] addToast:toast];
+    });
+}
+
+#pragma mark - Presentation
+
+- (ASPresentationAnchor)presentationAnchorForAuthorizationController:(ASAuthorizationController *)controller {
+    return NSApplication.sharedApplication.keyWindow ?: NSApplication.sharedApplication.windows.firstObject;
 }
 
 @end

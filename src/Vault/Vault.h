@@ -21,6 +21,7 @@ namespace ClientWarden {
         Unlockable,
         WaitingForTOTP,
         WaitingForDeviceVerif,
+        WaitingForPasskey,
         Unlocked,
         Failed // Vault should never reach this point
     };
@@ -49,6 +50,7 @@ namespace ClientWarden {
 
         bool Login(std::string& email, std::string& password);
         bool Login(std::string code);
+        bool Login(std::string id, std::string authData, std::string clientData, std::string signature);
 
         bool Unlock(std::string& password);
         bool Lock();
@@ -110,6 +112,8 @@ namespace ClientWarden {
 
         std::recursive_mutex inactivityTimerMutex;
         std::optional<time_t> inactivityTimer;
+
+        std::string passkeyChallenge;
 
         VaultSession session;
         VaultCrypto crypto;

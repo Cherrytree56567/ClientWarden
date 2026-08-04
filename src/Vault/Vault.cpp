@@ -315,9 +315,22 @@ namespace ClientWarden {
         std::optional<nlohmann::json> token = network.getToken(email, session.masterPasswordHash);
         if (token.has_value()) {
             if (token.value().contains("error_description")) {
-                if (token.value()["error_description"] == "Two factor required.") {
-                    state = AuthState::WaitingForTOTP;
-                    return true;
+                if (token.value()["error_description"] == "Two factor required." && token.value().contains("TwoFactorProviders") && 
+                    !token.value()["TwoFactorProviders"].empty()) {
+                    if (token.value()["TwoFactorProviders"][0] == "0") {
+                        state = AuthState::WaitingForTOTP;
+                        return true;
+                    } else if (token.value()["TwoFactorProviders"][0] == "7") {
+                        /*
+                         * Passkey Support
+                        */
+                        if (token.value().contains("TwoFactorProviders2") && token.value()["TwoFactorProviders2"].contains("7") &&
+                            token.value()["TwoFactorProviders2"]["7"].contains("challenge")) {
+                            passkeyChallenge = token.value()["TwoFactorProviders2"]["7"]["challenge"];
+                            state = AuthState::WaitingForPasskey;
+                            return true;
+                        }
+                    }
                 } else if (token.value()["error_description"] == "New device verification required") {
                     state = AuthState::WaitingForDeviceVerif;
                     return true;
@@ -392,14 +405,80 @@ namespace ClientWarden {
                 !token.value().contains("expires_in")) {
                 return false;
             }
-            if (token.value().contains("error_description")) {
-                if (token.value()["error_description"] == "Two factor required.") {
-                    state = AuthState::WaitingForTOTP;
-                    return true;
-                } else if (token.value()["error_description"] == "New device verification required") {
-                    state = AuthState::WaitingForDeviceVerif;
-                    return true;
-                }
+            std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
+            (*session.authData)["accessString"] = token.value()["access_token"];
+            (*session.authData)["refreshToken"] = token.value()["refresh_token"];
+            (*session.authData)["expiresIn"] = token.value()["expires_in"];
+
+            std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
+            std::tm* localTime = std::localtime(&now);
+
+            std::ostringstream oss;
+            oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+            (*session.authData)["needsRefreshTime"] = oss.str();
+
+            storage.write("data.json", session.authData->dump(2));
+            lock_adset.unlock();
+
+            if (!Sync()) {
+                return false;
+            }
+
+            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+            std::string protectedKey = (*session.vaultData)["profile"]["key"];
+            lock_vdget.unlock();
+
+            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
+        
+            *session.encKey = std::move(encKey);
+            *session.macKey = std::move(macKey);
+
+            session.wssThread.start();
+            session.refreshThread.start();
+            session.connectivityThread.start();
+            session.autoLockThread.start();
+
+            state = AuthState::Unlocked;
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    bool Vault::Login(std::string id, std::string authData, std::string clientData, std::string signature) {
+        std::optional<nlohmann::json> token;
+
+        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
+        std::string salt = (*session.authData)["salt"];
+        lock_adget.unlock();
+
+        nlohmann::json passkeyCode;
+
+        passkeyCode["id"] = id;
+        passkeyCode["rawId"] = id;
+        passkeyCode["type"] = "public-key";
+        passkeyCode["extensions"] = nlohmann::json::object();
+        passkeyCode["extensions"]["appid"] = false;
+        passkeyCode["response"] = nlohmann::json::object();
+        passkeyCode["response"]["authenticatorData"] = authData;
+        passkeyCode["response"]["clientDataJson"] = clientData;
+        passkeyCode["response"]["signature"] = signature;
+
+        std::string c_passkeyCode = passkeyCode.dump();
+        
+        if (state == AuthState::WaitingForPasskey) {
+            token = network.getTokenWTotp(salt, session.masterPasswordHash, c_passkeyCode);
+        } else {
+            return false;
+        }
+
+        if (token.has_value()) {
+            if (!token.value().contains("access_token") || !token.value().contains("refresh_token") ||
+                !token.value().contains("expires_in")) {
                 return false;
             }
             std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);

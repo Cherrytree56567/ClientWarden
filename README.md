@@ -134,12 +134,15 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [X] Auto Lock Support
   - [ ] AutoFill Support
     - [X] Check if CW App is open
+    - [ ] Setup App Group
     - [ ] Ask CW App for AutoFill Unlock Window
     - [ ] Ask CW App for Ciphers with Domain/URL
     - [ ] Display Ciphers
     - [ ] Autofill Cipher
   - [ ] Passkey AutoFill Support
-  - [ ] Passkey Login Support
+  - [X] Passkey Login Support (wouldn't be possible)
+  - [ ] Biometric Support
+  - [ ] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
