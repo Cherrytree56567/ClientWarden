@@ -224,6 +224,16 @@ struct ClientwardenApp: App {
             }
         }
 
+        Window("Unlock Vault", id: "autofillUnlock") {
+            AutofillUnlockView()
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+        .windowStyle(.hiddenTitleBar)
+        .windowToolbarStyle(.unified(showsTitle: false))
+        .restorationBehavior(.disabled)
+        .handlesExternalEvents(matching: ["autofillUnlock"])
+
         Window("About ClientWarden", id: "about") {
             AboutView()
         }

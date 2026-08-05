@@ -22,6 +22,7 @@ function(buildUI _target)
     set(SwiftUI
         src/Platforms/MacOS/UI/Clientwarden/AboutView.swift
         src/Platforms/MacOS/UI/Clientwarden/ActivityMonitor.swift
+        src/Platforms/MacOS/UI/Clientwarden/AutofillUnlockView.swift
         src/Platforms/MacOS/UI/Clientwarden/Clientwarden.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenApp.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenImage.swift
@@ -72,6 +73,7 @@ function(buildUI _target)
         MACOSX_BUNDLE_GUI_IDENTIFIER ${CW_IDENTIFIER}
         MACOSX_BUNDLE_BUNDLE_VERSION "${CW_BUILD_STRING}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${CW_BUILD_STRING}"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Info.plist"
         #XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Clientwarden.entitlements"
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Bridge.h"
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "MacOSIcon"

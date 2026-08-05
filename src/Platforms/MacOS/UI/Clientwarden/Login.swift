@@ -55,7 +55,7 @@ final class Login: NSObject {
         return url
     }
     
-    @objc public var ViewType: LoginViewType = .Passkey // TODO: Change to Login
+    @objc public var ViewType: LoginViewType = .Login
 
     public var selectedTab: Int = 0
     public var defaults: Bool = false
