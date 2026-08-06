@@ -14,6 +14,8 @@
     [self cb_logout];
     [self cb_getScrshot];
     [self cb_setScrshot];
+    [self cb_getLockDelay];
+    [self cb_setLockDelay];
 }
 
 /*
@@ -45,7 +47,7 @@
             return (BOOL)v_inst.GetScreenshotOption();
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to get screenshot option"];
                 [[ToastStore instance] addToast:toast];
             });
             
@@ -63,7 +65,42 @@
             return YES;
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to log out"];
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to set screenshot option"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return NO;
+        }
+    };
+}
+
++ (void)cb_getLockDelay {
+    SettingsPanel.instance.cb_getLockDelay = ^NSInteger() {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+            
+            return (NSInteger)v_inst.GetAutoLockDelay();
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to get Auto Lock Delay"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return 300;
+        }
+    };
+}
++ (void)cb_setLockDelay {
+    SettingsPanel.instance.cb_setLockDelay = ^BOOL(NSInteger value) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+            
+            v_inst.SetAutoLockDelay((int)value);
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to set Auto Lock Delay"];
                 [[ToastStore instance] addToast:toast];
             });
             

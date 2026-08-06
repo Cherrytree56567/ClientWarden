@@ -18,11 +18,9 @@ namespace ClientWarden {
         ~VaultSession();
 
     public:
-        std::recursive_mutex authDataMutex;
         std::recursive_mutex vaultDataMutex;
         std::recursive_mutex settingsDataMutex;
 
-        std::shared_ptr<nlohmann::json> authData;
         std::shared_ptr<nlohmann::json> vaultData;
         std::shared_ptr<nlohmann::json> settingsData;
 
@@ -34,5 +32,6 @@ namespace ClientWarden {
         CWThread wssThread;
         CWThread refreshThread;
         CWThread connectivityThread;
+        CWThread autoLockThread;
     };
 }

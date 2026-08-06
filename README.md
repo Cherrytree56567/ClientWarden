@@ -129,52 +129,24 @@ You might need to use the `-s compiler.cppstd=20` flag.
 <!-- ROADMAP -->
 ## Roadmap
 
-- [X] MacOS Support
-    - [X] Attachment Support
-    - [X] Bin Page
-    - [X] Settings Support
-    - [X] Lock Support
-    - [X] UI Bridge
-      - [X] Nav Panel Bridge
-      - [X] Items Panel Bridge
-      - [X] Side Panel Bridge
-        - [X] Save Support
-      - [X] Settings Bridge
-        - [X] Add ScreenShot Option
-    - [X] Add Errors on Bridge
-    - [X] Fix Login Crashes
-    - [X] Fix Freezing Issue
-    - [X] Fix Vault Signouts
-    - [X] Code Review
-    - [X] Show Deletion Date
-    - [X] Show Password History Date
-    - [X] Reprompt Support
-    - [X] Add Reprompt Toggle
-    - [X] Add Password Generator
-    - [X] Highlight selected item
-    - [X] Add Animation for extending window
-    - [X] Folder Tree View (Couldn't figure this out with SwiftUI, TODO Later)
-    - [X] Add Remove Field Button for Custom Fields
-    - [ ] Passkey Support
-- [X] Derive Item Classes from Generic Item
-- [ ] Windows Support
-    - [ ] Create Nav Panel
-    - [ ] Create Side Panel
-    - [ ] Create Create Items Panel
-    - [ ] Settings Support
-    - [ ] UI Bridge
-    - [ ] Passkey Support
-- [ ] Linux Support
-    - [ ] Create Nav Panel
-    - [ ] Create Side Panel
-    - [ ] Create Create Items Panel
-    - [ ] Settings Support
-    - [ ] UI Bridge
-    - [ ] Passkey Support
-- [ ] Official Release
-- [ ] Watchtower
-- [ ] Custom Item Types
-- [ ] iOS and Android Support
+- [ ] V1.1.0
+  - [X] Clientwarden stays open in the background
+  - [X] Auto Lock Support
+  - [ ] AutoFill Support
+    - [X] Check if CW App is open
+    - [ ] Setup App Group
+    - [ ] Ask CW App for AutoFill Unlock Window
+    - [ ] Ask CW App for Ciphers with Domain/URL
+    - [ ] Display Ciphers
+    - [ ] Autofill Cipher
+    - [X] Add Autofill Unlock Screen
+  - [ ] Passkey AutoFill Support
+  - [X] Passkey Login Support (wouldn't be possible)
+  - [ ] Device Login Support
+  - [ ] Biometric Support
+  - [ ] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
+  - [ ] Make SDK
+  - [X] Store auth data in KeyChain (!important)
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 

@@ -4,13 +4,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var screenCaptureTimer: Timer?
 
     /*
-     * Close Application when a window is closed
-    */
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
-    }
-
-    /*
      * Screen Capture stuff.
     */
     func applyScreenCaptureSetting() {
@@ -106,8 +99,19 @@ enum WindowState: Int {
 @Observable
 final class ClientwardenWindow: NSObject {
     static let instance = ClientwardenWindow()
+
+    private var p_state: WindowState = .Empty
     
-    @objc public var state: WindowState = .Empty
+    @objc public var state: WindowState {
+        get { p_state }
+        set {
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    self.p_state = newValue
+                }
+            }
+        }
+    }
     
     @objc public var cb_getState: (() -> WindowState)?
     @objc public var cb_lock: (() -> Bool)?
@@ -195,12 +199,14 @@ struct ClientwardenApp: App {
             .onAppear {
                 #if NON_XCODE_BUILD
                     CWAppBridge.setupCallbacks()
+                    ActivityMonitorBridge.setupCallbacks()
                 #endif
                 data.getState()
             }
         }
         .windowResizability(.contentSize)
         .commands {
+            CommandGroup(replacing: .newItem) { } 
             CommandGroup(replacing: .appInfo) {
                 Button("About ClientWarden") {
                     openWindow(id: "about")
@@ -217,6 +223,16 @@ struct ClientwardenApp: App {
                 }
             }
         }
+
+        Window("Unlock Vault", id: "autofillUnlock") {
+            AutofillUnlockView()
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+        .windowStyle(.hiddenTitleBar)
+        .windowToolbarStyle(.unified(showsTitle: false))
+        .restorationBehavior(.disabled)
+        .handlesExternalEvents(matching: ["autofillUnlock"])
 
         Window("About ClientWarden", id: "about") {
             AboutView()

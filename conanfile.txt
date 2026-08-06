@@ -6,6 +6,7 @@ openssl/4.0.1
 boost/1.91.0
 spdlog/1.17.0
 msgpack-cxx/7.0.0
+keychain/1.3.0
 [generators]
 CMakeDeps
 CMakeToolchain

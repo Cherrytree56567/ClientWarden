@@ -1,24 +1,28 @@
 include(cmake/versioning.cmake)
 
 function(buildUI _target)
-#    add_library(ClientwardenAutoFill MODULE
-#        src/Platforms/MacOS/ClientwardenAutofill/CredentialProviderViewController.swift
-#    )
+    add_library(ClientwardenAutoFill MODULE
+        src/Platforms/MacOS/ClientwardenAutofill/CredentialProviderViewController.swift
+    )
 
-#    set_target_properties(ClientwardenAutoFill PROPERTIES
-#        BUNDLE TRUE
-#        XCODE_ATTRIBUTE_PRODUCT_NAME "ClientwardenAutoFill"
-#        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "appex"
-#        XCODE_ATTRIBUTE_PRODUCT_TYPE "com.apple.product-type.app-extension"
-#        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
-#        XCODE_ATTRIBUTE_SDKROOT "macosx"
-#        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
-#        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/ClientwardenAutofill.entitlements"
-#        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/Info.plist"
-#    )
+    set_target_properties(ClientwardenAutoFill PROPERTIES
+        BUNDLE TRUE
+        XCODE_ATTRIBUTE_PRODUCT_NAME "ClientwardenAutoFill"
+        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "appex"
+        XCODE_ATTRIBUTE_PRODUCT_TYPE "com.apple.product-type.app-extension"
+        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
+        XCODE_ATTRIBUTE_SDKROOT "macosx"
+        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/ClientwardenAutofill.entitlements"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/Info.plist"
+    )
+
+    add_dependencies(${_target} ClientwardenAutoFill)
 
     set(SwiftUI
         src/Platforms/MacOS/UI/Clientwarden/AboutView.swift
+        src/Platforms/MacOS/UI/Clientwarden/ActivityMonitor.swift
+        src/Platforms/MacOS/UI/Clientwarden/AutofillUnlockView.swift
         src/Platforms/MacOS/UI/Clientwarden/Clientwarden.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenApp.swift
         src/Platforms/MacOS/UI/Clientwarden/ClientwardenImage.swift
@@ -58,6 +62,7 @@ function(buildUI _target)
         src/Platforms/MacOS/UIBridge/ItemsPanelBridge.mm
         src/Platforms/MacOS/UIBridge/SidePanelBridge.mm
         src/Platforms/MacOS/UIBridge/SettingsBridge.mm
+        src/Platforms/MacOS/UIBridge/ActivityMonitorBridge.mm
     )
     
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets} ${ICON_FILE})
@@ -68,7 +73,10 @@ function(buildUI _target)
         MACOSX_BUNDLE_GUI_IDENTIFIER ${CW_IDENTIFIER}
         MACOSX_BUNDLE_BUNDLE_VERSION "${CW_BUILD_STRING}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${CW_BUILD_STRING}"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Info.plist"
+        #XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Clientwarden.entitlements"
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/Bridge.h"
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "MacOSIcon"
+        XCODE_EMBED_APP_EXTENSIONS ClientwardenAutoFill
     )
 endfunction()

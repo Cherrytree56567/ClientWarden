@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
+	<key>CFBundleIconFile</key>
+	<string>MacOSIcon</string>
+	<key>CFBundleIconName</key>
+	<string>MacOSIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>${MACOSX_BUNDLE_GUI_IDENTIFIER}</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLongVersionString</key>
+	<string></string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
+	<key>CSResourcesFileMapped</key>
+	<true/>
+
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.ct5.clientwarden.autofillUnlock</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>clientwarden</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

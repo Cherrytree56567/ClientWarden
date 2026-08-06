@@ -1,5 +1,12 @@
 import SwiftUI
 
+@objc
+enum LoginViewType: Int {
+    case Login
+    case TOTP
+    case Passkey
+}
+
 @objcMembers
 @Observable
 final class Login: NSObject {
@@ -48,7 +55,7 @@ final class Login: NSObject {
         return url
     }
     
-    @objc public var EmailPasswordView: Bool = true
+    @objc public var ViewType: LoginViewType = .Login
 
     public var selectedTab: Int = 0
     public var defaults: Bool = false
@@ -65,6 +72,7 @@ final class Login: NSObject {
     
     @objc public var cb_login: ((String, String, String, String, String, String, String) -> Bool)?
     @objc public var cb_submitCode: ((String) -> Bool)?
+    @objc public var cb_usePasskey: (() -> Bool)?
     
     /*
      * Callback Functions
@@ -100,6 +108,16 @@ final class Login: NSObject {
                     ClientwardenWindow.instance.state = WindowState.Login
                 }
             }
+        }
+    }
+    
+    func usePasskey() {
+        if let res = cb_usePasskey?() {
+            if (!res) {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to use Passkey"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for New Item"))
         }
     }
     
@@ -240,7 +258,7 @@ struct LoginView: View {
             Spacer()
             
             VStack {
-                if (data.EmailPasswordView) {
+                if (data.ViewType == LoginViewType.Login) {
                     Text("Clientwarden")
                         .font(.largeTitle.bold())
                     TextField("Email", text: $data.email)
@@ -272,6 +290,49 @@ struct LoginView: View {
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     .contentShape(Rectangle())
                     .keyboardShortcut(.defaultAction)
+                } else if (data.ViewType == LoginViewType.Passkey) {
+                    Text("Clientwarden")
+                        .font(.largeTitle.bold())
+                        .padding(.bottom, 8)
+                    Text("Use Passkey to Continue")
+                        .font(.subheadline)
+                    HStack {
+                        Button {
+                            withAnimation {
+                                data.usePasskey()
+                            }
+                        } label: {
+                            Text(verbatim: "Use Passkey")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.gray)
+                                .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+                        .frame(width: 100)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                        .contentShape(Rectangle())
+                        .keyboardShortcut(.defaultAction)
+                        
+                        Button {
+                            withAnimation {
+                                data.ViewType = .Login
+                            }
+                        } label: {
+                            Text(verbatim: "Cancel")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.gray)
+                                .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+                        .frame(width: 100)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                        .contentShape(Rectangle())
+                        .keyboardShortcut(.defaultAction)
+                    }
                 } else {
                     Text("Clientwarden")
                         .font(.largeTitle.bold())

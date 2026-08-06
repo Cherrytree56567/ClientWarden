@@ -9,6 +9,10 @@ extern "C" void SetLoginPage() {
     ClientwardenWindow.instance.state = WindowStateLogin;
 }
 
+extern "C" void SetLockPage() {
+    ClientwardenWindow.instance.state = WindowStateUnlock;
+}
+
 @implementation CWAppBridge
 
 /*
@@ -33,6 +37,8 @@ extern "C" void SetLoginPage() {
 
             if (v_inst.state == ClientWarden::AuthState::Unlockable) {
                 return WindowStateUnlock;
+            } else if (v_inst.state == ClientWarden::AuthState::Unlocked) {
+                return WindowStateVault;
             } else {
                 return WindowStateLogin;
             }

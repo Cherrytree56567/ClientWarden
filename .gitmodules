@@ -4,3 +4,6 @@
 [submodule "vendor/imgui2"]
 	path = vendor/imgui2
 	url = https://github.com/Cherrytree56567/imgui
+[submodule "Wiki"]
+	path = Wiki
+	url = https://github.com/Cherrytree56567/ClientWarden.wiki.git

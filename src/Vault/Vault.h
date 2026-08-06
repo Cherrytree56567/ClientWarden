@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <keychain/keychain.h>
 #include "VaultCrypto/VaultCrypto.h"
 #include "VaultNetwork/VaultNetwork.h"
 #include "VaultSession/VaultSession.h"
@@ -14,6 +15,8 @@
 #include "VaultUtils/VaultUtils.h"
 #include "Clipboard/Clipboard.h"
 
+#define CWbundleID "com.ct5.clientwarden", "clientwarden"
+
 namespace ClientWarden {
     enum class AuthState {
         Unknown,
@@ -21,6 +24,7 @@ namespace ClientWarden {
         Unlockable,
         WaitingForTOTP,
         WaitingForDeviceVerif,
+        WaitingForPasskey,
         Unlocked,
         Failed // Vault should never reach this point
     };
@@ -49,10 +53,13 @@ namespace ClientWarden {
 
         bool Login(std::string& email, std::string& password);
         bool Login(std::string code);
+        bool Login(std::string id, std::string authData, std::string clientData, std::string signature);
 
         bool Unlock(std::string& password);
         bool Lock();
         bool Logout();
+
+        bool UnlockUsingKeys();
 
         bool Sync(bool fullSync = false);
 
@@ -62,6 +69,8 @@ namespace ClientWarden {
 
         void SetScreenshotOption(bool value);
         bool GetScreenshotOption();
+        void SetAutoLockDelay(int value);
+        int GetAutoLockDelay();
 
         template <typename Derived>
         std::shared_ptr<Derived> GetItem(std::string uuid) {
@@ -78,6 +87,11 @@ namespace ClientWarden {
         std::shared_ptr<Folder> CreateFolder();
         std::vector<std::string> GetFolders();
         std::shared_ptr<CipherQuery> GetCipherQuery();
+
+        /*
+         * Auto Fill Stuff
+        */
+        std::vector<std::string> getAutoFillCiphers(std::string url);
 
         /*
          * Uses Vault Crypto and Vault Network.
@@ -98,6 +112,11 @@ namespace ClientWarden {
         bool RenameFolder(std::string folderUUID, std::string encryptedFolderName);
         bool DeleteFolder(std::string folderUUID);
         std::optional<std::string> DownloadIcon(std::string url);
+
+        std::recursive_mutex inactivityTimerMutex;
+        std::optional<time_t> inactivityTimer;
+
+        std::string passkeyChallenge;
 
         VaultSession session;
         VaultCrypto crypto;
