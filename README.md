@@ -142,9 +142,11 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Add Autofill Unlock Screen
   - [ ] Passkey AutoFill Support
   - [X] Passkey Login Support (wouldn't be possible)
+  - [ ] Device Login Support
   - [ ] Biometric Support
   - [ ] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
   - [ ] Make SDK
+  - [X] Store auth data in KeyChain (!important)
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 

@@ -141,10 +141,18 @@ static LoginBridge* p_loginBridge = nil;
             p_loginBridge = [LoginBridge new];
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 
-            std::unique_lock<std::recursive_mutex> lock_adset(v_inst.session.authDataMutex);
+            keychain::Error e1;
+
             NSData* challenge = [NSData dataWithBytes:v_inst.passkeyChallenge.data() length:v_inst.passkeyChallenge.size()];
-            NSString* rpID = [NSString stringWithUTF8String:(*v_inst.session.authData)["vaultURL"].get<std::string>().c_str()];
-            lock_adset.unlock();
+            NSString* rpID = [NSString stringWithUTF8String:keychain::getPassword(CWbundleID, "vaultURL", e1).c_str()];
+
+            if (e1.type != keychain::ErrorType::NoError) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Failed to use KeyChain"];
+                    [[ToastStore instance] addToast:toast];
+                });
+                return NO;
+            }
             
             ASAuthorizationPlatformPublicKeyCredentialProvider* provider = 
                 [[ASAuthorizationPlatformPublicKeyCredentialProvider alloc] initWithRelyingPartyIdentifier:rpID];

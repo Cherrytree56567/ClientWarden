@@ -25,12 +25,16 @@ namespace ClientWarden {
         }
 
         session.wssThread.setCallback([this](const std::atomic<bool>& shouldThread) {
-            std::unique_lock<std::recursive_mutex> lock(session.authDataMutex);
+            keychain::Error e1;
+            keychain::Error e2;
 
-            std::string accessString = (*session.authData)["accessString"].get<std::string>();
-            std::string wssString = (*session.authData)["wssURL"].get<std::string>();
+            std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+            std::string wssString = keychain::getPassword(CWbundleID, "wssURL", e2);
 
-            lock.unlock();
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get keychain value");
+                return false;
+            }
 
             std::function<void(int notifyType)> websocketLambda = [this](int notifyType) {
                 switch (notifyType) {
@@ -99,7 +103,7 @@ namespace ClientWarden {
                     case 10:
                         /*
                         * Account settings changed
-                        * TODO: Update data.json
+                        * TODO: Update Keychain
                         */
                         break;
                     case 11:
@@ -129,9 +133,15 @@ namespace ClientWarden {
                     continue;
                 }
 
-                std::unique_lock<std::recursive_mutex> lock_rt(session.authDataMutex);
-                std::string needsRefreshTime = (*session.authData)["needsRefreshTime"].get<std::string>();
-                lock_rt.unlock();
+                keychain::Error e1;
+                keychain::Error e2;
+
+                std::string needsRefreshTime = keychain::getPassword(CWbundleID, "needsRefreshTime", e1);
+
+                if (e1.type != keychain::ErrorType::NoError) {
+                    logger->info("Failed to get keychain value");
+                    return false;
+                }
 
                 std::tm tm = {};
                 std::istringstream ss(needsRefreshTime);
@@ -141,9 +151,12 @@ namespace ClientWarden {
                 std::time_t now = std::time(nullptr);
 
                 if (now >= expiry) {
-                    std::unique_lock<std::recursive_mutex> lock_ref(session.authDataMutex);
-                    std::string refreshTime = (*session.authData)["refreshToken"].get<std::string>();
-                    lock_ref.unlock();
+                    std::string refreshTime = keychain::getPassword(CWbundleID, "refreshToken", e1);
+
+                    if (e1.type != keychain::ErrorType::NoError) {
+                        logger->info("Failed to get keychain value");
+                        return false;
+                    }
 
                     std::optional<nlohmann::json> refreshBody = network.refreshToken(refreshTime);
 
@@ -152,19 +165,25 @@ namespace ClientWarden {
                         continue;
                     }
 
-                    std::unique_lock<std::recursive_mutex> lock_as(session.authDataMutex);
-                    (*session.authData)["accessString"] = refreshBody.value()["access_token"];
-                    (*session.authData)["expiresIn"] = refreshBody.value()["expires_in"];
+                    keychain::setPassword(CWbundleID, "accessString", refreshBody.value()["access_token"], e1);
+                    keychain::setPassword(CWbundleID, "expiresIn", refreshBody.value()["expires_in"], e2);
 
-                    std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
+                    if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+                        logger->info("Failed to set keychain value");
+                        return false;
+                    }
+
+                    std::time_t now = std::time(nullptr) + refreshBody.value()["expires_in"].get<int>();
                     std::tm* localTime = std::localtime(&now);
 
                     std::ostringstream oss;
                     oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-                    (*session.authData)["needsRefreshTime"] = oss.str();
+                    keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
 
-                    storage.write("data.json", session.authData->dump(4));
-                    lock_as.unlock();
+                    if (e1.type != keychain::ErrorType::NoError) {
+                        logger->info("Failed to set keychain value");
+                        return false;
+                    }
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
@@ -197,34 +216,34 @@ namespace ClientWarden {
             return true;
         });
 
-        if (!storage.exists("data.json") || !storage.exists("vault.json")) {
+        keychain::Error err1;
+
+        std::string needsRefreshTime = keychain::getPassword(CWbundleID, "email", err1);
+
+        if (err1.type != keychain::ErrorType::NoError || !storage.exists("vault.json")) {
             state = AuthState::LoggedOut;
         } else {
             state = AuthState::Unlockable;
-            
-            std::unique_lock<std::recursive_mutex> lock_adSet(session.authDataMutex);
-            *session.authData = nlohmann::json::parse(storage.read("data.json"));
-            lock_adSet.unlock();
 
             std::unique_lock<std::recursive_mutex> lock_vdset(session.vaultDataMutex);
             *session.vaultData = nlohmann::json::parse(storage.read("vault.json"));
             lock_vdset.unlock();
 
-            std::unique_lock<std::recursive_mutex> lock_check(session.authDataMutex);
-            if (!(*session.authData).contains("apiURL") || !(*session.authData).contains("iconURL") || 
-                !(*session.authData).contains("mainURL") || !(*session.authData).contains("vaultURL") || 
-                !(*session.authData).contains("wssURL")) {
-                logger->info("URL Info Not Found in data.json");
+            keychain::Error e1;
+            keychain::Error e2;
+            keychain::Error e3;
+            keychain::Error e4;
+
+            std::string vaultURL = keychain::getPassword(CWbundleID, "vaultURL", e1);
+            std::string mainURL = keychain::getPassword(CWbundleID, "mainURL", e2);
+            std::string apiURL = keychain::getPassword(CWbundleID, "apiURL", e3);
+            std::string iconURL = keychain::getPassword(CWbundleID, "iconURL", e4);
+
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+                e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError) {
+                logger->info("URL Info Not Found in KeyChain");
                 state = AuthState::Failed;
             }
-            lock_check.unlock();
-
-            std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-            std::string vaultURL = (*session.authData)["vaultURL"];
-            std::string mainURL = (*session.authData)["mainURL"];
-            std::string apiURL = (*session.authData)["apiURL"];
-            std::string iconURL = (*session.authData)["iconURL"];
-            lock_adget.unlock();
 
             network.initNetwork(vaultURL, mainURL, apiURL, iconURL);
         }
@@ -268,13 +287,24 @@ namespace ClientWarden {
     }
 
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
-        std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
-        (*session.authData)["vaultURL"] = vaultUri;
-        (*session.authData)["mainURL"] = mainUri;
-        (*session.authData)["apiURL"] = apiUri;
-        (*session.authData)["iconURL"] = iconUri;
-        (*session.authData)["wssURL"] = wssUri;
-        lock_adset.unlock();
+        keychain::Error e1;
+        keychain::Error e2;
+        keychain::Error e3;
+        keychain::Error e4;
+        keychain::Error e5;
+
+        keychain::setPassword(CWbundleID, "vaultURL", vaultUri, e1);
+        keychain::setPassword(CWbundleID, "mainURL", mainUri, e2);
+        keychain::setPassword(CWbundleID, "apiURL", apiUri, e3);
+        keychain::setPassword(CWbundleID, "iconURL", iconUri, e4);
+        keychain::setPassword(CWbundleID, "wssURL", wssUri, e5);
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+            e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError || 
+            e5.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to set KeyChain Value");
+            return;
+        }
 
         network.initNetwork(vaultUri, mainUri, apiUri, iconUri);
     }
@@ -292,16 +322,27 @@ namespace ClientWarden {
             return false;
         }
 
-        std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
-        (*session.authData)["kdfIterations"] = preLogin.value()["kdfIterations"];
-        (*session.authData)["salt"] = email;
-        (*session.authData)["email"] = email;
-        lock_adset.unlock();
+        keychain::Error e1;
+        keychain::Error e2;
+        keychain::Error e3;
 
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string salt = (*session.authData)["salt"];
-        int kdfIterations = (*session.authData)["kdfIterations"];
-        lock_adget.unlock();
+        keychain::setPassword(CWbundleID, "kdfIterations", std::to_string(preLogin.value()["kdfIterations"].get<int>()), e1);
+        keychain::setPassword(CWbundleID, "salt", email, e2);
+        keychain::setPassword(CWbundleID, "email", email, e3);
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+            e3.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to set KeyChain Value");
+            return false;
+        }
+
+        std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+        int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
         session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
@@ -337,24 +378,38 @@ namespace ClientWarden {
                 }
                 return false;
             }
+
             if (!token.value().contains("access_token") || !token.value().contains("refresh_token") ||
                 !token.value().contains("expires_in")) {
                 return false;
             }
-            std::unique_lock<std::recursive_mutex> lock_adset1(session.authDataMutex);
-            (*session.authData)["accessString"] = token.value()["access_token"];
-            (*session.authData)["refreshToken"] = token.value()["refresh_token"];
-            (*session.authData)["expiresIn"] = token.value()["expires_in"];
 
-            std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
+            keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
+            keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
+            keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
+
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+                e3.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to set KeyChain Value");
+                return false;
+            }
+
+            std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
             std::tm* localTime = std::localtime(&now);
+
+            if (e1.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get KeyChain Value");
+                return false;
+            }
 
             std::ostringstream oss;
             oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            (*session.authData)["needsRefreshTime"] = oss.str();
+            keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
 
-            storage.write("data.json", session.authData->dump(2));
-            lock_adset1.unlock();
+            if (e1.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to set KeyChain Value");
+                return false;
+            }
 
             if (!Sync()) {
                 return false;
@@ -388,9 +443,16 @@ namespace ClientWarden {
     bool Vault::Login(std::string code) {
         std::optional<nlohmann::json> token;
 
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string salt = (*session.authData)["salt"];
-        lock_adget.unlock();
+        keychain::Error e1;
+        keychain::Error e2;
+        keychain::Error e3;
+
+        std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
         
         if (state == AuthState::WaitingForTOTP) {
             token = network.getTokenWTotp(salt, session.masterPasswordHash, code);
@@ -405,20 +467,32 @@ namespace ClientWarden {
                 !token.value().contains("expires_in")) {
                 return false;
             }
-            std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
-            (*session.authData)["accessString"] = token.value()["access_token"];
-            (*session.authData)["refreshToken"] = token.value()["refresh_token"];
-            (*session.authData)["expiresIn"] = token.value()["expires_in"];
+            keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
+            keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
+            keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
 
-            std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+                e3.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to set KeyChain Value");
+                return false;
+            }
+
+            std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
             std::tm* localTime = std::localtime(&now);
+
+            if (e1.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get KeyChain Value");
+                return false;
+            }
 
             std::ostringstream oss;
             oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            (*session.authData)["needsRefreshTime"] = oss.str();
+            keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
 
-            storage.write("data.json", session.authData->dump(2));
-            lock_adset.unlock();
+            if (e1.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to set KeyChain Value");
+                return false;
+            }
 
             if (!Sync()) {
                 return false;
@@ -452,9 +526,16 @@ namespace ClientWarden {
     bool Vault::Login(std::string id, std::string authData, std::string clientData, std::string signature) {
         std::optional<nlohmann::json> token;
 
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string salt = (*session.authData)["salt"];
-        lock_adget.unlock();
+        keychain::Error e1;
+        keychain::Error e2;
+        keychain::Error e3;
+
+        std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         nlohmann::json passkeyCode;
 
@@ -481,20 +562,32 @@ namespace ClientWarden {
                 !token.value().contains("expires_in")) {
                 return false;
             }
-            std::unique_lock<std::recursive_mutex> lock_adset(session.authDataMutex);
-            (*session.authData)["accessString"] = token.value()["access_token"];
-            (*session.authData)["refreshToken"] = token.value()["refresh_token"];
-            (*session.authData)["expiresIn"] = token.value()["expires_in"];
+            keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
+            keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
+            keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
 
-            std::time_t now = std::time(nullptr) + (*session.authData)["expiresIn"].get<int>();
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+                e3.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to set KeyChain Value");
+                return false;
+            }
+
+            std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
             std::tm* localTime = std::localtime(&now);
+
+            if (e1.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get KeyChain Value");
+                return false;
+            }
 
             std::ostringstream oss;
             oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            (*session.authData)["needsRefreshTime"] = oss.str();
+            keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
 
-            storage.write("data.json", session.authData->dump(2));
-            lock_adset.unlock();
+            if (e1.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to set KeyChain Value");
+                return false;
+            }
 
             if (!Sync()) {
                 return false;
@@ -538,10 +631,17 @@ namespace ClientWarden {
 
     bool Vault::Unlock(std::string& password) {
         try {
-            std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-            std::string salt = (*session.authData)["salt"];
-            int kdfIterations = (*session.authData)["kdfIterations"];
-            lock_adget.unlock();
+            keychain::Error e1;
+            keychain::Error e2;
+            keychain::Error e3;
+
+            std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+            int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get KeyChain Value");
+                return false;
+            }
 
             *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
             session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
@@ -634,8 +734,49 @@ namespace ClientWarden {
 
             storage.remove("vault.json");
             storage.remove("settings.json");
-            storage.remove("data.json");
             storage.remove("cw.log");
+
+            keychain::Error e1;
+            keychain::Error e2;
+            keychain::Error e3;
+            keychain::Error e4;
+            keychain::Error e5;
+            keychain::Error e6;
+            keychain::Error e7;
+            keychain::Error e8;
+            keychain::Error e9;
+            keychain::Error e10;
+            keychain::Error e11;
+            keychain::Error e12;
+
+            keychain::deletePassword(CWbundleID, "accessString", e1);
+            keychain::deletePassword(CWbundleID, "apiURL", e2);
+            keychain::deletePassword(CWbundleID, "email", e3);
+            keychain::deletePassword(CWbundleID, "expiresIn", e4);
+            keychain::deletePassword(CWbundleID, "iconURL", e5);
+            keychain::deletePassword(CWbundleID, "kdfIterations", e6);
+            keychain::deletePassword(CWbundleID, "mainURL", e7);
+            keychain::deletePassword(CWbundleID, "needsRefreshTime", e8);
+            keychain::deletePassword(CWbundleID, "refreshToken", e9);
+            keychain::deletePassword(CWbundleID, "salt", e10);
+            keychain::deletePassword(CWbundleID, "vaultURL", e11);
+            keychain::deletePassword(CWbundleID, "wssURL", e12);
+
+            if ((e1.type != keychain::ErrorType::NoError && e1.type != keychain::ErrorType::NotFound) ||
+                (e2.type != keychain::ErrorType::NoError && e2.type != keychain::ErrorType::NotFound) ||
+                (e3.type != keychain::ErrorType::NoError && e3.type != keychain::ErrorType::NotFound) ||
+                (e4.type != keychain::ErrorType::NoError && e4.type != keychain::ErrorType::NotFound) ||
+                (e5.type != keychain::ErrorType::NoError && e5.type != keychain::ErrorType::NotFound) ||
+                (e6.type != keychain::ErrorType::NoError && e6.type != keychain::ErrorType::NotFound) ||
+                (e7.type != keychain::ErrorType::NoError && e7.type != keychain::ErrorType::NotFound) ||
+                (e8.type != keychain::ErrorType::NoError && e8.type != keychain::ErrorType::NotFound) ||
+                (e9.type != keychain::ErrorType::NoError && e9.type != keychain::ErrorType::NotFound) ||
+                (e10.type != keychain::ErrorType::NoError && e10.type != keychain::ErrorType::NotFound) ||
+                (e11.type != keychain::ErrorType::NoError && e11.type != keychain::ErrorType::NotFound) ||
+                (e12.type != keychain::ErrorType::NoError && e12.type != keychain::ErrorType::NotFound)) {
+                logger->info("Failed to remove KeyChain Values");
+                return false;
+            }
 
             state = AuthState::LoggedOut;
             return true;
@@ -680,9 +821,14 @@ namespace ClientWarden {
             return false;
         }
 
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"];
-        lock_adget.unlock();
+        keychain::Error e1;
+
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         std::optional<nlohmann::json> vaultResult = network.getVault(accessString);
 
@@ -1035,10 +1181,16 @@ namespace ClientWarden {
     }
 
     bool Vault::checkReprompt(std::string password) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string salt = (*session.authData)["salt"];
-        int kdfIterations = (*session.authData)["kdfIterations"];
-        lock_adget.unlock();
+        keychain::Error e1;
+        keychain::Error e2;
+
+        std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+        int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+        
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
         
         Botan::secure_vector<uint8_t> r_internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
         std::string r_masterPasswordHash = crypto.hashedPassword(password, r_internalKey);
@@ -1076,9 +1228,14 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> Vault::NewItem(nlohmann::json encryptedData, bool performVaultOps, nlohmann::json vaultOpsData) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return std::nullopt;
+        }
 
         std::optional<nlohmann::json> result = network.NewItem(encryptedData, accessString);
 
@@ -1104,9 +1261,14 @@ namespace ClientWarden {
     }
 
     bool Vault::UpdateItem(nlohmann::json encryptedData) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         std::optional<nlohmann::json> res = network.UpdateItem(encryptedData, accessString);
         if (res.has_value()) {
@@ -1117,9 +1279,14 @@ namespace ClientWarden {
     }
 
     bool Vault::DeleteItem(std::string uuid, bool performVaultOps, nlohmann::json vaultOpsData) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         bool result = network.DeleteItem(uuid, accessString);
         if (!result) {
@@ -1137,17 +1304,27 @@ namespace ClientWarden {
     }
 
     bool Vault::SoftDeleteItem(std::string uuid) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         return network.SoftDeleteItem(uuid, accessString);
     }
 
     bool Vault::RestoreItem(std::string uuid) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         return network.RestoreItem(uuid, accessString);
     }
@@ -1193,9 +1370,14 @@ namespace ClientWarden {
         Botan::secure_scrub_memory(cipEncKey.data(), cipEncKey.size());
         Botan::secure_scrub_memory(cipMacKey.data(), cipMacKey.size());
 
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return std::nullopt;
+        }
 
         std::optional<nlohmann::json> res = network.AddAttachment(uuid, encryptedFileContents, encryptedFileName,
             attachmentKey, accessString, onProgress);
@@ -1204,18 +1386,28 @@ namespace ClientWarden {
     }
 
     bool Vault::RemoveAttachment(std::string uuid, std::string attachmentID) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         return network.RemoveAttachment(uuid, attachmentID, accessString);
     }
 
     bool Vault::DownloadAttachment(std::string uuid, std::string attachmentID, std::filesystem::path savePath,
         Botan::secure_vector<uint8_t> cipEnc, Botan::secure_vector<uint8_t> cipMac, std::function<void(float)> onProgress) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         std::optional<std::pair<std::string, nlohmann::json>> attachment = network.DownloadAttachment(uuid, attachmentID, accessString, 
             onProgress);
@@ -1250,25 +1442,40 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> Vault::CreateFolder(std::string encryptedFolderName) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return std::nullopt;
+        }
 
         return network.CreateFolder(encryptedFolderName, accessString);
     }
 
     bool Vault::RenameFolder(std::string folderUUID, std::string encryptedFolderName) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         return network.RenameFolder(folderUUID, encryptedFolderName, accessString).has_value();
     }
 
     bool Vault::DeleteFolder(std::string folderUUID) {
-        std::unique_lock<std::recursive_mutex> lock_adget(session.authDataMutex);
-        std::string accessString = (*session.authData)["accessString"].get<std::string>();
-        lock_adget.unlock();
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
 
         return network.DeleteFolder(folderUUID, accessString);
     }

@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <keychain/keychain.h>
 #include "VaultCrypto/VaultCrypto.h"
 #include "VaultNetwork/VaultNetwork.h"
 #include "VaultSession/VaultSession.h"
@@ -13,6 +14,8 @@
 #include "GenericItem/GenericItemImpl.h"
 #include "VaultUtils/VaultUtils.h"
 #include "Clipboard/Clipboard.h"
+
+#define CWbundleID "com.ct5.clientwarden", "clientwarden"
 
 namespace ClientWarden {
     enum class AuthState {
