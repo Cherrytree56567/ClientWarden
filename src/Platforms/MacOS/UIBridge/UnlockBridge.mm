@@ -13,6 +13,7 @@
 + (void)setupCallbacks {
     [self cb_getInfo];
     [self cb_unlock];
+    [self cb_unlockBio];
 }
 
 /*
@@ -59,6 +60,40 @@
             if (!v_inst.Unlock(c_password)) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Toast* toast = [[Toast alloc] initWithMessage:@"Invalid Password"];
+                    [[ToastStore instance] addToast:toast];
+                });
+                return NO;
+            }
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                ClientwardenWindow.instance.state = WindowStateVault;
+            });
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Unlock Vault"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * Unlock uses a Keychain to show a touch id window 
+ * and try to unlock the encrypted vault and passes 
+ * back a result bool.
+ */
++ (void)cb_unlockBio {
+    Unlock.instance.cb_unlockBio = ^BOOL() {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            if (!v_inst.Unlock()) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Unlock"];
                     [[ToastStore instance] addToast:toast];
                 });
                 return NO;

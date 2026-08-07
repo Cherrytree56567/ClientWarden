@@ -56,6 +56,7 @@ namespace ClientWarden {
         bool Login(std::string id, std::string authData, std::string clientData, std::string signature);
 
         bool Unlock(std::string& password);
+        bool Unlock();
         bool Lock();
         bool Logout();
 
@@ -71,6 +72,11 @@ namespace ClientWarden {
         bool GetScreenshotOption();
         void SetAutoLockDelay(int value);
         int GetAutoLockDelay();
+
+        bool saveVaultKeysKeychain();
+        bool deleteVaultKeysKeychain();
+        bool checkVaultKeysKeychain();
+        bool getVaultKeysKeychain();
 
         template <typename Derived>
         std::shared_ptr<Derived> GetItem(std::string uuid) {
@@ -117,6 +123,8 @@ namespace ClientWarden {
         std::optional<time_t> inactivityTimer;
 
         std::string passkeyChallenge;
+
+        keychain::SecurityDetail bioDetail = keychain::SecurityDetail::Secure;
 
         VaultSession session;
         VaultCrypto crypto;

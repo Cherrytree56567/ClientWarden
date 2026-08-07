@@ -18,6 +18,16 @@ endif()
 
 set(Botan_DIR "build/build/generators")
 
+include(FetchContent)
+
+FetchContent_Declare(
+    keychain
+    GIT_REPOSITORY https://github.com/Cherrytree56567/keychain
+    GIT_TAG master
+)
+
+FetchContent_MakeAvailable(keychain)
+
 find_package(OpenSSL REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Boost REQUIRED)
@@ -26,7 +36,6 @@ find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Botan CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
-find_package(keychain REQUIRED CONFIG)
 
 get_target_property(BOTAN_INCLUDES botan::botan INTERFACE_INCLUDE_DIRECTORIES)
 message(STATUS "Botan includes: ${BOTAN_INCLUDES}")
@@ -78,5 +87,5 @@ if(MSVC)
     target_compile_options(clientwarden PRIVATE /std:c++latest /GR- /EHa)
 endif()
 
-target_link_libraries(clientwarden OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain::keychain)
+target_link_libraries(clientwarden OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)

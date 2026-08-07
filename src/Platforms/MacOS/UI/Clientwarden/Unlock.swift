@@ -16,6 +16,7 @@ final class Unlock: NSObject {
     
     @objc public var cb_getInfo: (() -> Bool)?
     @objc public var cb_unlock: ((String) -> Bool)?
+    @objc public var cb_unlockBio: (() -> Bool)?
     
     /*
      * Callback Functions
@@ -40,6 +41,28 @@ final class Unlock: NSObject {
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let res = self?.cb_unlock?(password)
+
+            DispatchQueue.main.async {
+                if let r_res = res {
+                    if (r_res) {
+                    } else {
+                        ToastStore.instance.toasts.append(Toast(message: "Failed to Unlock Vault"))
+                        ClientwardenWindow.instance.state = WindowState.Unlock
+                    }
+                } else {
+                    ToastStore.instance.toasts.append(Toast(message: "No callback set for unlock"))
+                    ClientwardenWindow.instance.state = WindowState.Unlock
+                }
+            }
+        }
+    }
+    
+    func unlockBio() {
+        self.password = ""
+        ClientwardenWindow.instance.state = WindowState.Empty
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let res = self?.cb_unlockBio?()
 
             DispatchQueue.main.async {
                 if let r_res = res {
@@ -84,23 +107,44 @@ struct UnlockView: View {
                     .textFieldStyle(.plain)
                     .frame(width: 200)
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
-                Button {
-                    withAnimation {
-                        data.unlock()
-                    }
-                } label: {
-                    Text(verbatim: "Unlock")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.gray)
-                        .frame(maxWidth: .infinity)
+                HStack {
+                    if (SettingsPanel.instance.getBioUnlock()) {
+                        Button {
+                            withAnimation {
+                                data.unlockBio()
+                            }
+                        } label: {
+                            Image(systemName: "faceid")
+                                .font(.subheadline)
+                                .symbolRenderingMode(.monochrome)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+                        .frame(width: 25)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                         .contentShape(Rectangle())
+                        .keyboardShortcut(.defaultAction)
+                    }
+                    Button {
+                        withAnimation {
+                            data.unlock()
+                        }
+                    } label: {
+                        Text(verbatim: "Unlock")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.gray)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(6)
+                    .frame(width: .infinity)
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                    .contentShape(Rectangle())
+                    .keyboardShortcut(.defaultAction)
                 }
-                .buttonStyle(.plain)
-                .padding(6)
                 .frame(width: 200)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
-                .contentShape(Rectangle())
-                .keyboardShortcut(.defaultAction)
             }
             
             Spacer()

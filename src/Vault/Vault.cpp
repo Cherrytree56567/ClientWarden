@@ -683,6 +683,55 @@ namespace ClientWarden {
         }
     }
 
+    bool Vault::Unlock() {
+        try {
+            keychain::Error e1;
+            keychain::Error e2;
+            keychain::Error e3;
+
+            std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+            int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get KeyChain Value");
+                return false;
+            }
+
+            if (!getVaultKeysKeychain()) {
+                return false;
+            }
+
+            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+            std::string protectedKey = (*session.vaultData)["profile"]["key"];
+            lock_vdget.unlock();
+
+            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
+
+            Botan::secure_scrub_memory(stretchedEncKey.data(), stretchedEncKey.size());
+            Botan::secure_scrub_memory(stretchedMacKey.data(), stretchedMacKey.size());
+
+            *session.encKey = std::move(encKey);
+            *session.macKey = std::move(macKey);
+
+            session.wssThread.start();
+            session.refreshThread.start();
+            session.connectivityThread.start();
+            session.autoLockThread.start();
+
+            std::jthread t([&] {
+                Sync();
+            });
+
+            state = AuthState::Unlocked;
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+
     void Vault::SetScreenshotOption(bool value) {
         std::unique_lock<std::recursive_mutex> lock_sdset(session.vaultDataMutex);
         (*session.settingsData)["allowScreenshots"] = value;
@@ -1521,5 +1570,73 @@ namespace ClientWarden {
         
     std::shared_ptr<CipherQuery> Vault::GetCipherQuery() {
         return std::make_shared<CipherQuery>(*this);
+    }
+
+    /*
+     * Biometric Support
+    */
+    bool Vault::saveVaultKeysKeychain() {
+        keychain::Error e1;
+        keychain::Error e2;
+
+        keychain::setPassword(CWbundleID, "internalKey", b64Encode(*session.internalKey), e1, bioDetail);
+        keychain::setPassword(CWbundleID, "masterPasswordHash", session.masterPasswordHash, e2, bioDetail);
+        
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to set SECURE keychain value");
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Vault::deleteVaultKeysKeychain() {
+        keychain::Error e1;
+        keychain::Error e2;
+
+        keychain::deletePassword(CWbundleID, "internalKey", e1);
+        keychain::deletePassword(CWbundleID, "masterPasswordHash", e2);
+        
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to delete SECURE keychain value");
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Vault::checkVaultKeysKeychain() {
+        keychain::Error e1;
+        keychain::Error e2;
+
+        std::string internalKey = keychain::getPassword(CWbundleID, "internalKey", e1);
+        std::string masterPasswordHash = keychain::getPassword(CWbundleID, "masterPasswordHash", e2);
+
+        OPENSSL_cleanse(internalKey.data(), internalKey.size());
+        internalKey.clear();
+        OPENSSL_cleanse(masterPasswordHash.data(), masterPasswordHash.size());
+        masterPasswordHash.clear();
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get SECURE keychain value");
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Vault::getVaultKeysKeychain() {
+        keychain::Error e1;
+        keychain::Error e2;
+
+        *session.internalKey = std::move(b64Decode(keychain::getPassword(CWbundleID, "internalKey", e1)));
+        session.masterPasswordHash = keychain::getPassword(CWbundleID, "masterPasswordHash", e2);
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get SECURE keychain value");
+            return false;
+        }
+
+        return true;
     }
 }

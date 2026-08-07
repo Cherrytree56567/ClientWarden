@@ -143,7 +143,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [ ] Passkey AutoFill Support
   - [X] Passkey Login Support (wouldn't be possible)
   - [ ] Device Login Support
-  - [ ] Biometric Support
+  - [X] Biometric Support
   - [ ] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
   - [ ] Make SDK
   - [X] Store auth data in KeyChain (!important)
