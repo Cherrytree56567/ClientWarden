@@ -36,6 +36,7 @@ namespace ClientWarden {
         std::optional<nlohmann::json> refreshToken(std::string refreshToken);
         bool websocketLoop(std::function<void(int notifyType)> onNotification, std::string accessString, std::string wssURL,
             const std::atomic<bool>& shouldThread);
+        std::optional<nlohmann::json> getProfile(std::string accessString);
 
         std::optional<nlohmann::json> getVault(std::string accessToken);
 
@@ -62,6 +63,10 @@ namespace ClientWarden {
         std::shared_ptr<httplib::Client> apiClient;
         std::shared_ptr<httplib::Client> vaultClient;
         std::shared_ptr<httplib::Client> iconClient;
+
+        std::mutex apiClientMutex;
+        std::mutex vaultClientMutex;
+        std::mutex iconClientMutex;
 
         VaultConnectivity connectivity;
     };

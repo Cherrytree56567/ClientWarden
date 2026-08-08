@@ -78,6 +78,15 @@ namespace ClientWarden {
         bool checkVaultKeysKeychain();
         bool getVaultKeysKeychain();
 
+        /*
+         * Compares current Vault Key and New
+         * Vault Key.
+         * 
+         * If both vault keys don't match, then
+         * logout.
+        */
+        bool checkVaultValidity();
+
         template <typename Derived>
         std::shared_ptr<Derived> GetItem(std::string uuid) {
             return std::make_shared<Derived>(*this, uuid);

@@ -65,14 +65,12 @@ namespace ClientWarden {
                     case 4:
                         /*
                         * All Ciphers changed
-                        * TODO: Update whole vault.json file
                         */
                         Sync(true);
                         break;
                     case 5:
                         /*
                         * Whole Vault Changed
-                        * TODO: Update whole vault.json file
                         */
                         Sync(true);
                         break;
@@ -107,8 +105,9 @@ namespace ClientWarden {
                         */
                         break;
                     case 11:
-                        Logout();
-                        SetLoginPage();
+                        std::thread([this]() {
+                            Logout();
+                        }).detach();
                         break;
                     default:
                         logger->info("Unhandled type: {}", notifyType);
@@ -137,8 +136,9 @@ namespace ClientWarden {
                 keychain::Error e2;
 
                 std::string needsRefreshTime = keychain::getPassword(CWbundleID, "needsRefreshTime", e1);
+                std::string accessString = keychain::getPassword(CWbundleID, "accessString", e2);
 
-                if (e1.type != keychain::ErrorType::NoError) {
+                if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
                     logger->info("Failed to get keychain value");
                     return false;
                 }
@@ -150,7 +150,7 @@ namespace ClientWarden {
                 std::time_t expiry = std::mktime(&tm);
                 std::time_t now = std::time(nullptr);
 
-                if (now >= expiry) {
+                if (now >= expiry || !network.checkAccessTokenValidity(accessString)) {
                     std::string refreshTime = keychain::getPassword(CWbundleID, "refreshToken", e1);
 
                     if (e1.type != keychain::ErrorType::NoError) {
@@ -163,6 +163,14 @@ namespace ClientWarden {
                     if (!refreshBody.has_value()) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(500));
                         continue;
+                    }
+
+                    if (refreshBody.value().contains("error") && refreshBody.value()["error"].is_string() && 
+                        refreshBody.value()["error"] == "invalid_grant") {
+                        std::thread([this]() {
+                            Logout();
+                        }).detach();
+                        break;
                     }
 
                     keychain::setPassword(CWbundleID, "accessString", refreshBody.value()["access_token"], e1);
@@ -263,10 +271,6 @@ namespace ClientWarden {
 
     Vault::~Vault() {
         Lock();
-        session.wssThread.stop();
-        session.refreshThread.stop();
-        session.connectivityThread.stop();
-        session.autoLockThread.stop();
     }
 
     /*
@@ -619,6 +623,11 @@ namespace ClientWarden {
     }
 
     bool Vault::Lock() {
+        session.wssThread.stop();
+        session.refreshThread.stop();
+        session.connectivityThread.stop();
+        session.autoLockThread.stop();
+        
         Botan::secure_scrub_memory(session.internalKey->data(), session.internalKey->size());
         OPENSSL_cleanse(session.masterPasswordHash.data(), session.masterPasswordHash.size());
         Botan::secure_scrub_memory(session.encKey->data(), session.encKey->size());
@@ -634,6 +643,10 @@ namespace ClientWarden {
             keychain::Error e1;
             keychain::Error e2;
             keychain::Error e3;
+
+            if (!checkVaultValidity()) {
+                return true;
+            }
 
             std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
             int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
@@ -683,11 +696,47 @@ namespace ClientWarden {
         }
     }
 
+    bool Vault::checkVaultValidity() {
+        if (!network.checkConnectivity()) {
+            return true;
+        }
+
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return true;
+        }
+
+        std::optional<nlohmann::json> profileInfo = network.getProfile(accessString);
+
+        if (profileInfo.has_value()) {
+            if (profileInfo.value().contains("key") && session.vaultData->contains("profile") && 
+                (*session.vaultData)["profile"].contains("key")) {
+                std::string onlVKey = profileInfo.value()["key"];
+                if (profileInfo.value()["key"].get<std::string>() != (*session.vaultData)["profile"]["key"].get<std::string>()) {
+                    std::thread([this]() {
+                        Logout();
+                    }).detach();
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     bool Vault::Unlock() {
         try {
             keychain::Error e1;
             keychain::Error e2;
             keychain::Error e3;
+
+            if (!checkVaultValidity()) {
+                return true;
+            }
 
             std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
             int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
@@ -779,6 +828,7 @@ namespace ClientWarden {
 
     bool Vault::Logout() {
         try {
+            SetLoginPage();
             Lock();
 
             storage.remove("vault.json");
