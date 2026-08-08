@@ -139,7 +139,6 @@ struct UnlockView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(6)
-                    .frame(width: .infinity)
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     .contentShape(Rectangle())
                     .keyboardShortcut(.defaultAction)
