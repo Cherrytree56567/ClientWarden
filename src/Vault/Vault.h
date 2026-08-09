@@ -142,5 +142,9 @@ namespace ClientWarden {
         AuthState state;
         Storage storage;
         Clipboard clipboard;
+
+    private:
+        bool pLogin(std::optional<nlohmann::json> token);
+        bool pUnlock();
     };
 }

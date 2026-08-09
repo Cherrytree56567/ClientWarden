@@ -215,7 +215,9 @@ namespace ClientWarden {
                     if (elapsed >= static_cast<double>(GetAutoLockDelay())) {
                         inactivityTimer = std::nullopt;
                         SetLockPage();
-                        Lock();
+                        std::thread([this]() {
+                            Lock();
+                        }).detach();
                     }
                 }
                 lock_chk.unlock();
@@ -313,6 +315,64 @@ namespace ClientWarden {
         network.initNetwork(vaultUri, mainUri, apiUri, iconUri);
     }
 
+    bool Vault::pLogin(std::optional<nlohmann::json> token) {
+        keychain::Error e1;
+        keychain::Error e2;
+        keychain::Error e3;
+
+        keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
+        keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
+        keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+            e3.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to set KeyChain Value");
+            return false;
+        }
+
+        std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
+        std::tm* localTime = std::localtime(&now);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
+
+        std::ostringstream oss;
+        oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+        keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to set KeyChain Value");
+            return false;
+        }
+
+        if (!Sync(true)) {
+            return false;
+        }
+
+        std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+        std::string protectedKey = (*session.vaultData)["profile"]["key"];
+        lock_vdget.unlock();
+
+        Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+        Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+        auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
+        
+        *session.encKey = std::move(encKey);
+        *session.macKey = std::move(macKey);
+
+        session.wssThread.start();
+        session.refreshThread.start();
+        session.connectivityThread.start();
+        session.autoLockThread.start();
+
+        state = AuthState::Unlocked;
+
+        return true;
+    }
+
     /*
      * Since encryption requires a case-sensitive lowercase email
      * as a salt, we must lowercase the email using boost. Then
@@ -388,57 +448,7 @@ namespace ClientWarden {
                 return false;
             }
 
-            keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
-            keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
-            keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
-
-            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
-                e3.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to set KeyChain Value");
-                return false;
-            }
-
-            std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
-            std::tm* localTime = std::localtime(&now);
-
-            if (e1.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to get KeyChain Value");
-                return false;
-            }
-
-            std::ostringstream oss;
-            oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
-
-            if (e1.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to set KeyChain Value");
-                return false;
-            }
-
-            if (!Sync()) {
-                return false;
-            }
-
-            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
-            std::string protectedKey = (*session.vaultData)["profile"]["key"];
-            lock_vdget.unlock();
-
-            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
-            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
-
-            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
-        
-            *session.encKey = std::move(encKey);
-            *session.macKey = std::move(macKey);
-
-            session.wssThread.start();
-            session.refreshThread.start();
-            session.connectivityThread.start();
-            session.autoLockThread.start();
-
-            state = AuthState::Unlocked;
-
-            return true;
+            return pLogin(token);
         } else {
             return false;
         }
@@ -471,57 +481,8 @@ namespace ClientWarden {
                 !token.value().contains("expires_in")) {
                 return false;
             }
-            keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
-            keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
-            keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
 
-            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
-                e3.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to set KeyChain Value");
-                return false;
-            }
-
-            std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
-            std::tm* localTime = std::localtime(&now);
-
-            if (e1.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to get KeyChain Value");
-                return false;
-            }
-
-            std::ostringstream oss;
-            oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
-
-            if (e1.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to set KeyChain Value");
-                return false;
-            }
-
-            if (!Sync()) {
-                return false;
-            }
-
-            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
-            std::string protectedKey = (*session.vaultData)["profile"]["key"];
-            lock_vdget.unlock();
-
-            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
-            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
-
-            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
-        
-            *session.encKey = std::move(encKey);
-            *session.macKey = std::move(macKey);
-
-            session.wssThread.start();
-            session.refreshThread.start();
-            session.connectivityThread.start();
-            session.autoLockThread.start();
-
-            state = AuthState::Unlocked;
-
-            return true;
+            return pLogin(token);
         } else {
             return false;
         }
@@ -566,57 +527,8 @@ namespace ClientWarden {
                 !token.value().contains("expires_in")) {
                 return false;
             }
-            keychain::setPassword(CWbundleID, "accessString", token.value()["access_token"], e1);
-            keychain::setPassword(CWbundleID, "refreshToken", token.value()["refresh_token"], e2);
-            keychain::setPassword(CWbundleID, "expiresIn", std::to_string(token.value()["expires_in"].get<int>()), e3);
 
-            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
-                e3.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to set KeyChain Value");
-                return false;
-            }
-
-            std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
-            std::tm* localTime = std::localtime(&now);
-
-            if (e1.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to get KeyChain Value");
-                return false;
-            }
-
-            std::ostringstream oss;
-            oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-            keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
-
-            if (e1.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to set KeyChain Value");
-                return false;
-            }
-
-            if (!Sync()) {
-                return false;
-            }
-
-            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
-            std::string protectedKey = (*session.vaultData)["profile"]["key"];
-            lock_vdget.unlock();
-
-            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
-            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
-
-            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
-        
-            *session.encKey = std::move(encKey);
-            *session.macKey = std::move(macKey);
-
-            session.wssThread.start();
-            session.refreshThread.start();
-            session.connectivityThread.start();
-            session.autoLockThread.start();
-
-            state = AuthState::Unlocked;
-
-            return true;
+            return pLogin(token);
         } else {
             return false;
         }
@@ -636,64 +548,6 @@ namespace ClientWarden {
         session.masterPasswordHash.clear();
 
         return true;
-    }
-
-    bool Vault::Unlock(std::string& password) {
-        try {
-            keychain::Error e1;
-            keychain::Error e2;
-            keychain::Error e3;
-
-            if (!checkVaultValidity()) {
-                return true;
-            }
-
-            std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
-            int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
-
-            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
-                logger->info("Failed to get KeyChain Value");
-                return false;
-            }
-
-            *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
-            session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
-
-            /*
-            * Erase the password safely
-            */
-            OPENSSL_cleanse(password.data(), password.size());
-            password.clear();
-
-            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
-            std::string protectedKey = (*session.vaultData)["profile"]["key"];
-            lock_vdget.unlock();
-
-            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
-            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
-
-            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
-
-            Botan::secure_scrub_memory(stretchedEncKey.data(), stretchedEncKey.size());
-            Botan::secure_scrub_memory(stretchedMacKey.data(), stretchedMacKey.size());
-
-            *session.encKey = std::move(encKey);
-            *session.macKey = std::move(macKey);
-
-            session.wssThread.start();
-            session.refreshThread.start();
-            session.connectivityThread.start();
-            session.autoLockThread.start();
-
-            std::jthread t([&] {
-                Sync();
-            });
-
-            state = AuthState::Unlocked;
-            return true;
-        } catch (...) {
-            return false;
-        }
     }
 
     bool Vault::checkVaultValidity() {
@@ -728,6 +582,68 @@ namespace ClientWarden {
         return true;
     }
 
+    bool Vault::pUnlock() {
+        std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
+        std::string protectedKey = (*session.vaultData)["profile"]["key"];
+        lock_vdget.unlock();
+
+        Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
+        Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
+
+        auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
+
+        Botan::secure_scrub_memory(stretchedEncKey.data(), stretchedEncKey.size());
+        Botan::secure_scrub_memory(stretchedMacKey.data(), stretchedMacKey.size());
+
+        *session.encKey = std::move(encKey);
+        *session.macKey = std::move(macKey);
+
+        session.wssThread.start();
+        session.refreshThread.start();
+        session.connectivityThread.start();
+        session.autoLockThread.start();
+
+        std::jthread t([&] {
+            Sync();
+        });
+
+        state = AuthState::Unlocked;
+        return true;
+    }
+
+    bool Vault::Unlock(std::string& password) {
+        try {
+            keychain::Error e1;
+            keychain::Error e2;
+            keychain::Error e3;
+
+            if (!checkVaultValidity()) {
+                return true;
+            }
+
+            std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
+            int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+                logger->info("Failed to get KeyChain Value");
+                return false;
+            }
+
+            *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
+            session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
+
+            /*
+            * Erase the password safely
+            */
+            OPENSSL_cleanse(password.data(), password.size());
+            password.clear();
+
+            return pUnlock();
+        } catch (...) {
+            return false;
+        }
+    }
+
     bool Vault::Unlock() {
         try {
             keychain::Error e1;
@@ -750,32 +666,7 @@ namespace ClientWarden {
                 return false;
             }
 
-            std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
-            std::string protectedKey = (*session.vaultData)["profile"]["key"];
-            lock_vdget.unlock();
-
-            Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
-            Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
-
-            auto [encKey, macKey] = crypto.getEncMacKey(protectedKey, stretchedEncKey, stretchedMacKey);
-
-            Botan::secure_scrub_memory(stretchedEncKey.data(), stretchedEncKey.size());
-            Botan::secure_scrub_memory(stretchedMacKey.data(), stretchedMacKey.size());
-
-            *session.encKey = std::move(encKey);
-            *session.macKey = std::move(macKey);
-
-            session.wssThread.start();
-            session.refreshThread.start();
-            session.connectivityThread.start();
-            session.autoLockThread.start();
-
-            std::jthread t([&] {
-                Sync();
-            });
-
-            state = AuthState::Unlocked;
-            return true;
+            return pUnlock();
         } catch (...) {
             return false;
         }
