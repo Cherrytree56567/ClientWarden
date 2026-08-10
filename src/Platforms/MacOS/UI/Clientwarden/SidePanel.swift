@@ -69,6 +69,8 @@ final class SidePanel: NSObject {
     
     @objc public var cb_restore: ((UUID) -> Bool)?
     @objc public var cb_permDel: ((UUID) -> Bool)?
+    @objc public var cb_archive: ((UUID) -> Bool)?
+    @objc public var cb_unarchive: ((UUID) -> Bool)?
     
     @objc public var cb_sidebar: ((UUID) -> Bool)?
     @objc public var cb_sidebarReprompt: ((UUID, String) -> Bool)?
@@ -357,6 +359,34 @@ final class SidePanel: NSObject {
             }
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for permDelete"))
+        }
+    }
+    
+    func archiveItem() {
+        if let result = cb_archive?(uuid) {
+            if (result) {
+                editable = false
+                viewable = false
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to archive item"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for archive"))
+        }
+    }
+    
+    func unarchiveItem() {
+        if let result = cb_unarchive?(uuid) {
+            if (result) {
+                editable = false
+                viewable = false
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to archive item"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for archive"))
         }
     }
     
@@ -659,6 +689,47 @@ struct SidePanelView: View {
                         .glassEffect(.regular.interactive(), in: Circle())
                     }
                     .sharedBackgroundVisibility(.hidden)
+                } else if (NavigationPanel.instance.selection == NavItems.archived) {
+                    ToolbarItem {
+                        Button {
+                            data.editable = true
+                            data.saveSnapshot()
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.duplicateItem()
+                        } label: {
+                            Image(systemName: "document.on.document")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.unarchiveItem()
+                        } label: {
+                            Image(systemName: "archivebox.fill")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.deleteItem()
+                        } label: {
+                            Image(systemName: "trash")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
                 } else if (!data.editable) {
                     /*
                      * Edit Button
@@ -684,6 +755,16 @@ struct SidePanelView: View {
                             data.duplicateItem()
                         } label: {
                             Image(systemName: "document.on.document")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.archiveItem()
+                        } label: {
+                            Image(systemName: "archivebox")
                                 .imageScale(.medium)
                         }
                         .glassEffect(.regular.interactive(), in: Circle())

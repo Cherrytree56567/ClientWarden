@@ -53,6 +53,8 @@ namespace ClientWarden {
         void Delete();
         void Bin();
         void UnBin();
+        void Archive();
+        void UnArchive();
         void Close();
     protected:
         void SetNameImpl(std::string& name);

@@ -1318,6 +1318,32 @@ namespace ClientWarden {
 
         return network.RestoreItem(uuid, accessString);
     }
+
+    bool Vault::ArchiveItem(std::string uuid) {
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
+
+        return network.ArchiveItem(uuid, accessString);
+    }
+
+    bool Vault::UnArchiveItem(std::string uuid) {
+        keychain::Error e1;
+        
+        std::string accessString = keychain::getPassword(CWbundleID, "accessString", e1);
+
+        if (e1.type != keychain::ErrorType::NoError) {
+            logger->info("Failed to get KeyChain Value");
+            return false;
+        }
+
+        return network.UnArchiveItem(uuid, accessString);
+    }
     
     std::optional<nlohmann::json> Vault::AddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, 
         std::function<void(float)> onProgress) {

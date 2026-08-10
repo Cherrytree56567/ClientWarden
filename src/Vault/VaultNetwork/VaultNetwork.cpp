@@ -467,6 +467,60 @@ namespace ClientWarden {
         return true;
     }
 
+    bool VaultNetwork::ArchiveItem(std::string uuid, std::string accessString) {
+        std::lock_guard<std::mutex> lock(vaultClientMutex);
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + accessString },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "desktop" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        nlohmann::json jsonData;
+        jsonData["ids"] = nlohmann::json::array();
+        jsonData["ids"][0] = uuid;
+
+        auto res = vaultClient->Put("/api/ciphers/archive", headers, jsonData.dump(), "application/json");
+
+        if (!res) {
+            logger->error("archiveItem request failed");
+            return false;
+        }
+        if (res->status != 200) {
+            logger->error("archiveItem failed: {}", res->status);
+            return false;
+        }
+        
+        return true;
+    }
+
+    bool VaultNetwork::UnArchiveItem(std::string uuid, std::string accessString) {
+        std::lock_guard<std::mutex> lock(vaultClientMutex);
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + accessString },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "desktop" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        nlohmann::json jsonData;
+        jsonData["ids"] = nlohmann::json::array();
+        jsonData["ids"][0] = uuid;
+
+        auto res = vaultClient->Put("/api/ciphers/unarchive", headers, jsonData.dump(), "application/json");
+
+        if (!res) {
+            logger->error("unarchiveItem request failed");
+            return false;
+        }
+        if (res->status != 200) {
+            logger->error("unarchiveItem failed: {}", res->status);
+            return false;
+        }
+        
+        return true;
+    }
+
     std::optional<nlohmann::json> VaultNetwork::AddAttachment(std::string uuid, std::string& encryptedFileContents, 
         std::string& encryptedFileName, std::string& attKeyStr, std::string accessString, std::function<void(float)> onProgress) {
         std::lock_guard<std::mutex> lock(vaultClientMutex);

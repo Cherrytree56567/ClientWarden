@@ -4,6 +4,7 @@ enum NavItems: Hashable {
     case all_items
     case favorites
     case trash
+    case archived
     case login
     case card
     case identity
@@ -29,6 +30,7 @@ final class NavigationPanel: NSObject {
     @objc public var cb_allItems: (() -> [ItemElement])?
     @objc public var cb_favorites: (() -> [ItemElement])?
     @objc public var cb_trash: (() -> [ItemElement])?
+    @objc public var cb_archived: (() -> [ItemElement])?
     
     @objc public var cb_login: (() -> [ItemElement])?
     @objc public var cb_card: (() -> [ItemElement])?
@@ -85,6 +87,8 @@ final class NavigationPanel: NSObject {
                 elements = cb_favorites?()
             case .trash:
                 elements = cb_trash?()
+            case .archived:
+                elements = cb_archived?()
             case .login:
                 elements = cb_login?()
             case .card:
@@ -142,6 +146,11 @@ struct NavigationPanelView: View {
             }
             
             Tab("Trash", systemImage: "trash", value: .trash) {
+                ItemsPanelView()
+                    .id(refreshToken)
+            }
+            
+            Tab("Archived", systemImage: "archivebox", value: .archived) {
                 ItemsPanelView()
                     .id(refreshToken)
             }

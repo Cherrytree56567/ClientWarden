@@ -26,6 +26,8 @@
     [self cb_delete];
     [self cb_restore];
     [self cb_permDel];
+    [self cb_archive];
+    [self cb_unarchive];
     [self cb_sidebar];
     [self cb_downloadAttachment];
     [self cb_uploadAttachment];
@@ -198,6 +200,58 @@
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Restore Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * Archive moves the item with the UUID to the Archive and passes back a result bool
+ */
++ (void)cb_archive {
+    SidePanel.instance.cb_archive = ^BOOL(NSUUID* uuid) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            v_inst.GetItem(c_uuid)
+                 ->Archive();
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Archive Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * UnArchive moves the item with the UUID out of the Archive and passes back a result bool
+ */
++ (void)cb_unarchive {
+    SidePanel.instance.cb_unarchive = ^BOOL(NSUUID* uuid) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            v_inst.GetItem(c_uuid)
+                 ->UnArchive();
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to UnArchive Item"];
                 [[ToastStore instance] addToast:toast];
             });
 
