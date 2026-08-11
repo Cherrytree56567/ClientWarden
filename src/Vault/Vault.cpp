@@ -638,7 +638,9 @@ namespace ClientWarden {
             OPENSSL_cleanse(password.data(), password.size());
             password.clear();
 
-            return pUnlock();
+            bool result = pUnlock();
+
+            return result;
         } catch (...) {
             return false;
         }

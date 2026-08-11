@@ -1,6 +1,22 @@
 import SwiftUI
 
 /*
+ * This struct is AI, but the rest shouldn't dw
+ */
+struct Shake: GeometryEffect {
+    var amount: CGFloat = 8
+    var shakesPerUnit: CGFloat = 3
+    var animatableData: CGFloat
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        ProjectionTransform(CGAffineTransform(
+            translationX: amount * sin(animatableData * .pi * shakesPerUnit),
+            y: 0
+        ))
+    }
+}
+
+/*
  * I had no idea how to make this WindowConfigurator thing
  * so I had to ask claude. dw, it doesnt break anything, and
  * I have verified it.
@@ -39,6 +55,7 @@ struct WindowConfigurator: NSViewRepresentable {
 
 struct AutofillUnlockView: View {
     @Environment(\.dismissWindow) private var dismissWindow
+    @State private var shakeAmount: CGFloat = 0
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -88,8 +105,11 @@ struct AutofillUnlockView: View {
                 
                 Button {
                     withAnimation {
-                        Unlock.instance.unlock()
-                        dismissWindow(id: "autofillUnlock")
+                        Unlock.instance.unlock { result in
+                            if (result) {
+                                dismissWindow(id: "autofillUnlock")
+                            }
+                        }
                     }
                 } label: {
                     Text(verbatim: "Unlock")
@@ -112,10 +132,23 @@ struct AutofillUnlockView: View {
             WindowConfigurator()
             .glassEffect(.regular, in: .rect(cornerRadius: 20)))
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .modifier(Shake(amount: 32, animatableData: shakeAmount))
+        .padding(.leading, 20 * 2)
+        .padding(.trailing, 20 * 2)
         .onAppear {
             #if NON_XCODE_BUILD
                 UnlockBridge.setupCallbacks()
             #endif
+        }
+        .onChange(of: ToastStore.instance.toasts) { oldToasts, newToasts in
+            let oldIDs = Set(oldToasts.map { $0.id })
+            let addedToasts = newToasts.filter {
+                !oldIDs.contains($0.id)
+            }
+            
+            withAnimation(.easeInOut(duration: 0.4)) {
+                shakeAmount += 1
+            }
         }
     }
 }

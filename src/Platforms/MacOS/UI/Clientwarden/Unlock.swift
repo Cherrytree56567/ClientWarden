@@ -34,7 +34,7 @@ final class Unlock: NSObject {
         }
     }
     
-    func unlock() {
+    func unlock(done: ((Bool) -> Void)? = nil) {
         let password = self.password
         self.password = ""
         ClientwardenWindow.instance.state = WindowState.Empty
@@ -45,19 +45,22 @@ final class Unlock: NSObject {
             DispatchQueue.main.async {
                 if let r_res = res {
                     if (r_res) {
+                        done?(true)
                     } else {
                         ToastStore.instance.toasts.append(Toast(message: "Failed to Unlock Vault"))
                         ClientwardenWindow.instance.state = WindowState.Unlock
+                        done?(false)
                     }
                 } else {
                     ToastStore.instance.toasts.append(Toast(message: "No callback set for unlock"))
                     ClientwardenWindow.instance.state = WindowState.Unlock
+                    done?(false)
                 }
             }
         }
     }
     
-    func unlockBio() {
+    func unlockBio(done: ((Bool) -> Void)? = nil) {
         self.password = ""
         ClientwardenWindow.instance.state = WindowState.Empty
         
@@ -67,13 +70,16 @@ final class Unlock: NSObject {
             DispatchQueue.main.async {
                 if let r_res = res {
                     if (r_res) {
+                        done?(true)
                     } else {
                         ToastStore.instance.toasts.append(Toast(message: "Failed to Unlock Vault"))
                         ClientwardenWindow.instance.state = WindowState.Unlock
+                        done?(false)
                     }
                 } else {
                     ToastStore.instance.toasts.append(Toast(message: "No callback set for unlock"))
                     ClientwardenWindow.instance.state = WindowState.Unlock
+                    done?(false)
                 }
             }
         }

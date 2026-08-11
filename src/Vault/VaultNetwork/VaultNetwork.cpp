@@ -17,9 +17,14 @@ namespace ClientWarden {
         iconClient = std::make_shared<httplib::Client>(iconUri);
         iconClient->set_connection_timeout(2);
         iconClient->set_read_timeout(3);
+        init = true;
     }
 
     std::optional<nlohmann::json> VaultNetwork::preLogin(std::string& email) {
+        if (!init) {
+            return std::nullopt;
+        }
+
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "Content-Type", "application/json" },
@@ -42,6 +47,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getToken(std::string& email, std::string& masterPasswordHash) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
@@ -78,6 +87,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getTokenWTotp(std::string email, std::string& masterPasswordHash, std::string& totp) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
@@ -114,6 +127,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getTokenWDeviceVerify(std::string email, std::string& masterPasswordHash, std::string& code) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         vaultClient->set_default_headers({
             { "Accept", "application/json" },
@@ -148,6 +165,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::checkConnectivity() {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(apiClientMutex);
         apiClient->set_connection_timeout(1);
 
@@ -165,6 +186,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::checkAccessTokenValidity(std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(apiClientMutex);
         apiClient->set_connection_timeout(3);
         
@@ -177,6 +202,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getProfile(std::string accessString) {    
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(apiClientMutex);    
         httplib::Headers headers = {
             {"Authorization", "Bearer " + accessString}
@@ -197,6 +226,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::refreshToken(std::string refreshToken) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         boost::uuids::uuid guid = boost::uuids::random_generator()(); 
         std::string uniqueDeviceGuid = boost::lexical_cast<std::string>(guid);
@@ -228,6 +261,10 @@ namespace ClientWarden {
 
     bool VaultNetwork::websocketLoop(std::function<void(int notifyType)> onNotification, std::string accessString, std::string wssURL,
         const std::atomic<bool>& shouldThread) {
+        if (!init) {
+            return false;
+        }
+        
         std::string wsUri = wssURL + "/hub";
 
         httplib::Headers headers = {
@@ -324,6 +361,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::getVault(std::string accessString) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -347,6 +388,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::NewItem(nlohmann::json encryptedData, std::string accessString) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -370,6 +415,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::UpdateItem(nlohmann::json encryptedData, std::string accessString) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -399,6 +448,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::DeleteItem(std::string uuid, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -422,6 +475,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::SoftDeleteItem(std::string uuid, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -445,6 +502,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::RestoreItem(std::string uuid, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -468,6 +529,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::ArchiveItem(std::string uuid, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -495,6 +560,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::UnArchiveItem(std::string uuid, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -523,6 +592,10 @@ namespace ClientWarden {
 
     std::optional<nlohmann::json> VaultNetwork::AddAttachment(std::string uuid, std::string& encryptedFileContents, 
         std::string& encryptedFileName, std::string& attKeyStr, std::string accessString, std::function<void(float)> onProgress) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -593,6 +666,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::RemoveAttachment(std::string uuid, std::string attachmentID, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -617,6 +694,10 @@ namespace ClientWarden {
 
     std::optional<std::pair<std::string, nlohmann::json>> VaultNetwork::DownloadAttachment(std::string uuid, std::string attachmentID, 
         std::string accessString, std::function<void(float)> onProgress) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -679,6 +760,10 @@ namespace ClientWarden {
     }
 
     std::optional<nlohmann::json> VaultNetwork::CreateFolder(std::string encryptedFolderName, std::string accessString) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -703,6 +788,10 @@ namespace ClientWarden {
 
     std::optional<nlohmann::json> VaultNetwork::RenameFolder(std::string folderUUID, std::string encryptedFolderName, 
         std::string accessString) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -726,6 +815,10 @@ namespace ClientWarden {
     }
 
     bool VaultNetwork::DeleteFolder(std::string folderUUID, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
             { "authorization", "Bearer " + accessString },
@@ -749,6 +842,10 @@ namespace ClientWarden {
     }
 
     std::optional<std::vector<uint8_t>> VaultNetwork::DownloadIcon(std::string url) {
+        if (!init) {
+            return std::nullopt;
+        }
+        
         std::lock_guard<std::mutex> lock(iconClientMutex);
         std::string uri = url;
         if (url.starts_with("https://")) {

@@ -71,5 +71,6 @@ namespace ClientWarden {
         std::mutex iconClientMutex;
 
         VaultConnectivity connectivity;
+        bool init = false;
     };
 }
