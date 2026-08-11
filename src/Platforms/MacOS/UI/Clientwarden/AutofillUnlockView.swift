@@ -89,7 +89,24 @@ struct AutofillUnlockView: View {
                 .textFieldStyle(.plain)
                 .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
             
-            HStack {
+            HStack(alignment: .center) {
+                if (SettingsPanel.instance.getBioUnlock()) {
+                    Button {
+                        Unlock.instance.unlockBio { result in
+                            if (result) {
+                                dismissWindow(id: "autofillUnlock")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "faceid")
+                            .font(.subheadline)
+                            .symbolRenderingMode(.monochrome)
+                            .padding(2)
+                    }
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                }
+                
                 Button {
                     withAnimation {
                         dismissWindow(id: "autofillUnlock")
@@ -130,7 +147,8 @@ struct AutofillUnlockView: View {
         .focusEffectDisabled()
         .background(
             WindowConfigurator()
-            .glassEffect(.regular, in: .rect(cornerRadius: 20)))
+                .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        )
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .modifier(Shake(amount: 32, animatableData: shakeAmount))
         .padding(.leading, 20 * 2)
@@ -140,12 +158,7 @@ struct AutofillUnlockView: View {
                 UnlockBridge.setupCallbacks()
             #endif
         }
-        .onChange(of: ToastStore.instance.toasts) { oldToasts, newToasts in
-            let oldIDs = Set(oldToasts.map { $0.id })
-            let addedToasts = newToasts.filter {
-                !oldIDs.contains($0.id)
-            }
-            
+        .onChange(of: ToastStore.instance.toasts) {
             withAnimation(.easeInOut(duration: 0.4)) {
                 shakeAmount += 1
             }
