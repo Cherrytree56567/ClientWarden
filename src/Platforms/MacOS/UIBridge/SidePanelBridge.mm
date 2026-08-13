@@ -28,6 +28,11 @@
     [self cb_permDel];
     [self cb_archive];
     [self cb_unarchive];
+    [self cb_deleteMultiple];
+    [self cb_restoreMultiple];
+    [self cb_permDelMultiple];
+    [self cb_archiveMultiple];
+    [self cb_unarchiveMultiple];
     [self cb_sidebar];
     [self cb_downloadAttachment];
     [self cb_uploadAttachment];
@@ -278,6 +283,152 @@
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Permanently Delete Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * cb_deleteMultiple takes in an array of uuid, and bin's them each. It doesn't
+ * use an api to delete them all at once, bc Im too lazy and it would cause issues
+ * bc of the way things are structured.
+ */
++ (void)cb_deleteMultiple {
+    SidePanel.instance.cb_deleteMultiple = ^BOOL(NSArray<NSUUID*>* _Nonnull uuids) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            for (NSUUID* uuid in uuids) {
+                std::string c_uuid = uuid.UUIDString.UTF8String;
+                std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+                v_inst.GetItem(c_uuid)
+                    ->Bin();
+            }
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Delete Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * cb_restoreMultiple takes in an array of UUID's and restores each one of them and
+ * then returns true
+ */
++ (void)cb_restoreMultiple {
+    SidePanel.instance.cb_restoreMultiple = ^BOOL(NSArray<NSUUID*>* _Nonnull uuids) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            for (NSUUID* uuid in uuids) {
+                std::string c_uuid = uuid.UUIDString.UTF8String;
+                std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+                v_inst.GetItem(c_uuid)
+                    ->UnBin();
+            }
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Restore Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * cb_permDelMultiple takes in an array of UUID's and permanantly deletes each one of 
+ * them and then returns true
+ */
++ (void)cb_permDelMultiple {
+    SidePanel.instance.cb_permDelMultiple = ^BOOL(NSArray<NSUUID*>* _Nonnull uuids) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            for (NSUUID* uuid in uuids) {
+                std::string c_uuid = uuid.UUIDString.UTF8String;
+                std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+                v_inst.GetItem(c_uuid)
+                    ->Delete();
+            }
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Permanantly Delete Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * cb_archiveMultiple takes in an array of UUID's and archives each one of them and
+ * then returns true
+ */
++ (void)cb_archiveMultiple {
+    SidePanel.instance.cb_archiveMultiple = ^BOOL(NSArray<NSUUID*>* _Nonnull uuids) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            for (NSUUID* uuid in uuids) {
+                std::string c_uuid = uuid.UUIDString.UTF8String;
+                std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+                v_inst.GetItem(c_uuid)
+                    ->Archive();
+            }
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Archive Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+/*
+ * cb_unarchiveMultiple takes in an array of UUID's and archives each one of them and
+ * then returns true
+ */
++ (void)cb_unarchiveMultiple {
+    SidePanel.instance.cb_unarchiveMultiple = ^BOOL(NSArray<NSUUID*>* _Nonnull uuids) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            for (NSUUID* uuid in uuids) {
+                std::string c_uuid = uuid.UUIDString.UTF8String;
+                std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+                v_inst.GetItem(c_uuid)
+                    ->UnArchive();
+            }
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Unarchive Items"];
                 [[ToastStore instance] addToast:toast];
             });
 

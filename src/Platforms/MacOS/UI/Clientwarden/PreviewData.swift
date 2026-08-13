@@ -43,6 +43,50 @@ struct PreviewData {
                     SidePanel.instance.cb_favorite = {_,_ in
                         return true
                     }
+                    
+                    /*
+                     * THis thing is AI, but I had to do some formatting stuff, this is
+                     * only temp
+                     */
+                    ItemsPanel.instance.update(data: [
+                        ItemElement(
+                            name: "Google",
+                            uuid: UUID(),
+                            type: ItemType.Login,
+                            image: ClientwardenImage(type: ImageType.bundle, path: "profile1")
+                        ),
+                        ItemElement(
+                            name: "GitHub",
+                            uuid: UUID(),
+                            type: ItemType.Login,
+                            image: ClientwardenImage(type: ImageType.bundle, path: "profile2")
+                        ),
+                        ItemElement(
+                            name: "Visa Card",
+                            uuid: UUID(),
+                            type: ItemType.Card,
+                            image: ClientwardenImage(type: ImageType.bundle, path: "card1")
+                        ),
+                        ItemElement(
+                            name: "Personal Identity",
+                            uuid: UUID(),
+                            type: ItemType.Identity,
+                            image: ClientwardenImage(type: ImageType.bundle, path: "identity1")
+                        ),
+                        ItemElement(
+                            name: "Wifi Password",
+                            uuid: UUID(),
+                            type: ItemType.Note,
+                            image: ClientwardenImage(type: ImageType.bundle, path: "note1")
+                        ),
+                        ItemElement(
+                            name: "Server SSH Key",
+                            uuid: UUID(),
+                            type: ItemType.SSHKey,
+                            image: ClientwardenImage(type: ImageType.bundle, path: "ssh1")
+                            ),
+                        ]
+                    )
                 }
         }
         .frame(minWidth: 700, minHeight: 400)

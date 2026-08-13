@@ -559,6 +559,36 @@ namespace ClientWarden {
         return true;
     }
 
+    bool VaultNetwork::ArchiveItem(std::vector<std::string> uuids, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
+        std::lock_guard<std::mutex> lock(vaultClientMutex);
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + accessString },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "desktop" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        nlohmann::json jsonData;
+        jsonData["ids"] = uuids;
+
+        auto res = vaultClient->Put("/api/ciphers/archive", headers, jsonData.dump(), "application/json");
+
+        if (!res) {
+            logger->error("archiveItem(multiple) request failed");
+            return false;
+        }
+        if (res->status != 200) {
+            logger->error("archiveItem(multiple) failed: {}", res->status);
+            return false;
+        }
+        
+        return true;
+    }
+
     bool VaultNetwork::UnArchiveItem(std::string uuid, std::string accessString) {
         if (!init) {
             return false;
@@ -584,6 +614,36 @@ namespace ClientWarden {
         }
         if (res->status != 200) {
             logger->error("unarchiveItem failed: {}", res->status);
+            return false;
+        }
+        
+        return true;
+    }
+
+    bool VaultNetwork::UnArchiveItem(std::vector<std::string> uuids, std::string accessString) {
+        if (!init) {
+            return false;
+        }
+        
+        std::lock_guard<std::mutex> lock(vaultClientMutex);
+        httplib::Headers headers = {
+            { "authorization", "Bearer " + accessString },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", "desktop" },
+            { "bitwarden-client-version", "2026.3.0" },
+        };
+
+        nlohmann::json jsonData;
+        jsonData["ids"] = uuids;
+
+        auto res = vaultClient->Put("/api/ciphers/unarchive", headers, jsonData.dump(), "application/json");
+
+        if (!res) {
+            logger->error("unarchiveItem(multiple) request failed");
+            return false;
+        }
+        if (res->status != 200) {
+            logger->error("unarchiveItem(multiple) failed: {}", res->status);
             return false;
         }
         

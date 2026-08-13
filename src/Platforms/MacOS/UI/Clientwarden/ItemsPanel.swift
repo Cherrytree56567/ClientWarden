@@ -9,6 +9,7 @@ final class ItemsPanel: NSObject {
     public var filteredElements: [ItemElement] = []
     public var searchQuery: String = ""
     public var refreshNum: Int = 0
+    public var selectedItems: [UUID] = []
 
     @objc public var cb_query: ((String) -> [ItemElement])?
     @objc public var cb_new: ((ItemType) -> ItemElement)?
@@ -17,6 +18,7 @@ final class ItemsPanel: NSObject {
         elements = data
         filteredElements = data
         searchQuery = ""
+        selectedItems = []
     }
 
     func refresh(data: [ItemElement]) {
@@ -57,6 +59,7 @@ struct ItemsPanelView: View {
     @Bindable var data: ItemsPanel = ItemsPanel.instance
     @FocusState private var isFocused: Bool
     @State private var showNewItemCallout: Bool = false
+    @FocusState private var focused: Bool
 
     var body: some View {
         VStack() {
@@ -136,7 +139,27 @@ struct ItemsPanelView: View {
                     } else {
                         VStack {
                             ForEach(data.filteredElements) { item in
-                                ItemElementView(data: item, selected: SidePanel.instance.viewable && SidePanel.instance.uuid == item.uuid)
+                                ItemElementView(data: item, selected: (SidePanel.instance.viewable && SidePanel.instance.uuid == item.uuid) || data.selectedItems.contains(item.uuid)
+                                )
+                                .highPriorityGesture(
+                                    TapGesture().onEnded {
+                                        if (NSEvent.modifierFlags.contains(.shift)) {
+                                            if (data.selectedItems.contains(item.uuid)) {
+                                                data.selectedItems.removeAll {
+                                                    $0 == item.uuid
+                                                }
+                                            } else {
+                                                data.selectedItems.append(item.uuid)
+                                            }
+                                            SidePanel.instance.editable = false
+                                            SidePanel.instance.viewable = false
+                                        } else {
+                                            SidePanel.instance.viewItem(cb_uuid: item.uuid)
+                                            SidePanel.instance.editable = true
+                                            data.selectedItems.removeAll()
+                                        }
+                                    }
+                                )
                             }
                         }
                         .padding(12)
@@ -157,10 +180,16 @@ struct ItemsPanelView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: data.elements)
+        .focusable()
+        .focusEffectDisabled()
+        .focused($focused)
         .onAppear {
             #if NON_XCODE_BUILD
                 ItemsPanelBridge.setupCallbacks()
             #endif
+            DispatchQueue.main.async {
+                focused = true
+            }
         }
         .task {
             while !Task.isCancelled {
@@ -172,6 +201,15 @@ struct ItemsPanelView: View {
         }
         .onChange(of: data.refreshNum) { _, newVal in
             refreshToken = newVal
+        }
+        .onKeyPress(.escape) {
+            if (data.selectedItems.isEmpty) {
+                SidePanel.instance.viewable = false
+                SidePanel.instance.editable = false
+            } else {
+                data.selectedItems.removeAll()
+            }
+            return .ignored
         }
     }
 }
