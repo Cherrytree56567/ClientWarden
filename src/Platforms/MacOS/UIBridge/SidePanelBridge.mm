@@ -409,7 +409,7 @@
 }
 
 /*
- * cb_unarchiveMultiple takes in an array of UUID's and archives each one of them and
+ * Unarchive Multiple takes in an array of UUID's and archives each one of them and
  * then returns true
  */
 + (void)cb_unarchiveMultiple {
