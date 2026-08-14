@@ -54,6 +54,7 @@ final class ItemsPanel: NSObject {
         }
     }
 }
+
 struct ItemsPanelView: View {
     @State private var refreshToken: Int = 0
     @Bindable var data: ItemsPanel = ItemsPanel.instance
@@ -154,9 +155,10 @@ struct ItemsPanelView: View {
                                             SidePanel.instance.editable = false
                                             SidePanel.instance.viewable = false
                                         } else {
-                                            SidePanel.instance.viewItem(cb_uuid: item.uuid)
-                                            SidePanel.instance.editable = true
-                                            data.selectedItems.removeAll()
+                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                                SidePanel.instance.viewItem(cb_uuid: item.uuid)
+                                                data.selectedItems.removeAll()
+                                            }
                                         }
                                     }
                                 )

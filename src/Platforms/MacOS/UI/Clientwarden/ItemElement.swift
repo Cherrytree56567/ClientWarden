@@ -30,7 +30,11 @@ struct ItemElementView: View {
     
     var body: some View {
         Button {
-            SidePanel.instance.viewItem(cb_uuid: data.uuid)
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    SidePanel.instance.viewItem(cb_uuid: data.uuid)
+                }
+            }
         } label: {
             HStack {
                 if let img = data.image?.getImage() {
