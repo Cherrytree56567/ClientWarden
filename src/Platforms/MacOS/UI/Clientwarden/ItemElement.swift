@@ -29,26 +29,19 @@ struct ItemElementView: View {
     var selected: Bool = false
     
     var body: some View {
-        Button {
-            DispatchQueue.main.async {
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    SidePanel.instance.viewItem(cb_uuid: data.uuid)
-                }
-            }
-        } label: {
-            HStack {
-                if let img = data.image?.getImage() {
-                    if data.image?.type == .systemImage {
-                        img
-                            .font(.system(size: 24))
-                            .frame(width: 32, height: 32)
-                    } else {
-                        img
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 24, height: 24)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .frame(width: 32, height: 32)
+        HStack {
+            if let img = data.image?.getImage() {
+                if data.image?.type == .systemImage {
+                    img
+                        .font(.system(size: 24))
+                        .frame(width: 32, height: 32)
+                } else {
+                    img
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 24, height: 24)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .frame(width: 32, height: 32)
                     }
                 } else {
                     Image(systemName: "viewfinder")
@@ -83,8 +76,6 @@ struct ItemElementView: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .animation(.easeInOut(duration: 0.25), value: selected)
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 

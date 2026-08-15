@@ -1,4 +1,6 @@
 import Foundation
+import UniformTypeIdentifiers
+import SwiftUI
 
 @objcMembers
 class Folder: NSObject, Identifiable {
@@ -112,4 +114,16 @@ enum IdentityLinkedIDs : Int, CaseIterable {
 
 extension UUID {
     static let empty = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+}
+
+/*
+ * From Apple Docs
+ * https://developer.apple.com/documentation/swiftui/adopting-drag-and-drop-using-swiftui
+ */
+struct DragableItemElement: Codable, Transferable {
+    var uuids: [UUID]
+
+    static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .data)
+    }
 }

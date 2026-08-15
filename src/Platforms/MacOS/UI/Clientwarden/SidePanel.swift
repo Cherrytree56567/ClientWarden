@@ -71,6 +71,10 @@ final class SidePanel: NSObject {
     @objc public var cb_permDel: ((UUID) -> Bool)?
     @objc public var cb_archive: ((UUID) -> Bool)?
     @objc public var cb_unarchive: ((UUID) -> Bool)?
+    /*
+     * cb_moveToFolder(folderUUID, ItemUUID)
+     */
+    @objc public var cb_moveToFolder: ((UUID, UUID) -> Bool)?
     
     @objc public var cb_deleteMultiple: (([UUID]) -> Bool)?
     @objc public var cb_restoreMultiple: (([UUID]) -> Bool)?

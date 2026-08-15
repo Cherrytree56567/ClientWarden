@@ -473,7 +473,7 @@ namespace ClientWarden {
         */
         std::vector<std::string> folders = localVault.GetFolders();
 
-        if (std::find(folders.begin(), folders.end(), folder) == folders.end()) {
+        if (std::find(folders.begin(), folders.end(), data["folderId"].get<std::string>()) == folders.end()) {
             data["folderId"] = nullptr;
             return;
         }

@@ -28,6 +28,7 @@
     [self cb_permDel];
     [self cb_archive];
     [self cb_unarchive];
+    [self cb_moveToFolder];
     [self cb_deleteMultiple];
     [self cb_restoreMultiple];
     [self cb_permDelMultiple];
@@ -278,6 +279,40 @@
 
             v_inst.GetItem(c_uuid)
                  ->Delete();
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Permanently Delete Item"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            return NO;
+        }
+    };
+}
+
+
++ (void)cb_moveToFolder {
+    SidePanel.instance.cb_moveToFolder = ^BOOL(NSUUID* folderUUID, NSUUID* uuid) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UUIDString.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            std::string c_folderUUID = folderUUID.UUIDString.UTF8String;
+            std::transform(c_folderUUID.begin(), c_folderUUID.end(), c_folderUUID.begin(), ::tolower);
+
+            std::shared_ptr<ClientWarden::GenericItem> g_item = v_inst.GetItem(c_uuid);
+
+            if (c_folderUUID == "00000000-0000-0000-0000-000000000000") {
+                g_item->RemoveFolder();
+            } else {
+                g_item->SetFolder(c_folderUUID);
+            }
+            
+            g_item->Commit();
 
             return YES;
         } catch (...) {

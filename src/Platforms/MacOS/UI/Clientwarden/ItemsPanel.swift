@@ -162,6 +162,34 @@ struct ItemsPanelView: View {
                                         }
                                     }
                                 )
+                                .draggable(
+                                    /*
+                                     * Had to compress this into a small block
+                                     * bc other wise it wouldn't fit into XCode
+                                     * btw this is the doc:
+                                     * https://developer.apple.com/documentation/swiftui/adopting-drag-and-drop-using-swiftui
+                                     */
+                                    DragableItemElement(
+                                        uuids: !data.selectedItems.isEmpty
+                                        && data.selectedItems.contains(item.uuid)
+                                        ? data.selectedItems : [item.uuid]
+                                    )
+                                ) {
+                                    Image(systemName: "square.text.square.fill")
+                                        .font(.system(size: 24))
+                                        .frame(width: 32, height: 32)
+                                        .overlay(alignment: .topTrailing) {
+                                            if ((!data.selectedItems.isEmpty && data.selectedItems.contains(item.uuid) ? data.selectedItems : [item.uuid]).count > 0) {
+                                                Text("\((!data.selectedItems.isEmpty && data.selectedItems.contains(item.uuid) ? data.selectedItems : [item.uuid]).count)")
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                                    .padding(4)
+                                                    .background(Circle().fill(.blue))
+                                                    .frame(minWidth: 32, minHeight: 32)
+                                                    .offset(x: 6, y: 6)
+                                            }
+                                        }
+                                }
                             }
                         }
                         .padding(12)
