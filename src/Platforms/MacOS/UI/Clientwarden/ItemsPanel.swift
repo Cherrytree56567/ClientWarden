@@ -152,6 +152,9 @@ struct ItemsPanelView: View {
                                             } else {
                                                 data.selectedItems.append(item.uuid)
                                             }
+                                            if (SidePanel.instance.viewable) {
+                                                data.selectedItems.append(SidePanel.instance.uuid)
+                                            }
                                             SidePanel.instance.editable = false
                                             SidePanel.instance.viewable = false
                                         } else {
