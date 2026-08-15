@@ -7,6 +7,23 @@ enum LoginViewType: Int {
     case Passkey
 }
 
+enum LoginFields: Hashable {
+    case Email
+    case Password
+    case Login
+    
+    case UsePasskey
+    case CancelPasskey
+    
+    case Code
+    case SubmitCode
+    case VaultURL
+    case MainURL
+    case APIURL
+    case IconURL
+    case WebSocketURL
+}
+
 @objcMembers
 @Observable
 final class Login: NSObject {
@@ -148,6 +165,7 @@ final class Login: NSObject {
 
 struct LoginView: View {
     @Bindable private var data: Login = Login.instance
+    @FocusState private var focusedField: LoginFields?
     
     var body: some View {
         HStack {
@@ -160,6 +178,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Vault URL", text: $data.vaultURL)
+                            .focused($focusedField, equals: .VaultURL)
                         
                         Text("Main URL")
                             .padding(.leading, 4)
@@ -167,6 +186,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Main URL", text: $data.mainURL)
+                            .focused($focusedField, equals: .MainURL)
                         
                         Text("API URL")
                             .padding(.leading, 4)
@@ -174,6 +194,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("API URL", text: $data.apiURL)
+                            .focused($focusedField, equals: .APIURL)
                         
                         Text("Icon URL")
                             .padding(.leading, 4)
@@ -181,6 +202,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Icon URL", text: $data.iconURL)
+                            .focused($focusedField, equals: .IconURL)
                         
                         Text("WebSocket URL")
                             .padding(.leading, 4)
@@ -188,6 +210,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("WebSocket URL", text: $data.wssURL)
+                            .focused($focusedField, equals: .WebSocketURL)
                         Spacer()
                     }
                     Tab("Server", systemImage: "server.rack", value: 1) {
@@ -197,6 +220,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Vault URL", text: $data.vaultURL)
+                            .focused($focusedField, equals: .VaultURL)
                         
                         Text("Main URL")
                             .padding(.leading, 4)
@@ -204,6 +228,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Main URL", text: $data.mainURL)
+                            .focused($focusedField, equals: .MainURL)
                         
                         Text("API URL")
                             .padding(.leading, 4)
@@ -211,6 +236,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("API URL", text: $data.apiURL)
+                            .focused($focusedField, equals: .APIURL)
                         
                         Text("Icon URL")
                             .padding(.leading, 4)
@@ -218,6 +244,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Icon URL", text: $data.iconURL)
+                            .focused($focusedField, equals: .IconURL)
                         
                         Text("WebSocket URL")
                             .padding(.leading, 4)
@@ -225,6 +252,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("WebSocket URL", text: $data.wssURL)
+                            .focused($focusedField, equals: .WebSocketURL)
                         Spacer()
                     }
                 }
@@ -267,12 +295,14 @@ struct LoginView: View {
                         .textFieldStyle(.plain)
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                        .focused($focusedField, equals: .Email)
                     SecureField("Password", text: $data.password)
                         .font(.subheadline)
                         .padding(6)
                         .textFieldStyle(.plain)
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                        .focused($focusedField, equals: .Password)
                     Button {
                         withAnimation {
                             data.login()
@@ -290,6 +320,8 @@ struct LoginView: View {
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     .contentShape(Rectangle())
                     .keyboardShortcut(.defaultAction)
+                    .focusable()
+                    .focused($focusedField, equals: .Login)
                 } else if (data.ViewType == LoginViewType.Passkey) {
                     Text("Clientwarden")
                         .font(.largeTitle.bold())
@@ -314,6 +346,8 @@ struct LoginView: View {
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                         .contentShape(Rectangle())
                         .keyboardShortcut(.defaultAction)
+                        .focusable()
+                        .focused($focusedField, equals: .UsePasskey)
                         
                         Button {
                             withAnimation {
@@ -332,6 +366,8 @@ struct LoginView: View {
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                         .contentShape(Rectangle())
                         .keyboardShortcut(.defaultAction)
+                        .focusable()
+                        .focused($focusedField, equals: .CancelPasskey)
                     }
                 } else {
                     Text("Clientwarden")
@@ -342,6 +378,7 @@ struct LoginView: View {
                         .textFieldStyle(.plain)
                         .frame(width: 200)
                         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                        .focused($focusedField, equals: .Code)
                     Button {
                         withAnimation {
                             data.submitCode()
@@ -359,6 +396,8 @@ struct LoginView: View {
                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                     .contentShape(Rectangle())
                     .keyboardShortcut(.defaultAction)
+                    .focusable()
+                    .focused($focusedField, equals: .SubmitCode)
                 }
             }
             
@@ -369,6 +408,84 @@ struct LoginView: View {
             #if NON_XCODE_BUILD
                 LoginBridge.setupCallbacks()
             #endif
+        }
+        .onKeyPress(.tab) {
+            switch focusedField {
+            case .Email where data.ViewType == .Login:
+                focusedField = .Password
+                return .handled
+            case .Password where data.ViewType == .Login:
+                focusedField = .Login
+                return .handled
+            case .Login where data.ViewType == .Login:
+                focusedField = .VaultURL
+                return .handled
+            
+            case .UsePasskey where data.ViewType == .Passkey:
+                focusedField = .CancelPasskey
+                return .handled
+            case .CancelPasskey where data.ViewType == .Passkey:
+                focusedField = .VaultURL
+                return .handled
+            
+            case .Code where data.ViewType == .TOTP:
+                focusedField = .SubmitCode
+                return .handled
+            case .SubmitCode where data.ViewType == .TOTP:
+                focusedField = .VaultURL
+                return .handled
+            
+            case .VaultURL:
+                focusedField = .MainURL
+                return .handled
+            case .MainURL:
+                focusedField = .APIURL
+                return .handled
+            case .APIURL:
+                focusedField = .IconURL
+                return .handled
+            case .IconURL:
+                focusedField = .WebSocketURL
+                return .handled
+            case .WebSocketURL:
+                if (data.ViewType == .Login) {
+                    focusedField = .Email
+                } else if (data.ViewType == .Passkey) {
+                    focusedField = .UsePasskey
+                } else if (data.ViewType == .TOTP) {
+                    focusedField = .Code
+                }
+                return .handled
+            default:
+                return .ignored
+            }
+        }
+        .onExitCommand {
+            focusedField = nil
+        }
+        .onChange(of: data.ViewType) { _, newValue in
+            if (data.ViewType == .Login) {
+                focusedField = .Email
+            } else if (data.ViewType == .Passkey) {
+                focusedField = .UsePasskey
+            } else if (data.ViewType == .TOTP) {
+                focusedField = .Code
+            } else {
+                focusedField = nil
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.async {
+                if (data.ViewType == .Login) {
+                    focusedField = .Email
+                } else if (data.ViewType == .Passkey) {
+                    focusedField = .UsePasskey
+                } else if (data.ViewType == .TOTP) {
+                    focusedField = .Code
+                } else {
+                    focusedField = nil
+                }
+            }
         }
     }
 }

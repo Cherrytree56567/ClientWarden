@@ -379,6 +379,74 @@ namespace ClientWarden {
         lock_vdset.unlock();
     }
 
+    void GenericItem::Archive() {
+        if (!init) return;
+        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
+        itemEncKey.clear();
+        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
+        itemMacKey.clear();
+
+        data["revisionDate"] = getBitwardenTime();
+        data["archivedDate"] = getBitwardenTime();
+        data["data"] = (std::string)fieldData.dump();
+        if (isBeingCreated) {
+            std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
+            return;
+        }
+
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
+        auto& ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+
+        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
+            return cipher["id"] == data["id"];
+        });
+
+        if (it != ciphers.end()) {
+            *it = data;
+        }
+
+        bool result = localVault.ArchiveItem(data["id"]);
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
+        localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
+    }
+
+    void GenericItem::UnArchive() {
+        if (!init) return;
+        OPENSSL_cleanse(itemEncKey.data(), itemEncKey.size());
+        itemEncKey.clear();
+        OPENSSL_cleanse(itemMacKey.data(), itemMacKey.size());
+        itemMacKey.clear();
+
+        data["revisionDate"] = getBitwardenTime();
+        data["archivedDate"] = nullptr;
+        data["data"] = (std::string)fieldData.dump();
+        if (isBeingCreated) {
+            std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
+            return;
+        }
+
+        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
+        auto& ciphers = (*localVault.session.vaultData)["ciphers"];
+        lock_vdget.unlock();
+
+        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
+            return cipher["id"] == data["id"];
+        });
+
+        if (it != ciphers.end()) {
+            *it = data;
+        }
+
+        bool result = localVault.UnArchiveItem(data["id"]);
+
+        std::unique_lock<std::recursive_mutex> lock_vdset(localVault.session.vaultDataMutex);
+        localVault.storage.write("vault.json", localVault.session.vaultData->dump(2));
+        lock_vdset.unlock();
+    }
+
     void GenericItem::GetNameImpl(std::string& name) {
         if (!init) return;
         if (!data.contains("name")) return;
@@ -405,7 +473,7 @@ namespace ClientWarden {
         */
         std::vector<std::string> folders = localVault.GetFolders();
 
-        if (std::find(folders.begin(), folders.end(), folder) == folders.end()) {
+        if (std::find(folders.begin(), folders.end(), data["folderId"].get<std::string>()) == folders.end()) {
             data["folderId"] = nullptr;
             return;
         }

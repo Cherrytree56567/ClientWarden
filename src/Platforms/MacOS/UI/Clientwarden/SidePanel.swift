@@ -69,6 +69,18 @@ final class SidePanel: NSObject {
     
     @objc public var cb_restore: ((UUID) -> Bool)?
     @objc public var cb_permDel: ((UUID) -> Bool)?
+    @objc public var cb_archive: ((UUID) -> Bool)?
+    @objc public var cb_unarchive: ((UUID) -> Bool)?
+    /*
+     * cb_moveToFolder(folderUUID, ItemUUID)
+     */
+    @objc public var cb_moveToFolder: ((UUID, UUID) -> Bool)?
+    
+    @objc public var cb_deleteMultiple: (([UUID]) -> Bool)?
+    @objc public var cb_restoreMultiple: (([UUID]) -> Bool)?
+    @objc public var cb_permDelMultiple: (([UUID]) -> Bool)?
+    @objc public var cb_archiveMultiple: (([UUID]) -> Bool)?
+    @objc public var cb_unarchiveMultiple: (([UUID]) -> Bool)?
     
     @objc public var cb_sidebar: ((UUID) -> Bool)?
     @objc public var cb_sidebarReprompt: ((UUID, String) -> Bool)?
@@ -181,10 +193,6 @@ final class SidePanel: NSObject {
      * Callback Functions
      */
     func toggleFavorite() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_favorite?(!favorite, uuid) {
             if (result) {
                 favorite.toggle()
@@ -197,10 +205,6 @@ final class SidePanel: NSObject {
     }
     
     func saveItem() -> Bool {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_save?(uuid, name, type, repromptItem, folderUUID, itemFields, customFields, notes.value) {
             if (result) {
                 NavigationPanel.instance.loadCurrentTab(refresh: true)
@@ -215,10 +219,6 @@ final class SidePanel: NSObject {
     }
     
     func duplicateItem() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_duplicate?(uuid, type) {
             if (result != nil) {
                 ItemsPanel.instance.elements.append(result)
@@ -230,10 +230,6 @@ final class SidePanel: NSObject {
     }
     
     func deleteItem() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_delete?(uuid) {
             if (result) {
                 editable = false
@@ -247,11 +243,67 @@ final class SidePanel: NSObject {
         }
     }
     
+    func deleteSelected() {
+        if let result = cb_deleteMultiple?(ItemsPanel.instance.selectedItems) {
+            if (result) {
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to delete multiple items"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for delete Items"))
+        }
+    }
+    
+    func restoreSelected() {
+        if let result = cb_restoreMultiple?(ItemsPanel.instance.selectedItems) {
+            if (result) {
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to restore multiple items"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for restore Items"))
+        }
+    }
+    
+    func permDelSelected() {
+        if let result = cb_permDelMultiple?(ItemsPanel.instance.selectedItems) {
+            if (result) {
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to permanantly delete items"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for permanantly delete Items"))
+        }
+    }
+    
+    func archiveSelected() {
+        if let result = cb_archiveMultiple?(ItemsPanel.instance.selectedItems) {
+            if (result) {
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to archive items"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for archive Items"))
+        }
+    }
+    
+    func unarchiveSelected() {
+        if let result = cb_unarchiveMultiple?(ItemsPanel.instance.selectedItems) {
+            if (result) {
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to unarchive items"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for unarchive Items"))
+        }
+    }
+    
     func viewItem(cb_uuid: UUID) {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_sidebar?(cb_uuid) {
             if (result) {
             } else {
@@ -263,10 +315,6 @@ final class SidePanel: NSObject {
     }
     
     func viewItemReprompt() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_sidebarReprompt?(uuid, repromptPassword) {
             if (result) {
             } else {
@@ -280,10 +328,6 @@ final class SidePanel: NSObject {
     }
     
     func downloadAttachment(id: String) {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_downloadAttachment?(uuid, id) {
             if (result) {
             } else {
@@ -295,10 +339,6 @@ final class SidePanel: NSObject {
     }
     
     func removeAttachment(id: String) {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_removeAttachment?(uuid, id) {
             if (result) {
             } else {
@@ -310,10 +350,6 @@ final class SidePanel: NSObject {
     }
     
     func uploadAttachment() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_uploadAttachment?(uuid) {
             if (result) {
             } else {
@@ -325,10 +361,6 @@ final class SidePanel: NSObject {
     }
     
     func restoreItem() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_restore?(uuid) {
             if (result) {
                 editable = false
@@ -343,10 +375,6 @@ final class SidePanel: NSObject {
     }
     
     func permDeleteItem() {
-        /*
-         * Check if the var has a callback and check if
-         * the callback was successful
-         */
         if let result = cb_permDel?(uuid) {
             if (result) {
                 editable = false
@@ -357,6 +385,34 @@ final class SidePanel: NSObject {
             }
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for permDelete"))
+        }
+    }
+    
+    func archiveItem() {
+        if let result = cb_archive?(uuid) {
+            if (result) {
+                editable = false
+                viewable = false
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to archive item"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for archive"))
+        }
+    }
+    
+    func unarchiveItem() {
+        if let result = cb_unarchive?(uuid) {
+            if (result) {
+                editable = false
+                viewable = false
+                NavigationPanel.instance.loadCurrentTab(refresh: true)
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to archive item"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for archive"))
         }
     }
     
@@ -388,6 +444,7 @@ struct SidePanelView: View {
     @State private var showPasswordHistory: Bool = false
     @State private var showNewFieldCallout: Bool = false
     @State private var showDeleteCallout: Bool = false
+    @State private var showDeleteMultiple: Bool = false
     
     @Bindable var data: SidePanel = SidePanel.instance
     
@@ -659,6 +716,49 @@ struct SidePanelView: View {
                         .glassEffect(.regular.interactive(), in: Circle())
                     }
                     .sharedBackgroundVisibility(.hidden)
+                } else if (NavigationPanel.instance.selection == NavItems.archived) {
+                    if (ItemsPanel.instance.selectedItems.isEmpty) {
+                        ToolbarItem {
+                            Button {
+                                data.editable = true
+                                data.saveSnapshot()
+                            } label: {
+                                Image(systemName: "pencil")
+                            }
+                            .glassEffect(.regular.interactive(), in: Circle())
+                        }
+                        .sharedBackgroundVisibility(.hidden)
+                        ToolbarItem {
+                            Button {
+                                data.duplicateItem()
+                            } label: {
+                                Image(systemName: "document.on.document")
+                                    .imageScale(.medium)
+                            }
+                            .glassEffect(.regular.interactive(), in: Circle())
+                        }
+                        .sharedBackgroundVisibility(.hidden)
+                    }
+                    ToolbarItem {
+                        Button {
+                            data.unarchiveItem()
+                        } label: {
+                            Image(systemName: "archivebox.fill")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.deleteItem()
+                        } label: {
+                            Image(systemName: "trash")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
                 } else if (!data.editable) {
                     /*
                      * Edit Button
@@ -669,21 +769,33 @@ struct SidePanelView: View {
                      * to the normal field (eg: itemFields). If cancel is pressed, then edit_*
                      * fields will be discarded
                      */
-                    ToolbarItem {
-                        Button {
-                            data.editable = true
-                            data.saveSnapshot()
-                        } label: {
-                            Image(systemName: "pencil")
+                    if (ItemsPanel.instance.selectedItems.isEmpty) {
+                        ToolbarItem {
+                            Button {
+                                data.editable = true
+                                data.saveSnapshot()
+                            } label: {
+                                Image(systemName: "pencil")
+                            }
+                            .glassEffect(.regular.interactive(), in: Circle())
                         }
-                        .glassEffect(.regular.interactive(), in: Circle())
+                        .sharedBackgroundVisibility(.hidden)
+                        ToolbarItem {
+                            Button {
+                                data.duplicateItem()
+                            } label: {
+                                Image(systemName: "document.on.document")
+                                    .imageScale(.medium)
+                            }
+                            .glassEffect(.regular.interactive(), in: Circle())
+                        }
+                        .sharedBackgroundVisibility(.hidden)
                     }
-                    .sharedBackgroundVisibility(.hidden)
                     ToolbarItem {
                         Button {
-                            data.duplicateItem()
+                            data.archiveItem()
                         } label: {
-                            Image(systemName: "document.on.document")
+                            Image(systemName: "archivebox")
                                 .imageScale(.medium)
                         }
                         .glassEffect(.regular.interactive(), in: Circle())
@@ -725,12 +837,84 @@ struct SidePanelView: View {
                         .glassEffect(.regular.interactive(), in: Circle())
                     }
                 }
+            } else if (!ItemsPanel.instance.selectedItems.isEmpty) {
+                if (NavigationPanel.instance.selection == NavItems.archived) {
+                    ToolbarItem {
+                        Button {
+                            data.unarchiveSelected()
+                        } label: {
+                            Image(systemName: "archivebox.fill")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.deleteSelected()
+                        } label: {
+                            Image(systemName: "trash")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                } else if (NavigationPanel.instance.selection == NavItems.trash) {
+                    ToolbarItem {
+                        Button {
+                            showDeleteMultiple = true
+                        } label: {
+                            Image(systemName: "minus.circle")
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.restoreSelected()
+                        } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                } else {
+                    ToolbarItem {
+                        Button {
+                            data.archiveSelected()
+                        } label: {
+                            Image(systemName: "archivebox")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                    ToolbarItem {
+                        Button {
+                            data.deleteSelected()
+                        } label: {
+                            Image(systemName: "trash")
+                                .imageScale(.medium)
+                        }
+                        .glassEffect(.regular.interactive(), in: Circle())
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                }
             }
         }
         .alert("Are you sure you would like to Permanantly Delete this item?", isPresented: $showDeleteCallout) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
                 data.permDeleteItem()
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .alert("Are you sure you would like to Permanantly Delete these items?", isPresented: $showDeleteMultiple) {
+            Button("Cancel", role: .cancel) { }
+            Button("Confirm", role: .destructive) {
+                data.permDelSelected()
             }
         } message: {
             Text("This action cannot be undone.")

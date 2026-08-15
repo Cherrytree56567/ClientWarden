@@ -56,6 +56,7 @@ namespace ClientWarden {
         bool Login(std::string id, std::string authData, std::string clientData, std::string signature);
 
         bool Unlock(std::string& password);
+        bool Unlock();
         bool Lock();
         bool Logout();
 
@@ -71,6 +72,20 @@ namespace ClientWarden {
         bool GetScreenshotOption();
         void SetAutoLockDelay(int value);
         int GetAutoLockDelay();
+
+        bool saveVaultKeysKeychain();
+        bool deleteVaultKeysKeychain();
+        bool checkVaultKeysKeychain();
+        bool getVaultKeysKeychain();
+
+        /*
+         * Compares current Vault Key and New
+         * Vault Key.
+         * 
+         * If both vault keys don't match, then
+         * logout.
+        */
+        bool checkVaultValidity();
 
         template <typename Derived>
         std::shared_ptr<Derived> GetItem(std::string uuid) {
@@ -103,6 +118,8 @@ namespace ClientWarden {
         bool DeleteItem(std::string uuid, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());
         bool SoftDeleteItem(std::string uuid);
         bool RestoreItem(std::string uuid);
+        bool ArchiveItem(std::string uuid);
+        bool UnArchiveItem(std::string uuid);
         std::optional<nlohmann::json> AddAttachment(std::string uuid, std::string& decryptedFileContents, std::string& decryptedFileName, 
             std::function<void(float)> onProgress = nullptr);
         bool RemoveAttachment(std::string uuid, std::string attachmentID);
@@ -118,6 +135,8 @@ namespace ClientWarden {
 
         std::string passkeyChallenge;
 
+        keychain::SecurityDetail bioDetail = keychain::SecurityDetail::Secure;
+
         VaultSession session;
         VaultCrypto crypto;
         VaultNetwork network;
@@ -125,5 +144,9 @@ namespace ClientWarden {
         AuthState state;
         Storage storage;
         Clipboard clipboard;
+
+    private:
+        bool pLogin(std::optional<nlohmann::json> token);
+        bool pUnlock();
     };
 }

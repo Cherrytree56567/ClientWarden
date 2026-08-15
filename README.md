@@ -143,8 +143,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [ ] Passkey AutoFill Support
   - [X] Passkey Login Support (wouldn't be possible)
   - [ ] Device Login Support
-  - [ ] Biometric Support
-  - [ ] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
+  - [X] Biometric Support
+  - [X] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
   - [ ] Make SDK
   - [X] Store auth data in KeyChain (!important)
 
@@ -199,4 +199,4 @@ Thanks to:
 [issues-url]: https://github.com/Cherrytree56567/ClientWarden/issues
 [license-shield]: https://img.shields.io/github/license/Cherrytree56567/ClientWarden.svg?style=for-the-badge
 [license-url]: https://github.com/Cherrytree56567/ClientWarden/blob/master/LICENSE
-[product-screenshot]: https://github.com/user-attachments/assets/c0ccc0d1-e9eb-4bd9-8f78-6ec42e79e365
+[product-screenshot]: https://github.com/Cherrytree56567/ClientWarden/raw/refs/heads/main/assets/demo.gif

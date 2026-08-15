@@ -36,6 +36,7 @@ namespace ClientWarden {
         std::optional<nlohmann::json> refreshToken(std::string refreshToken);
         bool websocketLoop(std::function<void(int notifyType)> onNotification, std::string accessString, std::string wssURL,
             const std::atomic<bool>& shouldThread);
+        std::optional<nlohmann::json> getProfile(std::string accessString);
 
         std::optional<nlohmann::json> getVault(std::string accessToken);
 
@@ -44,6 +45,10 @@ namespace ClientWarden {
         bool DeleteItem(std::string uuid, std::string accessString);
         bool SoftDeleteItem(std::string uuid, std::string accessString);
         bool RestoreItem(std::string uuid, std::string accessString);
+        bool ArchiveItem(std::string id, std::string accessString);
+        bool ArchiveItem(std::vector<std::string> ids, std::string accessString);
+        bool UnArchiveItem(std::string id, std::string accessString);
+        bool UnArchiveItem(std::vector<std::string> ids, std::string accessString);
 
         std::optional<nlohmann::json> AddAttachment(std::string uuid, std::string& encryptedFileContents, std::string& encryptedFileName, 
             std::string& attKeyStr, std::string accessString, std::function<void(float)> onProgress = nullptr);
@@ -63,6 +68,11 @@ namespace ClientWarden {
         std::shared_ptr<httplib::Client> vaultClient;
         std::shared_ptr<httplib::Client> iconClient;
 
+        std::mutex apiClientMutex;
+        std::mutex vaultClientMutex;
+        std::mutex iconClientMutex;
+
         VaultConnectivity connectivity;
+        bool init = false;
     };
 }

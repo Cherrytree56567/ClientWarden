@@ -122,6 +122,40 @@ namespace ClientWarden {
         return *this;
     }
 
+    CipherQuery& CipherQuery::FilterByArchived() {
+        for (auto it = ciphers.begin(); it != ciphers.end();) {
+            if (!(*it).contains("archivedDate")) {
+                it = ciphers.erase(it);
+                continue;
+            }
+
+            if ((*it)["archivedDate"].is_null()) {
+                it = ciphers.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        return *this;
+    }
+
+    CipherQuery& CipherQuery::FilterByUnarchived() {
+        for (auto it = ciphers.begin(); it != ciphers.end();) {
+            if (!(*it).contains("archivedDate")) {
+                ++it;
+                continue;
+            }
+
+            if (!(*it)["archivedDate"].is_null()) {
+                it = ciphers.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        return *this;
+    }
+
     CipherQuery& CipherQuery::FilterByFavorites() {
         for (auto it = ciphers.begin(); it != ciphers.end();) {
             if (!(*it).contains("favorite")) {

@@ -20,6 +20,7 @@
     [self cb_AllItems];
     [self cb_Favorites];
     [self cb_Trash];
+    [self cb_archived];
     [self cb_Login];
     [self cb_Card];
     [self cb_Identity];
@@ -144,6 +145,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .GetCiphers();
             
             NSArray<ItemElement*>* items = [NavPanelBridge getItems:ciphers];
@@ -170,6 +172,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByFavorites()
                             .GetCiphers();
 
@@ -194,7 +197,33 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByBinned()
+                           ->FilterByUnarchived()
+                            .FilterByBinned()
+                            .GetCiphers();
+
+            return [NavPanelBridge getItems:ciphers];
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get Trash Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            NSMutableArray<ItemElement*>* items = [NSMutableArray array];
+            return items;
+        }
+    };
+}
+
++ (void)cb_archived {
+    NavigationPanel.instance.cb_archived = ^NSArray* _Nonnull {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                           ->FilterByUnbinned()
+                            .FilterByArchived()
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];
@@ -219,6 +248,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByType(ClientWarden::CipherType::Login)
                             .GetCiphers();
 
@@ -244,6 +274,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByType(ClientWarden::CipherType::Card)
                             .GetCiphers();
 
@@ -269,6 +300,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByType(ClientWarden::CipherType::Identity)
                             .GetCiphers();
 
@@ -294,6 +326,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByType(ClientWarden::CipherType::Note)
                             .GetCiphers();
 
@@ -319,6 +352,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByType(ClientWarden::CipherType::SSHKey)
                             .GetCiphers();
 
@@ -357,6 +391,7 @@
             
             ciphers = v_inst.GetCipherQuery()
                            ->FilterByUnbinned()
+                            .FilterByUnarchived()
                             .FilterByFolder(c_uuid)
                             .GetCiphers();
 
