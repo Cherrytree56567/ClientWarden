@@ -1,6 +1,13 @@
+import AppKit
 import AuthenticationServices
 
 class CredentialProviderViewController: ASCredentialProviderViewController {
+    //               UUID  , Title , Username
+    private var loginItems: [(uuid: String, title: String, username: String)] = []
+    private var p_requestID: String = ""
+    private var p_requestName: String = ""
+    private var p_result: String?
+    private var p_semaphore: DispatchSemaphore?
 
     /*
      * Clientwarden extension API stuff
@@ -29,7 +36,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
 
-        NSWorkspace.shared.openApplication([actionURL], withApplicationAt: appURL, configuration: configuration) { app, error in
+        NSWorkspace.shared.open([actionURL], withApplicationAt: appURL, configuration: configuration) { app, error in
             if let error {
                 /*
                  * Failed to launch Clientwarden App
@@ -48,6 +55,12 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
          * `app.ct5.clientwarden` for the extensions.
          */
         let requestID = UUID().uuidString
+        
+        p_requestID = requestID
+        p_requestName = requestName
+        p_result = nil
+        p_semaphore = DispatchSemaphore(value: 0)
+        
         let request: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccessGroup as String: "ID.app.ct5.clientwarden",
@@ -66,18 +79,22 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
          * know if the request has been fulfilled. Then we can get the response,
          * set the result, delete the response and return.
          */
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: String?
         let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
         CFNotificationCenterAddObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
             observer,
-            { _, _, _, _, _ in
+            { _, p_observer, _, _, _ in
+                guard let p_observer else {
+                    return
+                }
+                
+                let credProv = Unmanaged<CredentialProviderViewController>.fromOpaque(p_observer).takeUnretainedValue()
+                
                 let response: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
                     kSecAttrAccessGroup as String: "ID.app.ct5.clientwarden",
-                    kSecAttrAccount as String: requestID,
-                    kSecAttrService as String: "app.ct5.clientwarden." + requestName,
+                    kSecAttrAccount as String: credProv.p_requestID,
+                    kSecAttrService as String: "app.ct5.clientwarden." + credProv.p_requestName,
                     kSecReturnData as String: true,
                     kSecMatchLimit as String: kSecMatchLimitOne
                 ]
@@ -86,10 +103,10 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 let status = SecItemCopyMatching(response as CFDictionary, &a_result)
 
                 if status == errSecSuccess, let data = a_result as? Data {
-                    result = String(data: data, encoding: .utf8)
+                    credProv.p_result = String(data: data, encoding: .utf8)
                 }
 
-                semaphore.signal()
+                credProv.p_semaphore?.signal()
 
                 /*
                  * TODO: Put the actuall bundle id here
@@ -97,8 +114,8 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 let deleteRequest: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
                     kSecAttrAccessGroup as String: "ID.app.ct5.clientwarden",
-                    kSecAttrAccount as String: requestID,
-                    kSecAttrService as String: "app.ct5.clientwarden." + requestName,
+                    kSecAttrAccount as String: credProv.p_requestID,
+                    kSecAttrService as String: "app.ct5.clientwarden." + credProv.p_requestName,
                 ]
 
                 SecItemDelete(deleteRequest as CFDictionary)
@@ -119,10 +136,10 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         )
 
         /*
-         * Wait for 5 s and then, either remove the listener
+         * Wait for 1 s and then, either remove the listener
          * and fail or remove the listener and return the result
          */
-        let w_result = semaphore.wait(timeout: .now() + 5)
+        let w_result = p_semaphore?.wait(timeout: .now() + 1)
 
         CFNotificationCenterRemoveObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
@@ -131,11 +148,11 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
             nil
         )
 
-        if (w_result == .timedOut) {
+        if (w_result == .timedOut || w_result == nil) {
             return nil
         }
 
-        return result
+        return p_result
     }
 
     override func viewDidLoad() {
@@ -167,7 +184,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
              * Store a bunch of UUIDs for us to pass to the cw app to get the username's and title's
              * of the items.
              */
-            var UUIDs: [String]
+            var UUIDs: [String] = []
 
             /*
              * Loop through the websites that an app reports and ask the CW app for matching logins
@@ -181,14 +198,56 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 }
             }
 
-            //               UUID  , Title , Username
-            var loginItems: [(String, String, String)] = []
+            loginItems = []
 
             for l_uuid in UUIDs {
                 var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
                 var username: String? = requestClientwarden(requestName: "getUsername", requestValue: l_uuid);
 
-                loginItems.append((l_uuid, title, username));
+                loginItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
+            }
+
+            DispatchQueue.main.async {
+                /*
+                 * First, we have to remove the
+                 * existing views
+                 */
+                self.view.subviews.forEach { 
+                    $0.removeFromSuperview() 
+                }
+                
+                /*
+                 * Show the items
+                 */
+                let stack = NSStackView()
+                stack.orientation = .vertical
+                stack.alignment = .leading
+                stack.spacing = 8
+                stack.translatesAutoresizingMaskIntoConstraints = false
+
+                for (index, item) in self.loginItems.enumerated() {
+                    let b_item = NSButton(title: (item.username.isEmpty ?
+                                                      item.title :
+                                                        "\(item.title) — \(item.username)"), target: self, action: #selector(self.passwordSelected(_:)))
+                    b_item.bezelStyle = .rounded
+                    b_item.tag = index
+                    stack.addArrangedSubview(b_item)
+                }
+                
+                /*
+                 * From viewDidLoad
+                 */
+                let button = NSButton(title: "Dismiss", target: self, action: #selector(self.cancel(_:)))
+                button.bezelStyle = .rounded
+                button.translatesAutoresizingMaskIntoConstraints = false
+                stack.addArrangedSubview(button)
+                
+                self.view.addSubview(stack)
+                
+                NSLayoutConstraint.activate([
+                    stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+                    stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+                ])
             }
         }
     }
@@ -229,8 +288,33 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
 
     @objc
     func passwordSelected(_ sender: AnyObject?) {
-        let passwordCredential = ASPasswordCredential(user: "j_appleseed", password: "apple1234")
-        self.extensionContext.completeRequest(withSelectedCredential: passwordCredential, completionHandler: nil)
+        if let button = sender as? NSButton {
+            /*
+             * Check if button has a valid
+             * loginItem count thing.
+             *
+             * Then, we can get the item and
+             * and the UUID which we can pass
+             * to CW to retrieve the password
+             */
+            if (button.tag >= 0 && button.tag < loginItems.count) {
+                var item = loginItems[button.tag]
+                
+                var password: String? = requestClientwarden(requestName: "getPassword", requestValue: item.uuid);
+                
+                if (password != nil) {
+                    let p_cred = ASPasswordCredential(user: item.username, password: password!)
+                    self.extensionContext.completeRequest(withSelectedCredential: p_cred, completionHandler: nil)
+                    return
+                }
+            }
+            
+            /*
+             * If we cant get the password
+             * then we can return a failed
+             * request
+             */
+            self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+        }
     }
-
 }
