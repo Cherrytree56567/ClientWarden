@@ -17,12 +17,15 @@ final class SettingsPanel: NSObject {
     public var clipboardDelay: Int = 30
     public var autoLockDelay: Int = 300
     public var allowScreenshots: Bool = false
+    public var allowBioLogin: Bool = false
     
     @objc public var cb_logout: (() -> Bool)?
     @objc public var cb_getScrshot: (() -> Bool)?
     @objc public var cb_setScrshot: ((Bool) -> Bool)?
     @objc public var cb_getLockDelay: (() -> Int)?
     @objc public var cb_setLockDelay: ((Int) -> Bool)?
+    @objc public var cb_getBioUnlock: (() -> Bool)?
+    @objc public var cb_setBioUnlock: ((Bool) -> Bool)?
     
     var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
@@ -75,6 +78,25 @@ final class SettingsPanel: NSObject {
     
     func getScrshot() -> Bool {
         if let res = cb_getScrshot?() {
+            return res
+        }
+        return false
+    }
+    
+    func setBioUnlock(option: Bool) {
+        if let res = cb_setBioUnlock?(option) {
+            if (res) {
+                allowBioLogin = !allowBioLogin;
+            } else {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Set Biometric Unlock"))
+            }
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for Set Biometric Unlock"))
+        }
+    }
+    
+    func getBioUnlock() -> Bool {
+        if let res = cb_getBioUnlock?() {
             return res
         }
         return false
@@ -204,6 +226,31 @@ struct SettingsView: View {
                 
                 Divider()
                 
+                if (ClientwardenWindow.instance.state == WindowState.Vault) {
+                    HStack {
+                        Text("Use Biometric Login")
+                            .padding(12)
+                        
+                        Spacer()
+                        
+                        Toggle("Use Biometric Login", isOn: Binding(
+                            get: {
+                                return data.allowBioLogin
+                            },
+                            set: {
+                                data.setBioUnlock(option: $0)
+                            }
+                        ))
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .padding(.trailing, 12)
+                    }
+                    .padding(.top, -10)
+                    .padding(.bottom, -10)
+                    
+                    Divider()
+                }
+                
                 Button {
                     showLogout = true
                 } label: {
@@ -254,6 +301,9 @@ struct SettingsView: View {
         }
         .onChange(of: thisWindow) { _, newWindow in
             newWindow?.title = "Settings"
+        }
+        .onAppear {
+            data.allowBioLogin = data.getBioUnlock()
         }
     }
 }

@@ -14,6 +14,8 @@
     [self cb_logout];
     [self cb_getScrshot];
     [self cb_setScrshot];
+    [self cb_getBioUnlock];
+    [self cb_setBioUnlock];
     [self cb_getLockDelay];
     [self cb_setLockDelay];
 }
@@ -66,6 +68,45 @@
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to set screenshot option"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return NO;
+        }
+    };
+}
+
++ (void)cb_getBioUnlock {
+    SettingsPanel.instance.cb_getBioUnlock = ^BOOL() {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+            
+            return (BOOL)v_inst.checkVaultKeysKeychain();
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to get biometric unlock value"];
+                [[ToastStore instance] addToast:toast];
+            });
+            
+            return NO;
+        }
+    };
+}
++ (void)cb_setBioUnlock {
+    SettingsPanel.instance.cb_setBioUnlock = ^BOOL(BOOL value) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            if (value) {
+                return v_inst.saveVaultKeysKeychain();
+            } else {
+                return v_inst.deleteVaultKeysKeychain();
+            }
+
+            return YES;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to set biometric unlock"];
                 [[ToastStore instance] addToast:toast];
             });
             

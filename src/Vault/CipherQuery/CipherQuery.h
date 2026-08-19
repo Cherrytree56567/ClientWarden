@@ -22,6 +22,8 @@ namespace ClientWarden {
         CipherQuery& FilterByDeletionDate(std::time_t start, std::time_t end);
         CipherQuery& FilterByBinned();
         CipherQuery& FilterByUnbinned();
+        CipherQuery& FilterByArchived();
+        CipherQuery& FilterByUnarchived();
         CipherQuery& FilterByFavorites();
         CipherQuery& FilterByFolder(std::string folderUUID);
         CipherQuery& FilterNameByRegex(std::string regex);
