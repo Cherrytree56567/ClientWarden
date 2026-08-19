@@ -7,3 +7,4 @@
 #import "UIBridge/SidePanelBridge.h"
 #import "UIBridge/SettingsBridge.h"
 #import "UIBridge/ActivityMonitorBridge.h"
+#import "UIBridge/SDKHandlerBridge.h"

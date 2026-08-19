@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <AuthenticationServices/AuthenticationServices.h>
 
-@interface DarwinNotifs : NSObject <ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding>
-+ (void)setupDarwinNotifs;
+@interface LoginBridge : NSObject <ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding>
++ (void)setupCallbacks;
 @end
