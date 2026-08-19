@@ -74,8 +74,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
-            //context.timingFunction = CAMediaTimingFunction(name: "easeIn")
-
+            #if NON_XCODE_BUILD
+                context.timingFunction = CAMediaTimingFunction(name: "easeIn")
+            #endif
+            
             frame.size.width = 0
 
             sender.animator().setFrame(frame, display: true)
@@ -201,6 +203,7 @@ struct ClientwardenApp: App {
                     CWAppBridge.setupCallbacks()
                     ActivityMonitorBridge.setupCallbacks()
                 #endif
+                SDKHandler.instance.observe()
                 data.getState()
             }
         }
