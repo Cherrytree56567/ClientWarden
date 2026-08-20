@@ -19,6 +19,12 @@ namespace ClientWarden {
     public:
         VaultCrypto(std::shared_ptr<Botan::secure_vector<uint8_t>> encKey, std::shared_ptr<Botan::secure_vector<uint8_t>> macKey,
             std::shared_ptr<Botan::secure_vector<uint8_t>> internalKey);
+        
+        /*
+         * Added a var here so that I don't unintentionally
+         * make a VaultCrypto without the vars
+        */
+        VaultCrypto(bool cont) {}
 
         std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> getEncMacKey(std::string protectedKey);
         std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> getEncMacKey(std::string protectedKey, 

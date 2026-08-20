@@ -1,0 +1,13 @@
+[requires]
+botan/3.11.1
+nlohmann_json/3.12.0
+cpp-httplib/0.47.0
+openssl/4.0.1
+boost/1.91.0
+spdlog/1.17.0
+msgpack-cxx/7.0.0
+[generators]
+CMakeDeps
+CMakeToolchain
+[layout]
+cmake_layout
