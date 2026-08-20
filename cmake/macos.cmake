@@ -1,7 +1,14 @@
 include(cmake/versioning.cmake)
 
 function(buildUI _target)
+    configure_file(
+        src/Platforms/MacOS/UI/Clientwarden/CMake.swift.in
+        ${CMAKE_BINARY_DIR}/generated/CMake.swift
+        @ONLY
+    )
+
     add_library(ClientwardenAutoFill MODULE
+        ${CMAKE_BINARY_DIR}/generated/CMake.swift
         src/Platforms/MacOS/ClientwardenAutofill/CredentialProviderViewController.swift
     )
 
@@ -40,6 +47,7 @@ function(buildUI _target)
         src/Platforms/MacOS/UI/Clientwarden/SettingsView.swift
         src/Platforms/MacOS/UI/Clientwarden/AttachmentItem.swift
         src/Platforms/MacOS/UI/Clientwarden/Toast.swift
+        ${CMAKE_BINARY_DIR}/generated/CMake.swift
     )
 
     set(SwiftUIAssets

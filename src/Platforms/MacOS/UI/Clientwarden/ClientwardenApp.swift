@@ -102,7 +102,11 @@ enum WindowState: Int {
 final class ClientwardenWindow: NSObject {
     static let instance = ClientwardenWindow()
 
-    private var p_state: WindowState = .Empty
+    /*
+     * Needs to be public so that SDK Handler
+     * can access it
+     */
+    public var p_state: WindowState = .Empty
     
     @objc public var state: WindowState {
         get { p_state }
@@ -202,8 +206,8 @@ struct ClientwardenApp: App {
                 #if NON_XCODE_BUILD
                     CWAppBridge.setupCallbacks()
                     ActivityMonitorBridge.setupCallbacks()
+                    SDKHandler.instance.observe()
                 #endif
-                SDKHandler.instance.observe()
                 data.getState()
             }
         }

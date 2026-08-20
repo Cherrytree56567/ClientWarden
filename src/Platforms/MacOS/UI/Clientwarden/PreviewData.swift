@@ -87,6 +87,11 @@ struct PreviewData {
                             ),
                         ]
                     )
+                    
+                    NavigationPanel.instance.folders = [
+                        Folder(uuid: UUID(), name: "New Fold"),
+                        Folder(uuid: UUID(), name: "Client Fold")
+                    ]
                 }
         }
         .frame(minWidth: 700, minHeight: 400)

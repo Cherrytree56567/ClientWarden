@@ -469,10 +469,8 @@ struct GenericItem: View {
         .padding(.top, (data.type == GenericItemType.password && editable && data.title == "Password") ? 8 : 0)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(lineWidth: 0)
                 .fill(AnyShapeStyle(Material.ultraThinMaterial))
                 .stroke(Color.gray.opacity(data.isMultiline() ? 0.5 : 0.3), lineWidth: 0.5)
-                .overlay(Color.black.opacity(0.15))
         }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .clipped()

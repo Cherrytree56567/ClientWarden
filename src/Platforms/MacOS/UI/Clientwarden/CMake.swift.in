@@ -1,0 +1,9 @@
+
+/*
+ * Should be autogen by CMake
+ */
+enum BundleInfo {
+    static let teamID = "@TEAM_ID@"
+    static let sharedID = "@SHARED_BUNDLE_ID@"
+    static let appID = "@APP_BUNDLE_ID@"
+}

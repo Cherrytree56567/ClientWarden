@@ -1,35 +1,33 @@
+import os
 import AppKit
 import AuthenticationServices
 
 class CredentialProviderViewController: ASCredentialProviderViewController {
-    //               UUID  , Title , Username
     private var loginItems: [(uuid: String, title: String, username: String)] = []
     private var p_requestID: String = ""
     private var p_requestName: String = ""
     private var p_result: String?
     private var p_semaphore: DispatchSemaphore?
+    
+    let logger = Logger(subsystem: BundleInfo.sharedID, category: "AutoFill")
 
     /*
      * Clientwarden extension API stuff
      */
     func clientwardenAppRunning() -> Bool {
         return NSWorkspace.shared.runningApplications.contains {
-            $0.bundleIdentifier == "com.ct5.clientwarden"
+            $0.bundleIdentifier == BundleInfo.appID
         }
     }
 
     func launchClientwardenApp() {
-        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.ct5.clientwarden") else {
-            /*
-             * Failed to locate Clientwarden App
-             */
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: BundleInfo.appID) else {
+            logger.error("Failed to locate Clientwarden App")
             return
         }
 
         guard let actionURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "clientwarden://autofillUnlock") else {
-            /*
-             * Failed to locate Clientwarden App
-             */
+            logger.error("Failed to locate Clientwarden App")
             return
         }
 
@@ -38,9 +36,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
 
         NSWorkspace.shared.open([actionURL], withApplicationAt: appURL, configuration: configuration) { app, error in
             if let error {
-                /*
-                 * Failed to launch Clientwarden App
-                 */
+                self.logger.error("Failed to launch Clientwarden App")
                 return
             }
         }
@@ -63,9 +59,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         
         let request: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccessGroup as String: "ID.app.ct5.clientwarden",
+            kSecAttrAccessGroup as String: BundleInfo.teamID + "." + BundleInfo.sharedID,
             kSecAttrAccount as String: requestID,
-            kSecAttrService as String: "app.ct5.clientwarden." + requestName,
+            kSecAttrService as String: BundleInfo.sharedID + "." + requestName,
             kSecValueData as String: requestValue.data(using: .utf8)!
         ]
 
@@ -92,9 +88,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 
                 let response: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
-                    kSecAttrAccessGroup as String: "ID.app.ct5.clientwarden",
+                    kSecAttrAccessGroup as String: BundleInfo.teamID + "." + BundleInfo.sharedID,
                     kSecAttrAccount as String: credProv.p_requestID,
-                    kSecAttrService as String: "app.ct5.clientwarden." + credProv.p_requestName,
+                    kSecAttrService as String: BundleInfo.sharedID + "." + credProv.p_requestName,
                     kSecReturnData as String: true,
                     kSecMatchLimit as String: kSecMatchLimitOne
                 ]
@@ -113,14 +109,14 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                  */
                 let deleteRequest: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
-                    kSecAttrAccessGroup as String: "ID.app.ct5.clientwarden",
+                    kSecAttrAccessGroup as String: BundleInfo.teamID + "." + BundleInfo.sharedID,
                     kSecAttrAccount as String: credProv.p_requestID,
-                    kSecAttrService as String: "app.ct5.clientwarden." + credProv.p_requestName,
+                    kSecAttrService as String: BundleInfo.sharedID + "." + credProv.p_requestName,
                 ]
 
                 SecItemDelete(deleteRequest as CFDictionary)
             },
-            ("app.ct5.clientwarden." + requestName) as CFString,
+            (BundleInfo.sharedID + "." + requestName) as CFString,
             nil,
             .deliverImmediately
         )
@@ -131,7 +127,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
          */
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
-            CFNotificationName(("app.ct5.clientwarden.request." + requestName) as CFString),
+            CFNotificationName((BundleInfo.sharedID + ".request." + requestName) as CFString),
             nil, nil, true
         )
 
@@ -144,15 +140,20 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         CFNotificationCenterRemoveObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
             observer,
-            CFNotificationName(("app.ct5.clientwarden." + requestName) as CFString),
+            CFNotificationName((BundleInfo.sharedID + "." + requestName) as CFString),
             nil
         )
 
         if (w_result == .timedOut || w_result == nil) {
+            logger.warning("Didn't Recieve response from App")
             return nil
         }
 
         return p_result
+    }
+    
+    func clientwardenStatus() -> Bool {
+        return requestClientwarden(requestName: "getState", requestValue: "") == "true"
     }
 
     override func viewDidLoad() {
@@ -177,7 +178,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
         if (!clientwardenAppRunning()) {
             launchClientwardenApp()
-        } else if (false) { // TODO: Check if CW App is running but is locked
+        } else if (clientwardenStatus()) { // Check if CW App is running but is locked
             launchClientwardenApp()
         } else {
             /*
@@ -314,6 +315,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
              * then we can return a failed
              * request
              */
+            logger.error("Failed to get password")
             self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
         }
     }

@@ -6,7 +6,12 @@ if (APPLE)
     enable_language(Swift)
 endif()
 
-set(CW_IDENTIFIER com.ct5.clientwarden)
+# Mac Specific stuff
+set(TEAM_ID "IDABC16767")
+set(SHARED_BUNDLE_ID "app.ct5.clientwarden")
+set(APP_BUNDLE_ID "com.ct5.clientwarden")
+
+set(CW_IDENTIFIER ${APP_BUNDLE_ID})
 set(CW_VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 23)
