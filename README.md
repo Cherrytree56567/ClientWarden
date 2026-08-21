@@ -126,6 +126,26 @@ You might need to use the `-s compiler.cppstd=20` flag.
    ```
 5. Enjoy!
 
+### Building Tests
+
+1. Install CMake
+2. Install Dependencies
+   ```sh
+   mkdir build
+   conan install . --output-folder=build --build=missing
+   conan install . --output-folder=build --build=missing -s build_type=Debug
+   ```
+You might need to use the `-s compiler.cppstd=20` flag.
+3. Build
+   ```sh
+   cd build
+   cmake .. -DCMAKE_TOOLCHAIN_FILE=build/Debug/generators/conan_toolchain.cmake -G Xcode
+   cd ../
+   cmake --build build
+   cd build
+   ctest --output-on-failure
+   ```
+
 <!-- ROADMAP -->
 ## Roadmap
 
