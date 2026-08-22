@@ -3,11 +3,6 @@
 #include "VaultCrypto/VaultCrypto.h"
 
 /*
- * TODO: Don't Use B64 Encode or Decode
- * TODO: Test invalid tests
-*/
-
-/*
  * Encrypting will produce a different result everytime
 */
 TEST_CASE("Encrypt/Decrypt Test") {
@@ -17,9 +12,6 @@ TEST_CASE("Encrypt/Decrypt Test") {
         ClientWarden::b64Decode("GNuySg6B8dB8TPuz7z9kBDbn60iUKGT/P2pVUO9h4dM=");
     Botan::secure_vector<uint8_t> macKey = 
         ClientWarden::b64Decode("yZzs3Z5PrweGEbRqw63hEo4NTbhpEAlfAHHcPYRjVgI=");
-
-    std::cout << ClientWarden::b64Encode(encKey) << std::endl;
-    std::cout << ClientWarden::b64Encode(macKey) << std::endl;
 
     Botan::secure_vector<uint8_t> og = {
         'C', 'l', 'i', 'e', 'n', 't', 'W', 'a', 'r', 'd', 'e', 'n'

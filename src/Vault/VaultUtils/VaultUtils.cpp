@@ -24,8 +24,13 @@ namespace ClientWarden {
 
         Botan::secure_vector<uint8_t> result(data.size());
         int len = BIO_read(b64, result.data(), result.size());
-        result.resize(len);
         BIO_free_all(b64);
+
+        if (len < 0) {
+            throw std::runtime_error("invalid base64 input");
+        }
+
+        result.resize(len);
         return result;
     }
 

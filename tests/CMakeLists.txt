@@ -52,7 +52,7 @@ set(FILES
 )
 
 
-add_executable(tests crypto.cpp ${FILES})
+add_executable(tests test.cpp crypto/crypto_pbkdf.cpp crypto/crypto_pbkdf_fail.cpp utils/utils.cpp ${FILES})
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 
 if(APPLE)
