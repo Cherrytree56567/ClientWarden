@@ -197,8 +197,7 @@
             std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
             
             ciphers = v_inst.GetCipherQuery()
-                           ->FilterByUnarchived()
-                            .FilterByBinned()
+                           ->FilterByBinned()
                             .GetCiphers();
 
             return [NavPanelBridge getItems:ciphers];

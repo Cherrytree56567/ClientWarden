@@ -117,7 +117,6 @@ final class NavigationPanel: NSObject {
 }
 
 struct NavigationPanelView: View {
-    @State private var refreshToken: Int = 0
     @State private var showRenameAlert: Bool = false
     @State private var showDeleteAlert: Bool = false
     @State private var showDeleteFolder: Folder = Folder(uuid: UUID.empty, name: "")
@@ -133,20 +132,65 @@ struct NavigationPanelView: View {
     }
     
     var body: some View {
-        TabView(selection: $data.selection) {
-            Tab("All Items", systemImage: "command", value: .all_items) {
-                ItemsPanelView()
-                    .id(refreshToken)
-            }
-            .dropDestination(for: DragableItemElement.self) { droppedItems in
-                /*
-                 * Found on:
-                 * https://developer.apple.com/documentation/swiftui/adopting-drag-and-drop-using-swiftui
-                 */
-                
-                if (data.selection == .favorites) {
+        List(selection: $data.selection) {
+            Label("All Items", systemImage: "command")
+                .tag(NavItems.all_items)
+                .dropDestination(for: DragableItemElement.self) { droppedItems, location in
+                    /*
+                    * Found on:
+                    * https://developer.apple.com/documentation/swiftui/adopting-drag-and-drop-using-swiftui
+                    */
+                    
+                    if (data.selection == .favorites) {
+                        for uuid in (droppedItems.flatMap{$0.uuids}) {
+                            if let result = SidePanel.instance.cb_favorite?(false, uuid) {
+                                if (result) {
+                                } else {
+                                    ToastStore.instance.toasts.append(Toast(message: "Failed to favorite items"))
+                                }
+                            } else {
+                                ToastStore.instance.toasts.append(Toast(message: "No callback set for favorite Items"))
+                            }
+                        }
+                    } else if (data.selection == .trash) {
+                        if let result = SidePanel.instance.cb_restoreMultiple?(droppedItems.flatMap{$0.uuids}) {
+                            if (result) {
+                            } else {
+                                ToastStore.instance.toasts.append(Toast(message: "Failed to restore items"))
+                            }
+                        } else {
+                            ToastStore.instance.toasts.append(Toast(message: "No callback set for restore Items"))
+                        }
+                    } else if (data.selection == .archived) {
+                        if let result = SidePanel.instance.cb_unarchiveMultiple?(droppedItems.flatMap{$0.uuids}) {
+                            if (result) {
+                            } else {
+                                ToastStore.instance.toasts.append(Toast(message: "Failed to unarchive items"))
+                            }
+                        } else {
+                            ToastStore.instance.toasts.append(Toast(message: "No callback set for unarchive Items"))
+                        }
+                    } else if case .folder(let folderId) = data.selection {
+                        for uuid in (droppedItems.flatMap{$0.uuids}) {
+                            if let result = SidePanel.instance.cb_moveToFolder?(UUID.empty, uuid) {
+                                if (result) {
+                                } else {
+                                    ToastStore.instance.toasts.append(Toast(message: "Failed to move items to folder"))
+                                }
+                            } else {
+                                ToastStore.instance.toasts.append(Toast(message: "No callback set for move items to folder"))
+                            }
+                        }
+                    }
+                    
+                    NavigationPanel.instance.loadCurrentTab(refresh: true)
+                }
+            
+            Label("Favorites", systemImage: "star")
+                .tag(NavItems.favorites)
+                .dropDestination(for: DragableItemElement.self) { droppedItems, location in
                     for uuid in (droppedItems.flatMap{$0.uuids}) {
-                        if let result = SidePanel.instance.cb_favorite?(false, uuid) {
+                        if let result = SidePanel.instance.cb_favorite?(true, uuid) {
                             if (result) {
                             } else {
                                 ToastStore.instance.toasts.append(Toast(message: "Failed to favorite items"))
@@ -155,118 +199,65 @@ struct NavigationPanelView: View {
                             ToastStore.instance.toasts.append(Toast(message: "No callback set for favorite Items"))
                         }
                     }
-                } else if (data.selection == .trash) {
-                    if let result = SidePanel.instance.cb_restoreMultiple?(droppedItems.flatMap{$0.uuids}) {
+                    NavigationPanel.instance.loadCurrentTab(refresh: true)
+                }
+            
+            Label("Trash", systemImage: "trash")
+                .tag(NavItems.trash)
+                .dropDestination(for: DragableItemElement.self) { droppedItems, location in
+                    if let result = SidePanel.instance.cb_deleteMultiple?(droppedItems.flatMap{$0.uuids}) {
                         if (result) {
+                            NavigationPanel.instance.loadCurrentTab(refresh: true)
                         } else {
-                            ToastStore.instance.toasts.append(Toast(message: "Failed to restore items"))
+                            ToastStore.instance.toasts.append(Toast(message: "Failed to delete items"))
                         }
                     } else {
-                        ToastStore.instance.toasts.append(Toast(message: "No callback set for restore Items"))
+                        ToastStore.instance.toasts.append(Toast(message: "No callback set for delete Items"))
                     }
-                } else if (data.selection == .archived) {
-                    if let result = SidePanel.instance.cb_unarchiveMultiple?(droppedItems.flatMap{$0.uuids}) {
-                        if (result) {
-                        } else {
-                            ToastStore.instance.toasts.append(Toast(message: "Failed to unarchive items"))
-                        }
-                    } else {
-                        ToastStore.instance.toasts.append(Toast(message: "No callback set for unarchive Items"))
-                    }
-                } else if case .folder(let folderId) = data.selection {
-                    for uuid in (droppedItems.flatMap{$0.uuids}) {
-                        if let result = SidePanel.instance.cb_moveToFolder?(UUID.empty, uuid) {
+                }
+            
+            Label("Archived", systemImage: "archivebox")
+                .tag(NavItems.archived)
+                .dropDestination(for: DragableItemElement.self) { droppedItems, location in
+                    if (data.selection == NavItems.trash) {
+                        if let result = SidePanel.instance.cb_restoreMultiple?(droppedItems.flatMap{$0.uuids}) {
                             if (result) {
                             } else {
-                                ToastStore.instance.toasts.append(Toast(message: "Failed to move items to folder"))
+                                ToastStore.instance.toasts.append(Toast(message: "Failed to restore items"))
                             }
                         } else {
-                            ToastStore.instance.toasts.append(Toast(message: "No callback set for move items to folder"))
+                            ToastStore.instance.toasts.append(Toast(message: "No callback set for restore Items"))
                         }
                     }
-                }
-                
-                NavigationPanel.instance.loadCurrentTab(refresh: true)
-            }
-            
-            Tab("Favorites", systemImage: "star", value: .favorites) {
-                ItemsPanelView()
-                    .id(refreshToken)
-            }
-            .dropDestination(for: DragableItemElement.self) { droppedItems in
-                for uuid in (droppedItems.flatMap{$0.uuids}) {
-                    if let result = SidePanel.instance.cb_favorite?(true, uuid) {
+                    if let result = SidePanel.instance.cb_archiveMultiple?(droppedItems.flatMap{$0.uuids}) {
                         if (result) {
+                            NavigationPanel.instance.loadCurrentTab(refresh: true)
                         } else {
-                            ToastStore.instance.toasts.append(Toast(message: "Failed to favorite items"))
+                            ToastStore.instance.toasts.append(Toast(message: "Failed to archive items"))
                         }
                     } else {
-                        ToastStore.instance.toasts.append(Toast(message: "No callback set for favorite Items"))
+                        ToastStore.instance.toasts.append(Toast(message: "No callback set for archive Items"))
                     }
                 }
-                NavigationPanel.instance.loadCurrentTab(refresh: true)
+
+            Section("Type") {
+                Label("Login", systemImage: "globe")
+                    .tag(NavItems.login)
+                
+                Label("Card", systemImage: "creditcard")
+                    .tag(NavItems.card)
+                
+                Label("Identity", systemImage: "person.text.rectangle")
+                    .tag(NavItems.identity)
+                
+                Label("Note", systemImage: "pad.header")
+                    .tag(NavItems.note)
+                
+                Label("SSH Key", systemImage: "key.viewfinder")
+                    .tag(NavItems.sshkey)
             }
             
-            Tab("Trash", systemImage: "trash", value: .trash) {
-                ItemsPanelView()
-                    .id(refreshToken)
-            }
-            .dropDestination(for: DragableItemElement.self) { droppedItems in
-                if let result = SidePanel.instance.cb_deleteMultiple?(droppedItems.flatMap{$0.uuids}) {
-                    if (result) {
-                        NavigationPanel.instance.loadCurrentTab(refresh: true)
-                    } else {
-                        ToastStore.instance.toasts.append(Toast(message: "Failed to delete items"))
-                    }
-                } else {
-                    ToastStore.instance.toasts.append(Toast(message: "No callback set for delete Items"))
-                }
-            }
-            
-            Tab("Archived", systemImage: "archivebox", value: .archived) {
-                ItemsPanelView()
-                    .id(refreshToken)
-            }
-            .dropDestination(for: DragableItemElement.self) { droppedItems in
-                if let result = SidePanel.instance.cb_archiveMultiple?(droppedItems.flatMap{$0.uuids}) {
-                    if (result) {
-                        NavigationPanel.instance.loadCurrentTab(refresh: true)
-                    } else {
-                        ToastStore.instance.toasts.append(Toast(message: "Failed to archive items"))
-                    }
-                } else {
-                    ToastStore.instance.toasts.append(Toast(message: "No callback set for archive Items"))
-                }
-            }
-            
-            TabSection("Type") {
-                Tab("Login", systemImage: "globe", value: NavItems.login) {
-                    ItemsPanelView()
-                        .id(refreshToken)
-                }
-                
-                Tab("Card", systemImage: "creditcard", value: NavItems.card) {
-                    ItemsPanelView()
-                        .id(refreshToken)
-                }
-                
-                Tab("Identity", systemImage: "person.text.rectangle", value: NavItems.identity) {
-                    ItemsPanelView()
-                        .id(refreshToken)
-                }
-                
-                Tab("Note", systemImage: "pad.header", value: NavItems.note) {
-                    ItemsPanelView()
-                        .id(refreshToken)
-                }
-                
-                Tab("SSH Key", systemImage: "key.viewfinder", value: NavItems.sshkey) {
-                    ItemsPanelView()
-                        .id(refreshToken)
-                }
-            }
-            
-            TabSection("Folder") {
+            Section("Folder") {
                 /*
                  * We can dynamically add folders to the tab section
                  * by iterating through the `folders` array which contains
@@ -274,46 +265,44 @@ struct NavigationPanelView: View {
                  */
                 ForEach(data.folders) { folder in
                     if (folder.id != UUID.empty) {
-                        Tab(folder.name, systemImage: "folder", value: NavItems.folder(folder.id)) {
-                            ItemsPanelView()
-                                .id(refreshToken)
-                        }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                showDeleteFolder = folder
-                                showDeleteAlert = true
-                            } label: {
-                                Label("Delete", systemImage: "minus.circle")
-                                    .labelStyle(TitleAndIconLabelStyle())
-                            }
-                            Button {
-                                showRenameAlert = true
-                                renameAlertId = folder.id
-                                folderName = folder.name
-                            } label: {
-                                Label("Rename", systemImage: "character.cursor.ibeam")
-                                    .labelStyle(TitleAndIconLabelStyle())
-                            }
-                        }
-                        .dropDestination(for: DragableItemElement.self) { droppedItems in
-                            for uuid in (droppedItems.flatMap{$0.uuids}) {
-                                if let result = SidePanel.instance.cb_moveToFolder?(folder.id, uuid) {
-                                    if (result) {
-                                    } else {
-                                        ToastStore.instance.toasts.append(Toast(message: "Failed to move items to folder"))
-                                    }
-                                } else {
-                                    ToastStore.instance.toasts.append(Toast(message: "No callback set for move items to folder"))
+                        Label(folder.name, systemImage: "folder")
+                            .tag(NavItems.folder(folder.id))
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    showDeleteFolder = folder
+                                    showDeleteAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "minus.circle")
+                                        .labelStyle(TitleAndIconLabelStyle())
+                                }
+                                Button {
+                                    showRenameAlert = true
+                                    renameAlertId = folder.id
+                                    folderName = folder.name
+                                } label: {
+                                    Label("Rename", systemImage: "character.cursor.ibeam")
+                                        .labelStyle(TitleAndIconLabelStyle())
                                 }
                             }
-                            NavigationPanel.instance.loadCurrentTab(refresh: true)
-                        }
+                            .dropDestination(for: DragableItemElement.self) { droppedItems, location in
+                                for uuid in (droppedItems.flatMap{$0.uuids}) {
+                                    if let result = SidePanel.instance.cb_moveToFolder?(folder.id, uuid) {
+                                        if (result) {
+                                        } else {
+                                            ToastStore.instance.toasts.append(Toast(message: "Failed to move items to folder"))
+                                        }
+                                    } else {
+                                        ToastStore.instance.toasts.append(Toast(message: "No callback set for move items to folder"))
+                                    }
+                                }
+                                NavigationPanel.instance.loadCurrentTab(refresh: true)
+                            }
                     }
                 }
             }
         }
-        .tabViewStyle(.sidebarAdaptable)
-        .tabViewSidebarBottomBar {
+        .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom) {
             Button {
                 /*
                  * Check if the var has a callback and check if
@@ -329,13 +318,33 @@ struct NavigationPanelView: View {
             } label: {
                 Label("Add Folder", systemImage: "folder.badge.plus")
                     .labelStyle(TitleAndIconLabelStyle())
+                    .foregroundStyle(Color.gray)
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+                    .padding(.leading, 12)
+                    .padding(.trailing, 8)
             }
-            .padding(.vertical, 4)
-            .padding(.horizontal, 4)
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .clipShape(
+                .rect(
+                    topLeadingRadius: 0,
+                    bottomLeadingRadius: 10,
+                    bottomTrailingRadius: 10,
+                    topTrailingRadius: 0
+                )
+            )
+            .overlay(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 0,
+                    bottomLeadingRadius: 10,
+                    bottomTrailingRadius: 10,
+                    topTrailingRadius: 0
+                )
+                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+            )
             .animation(.spring(response: 0.4, dampingFraction: 0.8))
-        }
-        .onChange(of: data.refresh) { _, newVal in
-            refreshToken = newVal
         }
         .onChange(of: data.selection) { oldValue, newValue in
             SidePanel.instance.closeItem()

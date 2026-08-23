@@ -184,8 +184,14 @@ struct ClientwardenApp: App {
                         )
                     case .Vault:
                         HStack(spacing: 0) {
-                            NavigationPanelView()
-                            SidePanelView()
+                            NavigationSplitView {
+                                NavigationPanelView()
+                            } content: {
+                                ItemsPanelView()
+                                    .id(NavigationPanel.instance.refresh)
+                            } detail: {
+                                SidePanelView()
+                            }
                         }
                         .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
                         .toast(

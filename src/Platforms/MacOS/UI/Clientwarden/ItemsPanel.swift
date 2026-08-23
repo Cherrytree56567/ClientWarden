@@ -118,26 +118,28 @@ struct ItemsPanelView: View {
                 }
             }
             .padding(8)
-            .padding(.bottom, -8)
-            GeometryReader { geo in
-                ScrollView {
-                    if (data.searchQuery != "" && data.filteredElements.isEmpty) {
-                        Spacer()
-                        ContentUnavailableView(
-                            "No Items Found",
-                            systemImage: "magnifyingglass",
-                            description: Text("Couldn't find any items!")
-                        )
-                        .frame(minWidth: geo.size.width, minHeight: geo.size.height)
-                    } else if (data.searchQuery == "" && data.filteredElements.isEmpty) {
-                        Spacer()
-                        ContentUnavailableView(
-                            "No Items",
-                            systemImage: "tray",
-                            description: Text("Create some items!")
-                        )
-                        .frame(minWidth: geo.size.width, minHeight: geo.size.height)
-                    } else {
+            
+            VStack {
+                if (data.searchQuery != "" && data.filteredElements.isEmpty) {
+                    Spacer()
+                    ContentUnavailableView(
+                        "No Items Found",
+                        systemImage: "magnifyingglass",
+                        description: Text("Couldn't find any items!")
+                    )
+                    .frame(width: .infinity, height: .infinity)
+                    Spacer()
+                } else if (data.searchQuery == "" && data.filteredElements.isEmpty) {
+                    Spacer()
+                    ContentUnavailableView(
+                        "No Items",
+                        systemImage: "tray",
+                        description: Text("Create some items!")
+                    )
+                    .frame(width: .infinity, height: .infinity)
+                    Spacer()
+                } else {
+                    ScrollView {
                         VStack {
                             ForEach(data.filteredElements) { item in
                                 ItemElementView(data: item, selected: (SidePanel.instance.viewable && SidePanel.instance.uuid == item.uuid) || data.selectedItems.contains(item.uuid)
@@ -197,17 +199,18 @@ struct ItemsPanelView: View {
                         }
                         .padding(12)
                     }
+                    .scrollIndicators(.never)
                 }
-                .scrollIndicators(.never)
-                .background {
-                    RoundedRectangle(cornerRadius: 0, style: .continuous)
-                        .stroke(lineWidth: 0)
-                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
-                }
-                .padding(.bottom, -9)
-                .padding(.leading, -1)
-                .padding(.trailing, -1)
             }
+            .background {
+                RoundedRectangle(cornerRadius: 0, style: .continuous)
+                    .stroke(lineWidth: 0)
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+            }
+            .padding(.bottom, -9)
+            .padding(.leading, -1)
+            .padding(.trailing, -1)
+            .padding(.top, -8)
 
             Spacer()
         }
