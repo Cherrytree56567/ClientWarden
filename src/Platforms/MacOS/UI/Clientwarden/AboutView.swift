@@ -11,12 +11,24 @@ struct AboutView: View {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
     
+    @State private var easterEggs = 0
+    @State private var easterCount = 0
+    
     var body: some View {
         VStack(spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 96, height: 96)
+                .rotationEffect(.degrees(Double(easterEggs) * 360))
+                .animation(.easeInOut(duration: 0.6), value: easterEggs)
                 .padding(.top, 24)
+                .onTapGesture {
+                    easterCount += 1
+                    if (easterCount >= 3) {
+                        easterEggs += 1
+                        easterCount = 0
+                    }
+                }
 
             Text("ClientWarden")
                 .font(.title2)
