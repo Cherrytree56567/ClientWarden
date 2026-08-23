@@ -327,6 +327,7 @@ struct NavigationPanelView: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
+            .glassEffect(.regular, in: .rect(cornerRadius: 0))
             .clipShape(
                 .rect(
                     topLeadingRadius: 0,

@@ -136,7 +136,6 @@ struct ItemsPanelView: View {
                         systemImage: "tray",
                         description: Text("Create some items!")
                     )
-                    .frame(width: .infinity, height: .infinity)
                     Spacer()
                 } else {
                     ScrollView {
