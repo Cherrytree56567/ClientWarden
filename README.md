@@ -152,13 +152,13 @@ You might need to use the `-s compiler.cppstd=20` flag.
 - [ ] V1.1.0
   - [X] Clientwarden stays open in the background
   - [X] Auto Lock Support
-  - [ ] AutoFill Support
+  - [X] AutoFill Support
     - [X] Check if CW App is open
-    - [ ] Setup App Group
-    - [ ] Ask CW App for AutoFill Unlock Window
-    - [ ] Ask CW App for Ciphers with Domain/URL
-    - [ ] Display Ciphers
-    - [ ] Autofill Cipher
+    - [X] Setup App Group
+    - [X] Ask CW App for AutoFill Unlock Window
+    - [X] Ask CW App for Ciphers with Domain/URL
+    - [X] Display Ciphers
+    - [X] Autofill Cipher
     - [X] Add Autofill Unlock Screen
   - [ ] Passkey AutoFill Support
   - [X] Passkey Login Support (wouldn't be possible)
@@ -167,6 +167,9 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [X] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
   - [ ] Make SDK
   - [X] Store auth data in KeyChain (!important)
+  - [ ] Code Signing
+  - [X] Argon2ID
+  - [ ] Fix Light Mode
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 

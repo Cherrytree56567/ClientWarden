@@ -30,20 +30,49 @@ namespace ClientWarden {
         return { std::move(itemEncKey), std::move(itemMacKey) };
     }
 
-    Botan::secure_vector<uint8_t> VaultCrypto::makeKey(const std::string& password, const std::string& salt, int iterations) {
+    Botan::secure_vector<uint8_t> VaultCrypto::makeKey(const std::string& password, const std::string& salt, int kdfType, int iterations, int memory, int parallel) {
         Botan::secure_vector<uint8_t> key(256 / 8);
 
-        int result = PKCS5_PBKDF2_HMAC(
-            password.c_str(), password.size(),
-            reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
-            iterations,
-            EVP_sha256(),
-            key.size(), key.data()
-        );
+        if (kdfType == 1) {
+            logger->warn("makeKey : Argon2ID is not OFFICIALLY supported");
 
-        if (result != 1) {
-            logger->error("makeKey : PBKDF2 failed");
-            throw std::runtime_error("PBKDF2 failed");
+            /*
+             * BitWarden requires a SHA256 hash of the salt for Argon2ID.
+            */
+            Botan::secure_vector<uint8_t> h_salt(SHA256_DIGEST_LENGTH);
+
+            SHA256(
+                reinterpret_cast<const uint8_t*>(salt.data()),
+                salt.size(),
+                h_salt.data()
+            );
+            
+            std::unique_ptr<Botan::PasswordHashFamily> l_family = Botan::PasswordHashFamily::create_or_throw("Argon2id");
+            std::unique_ptr<Botan::PasswordHash> l_argon = l_family->from_params(memory * 1024, iterations, parallel);
+
+            l_argon->derive_key(
+                key.data(),
+                key.size(),
+                password.c_str(),
+                password.size(),
+                reinterpret_cast<const uint8_t*>(h_salt.data()),
+                h_salt.size()
+            );
+        } else if (kdfType == 0) {
+            int result = PKCS5_PBKDF2_HMAC(
+                password.c_str(), password.size(),
+                reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
+                iterations,
+                EVP_sha256(),
+                key.size(), key.data()
+            );
+
+            if (result != 1) {
+                logger->error("makeKey : PBKDF2 failed");
+                throw std::runtime_error("PBKDF2 failed");
+            }
+        } else {
+            logger->warn("makeKey : unsupported encryption type");
         }
 
         return key;

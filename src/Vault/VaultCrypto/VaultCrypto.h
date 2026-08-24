@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <botan/secmem.h>
 #include <botan/mem_ops.h>
+#include <botan/pwdhash.h>
 #include <openssl/kdf.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
@@ -30,7 +31,7 @@ namespace ClientWarden {
         std::pair<Botan::secure_vector<uint8_t>, Botan::secure_vector<uint8_t>> getEncMacKey(std::string protectedKey, 
             Botan::secure_vector<uint8_t> itemEncKey, Botan::secure_vector<uint8_t> itemMacKey);
 
-        Botan::secure_vector<uint8_t> makeKey(const std::string& password, const std::string& salt, int iterations);
+        Botan::secure_vector<uint8_t> makeKey(const std::string& password, const std::string& salt, int kdfType, int iterations, int memory, int parallel);
         std::string cipherString(int encryptionType, const std::string& iv, const std::string& ct, const std::string& mac);
         std::string makeEncKey(const Botan::secure_vector<uint8_t>& key);
         std::string hashedPassword(const std::string& password, const Botan::secure_vector<uint8_t>& key);

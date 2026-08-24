@@ -389,26 +389,45 @@ namespace ClientWarden {
         keychain::Error e1;
         keychain::Error e2;
         keychain::Error e3;
+        keychain::Error e4;
+        keychain::Error e5;
+        keychain::Error e6;
 
-        keychain::setPassword(CWbundleID, "kdfIterations", std::to_string(preLogin.value()["kdfIterations"].get<int>()), e1);
-        keychain::setPassword(CWbundleID, "salt", email, e2);
-        keychain::setPassword(CWbundleID, "email", email, e3);
+        keychain::setPassword(CWbundleID, "kdfType", std::to_string(preLogin.value()["kdf"].get<int>()), e1);
+        keychain::setPassword(CWbundleID, "kdfIterations", std::to_string(preLogin.value()["kdfIterations"].get<int>()), e2);
+        keychain::setPassword(CWbundleID, "kdfMemory", "0", e3);
+        keychain::setPassword(CWbundleID, "kdfParallelism", "0", e4);
+        keychain::setPassword(CWbundleID, "salt", email, e5);
+        keychain::setPassword(CWbundleID, "email", email, e6);
+        if (preLogin.value()["kdf"].get<int>() == 1) {
+            if (preLogin.value().contains("kdfMemory") && preLogin.value()["kdfMemory"].is_number() &&
+                preLogin.value().contains("kdfParallelism") && preLogin.value()["kdfParallelism"].is_number()) {
+                keychain::setPassword(CWbundleID, "kdfMemory", std::to_string(preLogin.value()["kdfMemory"].get<int>()), e5);
+                keychain::setPassword(CWbundleID, "kdfParallelism", std::to_string(preLogin.value()["kdfParallelism"].get<int>()), e6);
+            }
+        }
 
         if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
-            e3.type != keychain::ErrorType::NoError) {
+            e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError ||
+            e5.type != keychain::ErrorType::NoError || e6.type != keychain::ErrorType::NoError) {
             logger->info("Failed to set KeyChain Value");
             return false;
         }
 
         std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
         int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+        int kdfMemory = std::stoi(keychain::getPassword(CWbundleID, "kdfMemory", e3));
+        int kdfParallelism = std::stoi(keychain::getPassword(CWbundleID, "kdfParallelism", e4));
+        int kdfType = std::stoi(keychain::getPassword(CWbundleID, "kdfType", e5));
 
-        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+            e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError ||
+            e5.type != keychain::ErrorType::NoError) {
             logger->info("Failed to get KeyChain Value");
             return false;
         }
 
-        *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
+        *session.internalKey = std::move(crypto.makeKey(password, salt, kdfType, kdfIterations, kdfMemory, kdfParallelism));
         session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
         /*
@@ -616,6 +635,8 @@ namespace ClientWarden {
             keychain::Error e1;
             keychain::Error e2;
             keychain::Error e3;
+            keychain::Error e4;
+            keychain::Error e5;
 
             if (!checkVaultValidity()) {
                 return true;
@@ -623,13 +644,18 @@ namespace ClientWarden {
 
             std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
             int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
+            int kdfMemory = std::stoi(keychain::getPassword(CWbundleID, "kdfMemory", e3));
+            int kdfParallelism = std::stoi(keychain::getPassword(CWbundleID, "kdfParallelism", e4));
+            int kdfType = std::stoi(keychain::getPassword(CWbundleID, "kdfType", e5));
 
-            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+            if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+                e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError ||
+                e5.type != keychain::ErrorType::NoError) {
                 logger->info("Failed to get KeyChain Value");
                 return false;
             }
 
-            *session.internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
+            *session.internalKey = std::move(crypto.makeKey(password, salt, kdfType, kdfIterations, kdfMemory, kdfParallelism));
             session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
             /*
@@ -1175,16 +1201,24 @@ namespace ClientWarden {
     bool Vault::checkReprompt(std::string password) {
         keychain::Error e1;
         keychain::Error e2;
+        keychain::Error e3;
+        keychain::Error e4;
+        keychain::Error e5;
 
         std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
         int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
-        
-        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError) {
+        int kdfMemory = std::stoi(keychain::getPassword(CWbundleID, "kdfMemory", e3));
+        int kdfParallelism = std::stoi(keychain::getPassword(CWbundleID, "kdfParallelism", e4));
+        int kdfType = std::stoi(keychain::getPassword(CWbundleID, "kdfType", e5));
+
+        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
+            e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError ||
+            e5.type != keychain::ErrorType::NoError) {
             logger->info("Failed to get KeyChain Value");
             return false;
         }
         
-        Botan::secure_vector<uint8_t> r_internalKey = std::move(crypto.makeKey(password, salt, kdfIterations));
+        Botan::secure_vector<uint8_t> r_internalKey = std::move(crypto.makeKey(password, salt, kdfType, kdfIterations, kdfMemory, kdfParallelism));
         std::string r_masterPasswordHash = crypto.hashedPassword(password, r_internalKey);
 
         if (r_internalKey == *session.internalKey && r_masterPasswordHash == session.masterPasswordHash) {
