@@ -149,7 +149,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] V1.1.0
+- [ ] V1.0.0
   - [X] Clientwarden stays open in the background
   - [X] Auto Lock Support
   - [X] AutoFill Support
@@ -170,6 +170,28 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [ ] Code Signing
   - [X] Argon2ID
   - [ ] Fix Light Mode
+  - [ ] Windows UI
+    - [ ] Nav Panel
+      - [ ] General Tabs
+      - [ ] Folders
+      - [ ] Drag and Drop
+    - [ ] Items Panel
+      - [ ] Search Input
+      - [ ] New Item Button
+      - [ ] Items
+    - [ ] Vault UI
+      - [ ] Item Icon, Name, Fav, Item Type
+      - [ ] Generic Item
+      - [ ] Field Item
+      - [ ] Attachment Item
+    - [ ] Main Window
+    - [ ] Login UI
+    - [ ] Unlock UI
+    - [ ] Passkey UI
+    - [ ] Settings UI
+    - [ ] About UI
+    - [ ] Passkey Support
+    - [ ] Biometric Support
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
