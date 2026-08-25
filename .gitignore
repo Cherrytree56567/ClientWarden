@@ -18,3 +18,8 @@ x64
 vcpkg_installed
 .DS_Store
 **.xcodeproj
+**/ARM64
+**/Generated Files
+**/packages
+**/WindowsUI
+**/x64

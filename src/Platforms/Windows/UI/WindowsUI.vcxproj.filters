@@ -23,7 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

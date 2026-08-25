@@ -121,30 +121,6 @@
     <Manifest Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CheckboxField.xaml.h">
-      <DependentUpon>CheckboxField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="GenericField.xaml.h">
-      <DependentUpon>GenericField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="HiddenField.xaml.h">
-      <DependentUpon>HiddenField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="LinkedField.xaml.h">
-      <DependentUpon>LinkedField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="Login.xaml.h">
-      <DependentUpon>Login.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="PasswordField.xaml.h">
-      <DependentUpon>PasswordField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -152,96 +128,12 @@
     <ClInclude Include="MainWindow.xaml.h">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="TextField.xaml.h">
-      <DependentUpon>TextField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="TOTPField.xaml.h">
-      <DependentUpon>TOTPField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="Unlock.xaml.h">
-      <DependentUpon>Unlock.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="Vault.xaml.h">
-      <DependentUpon>Vault.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="VaultItem.xaml.h">
-      <DependentUpon>VaultItem.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="WebsiteField.xaml.h">
-      <DependentUpon>WebsiteField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
-    <Page Include="CheckboxField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="GenericField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="HiddenField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="LinkedField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Login.xaml">
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="MainWindow.xaml" />
-    <Page Include="PasswordField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="TextField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="TOTPField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Unlock.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Vault.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="VaultItem.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="WebsiteField.xaml">
-      <SubType>Designer</SubType>
-    </Page>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CheckboxField.xaml.cpp">
-      <DependentUpon>CheckboxField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="GenericField.xaml.cpp">
-      <DependentUpon>GenericField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="HiddenField.xaml.cpp">
-      <DependentUpon>HiddenField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="LinkedField.xaml.cpp">
-      <DependentUpon>LinkedField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="Login.xaml.cpp">
-      <DependentUpon>Login.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="PasswordField.xaml.cpp">
-      <DependentUpon>PasswordField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -251,84 +143,11 @@
     <ClCompile Include="MainWindow.xaml.cpp">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="TextField.xaml.cpp">
-      <DependentUpon>TextField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="TOTPField.xaml.cpp">
-      <DependentUpon>TOTPField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="Unlock.xaml.cpp">
-      <DependentUpon>Unlock.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="Vault.xaml.cpp">
-      <DependentUpon>Vault.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="VaultItem.xaml.cpp">
-      <DependentUpon>VaultItem.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="WebsiteField.xaml.cpp">
-      <DependentUpon>WebsiteField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="CheckboxField.idl">
-      <DependentUpon>CheckboxField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="GenericField.idl">
-      <DependentUpon>GenericField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="HiddenField.idl">
-      <DependentUpon>HiddenField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="LinkedField.idl">
-      <DependentUpon>LinkedField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="Login.idl">
-      <DependentUpon>Login.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
     <Midl Include="MainWindow.idl">
       <SubType>Code</SubType>
       <DependentUpon>MainWindow.xaml</DependentUpon>
-    </Midl>
-    <Midl Include="PasswordField.idl">
-      <DependentUpon>PasswordField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="TextField.idl">
-      <DependentUpon>TextField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="TOTPField.idl">
-      <DependentUpon>TOTPField.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="Unlock.idl">
-      <DependentUpon>Unlock.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="Vault.idl">
-      <DependentUpon>Vault.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="VaultItem.idl">
-      <DependentUpon>VaultItem.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="WebsiteField.idl">
-      <DependentUpon>WebsiteField.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Midl>
   </ItemGroup>
   <ItemGroup>

@@ -14,11 +14,5 @@
     </Window.SystemBackdrop>
 
     <Grid Loaded="Grid_Loaded">
-        <Frame x:Name="MainFrame" Background="Transparent"/>
-        <StackPanel x:Name="NotifStack"
-                    VerticalAlignment="Top"
-                    HorizontalAlignment="Right"
-                    Margin="0,16,16,0"
-                    Spacing="8"/>
     </Grid>
 </Window>
