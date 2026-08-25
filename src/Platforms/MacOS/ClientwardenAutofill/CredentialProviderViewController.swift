@@ -2,12 +2,22 @@ import os
 import AppKit
 import AuthenticationServices
 
+/*
+ * TODO:
+ *  - Check for CW when getting Password
+ *  - WARN: Using the launchClientwardenApp should ask for unlock prompt and then allow the user to use the passkey or whatev
+ *  - Add Mutex
+ *  - Get relyingParty and clientDataHash
+ */
 class CredentialProviderViewController: ASCredentialProviderViewController {
     private var loginItems: [(uuid: String, title: String, username: String)] = []
+    private var passkeyItems: [(uuid: String, title: String, username: String)] = []
     private var p_requestID: String = ""
     private var p_requestName: String = ""
     private var p_result: String?
     private var p_semaphore: DispatchSemaphore?
+    private var c_relyingParty: String = ""
+    private var c_clientDataHash: Data = Data()
     
     let logger = Logger(subsystem: BundleInfo.sharedID, category: "AutoFill")
 
@@ -150,6 +160,13 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         }
 
         return p_result
+    }
+
+    func requestClientwardenForData(requestName: String, requestValue: String) -> Data? {
+        guard let s_res = requestClientwarden(requestName: requestName, requestValue: requestValue) else {
+            return nil
+        }
+        return Data(base64Encoded: s_res)
     }
     
     func clientwardenStatus() -> Bool {
@@ -316,6 +333,198 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
              * request
              */
             logger.error("Failed to get password")
+            self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+        }
+    }
+
+    /*
+     * From DashLane Example:
+     * https://github.com/Dashlane/apple-credential-provider-example/blob/main/PasskeyProviderExtension/CredentialProviderViewController.swift
+     * 
+     * This is for generating a passkey
+     */
+    override func prepareInterface(forPasskeyRegistration registrationRequest: ASCredentialRequest) {
+        guard let request = registrationRequest as? ASPasskeyCredentialRequest,
+              let identity = request.credentialIdentity as? ASPasskeyCredentialIdentity else {
+            extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+            return
+        }
+
+        if (!clientwardenAppRunning()) {
+            launchClientwardenApp()
+        } else if (clientwardenStatus()) { // Check if CW App is running but is locked
+            launchClientwardenApp()
+        } else {
+            /*
+             * Generate a passkey here
+             */
+            var requestStr = identity.relyingPartyIdentifier.data(using: .utf8)!.base64EncodedString() + "," + 
+                             identity.userName.data(using: .utf8)!.base64EncodedString() + "," + 
+                             identity.userHandle.base64EncodedString() + "," + 
+                             request.clientDataHash.base64EncodedString()
+            
+            var response: String? = requestClientwarden(requestName: "createPasskey", requestValue: requestStr);
+
+            if (response != nil) {
+                var responses = response!.components(separatedBy: ",")
+
+                if (responses.count < 2) {
+                    extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+                    return
+                }
+
+                let credentialId = Data(base64Encoded: responses[0]),
+                let attestationObject = Data(base64Encoded: responses[1])
+
+                if (credentialId == nil || attestationObject == nil) {
+                    extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+                    return
+                }
+
+                let credential = ASPasskeyRegistrationCredential(
+                    relyingParty: identity.relyingPartyIdentifier,
+                    clientDataHash: request.clientDataHash,
+                    credentialID: credentialId,
+                    attestationObject: attestationObject
+                )
+
+                extensionContext.completeRegistrationRequest(using: credential, completionHandler: nil)
+            }
+        }
+    }
+
+    /*
+     * This is for getting passkeys
+     */
+    override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier], requestParameters: ASPasskeyCredentialRequestParameters) {
+        guard let request = registrationRequest as? ASPasskeyCredentialRequest,
+              let identity = request.credentialIdentity as? ASPasskeyCredentialIdentity else {
+            cancelWithError(.failed)
+            return
+        }
+
+        if (!clientwardenAppRunning()) {
+            launchClientwardenApp()
+        } else if (clientwardenStatus()) { // Check if CW App is running but is locked
+            launchClientwardenApp()
+        } else {
+            /*
+             * Store a bunch of UUIDs for us to pass to the cw app to get passkey's
+             */
+            var UUIDs: [String] = []
+
+            /*
+             * Loop through the websites that an app reports and ask the CW app for matching passkeys
+             * and then add them to UUIDs
+             */
+            for serviceIdentifier in serviceIdentifiers {
+                var s_UUIDs: String? = requestClientwarden(requestName: "getPasskeys", requestValue: serviceIdentifier.identifier);
+
+                if let s_UUIDs, s_UUIDs != "" {
+                    UUIDs.append(contentsOf: s_UUIDs.components(separatedBy: ","))
+                }
+            }
+
+            passkeyItems = []
+
+            for l_uuid in UUIDs {
+                var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
+
+                passkeyItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
+            }
+
+            DispatchQueue.main.async {
+                /*
+                 * First, we have to remove the
+                 * existing views
+                 */
+                self.view.subviews.forEach { 
+                    $0.removeFromSuperview() 
+                }
+                
+                /*
+                 * Show the items
+                 */
+                let stack = NSStackView()
+                stack.orientation = .vertical
+                stack.alignment = .leading
+                stack.spacing = 8
+                stack.translatesAutoresizingMaskIntoConstraints = false
+
+                for (index, item) in self.passkeyItems.enumerated() {
+                    let b_item = NSButton(title: (item.username.isEmpty ?
+                                                      item.title :
+                                                        "\(item.title) — \(item.username)"), target: self, action: #selector(self.passkeySelected(_:)))
+                    b_item.bezelStyle = .rounded
+                    b_item.tag = index
+                    stack.addArrangedSubview(b_item)
+                }
+                
+                /*
+                 * From viewDidLoad
+                 */
+                let button = NSButton(title: "Dismiss", target: self, action: #selector(self.cancel(_:)))
+                button.bezelStyle = .rounded
+                button.translatesAutoresizingMaskIntoConstraints = false
+                stack.addArrangedSubview(button)
+                
+                self.view.addSubview(stack)
+                
+                NSLayoutConstraint.activate([
+                    stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+                    stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+                ])
+            }
+        }
+    }
+
+    /*
+     * Get Passkey Data
+     */
+    @objc
+    func passkeySelected(_ sender: AnyObject?) {
+        if let button = sender as? NSButton {
+            /*
+             * Check if button has a valid
+             * loginItem count thing.
+             *
+             * Then, we can get the item and
+             * and the UUID which we can pass
+             * to CW to retrieve the passkey
+             */
+            if (button.tag >= 0 && button.tag < passkeyItems.count) {
+                var item = passkeyItems[button.tag]
+                
+                var p_info: String? = requestClientwarden(requestName: "getPasskeyInfo", requestValue: item.uuid);
+                
+                if (p_info != nil) {
+                    var responses = p_info!.components(separatedBy: ",")
+
+                    if (responses.count < 4) {
+                        logger.error("Failed to get response from getPasskeyInfo")
+                        self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+                    }
+
+                    let p_cred = ASPasskeyAssertionCredential(
+                        userHandle: responses[0],
+                        relyingParty: c_relyingParty,
+                        signature: responses[1],
+                        clientDataHash: c_clientDataHash,
+                        authenticatorData: responses[2],
+                        credentialID: responses[3]
+                    )
+
+                    self.extensionContext.completeAssertionRequest(using: p_cred, completionHandler: nil)
+                    return
+                }
+            }
+            
+            /*
+             * If we cant get the passkey
+             * then we can return a failed
+             * request
+             */
+            logger.error("Failed to get passkey")
             self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
         }
     }
