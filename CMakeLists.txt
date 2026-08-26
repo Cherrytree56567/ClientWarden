@@ -48,7 +48,9 @@ message(STATUS "Botan includes: ${BOTAN_INCLUDES}")
 if (WIN32)
     include(cmake/windows.cmake)
 elseif (APPLE)
-    include(cmake/macos.cmake)
+    include(cmake/linux.cmake) # TODO: Change to macos.cmake
+elseif (LINUX)
+    include(cmake/linux.cmake)
 else ()
     message(WARNING "Unknown platform: won't build UI")
 endif()
@@ -79,18 +81,24 @@ set(FILES
 if (WIN32)
     add_executable(clientwarden WIN32 ${FILES})
 elseif (APPLE)
-    add_executable(clientwarden MACOSX_BUNDLE ${FILES})
+    #add_executable(clientwarden MACOSX_BUNDLE ${FILES}) # We need to remove these for now
+elseif (LINUX)
+    # QT Creates the exec, so ig we dont create it here
 else()
-    add_executable(clientwarden ${FILES})
+    add_library(clientwarden SHARED ${FILES})
 endif()
 
-if (WIN32 OR APPLE)
+if (WIN32 OR APPLE OR LINUX)
     buildUI(clientwarden)
+endif()
+
+if (APPLE OR LINUX) # Change to Linux only later
+target_sources(clientwarden PRIVATE ${FILES})
 endif()
 
 if(MSVC)
     target_compile_options(clientwarden PRIVATE /std:c++latest /GR- /EHa)
 endif()
 
-target_link_libraries(clientwarden OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
+target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)

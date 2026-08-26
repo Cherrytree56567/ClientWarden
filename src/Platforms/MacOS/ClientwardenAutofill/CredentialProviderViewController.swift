@@ -343,6 +343,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
      * 
      * This is for generating a passkey
      */
+    @available(macOS 14.0, *)
     override func prepareInterface(forPasskeyRegistration registrationRequest: ASCredentialRequest) {
         guard let request = registrationRequest as? ASPasskeyCredentialRequest,
               let identity = request.credentialIdentity as? ASPasskeyCredentialIdentity else {
@@ -373,7 +374,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     return
                 }
 
-                let credentialId = Data(base64Encoded: responses[0]),
+                let credentialId = Data(base64Encoded: responses[0])
                 let attestationObject = Data(base64Encoded: responses[1])
 
                 if (credentialId == nil || attestationObject == nil) {
@@ -384,8 +385,8 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 let credential = ASPasskeyRegistrationCredential(
                     relyingParty: identity.relyingPartyIdentifier,
                     clientDataHash: request.clientDataHash,
-                    credentialID: credentialId,
-                    attestationObject: attestationObject
+                    credentialID: credentialId!,
+                    attestationObject: attestationObject!
                 )
 
                 extensionContext.completeRegistrationRequest(using: credential, completionHandler: nil)
@@ -396,12 +397,10 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     /*
      * This is for getting passkeys
      */
-    override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier], requestParameters: ASPasskeyCredentialRequestParameters) {
-        guard let request = registrationRequest as? ASPasskeyCredentialRequest,
-              let identity = request.credentialIdentity as? ASPasskeyCredentialIdentity else {
-            cancelWithError(.failed)
-            return
-        }
+    @available(macOS 14.0, *)
+    override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier], requestParameters: ASPasskeyCredentialRequestParameters) {        
+        c_relyingParty = requestParameters.relyingPartyIdentifier
+        c_clientDataHash = requestParameters.clientDataHash
 
         if (!clientwardenAppRunning()) {
             launchClientwardenApp()
@@ -429,6 +428,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
 
             for l_uuid in UUIDs {
                 var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
+                var username: String? = requestClientwarden(requestName: "getUsername", requestValue: l_uuid);
 
                 passkeyItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
             }
@@ -482,6 +482,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
      * Get Passkey Data
      */
     @objc
+    @available(macOS 14.0, *)
     func passkeySelected(_ sender: AnyObject?) {
         if let button = sender as? NSButton {
             /*
@@ -505,13 +506,24 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                         self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
                     }
 
+                    let userHandle = Data(base64Encoded: responses[0])
+                    let signature = Data(base64Encoded: responses[1])
+                    let authenticatorData = Data(base64Encoded: responses[2])
+                    let credentialID = Data(base64Encoded: responses[3])
+
+                    if (userHandle == nil || signature == nil || authenticatorData == nil || credentialID == nil) {
+                        logger.error("Failed to get b64 Decoded stuff")
+                        self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+                        return
+                    }
+
                     let p_cred = ASPasskeyAssertionCredential(
-                        userHandle: responses[0],
+                        userHandle: userHandle!,
                         relyingParty: c_relyingParty,
-                        signature: responses[1],
+                        signature: signature!,
                         clientDataHash: c_clientDataHash,
-                        authenticatorData: responses[2],
-                        credentialID: responses[3]
+                        authenticatorData: authenticatorData!,
+                        credentialID: credentialID!
                     )
 
                     self.extensionContext.completeAssertionRequest(using: p_cred, completionHandler: nil)
