@@ -7,8 +7,5 @@ ApplicationWindow {
     visible: true
     title: "ClientWarden"
 
-    Text {
-        anchors.centerIn: parent
-        text: "Hello, Qt Quick!"
-    }
+    color: "#11111b"
 }

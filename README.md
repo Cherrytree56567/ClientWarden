@@ -170,7 +170,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [ ] Code Signing
   - [X] Argon2ID
   - [ ] Fix Light Mode
-  - [ ] Windows UI
+  - [ ] Linux UI
     - [ ] Nav Panel
       - [ ] General Tabs
       - [ ] Folders

@@ -23,3 +23,4 @@ vcpkg_installed
 **/packages
 **/WindowsUI
 **/x64
+**/.idea

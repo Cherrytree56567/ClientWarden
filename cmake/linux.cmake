@@ -20,6 +20,7 @@ function(buildUI _target)
         VERSION 1.0
         QML_FILES
             src/Platforms/Linux/UI/App.qml
+            src/Platforms/Linux/UI/NavPanel.qml
     )
 
     target_include_directories(${_target} PRIVATE src/Vault src/Platforms/Linux/)
