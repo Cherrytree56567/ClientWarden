@@ -24,3 +24,5 @@ vcpkg_installed
 **/WindowsUI
 **/x64
 **/.idea
+Cargo.lock
+src/Platforms/Linux/target

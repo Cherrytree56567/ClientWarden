@@ -6,6 +6,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen(weight: Modifier.Companion.(Float) -> Modifier) {
+fun MainScreen() {
     ClientwardenTheme {
         var query by rememberSaveable { mutableStateOf("") }
         val navController = rememberNavController()
@@ -40,15 +43,20 @@ fun MainScreen(weight: Modifier.Companion.(Float) -> Modifier) {
                 NavBar()
             }
         ) { innerPadding ->
-            TopBar(
-                query = query,
-                onQueryChange = { query = it }
-            )
-            AppNavHost(
-                navController = navController,
-                startDestination = NavTabs.HOME,
-                modifier = Modifier.weight(1f)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                TopBar(
+                    query = query,
+                    onQueryChange = { query = it }
+                )
+                AppNavHost(
+                    navController = navController,
+                    startDestination = NavTabs.HOME,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }

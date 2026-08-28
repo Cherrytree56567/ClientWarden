@@ -1,0 +1,17 @@
+[package]
+name = "clientwarden-ui"
+version = "0.0.0"
+authors = ["CT5"]
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "UI"
+path = "UI/main.rs"
+
+[dependencies]
+iced = "0.14"
+cxx = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"

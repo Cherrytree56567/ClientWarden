@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 project(ClientWarden VERSION 1.0)
 
 if (APPLE)
@@ -82,18 +82,15 @@ if (WIN32)
     add_executable(clientwarden WIN32 ${FILES})
 elseif (APPLE)
     #add_executable(clientwarden MACOSX_BUNDLE ${FILES}) # We need to remove these for now
+    add_library(clientwarden SHARED ${FILES})
 elseif (LINUX)
-    # QT Creates the exec, so ig we dont create it here
+    add_library(clientwarden SHARED ${FILES})
 else()
     add_library(clientwarden SHARED ${FILES})
 endif()
 
 if (WIN32 OR APPLE OR LINUX)
     buildUI(clientwarden)
-endif()
-
-if (APPLE OR LINUX) # Change to Linux only later
-target_sources(clientwarden PRIVATE ${FILES})
 endif()
 
 if(MSVC)
