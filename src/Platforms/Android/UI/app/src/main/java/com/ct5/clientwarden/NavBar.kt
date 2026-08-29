@@ -3,6 +3,7 @@ package com.ct5.clientwarden
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.DensitySmall
@@ -30,10 +31,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Settings
 
 enum class NavTabs(
     val route: String,
@@ -41,8 +46,8 @@ enum class NavTabs(
     val icon: ImageVector,
     val contentDescription: String
 ) {
-    HOME("home", "Home", Icons.Default.Home, "Home"),
-    ITEMS("items", "Items", Icons.Default.DensitySmall, "Items")
+    HOME("home", "Home", Lucide.House, "Home"),
+    SETTINGS("settings", "Settings", Lucide.Settings, "Settings")
 }
 
 @Composable
@@ -60,7 +65,7 @@ fun AppNavHost(
             composable(destination.route) {
                 when (destination) {
                     NavTabs.HOME -> HomeScreen()
-                    NavTabs.ITEMS -> ItemsScreen()
+                    NavTabs.SETTINGS -> SettingsScreen()
                 }
             }
         }
@@ -87,7 +92,8 @@ fun NavBar(modifier: Modifier = Modifier) {
                 icon = {
                     Icon(
                         navtab.icon,
-                        contentDescription = navtab.contentDescription
+                        contentDescription = navtab.contentDescription,
+                        modifier = Modifier.size(20.dp)
                     )
                 },
                 label = {

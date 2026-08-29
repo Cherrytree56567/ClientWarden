@@ -50,7 +50,7 @@ impl NavPanel {
                     None
                 },
                 text_color: if (isSelected) {
-                    Color::from_rgb8(76, 79, 105)
+                    Color::from_rgb8(24, 24, 37)
                 } else {
                     Color::from_rgb8(205, 214, 244)
                 },
