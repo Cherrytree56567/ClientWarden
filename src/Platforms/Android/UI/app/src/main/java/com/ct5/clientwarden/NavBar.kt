@@ -64,7 +64,7 @@ fun AppNavHost(
         NavTabs.entries.forEach { destination ->
             composable(destination.route) {
                 when (destination) {
-                    NavTabs.HOME -> HomeScreen()
+                    NavTabs.HOME -> HomeScreen.view()
                     NavTabs.SETTINGS -> SettingsScreen()
                 }
             }

@@ -1,6 +1,7 @@
 package com.ct5.clientwarden
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,23 +16,33 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Archive
 import com.composables.icons.lucide.CreditCard
+import com.composables.icons.lucide.EllipsisVertical
+import com.composables.icons.lucide.Expand
 import com.composables.icons.lucide.Folder
+import com.composables.icons.lucide.FunnelPlus
+import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.House
 import com.composables.icons.lucide.IdCard
 import com.composables.icons.lucide.KeyRound
@@ -40,40 +51,30 @@ import com.composables.icons.lucide.SquareAsterisk
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.StickyNote
 import com.composables.icons.lucide.Trash2
+import com.ct5.clientwarden.NavScreen.NavButton
+import com.ct5.clientwarden.NavScreen.folders
 import java.util.UUID
+import kotlin.math.floor
 
-sealed interface NavItem {
-    data object AllItems : NavItem
-    data object Favorites : NavItem
-    data object Trash : NavItem
-    data object Archived : NavItem
-    data object Login : NavItem
-    data object Card : NavItem
-    data object Identity : NavItem
-    data object Note : NavItem
-    data object SshKey : NavItem
-    data class Folder(val id: UUID) : NavItem
-}
+/*
+ * f_items = Filtered Items
+ */
+object ItemsScreen {
+    var items = mutableListOf<ItemElement>()
+    var f_items = mutableListOf<ItemElement>()
 
-object NavScreen {
-    var folders = mutableListOf<ClientwardenFolder>()
-
-    //var cb_AllItems: (() -> List<ItemElement>)? = null
     @Composable
-    fun NavButton(text: String, icon: ImageVector, start: Boolean = false, end: Boolean = false) {
+    fun Item(item: ItemElement, start: Boolean = false, end: Boolean = false) {
         FilledTonalButton(onClick = { },
             modifier = Modifier.fillMaxWidth()
-                .height(52.dp)
-                .drawWithContent {
-                    drawContent()
-                },
+                .height(64.dp),
             shape = RoundedCornerShape(
                 topStart = if (start) 12.dp else 0.dp,
                 topEnd = if (start) 12.dp else 0.dp,
                 bottomStart = if (end) 12.dp else 0.dp,
                 bottomEnd = if (end) 12.dp else 0.dp
             ),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 4.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -83,18 +84,43 @@ object NavScreen {
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(icon,
+                Icon(item.icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(text,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1)
+                Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+                    Text(item.name,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.padding(top = 2.dp),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1)
+                    Text(item.type.desc,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 16.sp)
+                }
+                Spacer(Modifier.weight(1f).fillMaxWidth())
+                IconButton(onClick = {}) {
+                    Icon(
+                        Lucide.EllipsisVertical,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        if (!end) {
+            Column(modifier = Modifier.fillMaxWidth()
+                                      .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
             }
         }
     }
+
     @Composable
     fun view() {
         Column(
@@ -102,23 +128,8 @@ object NavScreen {
                                .verticalScroll(rememberScrollState())
                                .padding(16.dp)
         ) {
-            NavButton("All Items", Lucide.House, start = true)
-            NavButton("Favorites", Lucide.Star)
-            NavButton("Trash", Lucide.Trash2)
-            NavButton("Archived", Lucide.Archive, end = true)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            NavButton("Login", Lucide.SquareAsterisk, start = true)
-            NavButton("Card", Lucide.CreditCard)
-            NavButton("Identity", Lucide.IdCard)
-            NavButton("Note", Lucide.StickyNote)
-            NavButton("SSH Key", Lucide.KeyRound, end = true)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            for ((i, folder) in folders.withIndex()) {
-                NavButton(folder.name, Lucide.Folder, start = i == 0, end = i == folders.lastIndex)
+            for ((i, item) in f_items.withIndex()) {
+                Item(item, start = i == 0, end = i == f_items.lastIndex)
             }
         }
     }
@@ -131,6 +142,6 @@ object NavScreen {
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
-fun PreviewNav() {
+fun PreviewItems() {
     MainScreen()
 }
