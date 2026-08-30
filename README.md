@@ -174,8 +174,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Nav Panel
       - [X] General Tabs
       - [X] Folders
-    - [ ] Items Panel
-      - [ ] Items
+    - [X] Items Panel
+      - [X] Items
     - [ ] Top Bar
       - [ ] Search Input
       - [ ] New Item Button
