@@ -2,7 +2,9 @@ package com.ct5.clientwarden
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,24 +21,37 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import com.composables.icons.lucide.Archive
 import com.composables.icons.lucide.CreditCard
 import com.composables.icons.lucide.EllipsisVertical
@@ -61,10 +77,90 @@ import kotlin.math.floor
  */
 object ItemsScreen {
     var items = mutableListOf<ItemElement>()
-    var f_items = mutableListOf<ItemElement>()
+    var f_items = mutableListOf<ItemElement>(
+        ItemElement(
+            UUID.randomUUID(),
+            "Google",
+            ItemType.Login,
+            Lucide.Globe
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "GitHub",
+            ItemType.Login,
+            Lucide.Globe
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Amazon",
+            ItemType.Login,
+            Lucide.Globe
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Netflix",
+            ItemType.Login,
+            Lucide.Globe
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Visa",
+            ItemType.Card,
+            Lucide.CreditCard
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Mastercard",
+            ItemType.Card,
+            Lucide.CreditCard
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "American Express",
+            ItemType.Card,
+            Lucide.CreditCard
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Driver Licence",
+            ItemType.Identity,
+            Lucide.IdCard
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Passport",
+            ItemType.Identity,
+            Lucide.IdCard
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Personal Notes",
+            ItemType.Note,
+            Lucide.StickyNote
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Server Credentials",
+            ItemType.SSHKey,
+            Lucide.KeyRound
+        ),
+        ItemElement(
+            UUID.randomUUID(),
+            "Production Server",
+            ItemType.SSHKey,
+            Lucide.KeyRound
+        )
+    )
+
+    fun SetItems(l_items: List<ItemElement>) {
+        items = mutableListOf<ItemElement>()
+        items.addAll(l_items)
+        f_items = items
+    }
 
     @Composable
     fun Item(item: ItemElement, start: Boolean = false, end: Boolean = false) {
+        var m_expanded by remember { mutableStateOf(false) }
         FilledTonalButton(onClick = { },
             modifier = Modifier.fillMaxWidth()
                 .height(64.dp),
@@ -103,13 +199,121 @@ object ItemsScreen {
                         lineHeight = 16.sp)
                 }
                 Spacer(Modifier.weight(1f).fillMaxWidth())
-                IconButton(onClick = {}) {
-                    Icon(
-                        Lucide.EllipsisVertical,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Box {
+                    IconButton(
+                        onClick = { m_expanded = true }
+                    ) {
+                        Icon(
+                            Lucide.EllipsisVertical,
+                            contentDescription = "More",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    if (m_expanded) {
+                    Popup(
+                        alignment = Alignment.TopEnd,
+                        onDismissRequest = { m_expanded = false }
+                    ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                tonalElevation = 3.dp,
+                                modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)
+                            ) {
+                                /*
+                                 * Use NavScreen.c_item to show or hide restore/delete
+                                 */
+                                Column(modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)) {
+                                    if (NavScreen.c_item == NavItem.Trash) {
+                                        TextButton(
+                                            onClick = { m_expanded = false },
+                                            shape = RoundedCornerShape(
+                                                topStart = 8.dp,
+                                                topEnd = 8.dp,
+                                                bottomStart = 8.dp,
+                                                bottomEnd = 8.dp
+                                            ),
+                                            modifier = Modifier.width(100.dp)
+                                        ) {
+                                            Text(
+                                                "Restore",
+                                                textAlign = TextAlign.Left,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    } else if (NavScreen.c_item == NavItem.Archived) {
+                                        TextButton(
+                                            onClick = { m_expanded = false },
+                                            shape = RoundedCornerShape(
+                                                topStart = 8.dp,
+                                                topEnd = 8.dp,
+                                                bottomStart = 0.dp,
+                                                bottomEnd = 0.dp
+                                            ),
+                                            modifier = Modifier.width(100.dp)
+                                        ) {
+                                            Text(
+                                                "Unarchive",
+                                                textAlign = TextAlign.Left,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+
+                                        TextButton(
+                                            onClick = { m_expanded = false },
+                                            shape = RoundedCornerShape(
+                                                topStart = 0.dp,
+                                                topEnd = 0.dp,
+                                                bottomStart = 8.dp,
+                                                bottomEnd = 8.dp
+                                            ),
+                                            modifier = Modifier.width(100.dp)
+                                        ) {
+                                            Text("Delete",
+                                                textAlign = TextAlign.Left,
+                                                modifier = Modifier.fillMaxWidth())
+                                        }
+                                    } else {
+                                        TextButton(
+                                            onClick = { m_expanded = false },
+                                            shape = RoundedCornerShape(
+                                                topStart = 8.dp,
+                                                topEnd = 8.dp,
+                                                bottomStart = 0.dp,
+                                                bottomEnd = 0.dp
+                                            ),
+                                            modifier = Modifier.width(100.dp)
+                                        ) {
+                                            Text(
+                                                "Delete",
+                                                textAlign = TextAlign.Left,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+
+                                        TextButton(
+                                            onClick = { m_expanded = false },
+                                            shape = RoundedCornerShape(
+                                                topStart = 0.dp,
+                                                topEnd = 0.dp,
+                                                bottomStart = 8.dp,
+                                                bottomEnd = 8.dp
+                                            ),
+                                            modifier = Modifier.width(100.dp)
+                                        ) {
+                                            Text(
+                                                "Archive",
+                                                textAlign = TextAlign.Left,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

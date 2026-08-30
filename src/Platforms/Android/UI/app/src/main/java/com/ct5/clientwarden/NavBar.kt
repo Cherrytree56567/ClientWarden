@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -77,8 +78,7 @@ fun AppNavHost(
  * https://github.com/android/snippets/blob/main/compose/snippets/src/main/java/com/example/compose/snippets/components/Navigation.kt
  */
 @Composable
-fun NavBar(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
+fun NavBar(navController: NavHostController, modifier: Modifier = Modifier) {
     val startDestination = NavTabs.HOME
     var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
 
@@ -88,6 +88,13 @@ fun NavBar(modifier: Modifier = Modifier) {
                 selected = selectedDestination == index,
                 onClick = {
                     selectedDestination = index
+                    navController.navigate(navtab.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 },
                 icon = {
                     Icon(

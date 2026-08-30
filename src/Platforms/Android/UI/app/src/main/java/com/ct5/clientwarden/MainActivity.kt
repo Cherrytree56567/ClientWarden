@@ -40,7 +40,7 @@ fun MainScreen() {
 
         Scaffold(
             bottomBar = {
-                NavBar()
+                NavBar(navController = navController)
             }
         ) { innerPadding ->
             Column(

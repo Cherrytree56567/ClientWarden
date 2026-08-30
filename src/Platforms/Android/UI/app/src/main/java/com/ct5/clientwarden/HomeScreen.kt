@@ -15,7 +15,7 @@ enum class HomeScreenPanel {
 }
 
 object HomeScreen {
-    var c_panel: HomeScreenPanel = HomeScreenPanel.ItemsPanel
+    var c_panel: HomeScreenPanel = HomeScreenPanel.NavPanel
     @Composable
     fun view(modifier: Modifier = Modifier) {
         Box(
