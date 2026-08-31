@@ -1,6 +1,13 @@
 package com.ct5.clientwarden
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -152,6 +160,12 @@ object ItemsScreen {
         )
     )
 
+    var cb_bin: (() -> Boolean)? = null
+    var cb_delete: (() -> Boolean)? = null
+    var cb_restore: (() -> Boolean)? = null
+    var cb_archive: (() -> Boolean)? = null
+    var cb_unarchive: (() -> Boolean)? = null
+
     fun SetItems(l_items: List<ItemElement>) {
         items = mutableListOf<ItemElement>()
         items.addAll(l_items)
@@ -211,103 +225,165 @@ object ItemsScreen {
                         )
                     }
 
-                    if (m_expanded) {
-                    Popup(
-                        alignment = Alignment.TopEnd,
-                        onDismissRequest = { m_expanded = false }
-                    ) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                tonalElevation = 3.dp,
-                                modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)
+                    val transitionState = remember { MutableTransitionState(false) }
+                    transitionState.targetState = m_expanded
+
+                    /*
+                     * Thanks to claude for the Animated Visibility,
+                     * the Popup stuff was mine
+                     */
+                    if (transitionState.currentState || transitionState.targetState) {
+                        Popup(
+                            alignment = Alignment.TopEnd,
+                            onDismissRequest = { m_expanded = false }
+                        ) {
+                            androidx.compose.animation.AnimatedVisibility(
+                                visibleState = transitionState,
+                                enter = fadeIn(tween(120)) + scaleIn(
+                                    initialScale = 0.85f,
+                                    animationSpec = tween(120),
+                                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 0f) // top-end anchor
+                                ),
+                                exit = fadeOut(tween(100)) + scaleOut(
+                                    targetScale = 0.85f,
+                                    animationSpec = tween(280),
+                                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 0f)
+                                )
                             ) {
-                                /*
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    tonalElevation = 3.dp,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp)
+                                ) {
+                                    /*
                                  * Use NavScreen.c_item to show or hide restore/delete
                                  */
-                                Column(modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)) {
-                                    if (NavScreen.c_item == NavItem.Trash) {
-                                        TextButton(
-                                            onClick = { m_expanded = false },
-                                            shape = RoundedCornerShape(
-                                                topStart = 8.dp,
-                                                topEnd = 8.dp,
-                                                bottomStart = 8.dp,
-                                                bottomEnd = 8.dp
-                                            ),
-                                            modifier = Modifier.width(100.dp)
-                                        ) {
-                                            Text(
-                                                "Restore",
-                                                textAlign = TextAlign.Left,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
-                                    } else if (NavScreen.c_item == NavItem.Archived) {
-                                        TextButton(
-                                            onClick = { m_expanded = false },
-                                            shape = RoundedCornerShape(
-                                                topStart = 8.dp,
-                                                topEnd = 8.dp,
-                                                bottomStart = 0.dp,
-                                                bottomEnd = 0.dp
-                                            ),
-                                            modifier = Modifier.width(100.dp)
-                                        ) {
-                                            Text(
-                                                "Unarchive",
-                                                textAlign = TextAlign.Left,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
+                                    Column(
+                                        modifier = Modifier.padding(
+                                            horizontal = 0.dp,
+                                            vertical = 0.dp
+                                        )
+                                    ) {
+                                        if (NavScreen.c_item == NavItem.Trash) {
+                                            TextButton(
+                                                onClick = {
+                                                    m_expanded = false
+                                                    cb_restore?.invoke()
+                                                },
+                                                shape = RoundedCornerShape(
+                                                    topStart = 8.dp,
+                                                    topEnd = 8.dp,
+                                                    bottomStart = 8.dp,
+                                                    bottomEnd = 8.dp
+                                                ),
+                                                modifier = Modifier.width(100.dp)
+                                            ) {
+                                                Text(
+                                                    "Restore",
+                                                    textAlign = TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                            TextButton(
+                                                onClick = {
+                                                    m_expanded = false
+                                                    cb_delete?.invoke()
+                                                },
+                                                shape = RoundedCornerShape(
+                                                    topStart = 8.dp,
+                                                    topEnd = 8.dp,
+                                                    bottomStart = 8.dp,
+                                                    bottomEnd = 8.dp
+                                                ),
+                                                modifier = Modifier.width(100.dp)
+                                            ) {
+                                                Text(
+                                                    "Permanently Delete",
+                                                    textAlign = TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        } else if (NavScreen.c_item == NavItem.Archived) {
+                                            TextButton(
+                                                onClick = {
+                                                    m_expanded = false
+                                                    cb_unarchive?.invoke()
+                                                },
+                                                shape = RoundedCornerShape(
+                                                    topStart = 8.dp,
+                                                    topEnd = 8.dp,
+                                                    bottomStart = 0.dp,
+                                                    bottomEnd = 0.dp
+                                                ),
+                                                modifier = Modifier.width(100.dp)
+                                            ) {
+                                                Text(
+                                                    "Unarchive",
+                                                    textAlign = TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
 
-                                        TextButton(
-                                            onClick = { m_expanded = false },
-                                            shape = RoundedCornerShape(
-                                                topStart = 0.dp,
-                                                topEnd = 0.dp,
-                                                bottomStart = 8.dp,
-                                                bottomEnd = 8.dp
-                                            ),
-                                            modifier = Modifier.width(100.dp)
-                                        ) {
-                                            Text("Delete",
-                                                textAlign = TextAlign.Left,
-                                                modifier = Modifier.fillMaxWidth())
-                                        }
-                                    } else {
-                                        TextButton(
-                                            onClick = { m_expanded = false },
-                                            shape = RoundedCornerShape(
-                                                topStart = 8.dp,
-                                                topEnd = 8.dp,
-                                                bottomStart = 0.dp,
-                                                bottomEnd = 0.dp
-                                            ),
-                                            modifier = Modifier.width(100.dp)
-                                        ) {
-                                            Text(
-                                                "Delete",
-                                                textAlign = TextAlign.Left,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
+                                            TextButton(
+                                                onClick = {
+                                                    m_expanded = false
+                                                    cb_bin?.invoke()
+                                                },
+                                                shape = RoundedCornerShape(
+                                                    topStart = 0.dp,
+                                                    topEnd = 0.dp,
+                                                    bottomStart = 8.dp,
+                                                    bottomEnd = 8.dp
+                                                ),
+                                                modifier = Modifier.width(100.dp)
+                                            ) {
+                                                Text(
+                                                    "Bin",
+                                                    textAlign = TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        } else {
+                                            TextButton(
+                                                onClick = {
+                                                    m_expanded = false
+                                                    cb_bin?.invoke()
+                                                },
+                                                shape = RoundedCornerShape(
+                                                    topStart = 8.dp,
+                                                    topEnd = 8.dp,
+                                                    bottomStart = 0.dp,
+                                                    bottomEnd = 0.dp
+                                                ),
+                                                modifier = Modifier.width(100.dp)
+                                            ) {
+                                                Text(
+                                                    "Bin",
+                                                    textAlign = TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
 
-                                        TextButton(
-                                            onClick = { m_expanded = false },
-                                            shape = RoundedCornerShape(
-                                                topStart = 0.dp,
-                                                topEnd = 0.dp,
-                                                bottomStart = 8.dp,
-                                                bottomEnd = 8.dp
-                                            ),
-                                            modifier = Modifier.width(100.dp)
-                                        ) {
-                                            Text(
-                                                "Archive",
-                                                textAlign = TextAlign.Left,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
+                                            TextButton(
+                                                onClick = {
+                                                    m_expanded = false
+                                                    cb_archive?.invoke()
+                                                },
+                                                shape = RoundedCornerShape(
+                                                    topStart = 0.dp,
+                                                    topEnd = 0.dp,
+                                                    bottomStart = 8.dp,
+                                                    bottomEnd = 8.dp
+                                                ),
+                                                modifier = Modifier.width(100.dp)
+                                            ) {
+                                                Text(
+                                                    "Archive",
+                                                    textAlign = TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -328,9 +404,10 @@ object ItemsScreen {
     @Composable
     fun view() {
         Column(
-            modifier = Modifier.fillMaxSize()
-                               .verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxWidth()
                                .padding(16.dp)
+                               .clip(RoundedCornerShape(16.dp))
+                               .verticalScroll(rememberScrollState())
         ) {
             for ((i, item) in f_items.withIndex()) {
                 Item(item, start = i == 0, end = i == f_items.lastIndex)

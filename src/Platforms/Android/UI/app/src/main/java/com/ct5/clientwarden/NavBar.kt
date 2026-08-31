@@ -95,6 +95,7 @@ fun NavBar(navController: NavHostController, modifier: Modifier = Modifier) {
                         launchSingleTop = true
                         restoreState = true
                     }
+                    TopBar.m_expanded = false
                 },
                 icon = {
                     Icon(
