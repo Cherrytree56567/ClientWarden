@@ -179,6 +179,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] Top Bar
       - [X] Search Input
       - [X] New Item Button
+    - [ ] Clean Up
     - [ ] Vault UI
       - [ ] Item Icon, Name, Fav, Item Type
       - [ ] Generic Item

@@ -12,11 +12,11 @@ import androidx.compose.ui.Modifier
 enum class HomeScreenPanel {
     NavPanel,
     ItemsPanel,
-    SidePanel
+    DetailsScreen
 }
 
 object HomeScreen {
-    var c_panel: HomeScreenPanel = HomeScreenPanel.ItemsPanel
+    var c_panel: HomeScreenPanel = HomeScreenPanel.DetailsScreen
     @Composable
     fun view(modifier: Modifier = Modifier) {
         Column(modifier = modifier.fillMaxSize()) {
@@ -28,6 +28,7 @@ object HomeScreen {
                 when (c_panel) {
                     HomeScreenPanel.NavPanel -> NavScreen.view()
                     HomeScreenPanel.ItemsPanel -> ItemsScreen.view()
+                    HomeScreenPanel.DetailsScreen -> DetailsScreen.view()
                     else -> Spacer(modifier = modifier)
                 }
             }
