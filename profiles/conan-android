@@ -18,4 +18,3 @@ boost/*:without_process=True
 
 [conf]
 tools.android:ndk_path={{ os.getenv("ANDROID_NDK_HOME") }}
-tools.build:compiler_executables={"c": "{{ os.getenv("ANDROID_NDK_HOME") }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang", "cpp": "{{ os.getenv("ANDROID_NDK_HOME") }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang++"}
