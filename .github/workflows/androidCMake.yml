@@ -27,12 +27,6 @@ jobs:
       id: setup-ndk
       with:
         ndk-version: r27c
-
-    - name: Link NDK Clang
-      run: |
-        NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
-        echo "CC=$NDK_BIN/aarch64-linux-android24-clang" >> $GITHUB_ENV
-        echo "CXX=$NDK_BIN/aarch64-linux-android24-clang++" >> $GITHUB_ENV
     
     - name: CHMod GradleW
       run: chmod +x ./src/Platforms/Android/UI/gradlew
