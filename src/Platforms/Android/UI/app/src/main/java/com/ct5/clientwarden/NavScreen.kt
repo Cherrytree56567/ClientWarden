@@ -95,9 +95,7 @@ sealed interface NavItem {
 }
 
 object NavScreen {
-    var folders = mutableListOf<ClientwardenFolder>(
-        ClientwardenFolder(uuid = UUID(0L, 0L), name = "Fol")
-    )
+    var folders = mutableListOf<ClientwardenFolder>()
     var c_item: NavItem = NavItem.AllItems
 
     /*
