@@ -92,13 +92,12 @@ sealed interface NavItem {
     data object SshKey : NavItem
     data class Folder(val id: UUID) : NavItem
     data object None : NavItem
-    }
+}
 
-/*
- * TODO: Create Add Folder Popup
- */
 object NavScreen {
-    var folders = mutableListOf<ClientwardenFolder>()
+    var folders = mutableListOf<ClientwardenFolder>(
+        ClientwardenFolder(uuid = UUID(0L, 0L), name = "Fol")
+    )
     var c_item: NavItem = NavItem.AllItems
 
     /*
@@ -117,12 +116,17 @@ object NavScreen {
 
     var cb_Folder: ((uuid: UUID) -> List<ItemElement>)? = null
     var cb_NewFolder: ((name: String) -> Unit)? = null
+    var cb_RenameFolder: ((uuid: UUID, name: String) -> Unit)? = null
+    var cb_DeleteFolder: ((uuid: UUID) -> Unit)? = null
 
     @Composable
     fun NavButton(text: String, icon: ImageVector, item: NavItem,
                   onClick: () -> Unit = {}, start: Boolean = false,
-                  end: Boolean = false, addEllipses: Boolean = false) {
+                  end: Boolean = false, addEllipses: Boolean = false,
+                  folder: ClientwardenFolder = ClientwardenFolder(uuid = UUID(0L, 0L), name = "Fol")) {
         var m_expanded by remember { mutableStateOf(false) }
+        var m_renameExpanded by remember { mutableStateOf(false) }
+        var m_deleteExpanded by remember { mutableStateOf(false) }
         /*
          * A Mat You Button with a custom BG Color
          */
@@ -180,8 +184,8 @@ object NavScreen {
                 if (addEllipses) {
                     Box {
                         /*
-                     * Ellipses Button
-                     */
+                         * Ellipses Button
+                         */
                         IconButton(
                             onClick = { m_expanded = true }
                         ) {
@@ -245,9 +249,7 @@ object NavScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    /*
-                                                     * TODO: Add rename Folder support
-                                                     */
+                                                    m_renameExpanded = true
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 8.dp,
@@ -270,9 +272,7 @@ object NavScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    /*
-                                                     * TODO: Add delete Folder support
-                                                     */
+                                                    m_deleteExpanded = true
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 8.dp,
@@ -292,6 +292,133 @@ object NavScreen {
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        var s_folderName by remember { mutableStateOf("") }
+
+        /*
+         * Prompt to ask for New Folder Name
+         */
+        if (m_renameExpanded) {
+            s_folderName = text
+            Dialog(
+                onDismissRequest = {
+                    m_renameExpanded = false
+                },
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false
+                ),
+            ) {
+                Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(32.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .width(300.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Rename Folder",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(Modifier.height(24.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            /*
+                             * Custom Text Field
+                             * We are using a custom text field here
+                             * bc the mat you one has to be thicc, but
+                             * I need it to be thin
+                             */
+                            BasicTextField(
+                                value = s_folderName,
+                                onValueChange = {
+                                    s_folderName = it
+                                },
+                                modifier = Modifier.weight(1f)
+                                    .height(34.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(32.dp)
+                                    )
+                                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
+                                cursorBrush = SolidColor(
+                                    MaterialTheme.colorScheme.primary
+                                )
+                            )
+
+                            Spacer(Modifier.width(12.dp))
+
+                            FilledIconButton(
+                                onClick = {
+                                    m_renameExpanded = false
+                                    cb_RenameFolder?.invoke(folder.uuid, s_folderName)
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Lucide.ArrowRight,
+                                    contentDescription = "More",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /*
+         * Prompt to Ask for Folder Deletion
+         * Confirmation
+         */
+        if (m_deleteExpanded) {
+            Dialog(
+                onDismissRequest = {
+                    m_deleteExpanded = false
+                },
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false
+                ),
+            ) {
+                Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(32.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .width(300.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Delete Folder",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Text(
+                            text = "Are you sure you would like to delete this folder? This is an irreversable action!",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        TextButton(
+                            onClick = {
+                                m_deleteExpanded = false
+                                cb_DeleteFolder?.invoke(folder.uuid)
+                            }
+                        ) {
+                            Text("Continue")
                         }
                     }
                 }
@@ -346,7 +473,8 @@ object NavScreen {
                     NavItem.Folder(folder.uuid), start = i == 0,
                     onClick = {
                         ItemsScreen.SetItems(cb_Folder?.invoke(folder.uuid) ?: emptyList())
-                    }, addEllipses = true)
+                    }, addEllipses = true, folder = folder
+                )
             }
 
             /*
@@ -356,9 +484,13 @@ object NavScreen {
                 start = if (folders.size == 0) true else false, end = true,
                 onClick = {
                     addFolder_expanded = true
-                })
+                }
+            )
         }
 
+        /*
+         * Prompt to ask for New Folder Name
+         */
         if (addFolder_expanded) {
             Dialog(
                 onDismissRequest = {
