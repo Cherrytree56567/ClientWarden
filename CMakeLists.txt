@@ -47,6 +47,8 @@ message(STATUS "Botan includes: ${BOTAN_INCLUDES}")
 
 if (WIN32)
     include(cmake/windows.cmake)
+elseif (ANDROID)
+    include(cmake/android.cmake)
 elseif (APPLE)
     include(cmake/linux.cmake) # TODO: Change to macos.cmake
 elseif (LINUX)
@@ -80,6 +82,8 @@ set(FILES
 
 if (WIN32)
     add_executable(clientwarden WIN32 ${FILES})
+elseif (ANDROID)
+    add_library(clientwarden SHARED ${FILES})
 elseif (APPLE)
     #add_executable(clientwarden MACOSX_BUNDLE ${FILES}) # We need to remove these for now
     add_library(clientwarden SHARED ${FILES})
@@ -89,7 +93,7 @@ else()
     add_library(clientwarden SHARED ${FILES})
 endif()
 
-if (WIN32 OR APPLE OR LINUX)
+if (WIN32 OR APPLE OR LINUX OR ANDROID)
     buildUI(clientwarden)
 endif()
 
