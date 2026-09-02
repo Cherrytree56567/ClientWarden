@@ -50,7 +50,7 @@ jobs:
       with: 
         path: build
         key: cmake-${{ runner.os }}-android-${{ hashFiles('**/CMakeLists.txt', '**/android.cmake', '**/versioning.cmake') }}
-        restore-keys: cmake-
+        restore-keys: cmake-${{ runner.os }}-android-
       
     - name: Install Dependencies
       run: |
