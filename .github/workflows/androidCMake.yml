@@ -22,6 +22,20 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
     
+    - name: Set up Android NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r27c
+
+    - name: Link NDK Clang
+      run: |
+        NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+        mkdir -p /tmp/ndk-clang
+        ln -sf "$NDK_BIN/aarch64-linux-android24-clang" /tmp/ndk-clang/clang
+        ln -sf "$NDK_BIN/aarch64-linux-android24-clang++" /tmp/ndk-clang/clang++
+        echo "/tmp/ndk-clang" >> $GITHUB_PATH
+    
     - name: CHMod GradleW
       run: chmod +x ./src/Platforms/Android/UI/gradlew
 
