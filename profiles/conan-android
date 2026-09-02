@@ -3,6 +3,13 @@ os=Android
 os.api_level=24
 arch=armv8
 compiler=clang
-compiler.version=20
+compiler.version=18
 compiler.libcxx=c++_shared
+compiler.cppstd=20
 build_type=Release
+
+[options]
+boost/*:without_cobalt=True
+
+[conf]
+tools.android:ndk_path={{ os.getenv("ANDROID_NDK_HOME") }}

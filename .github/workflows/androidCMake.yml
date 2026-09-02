@@ -40,7 +40,7 @@ jobs:
     - name: Install Dependencies
       run: |
           mkdir -p build
-          conan install . --output-folder=build --build=missing -s os=Android -s os.api_level=24 -s arch=armv8 -s compiler=clang -s compiler.version=18 -s compiler.libcxx=c++_shared -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
+          conan install . --output-folder=build --build=missing -pr:h=./profiles/conan-android -s build_type=${{env.BUILD_TYPE}}
       
     - name: Configure CMake
       run: |
