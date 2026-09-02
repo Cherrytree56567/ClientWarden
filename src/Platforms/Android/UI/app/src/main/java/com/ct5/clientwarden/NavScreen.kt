@@ -64,6 +64,9 @@ object NavScreen {
     var folders = mutableListOf<ClientwardenFolder>()
     var c_item: NavItem = NavItem.AllItems
 
+    /*
+     * Tons of callbacks
+     */
     var cb_AllItems: (() -> List<ItemElement>)? = null
     var cb_Favorites: (() -> List<ItemElement>)? = null
     var cb_Trash: (() -> List<ItemElement>)? = null
@@ -76,9 +79,13 @@ object NavScreen {
     var cb_SSHKey: (() -> List<ItemElement>)? = null
 
     var cb_Folder: ((uuid: UUID) -> List<ItemElement>)? = null
+    var cb_NewFolder: ((name: String) -> Unit)? = null
 
     @Composable
     fun NavButton(text: String, icon: ImageVector, item: NavItem, onClick: () -> Unit = {}, start: Boolean = false, end: Boolean = false) {
+        /*
+         * A Mat You Button with a custom BG Color
+         */
         FilledTonalButton(onClick = {
             if (item != NavItem.None) {
                 c_item = item
@@ -106,11 +113,19 @@ object NavScreen {
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                /*
+                 * Nav Item Icon
+                 */
                 Icon(icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.size(20.dp))
+
                 Spacer(Modifier.width(8.dp))
+
+                /*
+                 * Nav Item Name
+                 */
                 Text(text,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     overflow = TextOverflow.Ellipsis,
@@ -125,6 +140,9 @@ object NavScreen {
                                .verticalScroll(rememberScrollState())
                                .padding(16.dp)
         ) {
+            /*
+             * Main Nav Items
+             */
             NavButton("All Items", Lucide.House, NavItem.AllItems,
                 start = true, onClick = { ItemsScreen.SetItems(cb_AllItems?.invoke() ?: emptyList()) })
             NavButton("Favorites", Lucide.Star, NavItem.Favorites,
@@ -136,6 +154,9 @@ object NavScreen {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            /*
+             * Item Type Nav Items
+             */
             NavButton("Login", Lucide.SquareAsterisk, NavItem.Login,
                 start = true, onClick = { ItemsScreen.SetItems(cb_Login?.invoke() ?: emptyList()) })
             NavButton("Card", Lucide.CreditCard, NavItem.Card,
@@ -149,15 +170,24 @@ object NavScreen {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            /*
+             * Folder Nav Items
+             * TODO: Add Ellipses to Rename or Delete folder
+             */
             for ((i, folder) in folders.withIndex()) {
                 NavButton(folder.name, Lucide.Folder,
                     NavItem.Folder(folder.uuid), start = i == 0,
                     onClick = { ItemsScreen.SetItems(cb_Folder?.invoke(folder.uuid) ?: emptyList()) })
             }
 
-
+            /*
+             * Add Folder Button
+             * TODO: Add full screen popup that asks for folder
+             *  name and then creates folder
+             */
             NavButton("Add Folder", Lucide.Plus, NavItem.None,
-                start = if (folders.size == 0) true else false, end = true)
+                start = if (folders.size == 0) true else false, end = true,
+                onClick = { ItemsScreen.SetItems(cb_Card?.invoke() ?: emptyList()) })
         }
     }
 }

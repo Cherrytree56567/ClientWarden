@@ -16,11 +16,20 @@ enum class HomeScreenPanel {
 }
 
 object HomeScreen {
-    var c_panel: HomeScreenPanel = HomeScreenPanel.DetailsScreen
+    var c_panel: HomeScreenPanel = HomeScreenPanel.NavPanel
     @Composable
     fun view(modifier: Modifier = Modifier) {
         Column(modifier = modifier.fillMaxSize()) {
+            /*
+             * Top Bar
+             * Shows the Search Bar/Add Button or
+             * Details Panel Buttons
+             */
             TopBar.view()
+
+            /*
+             * Displays current screen
+             */
             Box(
                 modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

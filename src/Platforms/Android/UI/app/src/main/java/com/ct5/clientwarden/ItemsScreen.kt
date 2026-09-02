@@ -175,6 +175,10 @@ object ItemsScreen {
     @Composable
     fun Item(item: ItemElement, start: Boolean = false, end: Boolean = false) {
         var m_expanded by remember { mutableStateOf(false) }
+        /*
+         * A filled Button that has the top corners rounded, if its the start
+         * or the bottom corners rouded, if its the end.
+         */
         FilledTonalButton(onClick = { },
             modifier = Modifier.fillMaxWidth()
                 .height(64.dp),
@@ -194,26 +198,55 @@ object ItemsScreen {
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                /*
+                 * Item Icon
+                 * Login's will have the website icon,
+                 * while everything else will have its own default
+                 * material you icon
+                 */
                 Icon(item.icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.size(20.dp))
+
                 Spacer(Modifier.width(8.dp))
+
+                /*
+                 * Text Column
+                 * Stores the Item Name and Item Type
+                 */
                 Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+                    /*
+                     * Item Name
+                     * Displays the Item Name
+                     */
                     Text(item.name,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         lineHeight = 16.sp,
                         modifier = Modifier.padding(top = 2.dp),
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1)
+                    /*
+                     * Item Type
+                     * Displays the Item Type
+                     */
                     Text(item.type.desc,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         lineHeight = 16.sp)
                 }
+
                 Spacer(Modifier.weight(1f).fillMaxWidth())
+
+                /*
+                 * Ellipses Box
+                 * Stores the Ellipses Button and Dropdown
+                 */
                 Box {
+                    /*
+                     * Ellipses Button
+                     */
                     IconButton(
                         onClick = { m_expanded = true }
                     ) {
@@ -229,7 +262,7 @@ object ItemsScreen {
                     transitionState.targetState = m_expanded
 
                     /*
-                     * Thanks to claude for the Animated Visibility,
+                     * Thanks to Claude for the Animated Visibility,
                      * the Popup stuff was mine
                      */
                     if (transitionState.currentState || transitionState.targetState) {
@@ -257,8 +290,8 @@ object ItemsScreen {
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp)
                                 ) {
                                     /*
-                                 * Use NavScreen.c_item to show or hide restore/delete
-                                 */
+                                     * Use NavScreen.c_item to show or hide restore/delete
+                                     */
                                     Column(
                                         modifier = Modifier.padding(
                                             horizontal = 0.dp,
@@ -266,6 +299,9 @@ object ItemsScreen {
                                         )
                                     ) {
                                         if (NavScreen.c_item == NavItem.Trash) {
+                                            /*
+                                             * Restore Icon
+                                             */
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
@@ -285,6 +321,10 @@ object ItemsScreen {
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
                                             }
+
+                                            /*
+                                             * Permenently Delete Button
+                                             */
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
@@ -305,6 +345,9 @@ object ItemsScreen {
                                                 )
                                             }
                                         } else if (NavScreen.c_item == NavItem.Archived) {
+                                            /*
+                                             * Un Archive Button
+                                             */
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
@@ -325,6 +368,9 @@ object ItemsScreen {
                                                 )
                                             }
 
+                                            /*
+                                             * Bin Button
+                                             */
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
@@ -345,6 +391,10 @@ object ItemsScreen {
                                                 )
                                             }
                                         } else {
+                                            /*
+                                             * Bin Button
+                                             * again
+                                             */
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
@@ -365,6 +415,9 @@ object ItemsScreen {
                                                 )
                                             }
 
+                                            /*
+                                             * Archive Button
+                                             */
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
@@ -393,6 +446,12 @@ object ItemsScreen {
                 }
             }
         }
+
+        /*
+         * Add a horizontal Divider to allow the user
+         * to see the end of each button and to differentiate
+         * each button separately
+         */
         if (!end) {
             Column(modifier = Modifier.fillMaxWidth()
                                       .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)) {
@@ -409,6 +468,10 @@ object ItemsScreen {
                                .clip(RoundedCornerShape(16.dp))
                                .verticalScroll(rememberScrollState())
         ) {
+            /*
+             * Display all items and set Start if the
+             * index is 0 and set End if it is the last Index
+             */
             for ((i, item) in f_items.withIndex()) {
                 Item(item, start = i == 0, end = i == f_items.lastIndex)
             }
