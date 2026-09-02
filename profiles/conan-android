@@ -10,6 +10,9 @@ build_type=Release
 
 [options]
 boost/*:without_cobalt=True
+boost/*:without_context=True
+boost/*:without_coroutine=True
+boost/*:without_fiber=True
 
 [conf]
 tools.android:ndk_path={{ os.getenv("ANDROID_NDK_HOME") }}
