@@ -1,0 +1,59 @@
+name: Android CMake
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+    
+    - name: CHMod GradleW
+      run: chmod +x ./android/gradlew
+
+    - name: Install Conan
+      uses: conan-io/setup-conan@v1
+      with:
+          cache_packages: true
+
+    - name: Cache Cmake
+      uses: actions/cache@v5
+      with: 
+        path: build
+        key: cmake-${{ hashFiles('**/CMakeLists.txt', '**/macos.cmake', '**/windows.cmake', '**/versioning.cmake') }}
+        restore-keys: cmake-
+      
+    - name: Install Dependencies
+      run: |
+          mkdir -p build
+          conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -o "boost/*:without_cobalt=True" -s build_type=${{env.BUILD_TYPE}}
+      
+    - name: Configure CMake
+      run: |
+          cd build
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True
+
+    - name: Build
+      run: |
+          cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ClientWarden-Release.zip
+        path: build/Release
+        archive: true
