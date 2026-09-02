@@ -1,0 +1,8 @@
+[settings]
+os=Android
+os.api_level=24
+arch=armv8
+compiler=clang
+compiler.version=20
+compiler.libcxx=c++_shared
+build_type=Release
