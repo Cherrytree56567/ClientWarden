@@ -64,6 +64,7 @@ jobs:
 
     - name: Build
       run: |
+          find build -maxdepth 6 | sort
           cmake --build build --config ${{env.BUILD_TYPE}}
 
     - name: Upload Artifact
