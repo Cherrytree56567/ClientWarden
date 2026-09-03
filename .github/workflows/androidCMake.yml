@@ -61,9 +61,7 @@ jobs:
       run: |
           cd build
           cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True
-          ls -la /home/runner/.conan2/p/nlohmd014ef7748f4b/p/include/ 2>&1 || echo "PATH DOES NOT EXIST"
-          ls -la /home/runner/.conan2/p/nlohmd014ef7748f4b/p/include/nlohmann/ 2>&1 || echo "nlohmann SUBDIR MISSING"
-          grep -i nlohmann build/CMakeFiles/clientwarden.dir/flags.make || echo "NOT IN FLAGS.MAKE"
+          ls -la /home/runner/.conan2/p/
 
     - name: Build
       run: |
