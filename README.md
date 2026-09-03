@@ -173,7 +173,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [ ] Android UI
     - [X] Nav Panel
       - [X] General Tabs
-      - [ ] Folders
+      - [X] Folders
     - [X] Items Panel
       - [X] Items
     - [X] Top Bar

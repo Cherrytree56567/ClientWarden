@@ -95,7 +95,9 @@ sealed interface NavItem {
 }
 
 object NavScreen {
-    var folders = mutableListOf<ClientwardenFolder>()
+    var folders = mutableListOf<ClientwardenFolder>(
+        ClientwardenFolder(uuid = UUID(0L, 0L), "New Fol")
+    )
     var c_item: NavItem = NavItem.AllItems
 
     /*
@@ -311,7 +313,7 @@ object NavScreen {
                     usePlatformDefaultWidth = false
                 ),
             ) {
-                Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(32.dp)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(32.dp)) {
                     Column(
                         modifier = Modifier
                             .padding(24.dp)
@@ -344,7 +346,7 @@ object NavScreen {
                                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
                                         shape = RoundedCornerShape(32.dp)
                                     )
-                                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface
@@ -388,7 +390,7 @@ object NavScreen {
                     usePlatformDefaultWidth = false
                 ),
             ) {
-                Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(32.dp)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(32.dp)) {
                     Column(
                         modifier = Modifier
                             .padding(24.dp)
@@ -414,7 +416,11 @@ object NavScreen {
                             onClick = {
                                 m_deleteExpanded = false
                                 cb_DeleteFolder?.invoke(folder.uuid)
-                            }
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
                         ) {
                             Text("Continue")
                         }
@@ -498,7 +504,7 @@ object NavScreen {
                     usePlatformDefaultWidth = false
                 ),
             ) {
-                Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(32.dp)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(32.dp)) {
                     Column(
                         modifier = Modifier
                             .padding(24.dp)
