@@ -233,7 +233,7 @@ object DetailsScreen {
             GenericItem(GenericItemData(title = "Email", value = "a@a.comfbweysfg", type = GenericItemType.Generic), false).view()
             GenericItem(GenericItemData(title = "Email", value = "a@a.comfbweysfg", "4", "5", "6"), true).view()
             GenericItem(GenericItemData(title = "Email", value = "a@a.comfbweysfg", type = GenericItemType.Password), false).view()
-            GenericItem(GenericItemData(title = "Email", value = "a@a.comfbweysfg", type = GenericItemType.Generic), false).view()
+            GenericItem(GenericItemData(title = "Email", value = "goog.com\na.com", type = GenericItemType.Website), true).view()
             GenericItem(GenericItemData(title = "Email", value = "a@a.comfbweysfg", type = GenericItemType.Generic), false).view()
         }
     }

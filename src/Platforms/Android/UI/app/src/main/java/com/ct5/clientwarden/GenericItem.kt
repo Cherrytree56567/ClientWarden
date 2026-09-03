@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +40,12 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.composables.icons.lucide.GripVertical
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 /*
  * Special Cases (editable):
@@ -104,7 +111,7 @@ data class GenericItemData(
 }
 
 /*
- * TODO: Add Editable + Add TOTP Support + Add Date Support + Add Website Support
+ * TODO: Add Editable + Add TOTP Support + Add Date Support
  */
 class GenericItem(var data: GenericItemData, var editable: Boolean) {
     @Composable
@@ -188,7 +195,8 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                      */
                     Text(
                         data.value,
-                        maxLines = if (data.type == GenericItemType.ML_Generic) 30 else 1,
+                        maxLines = if (data.type == GenericItemType.ML_Generic ||
+                            data.type == GenericItemType.Website) 30 else 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -216,6 +224,58 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                         BasicTextView(data.value4, {
                             data.value4 = it
                         }, Modifier.weight(1f))
+                    }
+                } else if (data.type == GenericItemType.Website) {
+                    var websites by remember { mutableStateOf(data.value.lines()) }
+
+                    val l_state = rememberLazyListState()
+                    val r_state = rememberReorderableLazyListState(l_state) { from, to ->
+                        websites = websites.toMutableList().apply {
+                            add(to.index, removeAt(from.index))
+                        }
+                        data.value = websites.joinToString("\n")
+                    }
+
+                    LazyColumn(state = l_state) {
+                        items(
+                            items = websites,
+                            key = { it }
+                        ) { line ->
+                            ReorderableItem(r_state, key = line) { dragging ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (dragging) MaterialTheme.colorScheme.surfaceBright else Color.Transparent)
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    /*
+                                     * Text Input
+                                     */
+                                    BasicTextView(line, { value ->
+                                        val index = websites.indexOf(line)
+                                        if (index != -1) {
+                                            websites = websites.toMutableList().apply {
+                                                this[index] = value
+                                            }
+                                            data.value = websites.joinToString("\n")
+                                        }
+                                    }, Modifier.weight(1f))
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    /*
+                                     * The actual icon that allows it to move
+                                     */
+                                    Icon(
+                                        imageVector = Lucide.GripVertical,
+                                        contentDescription = "Drag to Reorder",
+                                        modifier = Modifier.draggableHandle().size(16.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 } else {
                     /*
