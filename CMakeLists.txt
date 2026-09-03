@@ -93,6 +93,9 @@ else()
     add_library(clientwarden SHARED ${FILES})
 endif()
 
+target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
+target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
+
 if (WIN32 OR APPLE OR LINUX OR ANDROID)
     buildUI(clientwarden)
 endif()
@@ -100,6 +103,3 @@ endif()
 if(MSVC)
     target_compile_options(clientwarden PRIVATE /std:c++latest /GR- /EHa)
 endif()
-
-target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
-target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
