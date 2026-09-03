@@ -16,7 +16,7 @@ enum class HomeScreenPanel {
 }
 
 object HomeScreen {
-    var c_panel: HomeScreenPanel = HomeScreenPanel.NavPanel
+    var c_panel: HomeScreenPanel = HomeScreenPanel.DetailsScreen
     @Composable
     fun view(modifier: Modifier = Modifier) {
         Column(modifier = modifier.fillMaxSize()) {
