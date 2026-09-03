@@ -61,7 +61,7 @@ jobs:
       run: |
           cd build
           cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True
-          ls -laR /home/runner/.conan2/p/
+          cat build/CMakeFiles/clientwarden.dir/flags.make
 
     - name: Build
       run: |
