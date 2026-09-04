@@ -55,7 +55,7 @@ jobs:
     - name: Install Dependencies
       run: |
           mkdir -p build
-          conan install . --output-folder=build --build=missing -pr:h=./profiles/conan-android -s build_type=${{env.BUILD_TYPE}}
+          conan install . --output-folder=build --build=missing -pr:h=./profiles/conan-android -s build_type=${{env.BUILD_TYPE}} -c tools.build:jobs=4
       
     - name: Configure CMake
       run: |
