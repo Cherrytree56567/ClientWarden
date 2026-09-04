@@ -181,10 +181,11 @@ You might need to use the `-s compiler.cppstd=20` flag.
       - [X] New Item Button
     - [X] Clean Up
     - [ ] Vault UI
-      - [ ] Item Icon, Name, Fav, Item Type
-      - [ ] Generic Item
-      - [ ] Field Item
+      - [X] Item Icon, Name, Fav, Item Type
+      - [X] Generic Item
+      - [X] Field Item
       - [ ] Attachment Item
+      - [ ] Show Items
     - [ ] Main Window
     - [ ] Login UI
     - [ ] Unlock UI

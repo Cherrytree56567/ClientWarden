@@ -1,7 +1,12 @@
 package com.ct5.clientwarden
 
 import android.content.res.Configuration
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -43,9 +47,27 @@ import com.composables.icons.lucide.Lucide
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontFamily
 import com.composables.icons.lucide.GripVertical
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 /*
  * Special Cases (editable):
@@ -110,9 +132,6 @@ data class GenericItemData(
     )
 }
 
-/*
- * TODO: Add Editable + Add TOTP Support + Add Date Support
- */
 class GenericItem(var data: GenericItemData, var editable: Boolean) {
     @Composable
     fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -171,7 +190,8 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                         Text(
                             if (p_visible) data.value else "●".repeat(data.value.length),
                             maxLines = if (data.type == GenericItemType.ML_Password) 30 else 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
                         )
 
                         Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
@@ -189,9 +209,62 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                             )
                         }
                     }
+                } else if (data.type == GenericItemType.TOTP) {
+                    var totpValue by remember { mutableStateOf("") }
+                    var totpLeft by remember { mutableDoubleStateOf(0.0) }
+                    var totpMax by remember { mutableIntStateOf(30) }
+
+                    LaunchedEffect(data.cb_getTOTP) {
+                        val rcb_getTOTP = data.cb_getTOTP ?: return@LaunchedEffect
+                        var refresh = 0L
+                        while (isActive) {
+                            val now = System.currentTimeMillis() / 1000
+                            if (now >= refresh) {
+                                val res = rcb_getTOTP()
+                                totpValue = res.value
+                                totpMax = res.maxTimer
+                                refresh = res.refreshDate
+                            }
+                            totpLeft = maxOf(0.0, (refresh - now).toDouble())
+                            delay(1000.milliseconds)
+                        }
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (totpValue.isEmpty()) data.value else totpValue,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
+
+                        val linearProg by animateFloatAsState(
+                            targetValue = (totpLeft / totpMax).toFloat(),
+                            animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
+                            label = "totpProgress"
+                        )
+
+                        Box(contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                progress = { linearProg },
+                                modifier = Modifier.size(26.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 2.5.dp,
+                                trackColor = Color.Transparent,
+                                strokeCap = StrokeCap.Round
+                            )
+
+                            Text(
+                                text = totpLeft.toInt().toString(),
+                                fontSize = 9.sp,
+                                lineHeight = 9.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 } else {
                     /*
-                     * Generic, ML_Generic, Website
+                     * Generic, ML_Generic, Website, Date
                      */
                     Text(
                         data.value,
@@ -275,6 +348,44 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                                     )
                                 }
                             }
+                        }
+                    }
+                } else if (data.type == GenericItemType.Date) {
+                    val m_date = remember {
+                        SimpleDateFormat("MM/yyyy", Locale.getDefault())
+                    }
+                    val l_timestamp = remember(data.value) {
+                        runCatching { m_date.parse(data.value)?.time }.getOrNull()
+                    } ?: System.currentTimeMillis()
+
+                    var m_show by remember { mutableStateOf(false) }
+                    val p_state = rememberDatePickerState(initialSelectedDateMillis = l_timestamp)
+
+                    Row(modifier = Modifier.padding(0.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(color = MaterialTheme.colorScheme.surfaceBright)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .clickable {
+                            m_show = true
+                        },
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text(data.value, modifier = Modifier.padding(0.dp))
+                    }
+
+                    if (m_show) {
+                        DatePickerDialog(
+                            onDismissRequest = { m_show = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    p_state.selectedDateMillis?.let { data.value = m_date.format(Date(it)) }
+                                    m_show = false
+                                }) { Text("Ok") }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { m_show = false }) { Text("Cancel") }
+                            }
+                        ) {
+                            DatePicker(state = p_state)
                         }
                     }
                 } else {
