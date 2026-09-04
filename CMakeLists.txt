@@ -42,8 +42,13 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Botan CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
 
-get_target_property(BOTAN_INCLUDES botan::botan INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "Botan includes: ${BOTAN_INCLUDES}")
+get_target_property(JSON_INCLUDES
+    nlohmann_json::nlohmann_json
+    INTERFACE_INCLUDE_DIRECTORIES
+)
+
+message(STATUS "nlohmann_json target: nlohmann_json::nlohmann_json")
+message(STATUS "nlohmann_json includes: ${JSON_INCLUDES}")
 
 if (WIN32)
     include(cmake/windows.cmake)
