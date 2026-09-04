@@ -288,7 +288,7 @@ namespace ClientWarden {
 
         std::string msg;
 
-        std::jthread reader([&](std::stop_token) {
+        jthread reader([&](stop_token) {
             while (shouldThread) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
