@@ -14,8 +14,8 @@ function(buildUI _target)
     )
 
     target_sources(${_target} PRIVATE
-        src/Platforms/Linux/Clipboard/Clipboard.cpp
-        src/Platforms/Linux/Storage/Storage.cpp
+        src/Platforms/Android/Clipboard/Clipboard.cpp
+        src/Platforms/Android/Storage/Storage.cpp
     )
 
     target_include_directories(${_target} PRIVATE src/Vault src/Platforms/Android/)
