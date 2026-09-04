@@ -76,7 +76,7 @@ function(buildUI _target)
     )
     
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets} ${ICON_FILE})
-    target_include_directories(${_target} PRIVATE src/Platforms/MacOS src/Vault)
+    target_include_directories(${_target} PRIVATE src/Platforms/MacOS)
     target_link_libraries(${_target} "-framework Cocoa")
     target_compile_definitions(${_target} PRIVATE MSGPACK_DISABLE_LEGACY_NIL NON_XCODE_BUILD)
     set_target_properties(${_target} PROPERTIES

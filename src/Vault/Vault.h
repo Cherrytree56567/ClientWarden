@@ -8,6 +8,7 @@
 #include "VaultSession/VaultSession.h"
 #include "VaultProfile/VaultProfile.h"
 #include "Storage/Storage.h"
+#include "multi/jthread.h"
 
 #include "Folder/Folder.h"
 #include "CipherQuery/CipherQuery.h"

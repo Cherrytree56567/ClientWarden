@@ -4,6 +4,7 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 #include <msgpack.hpp>
+#include "multi/jthread.h"
 
 #include "Clientwarden.h"
 #include "VaultUtils/VaultUtils.h"

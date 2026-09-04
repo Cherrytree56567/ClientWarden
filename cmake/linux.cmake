@@ -16,7 +16,7 @@ function(buildUI _target)
     corrosion_import_crate(MANIFEST_PATH src/Platforms/Linux/Cargo.toml)
     corrosion_link_libraries(UI ${_target})
 
-    target_include_directories(${_target} PRIVATE src/Vault src/Platforms/Linux/)
+    target_include_directories(${_target} PRIVATE src/Platforms/Linux/)
 
     if (APPLE)
         set_target_properties(${_target} PROPERTIES

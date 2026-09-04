@@ -18,7 +18,7 @@ function(buildUI _target)
         src/Platforms/Android/Storage/Storage.cpp
     )
 
-    target_include_directories(${_target} PRIVATE src/Vault src/Platforms/Android/)
+    target_include_directories(${_target} PRIVATE src/Platforms/Android/)
 
     add_dependencies(UI ${_target})
 endfunction()

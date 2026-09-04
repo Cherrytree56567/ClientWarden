@@ -9,6 +9,8 @@ class ClientWardenConan(ConanFile):
     def requirements(self):
         if self.settings.os != "Android":
             self.requires("qt/6.11.1")
+        if self.settings.os == "Android":
+            self.requires("jthread-lite/0.1.0")
         self.requires("botan/3.11.1")
         self.requires("nlohmann_json/3.12.0")
         self.requires("cpp-httplib/0.47.0")

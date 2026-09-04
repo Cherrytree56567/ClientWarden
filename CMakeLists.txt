@@ -100,6 +100,8 @@ endif()
 target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
 
+target_include_directories(clientwarden PRIVATE src/Vault src/Platforms/)
+
 if (WIN32 OR APPLE OR LINUX OR ANDROID)
     buildUI(clientwarden)
 endif()
