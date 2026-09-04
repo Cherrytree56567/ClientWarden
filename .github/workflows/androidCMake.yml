@@ -60,12 +60,12 @@ jobs:
     - name: Configure CMake
       run: |
           cd build
-          cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True --verbose
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True
 
     - name: Build
       run: |
           find build -maxdepth 6 | sort
-          cmake --build build --config ${{env.BUILD_TYPE}}
+          cmake --build build --config ${{env.BUILD_TYPE}} --verbose
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
