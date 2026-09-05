@@ -40,7 +40,6 @@ find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Botan CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
-find_package(jthread-lite CONFIG REQUIRED)
 
 get_target_property(JSON_INCLUDES
     nlohmann_json::nlohmann_json
@@ -98,7 +97,7 @@ else()
     add_library(clientwarden SHARED ${FILES})
 endif()
 
-target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain nonstd::jthread-lite)
+target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
 
 target_include_directories(clientwarden PRIVATE src/Vault src/Platforms/)
