@@ -16,6 +16,13 @@ boost/*:without_fiber=True
 boost/*:without_asio=True
 boost/*:without_process=True
 
+[buildenv]
+CC={{ os.getenv("CC") }}
+CXX={{ os.getenv("CXX") }}
+AR={{ os.getenv("AR") }}
+RANLIB={{ os.getenv("RANLIB") }}
+STRIP={{ os.getenv("STRIP") }}
+
 [conf]
 tools.android:ndk_path={{ os.getenv("ANDROID_NDK_HOME") }}
 tools.build:compiler_executables={"c": "$CC", "cpp": "$CXX"}
