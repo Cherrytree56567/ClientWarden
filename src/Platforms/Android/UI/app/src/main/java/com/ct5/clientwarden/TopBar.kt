@@ -83,7 +83,7 @@ object TopBar {
     fun view() {
         if (HomeScreen.c_panel == HomeScreenPanel.DetailsScreen) {
             Row(
-                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 FilledIconButton(

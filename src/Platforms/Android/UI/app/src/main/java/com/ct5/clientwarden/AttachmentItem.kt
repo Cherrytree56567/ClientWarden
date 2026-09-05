@@ -1,0 +1,142 @@
+package com.ct5.clientwarden
+
+import android.content.res.Configuration
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Download
+import com.composables.icons.lucide.File
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Trash
+
+data class AttachmentItemData(
+    var id: String,
+    var name: String,
+    var progress: Double
+) {
+    constructor(id: String, name: String) : this(
+        id = id,
+        name = name,
+        progress = 0.0
+    )
+}
+
+class AttachmentItem(var data: AttachmentItemData, var editable: Boolean) {
+    @Composable
+    fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier) {
+        var m_data by remember(data) { mutableStateOf(data) }
+        BasicTextField(
+            value = m_data,
+            onValueChange = {
+                m_data = it
+                cb_data(it)
+            },
+            modifier = modifier
+                .height(34.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            cursorBrush = SolidColor(
+                MaterialTheme.colorScheme.primary
+            )
+        )
+    }
+
+    @Composable
+    fun view() {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .padding(4.dp)
+        ) {
+            Text(
+                "Attachment",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Lucide.File, contentDescription = "Attachment",
+                    modifier = Modifier.size(18.dp))
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                if (!editable) {
+                    Text(
+                        data.name,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
+
+                    IconButton(onClick = {
+                        DetailsScreen.cb_downloadAttachment?.invoke(data.id)
+                    }, modifier = Modifier.size(22.dp)) {
+                        Icon(Lucide.Download, contentDescription = "Download",
+                            modifier = Modifier.size(18.dp))
+                    }
+                } else {
+                    BasicTextView(
+                        data.name,
+                        cb_data = { data.name = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(onClick = {
+                        DetailsScreen.cb_removeAttachment?.invoke(data.id)
+                    }, modifier = Modifier.size(22.dp)) {
+                        Icon(Lucide.Trash, contentDescription = "Delete",
+                            modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    device = Devices.PIXEL_9,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun PreviewAttachment() {
+    MainScreen()
+}

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -134,7 +135,7 @@ data class GenericItemData(
 
 class GenericItem(var data: GenericItemData, var editable: Boolean) {
     @Composable
-    fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier) {
+    fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier, multiLine: Boolean = false) {
         var m_data by remember(data) { mutableStateOf(data) }
         BasicTextField(
             value = m_data,
@@ -143,13 +144,16 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                 cb_data(it)
             },
             modifier = modifier
-                .height(34.dp)
+                .then(
+                    if (multiLine) Modifier.heightIn(min = 34.dp)
+                    else Modifier.height(34.dp)
+                )
                 .background(
                     color = MaterialTheme.colorScheme.surfaceBright,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(horizontal = 14.dp, vertical = 6.dp),
-            singleLine = true,
+            singleLine = !multiLine,
             textStyle = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface
             ),
@@ -162,7 +166,8 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
     @Composable
     fun view() {
         var p_visible by remember { mutableStateOf(false) }
-        Column(modifier = Modifier.fillMaxWidth()
+        Column(modifier = Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(12.dp)) {
@@ -194,7 +199,9 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
                         )
 
-                        Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
+                        Spacer(modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth())
 
                         IconButton(
                             onClick = { p_visible = !p_visible },
@@ -236,7 +243,9 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
                         )
 
-                        Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
+                        Spacer(modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth())
 
                         val linearProg by animateFloatAsState(
                             targetValue = (totpLeft / totpMax).toFloat(),
@@ -309,7 +318,7 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                         data.value = websites.joinToString("\n")
                     }
 
-                    LazyColumn(state = l_state) {
+                    LazyColumn(state = l_state, modifier = Modifier.heightIn(max = 300.dp)) {
                         items(
                             items = websites,
                             key = { it }
@@ -344,7 +353,9 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                                     Icon(
                                         imageVector = Lucide.GripVertical,
                                         contentDescription = "Drag to Reorder",
-                                        modifier = Modifier.draggableHandle().size(16.dp)
+                                        modifier = Modifier
+                                            .draggableHandle()
+                                            .size(16.dp)
                                     )
                                 }
                             }
@@ -361,7 +372,8 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                     var m_show by remember { mutableStateOf(false) }
                     val p_state = rememberDatePickerState(initialSelectedDateMillis = l_timestamp)
 
-                    Row(modifier = Modifier.padding(0.dp)
+                    Row(modifier = Modifier
+                        .padding(0.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(color = MaterialTheme.colorScheme.surfaceBright)
                         .padding(horizontal = 12.dp, vertical = 4.dp)
@@ -392,11 +404,12 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                     /*
                      * Generic, ML_Generic, Password, ML_Password, TOTP
                      */
-                    Text(
+                    BasicTextView(
                         data.value,
-                        maxLines = if (data.type == GenericItemType.ML_Generic ||
-                            data.type == GenericItemType.ML_Password) 30 else 1,
-                        overflow = TextOverflow.Ellipsis
+                        { data.value = it },
+                        multiLine = if (data.type == GenericItemType.ML_Generic ||
+                                        data.type == GenericItemType.ML_Password) true
+                                    else false
                     )
                 }
             }

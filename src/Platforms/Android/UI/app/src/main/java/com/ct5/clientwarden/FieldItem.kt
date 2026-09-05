@@ -121,7 +121,7 @@ class FieldItem(var data: FieldItemData, var editable: Boolean) {
             modifier = modifier
                 .height(34.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceBright,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(horizontal = 14.dp, vertical = 6.dp),
@@ -141,15 +141,22 @@ class FieldItem(var data: FieldItemData, var editable: Boolean) {
         Column(
             modifier = Modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .padding(12.dp)
+                .padding(4.dp)
         ) {
             if (data.type != FieldItemType.Checkbox) {
-                Text(
-                    data.title,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                if (editable) {
+                    BasicTextView(
+                        data.title,
+                        { data.title = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Text(
+                        data.title,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 8.dp))
             }
@@ -319,7 +326,7 @@ class FieldItem(var data: FieldItemData, var editable: Boolean) {
                             modifier = Modifier
                                 .height(34.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceBright)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .clickable(enabled = options.isNotEmpty()) { m_expanded = true }
                                 .padding(horizontal = 14.dp, vertical = 6.dp)
                                 .width(160.dp),
@@ -346,7 +353,8 @@ class FieldItem(var data: FieldItemData, var editable: Boolean) {
                         }
                     }
                 } else {
-                    BasicTextView(data.value, { data.value = it })
+                    BasicTextView(data.value, { data.value = it },
+                        modifier = Modifier.fillMaxWidth())
                 }
             }
         }

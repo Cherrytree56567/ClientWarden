@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,10 +53,51 @@ import com.composables.icons.lucide.Folder
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Star
+import com.ct5.clientwarden.AttachmentItem
+import com.ct5.clientwarden.FieldItem
 import java.util.UUID
 
 object DetailsScreen {
     var s_folder: ClientwardenFolder = ClientwardenFolder(uuid = UUID(0L, 0L), name = "No Folder")
+    var cb_removeAttachment: ((String) -> Boolean)? = null
+    var cb_downloadAttachment: ((String) -> Boolean)? = null
+
+    /*
+     * Generic Item Tests were from Claude
+     */
+    val l_genericItems = mutableStateListOf<GenericItemData>(
+        GenericItemData(title = "Username", value = "johndoe123", type = GenericItemType.Generic),
+        GenericItemData(title = "Notes", value = "This is a longer note.\nIt can span multiple lines.\nUp to 30 lines are shown.", type = GenericItemType.ML_Generic),
+        GenericItemData(title = "Password", value = "Sup3rSecret!", type = GenericItemType.Password),
+        GenericItemData(title = "Recovery Key", value = "ABCD-1234-EFGH-5678\nWXYZ-9999-QRST-0000", type = GenericItemType.ML_Password),
+        GenericItemData(title = "2FA Code", value = "000000", type = GenericItemType.TOTP,
+            cb_getTOTP = {
+                val now = System.currentTimeMillis() / 1000
+                val period = 30
+                val refresh = (now / period + 1) * period
+                TOTPResult(
+                    refreshDate = refresh,
+                    maxTimer = period,
+                    value = (100000..999999).random().toString()
+                )
+            }
+        ),
+        GenericItemData(title = "Website", value = "https://example.com\nhttps://mirror.example.com\nhttps://backup.example.org", type = GenericItemType.Website),
+        GenericItemData(title = "Expiration Date", value = "08/2027", type = GenericItemType.Date),
+        GenericItemData(title = "Card Number", value = "4242", value2 = "4242", value3 = "4242", value4 = "4242")
+    )
+    val l_fieldItems = mutableStateListOf<FieldItemData>(
+        FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Text),
+        FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Hidden),
+        FieldItemData(title = "Email", value = "true", type = FieldItemType.Checkbox),
+        FieldItemData(title = "Email", value = "405", type = FieldItemType.Linked, itemType = ItemType.Identity)
+    )
+    val l_attachmentItems = mutableStateListOf<AttachmentItemData>(
+        AttachmentItemData(id = "Email", name = "a@a.comfbweysfg"),
+        AttachmentItemData(id = "Email", name = "a@a.comfbweysfg")
+    )
+
+    var editable: Boolean = false
 
     @Composable
     fun folderButton(e_change: (Boolean) -> Unit, option: ClientwardenFolder) {
@@ -89,7 +133,9 @@ object DetailsScreen {
     fun view() {
         var f_expanded by remember { mutableStateOf(false) }
 
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.Start) {
+        Column(modifier = Modifier.fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp, 0.dp, 16.dp, 16.dp), horizontalAlignment = Alignment.Start) {
             /*
              * First Row - Item Detail
              * This contains the Item's Icon, Name/Type, Favorite
@@ -230,10 +276,31 @@ object DetailsScreen {
 
             Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-            FieldItem(FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Text), false).view()
-            FieldItem(FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Hidden), false).view()
-            FieldItem(FieldItemData(title = "Email", value = "true", type = FieldItemType.Checkbox), false).view()
-            FieldItem(FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Linked, itemType = ItemType.Identity), true).view()
+            for (genericItem in l_genericItems) {
+                GenericItem(genericItem, editable).view()
+
+                Spacer(modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            HorizontalDivider()
+
+            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+
+            for (fieldItem in l_fieldItems) {
+                FieldItem(fieldItem, editable).view()
+
+                Spacer(modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            HorizontalDivider()
+
+            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+
+            for (attachmentItems in l_attachmentItems) {
+                AttachmentItem(attachmentItems, editable).view()
+
+                Spacer(modifier = Modifier.padding(vertical = 8.dp))
+            }
         }
     }
 }
