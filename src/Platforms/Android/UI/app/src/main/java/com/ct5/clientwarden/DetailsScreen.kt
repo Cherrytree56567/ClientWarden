@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,58 +56,47 @@ import com.composables.icons.lucide.Folder
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Star
+import com.composables.icons.lucide.StarOff
 import com.ct5.clientwarden.AttachmentItem
 import com.ct5.clientwarden.FieldItem
 import java.util.UUID
 
+/*
+ * TODO: Make Folder Picker Scrollable
+ */
 object DetailsScreen {
-    var s_folder: ClientwardenFolder = ClientwardenFolder(uuid = UUID(0L, 0L), name = "No Folder")
     var cb_removeAttachment: ((String) -> Boolean)? = null
     var cb_downloadAttachment: ((String) -> Boolean)? = null
+    var cb_favorite: ((Boolean) -> Boolean)? = null
+    var cb_folder: ((UUID) -> Boolean)? = null
 
-    /*
-     * Generic Item Tests were from Claude
-     */
-    val l_genericItems = mutableStateListOf<GenericItemData>(
-        GenericItemData(title = "Username", value = "johndoe123", type = GenericItemType.Generic),
-        GenericItemData(title = "Notes", value = "This is a longer note.\nIt can span multiple lines.\nUp to 30 lines are shown.", type = GenericItemType.ML_Generic),
-        GenericItemData(title = "Password", value = "Sup3rSecret!", type = GenericItemType.Password),
-        GenericItemData(title = "Recovery Key", value = "ABCD-1234-EFGH-5678\nWXYZ-9999-QRST-0000", type = GenericItemType.ML_Password),
-        GenericItemData(title = "2FA Code", value = "000000", type = GenericItemType.TOTP,
-            cb_getTOTP = {
-                val now = System.currentTimeMillis() / 1000
-                val period = 30
-                val refresh = (now / period + 1) * period
-                TOTPResult(
-                    refreshDate = refresh,
-                    maxTimer = period,
-                    value = (100000..999999).random().toString()
-                )
-            }
-        ),
-        GenericItemData(title = "Website", value = "https://example.com\nhttps://mirror.example.com\nhttps://backup.example.org", type = GenericItemType.Website),
-        GenericItemData(title = "Expiration Date", value = "08/2027", type = GenericItemType.Date),
-        GenericItemData(title = "Card Number", value = "4242", value2 = "4242", value3 = "4242", value4 = "4242")
-    )
-    val l_fieldItems = mutableStateListOf<FieldItemData>(
-        FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Text),
-        FieldItemData(title = "Email", value = "a@a.comfbweysfg", type = FieldItemType.Hidden),
-        FieldItemData(title = "Email", value = "true", type = FieldItemType.Checkbox),
-        FieldItemData(title = "Email", value = "405", type = FieldItemType.Linked, itemType = ItemType.Identity)
-    )
-    val l_attachmentItems = mutableStateListOf<AttachmentItemData>(
-        AttachmentItemData(id = "Email", name = "a@a.comfbweysfg"),
-        AttachmentItemData(id = "Email", name = "a@a.comfbweysfg")
-    )
+    var name: String = ""
 
+    var uuid: UUID = UUID(0L, 0L)
+    var folderUUID: UUID = UUID(0L, 0L)
+    var repromptItem: Boolean = false
+    var type: ItemType = ItemType.Login
+    //var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
     var editable: Boolean = false
+    var viewable: Boolean = false
+    var favorite: Boolean = false
+
+    var itemHistory = mutableStateListOf<String>()
+    var passwordHistory = mutableStateListOf<PasswordHistoryItem>()
+    var notes: String = ""
+
+    val l_genericItems = mutableStateListOf<GenericItemData>()
+    val l_fieldItems = mutableStateListOf<FieldItemData>()
+    val l_attachmentItems = mutableStateListOf<AttachmentItemData>()
 
     @Composable
     fun folderButton(e_change: (Boolean) -> Unit, option: ClientwardenFolder) {
         TextButton(
             onClick = {
-                s_folder = option
-                e_change(false)
+                if (cb_folder?.invoke(option.uuid) == true) {
+                    folderUUID = option.uuid
+                    e_change(false)
+                }
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RectangleShape
@@ -175,8 +167,8 @@ object DetailsScreen {
                          * Item Name/Type
                          */
                         Column(modifier = Modifier.padding(start = 12.dp)) {
-                            Text("Item 1", fontSize = 20.sp, lineHeight = 20.sp)
-                            Text("Login", fontSize = 12.sp, lineHeight = 12.sp)
+                            Text(name, fontSize = 20.sp, lineHeight = 20.sp)
+                            Text(type.desc, fontSize = 12.sp, lineHeight = 12.sp)
                         }
 
                         Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
@@ -189,7 +181,11 @@ object DetailsScreen {
                          * effect.
                          */
                         Button(
-                            onClick = { },
+                            onClick = {
+                                if (cb_favorite?.invoke(!favorite) == true) {
+                                    favorite = !favorite
+                                }
+                            },
                             modifier = Modifier.size(42.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.Transparent
@@ -198,7 +194,7 @@ object DetailsScreen {
                             elevation = null
                         ) {
                             Icon(
-                                Lucide.Star,
+                                if (favorite) Lucide.Star else Lucide.StarOff,
                                 contentDescription = "Favorite",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(22.dp)
@@ -236,12 +232,30 @@ object DetailsScreen {
                                         modifier = Modifier.size(ButtonDefaults.IconSize)
                                     )
                                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+
+                                    val l_folder = NavScreen.folders.firstOrNull { it.uuid == folderUUID }
+                                        ?: ClientwardenFolder(uuid = UUID(0L, 0L), name = "No Folder")
+
                                     Text(
-                                        if (s_folder.uuid == UUID(0L, 0L)) "No Folder" else s_folder.name
+                                        l_folder.name
                                     )
                                 }
                             }
                         }
+                    }
+
+                    if (f_expanded) {
+                        /*
+                         * I've decided to move the divider outside
+                         * bc otherwise it gets lost when the user
+                         * scrolls down
+                         */
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 0.dp
+                            )
+                        )
                     }
 
                     /*
@@ -252,14 +266,8 @@ object DetailsScreen {
                         enter = expandVertically() + fadeIn(),
                         exit = shrinkVertically() + fadeOut()
                     ) {
-                        Column {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(
-                                    horizontal = 12.dp,
-                                    vertical = 0.dp
-                                )
-                            )
-
+                        Column(modifier = Modifier.heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())) {
                             folderButton(e_change = { f_expanded = it }, ClientwardenFolder(uuid = UUID(0L, 0L), name = "No Folder"))
 
                             NavScreen.folders.forEach { option ->
@@ -282,6 +290,11 @@ object DetailsScreen {
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
 
+            GenericItem(GenericItemData("Notes", notes,
+                GenericItemType.ML_Generic), editable).view()
+
+            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+
             HorizontalDivider()
 
             Spacer(modifier = Modifier.padding(vertical = 8.dp))
@@ -292,15 +305,35 @@ object DetailsScreen {
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            HorizontalDivider()
+            if (l_fieldItems.isNotEmpty()) {
+                HorizontalDivider()
 
-            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+                Spacer(modifier = Modifier.padding(vertical = 8.dp))
+            }
 
             for (attachmentItems in l_attachmentItems) {
                 AttachmentItem(attachmentItems, editable).view()
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
+
+            if (l_attachmentItems.isNotEmpty()) {
+                HorizontalDivider()
+
+                Spacer(modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            for (item in itemHistory) {
+                Text(item, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            Text("View Password History", style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clickable {
+
+                }
+            )
         }
     }
 }
