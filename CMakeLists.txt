@@ -102,6 +102,11 @@ target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
 
 target_include_directories(clientwarden PRIVATE src/Vault src/Platforms/)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(clientwarden PRIVATE -fexperimental-library)
+    target_link_options(clientwarden PRIVATE -fexperimental-library)
+endif()
+
 if (WIN32 OR APPLE OR LINUX OR ANDROID)
     buildUI(clientwarden)
 endif()
