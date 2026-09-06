@@ -380,7 +380,8 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
                         { data.value = it },
                         multiLine = if (data.type == GenericItemType.ML_Generic ||
                                         data.type == GenericItemType.ML_Password) true
-                                    else false
+                                    else false,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }

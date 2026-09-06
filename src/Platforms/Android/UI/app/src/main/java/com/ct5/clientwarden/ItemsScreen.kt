@@ -166,11 +166,7 @@ object ItemsScreen {
         )
     )
 
-    var cb_bin: (() -> Boolean)? = null
-    var cb_delete: (() -> Boolean)? = null
-    var cb_restore: (() -> Boolean)? = null
-    var cb_archive: (() -> Boolean)? = null
-    var cb_unarchive: (() -> Boolean)? = null
+
     var cb_repromptView: ((UUID, String) -> Boolean)? = null
     var cb_view: ((UUID) -> Boolean)? = null
 
@@ -217,7 +213,8 @@ object ItemsScreen {
                 Icon(item.icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(20.dp))
+                    modifier = Modifier.size(20.dp)
+                )
 
                 Spacer(Modifier.width(8.dp))
 
@@ -235,7 +232,8 @@ object ItemsScreen {
                         lineHeight = 16.sp,
                         modifier = Modifier.padding(top = 2.dp),
                         overflow = TextOverflow.Ellipsis,
-                        maxLines = 1)
+                        maxLines = 1
+                    )
                     /*
                      * Item Type
                      * Displays the Item Type
@@ -244,7 +242,8 @@ object ItemsScreen {
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        lineHeight = 16.sp)
+                        lineHeight = 16.sp
+                    )
                 }
 
                 Spacer(Modifier.weight(1f).fillMaxWidth())
@@ -315,7 +314,7 @@ object ItemsScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    cb_restore?.invoke()
+                                                    TopBar.cb_restore?.invoke(item.uuid)
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 8.dp,
@@ -338,7 +337,7 @@ object ItemsScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    cb_delete?.invoke()
+                                                    TopBar.cb_delete?.invoke(item.uuid)
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 8.dp,
@@ -361,7 +360,7 @@ object ItemsScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    cb_unarchive?.invoke()
+                                                    TopBar.cb_unarchive?.invoke(item.uuid)
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 8.dp,
@@ -384,7 +383,7 @@ object ItemsScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    cb_bin?.invoke()
+                                                    TopBar.cb_bin?.invoke(item.uuid)
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 0.dp,
@@ -408,7 +407,7 @@ object ItemsScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    cb_bin?.invoke()
+                                                    TopBar.cb_bin?.invoke(item.uuid)
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 8.dp,
@@ -431,7 +430,7 @@ object ItemsScreen {
                                             TextButton(
                                                 onClick = {
                                                     m_expanded = false
-                                                    cb_archive?.invoke()
+                                                    TopBar.cb_archive?.invoke(item.uuid)
                                                 },
                                                 shape = RoundedCornerShape(
                                                     topStart = 0.dp,

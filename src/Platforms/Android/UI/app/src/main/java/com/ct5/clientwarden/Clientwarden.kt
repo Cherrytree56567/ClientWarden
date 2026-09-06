@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import java.util.UUID
 
@@ -30,8 +31,14 @@ data class ClientwardenFolder(val uuid: UUID, var name: String)
 data class ItemElement(val uuid: UUID, var name: String, var type: ItemType, var icon: ImageVector)
 data class PasswordHistoryItem(val date: String, var password: String)
 
+/*
+ * We are using our own BasicTextView here because
+ * the mat you one is really annoying bc of the internal padding
+ * so I decided to make my own which can easily be reused
+ */
 @Composable
-fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier, multiLine: Boolean = false) {
+fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier, multiLine: Boolean = false,
+                  textStyle: TextStyle = MaterialTheme.typography.bodyMedium) {
     var m_data by remember(data) { mutableStateOf(data) }
     BasicTextField(
         value = m_data,
@@ -50,7 +57,7 @@ fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = 
             )
             .padding(horizontal = 14.dp, vertical = 6.dp),
         singleLine = !multiLine,
-        textStyle = MaterialTheme.typography.bodyMedium.copy(
+        textStyle = textStyle.copy(
             color = MaterialTheme.colorScheme.onSurface
         ),
         cursorBrush = SolidColor(

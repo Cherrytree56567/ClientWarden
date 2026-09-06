@@ -1,6 +1,7 @@
 package com.ct5.clientwarden
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -9,6 +10,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -94,28 +96,20 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
-/*
- * TODO: Add progress bar to attachmentItem
- *  + Edit Support
- *  + Add Callbacks for Top Bar
- *  + Add Multi Select Support
- *  + Readme Stuff
- */
 object DetailsScreen {
     var cb_removeAttachment: ((String) -> Boolean)? = null
     var cb_downloadAttachment: ((String) -> Boolean)? = null
     var cb_favorite: ((Boolean) -> Boolean)? = null
     var cb_folder: ((UUID) -> Boolean)? = null
 
-    var name: String = ""
+    var name by mutableStateOf("")
 
-    var uuid: UUID = UUID(0L, 0L)
-    var folderUUID: UUID = UUID(0L, 0L)
-    var repromptItem: Boolean = false
-    var type: ItemType = ItemType.Login
-    var icon: ClientwardenImage = ClientwardenImage.ImageIcon(Lucide.Globe)
-    var editable: Boolean = false
-    var favorite: Boolean = false
+    var uuid by mutableStateOf(UUID(0L, 0L))
+    var folderUUID by mutableStateOf(UUID(0L, 0L))
+    var type by mutableStateOf(ItemType.Login)
+    var icon by mutableStateOf<ClientwardenImage>(ClientwardenImage.ImageIcon(Lucide.Globe))
+    var editable by mutableStateOf(false)
+    var favorite by mutableStateOf(false)
 
     var itemHistory = mutableStateListOf<String>()
     var passwordHistory = mutableStateListOf<PasswordHistoryItem>(
@@ -131,9 +125,37 @@ object DetailsScreen {
     )
     var notes: String = ""
 
-    val l_genericItems = mutableStateListOf<GenericItemData>()
-    val l_fieldItems = mutableStateListOf<FieldItemData>()
-    val l_attachmentItems = mutableStateListOf<AttachmentItemData>()
+    var genericItems = mutableStateListOf<GenericItemData>()
+    var fieldItems = mutableStateListOf<FieldItemData>()
+    var attachmentItems = mutableStateListOf<AttachmentItemData>()
+
+    var s_name: String = ""
+    var s_favorite: Boolean = false
+    var s_folderUUID: UUID = UUID(0L, 0L)
+    var s_notes: String = ""
+    var s_genericItems = mutableStateListOf<GenericItemData>()
+    var s_fieldItems = mutableStateListOf<FieldItemData>()
+    var s_attachmentItems = mutableStateListOf<AttachmentItemData>()
+
+    fun takeSnapshot() {
+        DetailsScreen.s_name = DetailsScreen.name
+        DetailsScreen.s_favorite = DetailsScreen.favorite
+        DetailsScreen.s_folderUUID = DetailsScreen.folderUUID
+        DetailsScreen.s_notes = DetailsScreen.notes
+        DetailsScreen.s_genericItems = DetailsScreen.genericItems
+        DetailsScreen.s_fieldItems = DetailsScreen.fieldItems
+        DetailsScreen.s_attachmentItems = DetailsScreen.attachmentItems
+    }
+
+    fun releaseSnapshot() {
+        DetailsScreen.name = DetailsScreen.s_name
+        DetailsScreen.favorite = DetailsScreen.s_favorite
+        DetailsScreen.folderUUID = DetailsScreen.s_folderUUID
+        DetailsScreen.notes = DetailsScreen.s_notes
+        DetailsScreen.genericItems = DetailsScreen.s_genericItems
+        DetailsScreen.fieldItems = DetailsScreen.s_fieldItems
+        DetailsScreen.attachmentItems = DetailsScreen.s_attachmentItems
+    }
 
     @Composable
     fun folderButton(e_change: (Boolean) -> Unit, option: ClientwardenFolder) {
@@ -204,7 +226,21 @@ object DetailsScreen {
                          * Item Name/Type
                          */
                         Column(modifier = Modifier.padding(start = 12.dp)) {
-                            Text(name, fontSize = 20.sp, lineHeight = 20.sp)
+                            AnimatedContent(
+                                targetState = editable,
+                                transitionSpec = {
+                                    fadeIn(tween(200, delayMillis = 80)) togetherWith fadeOut(tween(80))
+                                },
+                                label = "nameEditable"
+                            ) { i_editable ->
+                                if (i_editable) {
+                                    BasicTextView(name, { name = it },
+                                        modifier = Modifier.size(200.dp, 32.dp).padding(bottom = 4.dp),
+                                        textStyle = MaterialTheme.typography.bodySmall)
+                                } else {
+                                    Text(name, fontSize = 20.sp, lineHeight = 20.sp)
+                                }
+                            }
                             Text(type.desc, fontSize = 12.sp, lineHeight = 12.sp)
                         }
 
@@ -321,14 +357,30 @@ object DetailsScreen {
 
             Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-            for (genericItem in l_genericItems) {
-                GenericItem(genericItem, editable).view()
+            for (genericItem in genericItems) {
+                AnimatedContent(
+                    targetState = editable,
+                    transitionSpec = {
+                        fadeIn(tween(200, delayMillis = 80)) togetherWith fadeOut(tween(80))
+                    },
+                    label = "genericItemEditable"
+                ) { i_editable ->
+                    GenericItem(genericItem, i_editable).view()
+                }
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            GenericItem(GenericItemData("Notes", notes,
-                GenericItemType.ML_Generic), editable).view()
+            AnimatedContent(
+                targetState = editable,
+                transitionSpec = {
+                    fadeIn(tween(200, delayMillis = 80)) togetherWith fadeOut(tween(80))
+                },
+                label = "genericItemNotesEditable"
+            ) { i_editable ->
+                GenericItem(GenericItemData("Notes", notes,
+                    GenericItemType.ML_Generic), i_editable).view()
+            }
 
             Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -336,25 +388,41 @@ object DetailsScreen {
 
             Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-            for (fieldItem in l_fieldItems) {
-                FieldItem(fieldItem, editable).view()
+            for (fieldItem in fieldItems) {
+                AnimatedContent(
+                    targetState = editable,
+                    transitionSpec = {
+                        fadeIn(tween(200, delayMillis = 80)) togetherWith fadeOut(tween(80))
+                    },
+                    label = "genericItemEditable"
+                ) { i_editable ->
+                    FieldItem(fieldItem, i_editable).view()
+                }
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            if (l_fieldItems.isNotEmpty()) {
+            if (fieldItems.isNotEmpty()) {
                 HorizontalDivider()
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            for (attachmentItems in l_attachmentItems) {
-                AttachmentItem(attachmentItems, editable).view()
+            for (attachmentItems in attachmentItems) {
+                AnimatedContent(
+                    targetState = editable,
+                    transitionSpec = {
+                        fadeIn(tween(200, delayMillis = 80)) togetherWith fadeOut(tween(80))
+                    },
+                    label = "genericItemEditable"
+                ) { i_editable ->
+                    AttachmentItem(attachmentItems, i_editable).view()
+                }
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            if (l_attachmentItems.isNotEmpty()) {
+            if (attachmentItems.isNotEmpty()) {
                 HorizontalDivider()
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
@@ -390,6 +458,9 @@ object DetailsScreen {
                                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                                     .padding(12.dp)
                             ) {
+                                /*
+                                 * Date Text
+                                 */
                                 Text(
                                     pwHist.date,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -405,6 +476,9 @@ object DetailsScreen {
                                     )
                                 )
 
+                                /*
+                                 * Password
+                                 */
                                 Text(
                                     pwHist.password,
                                     maxLines = 1,

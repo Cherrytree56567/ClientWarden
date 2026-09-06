@@ -52,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import com.composables.icons.lucide.Archive
+import com.composables.icons.lucide.ArchiveRestore
 import com.composables.icons.lucide.CreditCard
 import com.composables.icons.lucide.EllipsisVertical
 import com.composables.icons.lucide.Globe
@@ -60,23 +61,29 @@ import com.composables.icons.lucide.KeyRound
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pen
 import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.RotateCcw
+import com.composables.icons.lucide.Save
+import com.composables.icons.lucide.SaveAll
 import com.composables.icons.lucide.ScreenShare
 import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.SearchX
 import com.composables.icons.lucide.StickyNote
+import com.composables.icons.lucide.Trash
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.X
-import com.ct5.clientwarden.ItemsScreen.cb_archive
-import com.ct5.clientwarden.ItemsScreen.cb_bin
-import com.ct5.clientwarden.ItemsScreen.cb_delete
-import com.ct5.clientwarden.ItemsScreen.cb_restore
-import com.ct5.clientwarden.ItemsScreen.cb_unarchive
+import java.util.UUID
 
 object TopBar {
     var query: String = ""
     var m_expanded by mutableStateOf(false)
     var cb_query: ((String) -> Unit)? = null
     var cb_new: ((ItemType) -> Boolean)? = null
+    var cb_save: (() -> Boolean)? = null
+    var cb_bin: ((UUID) -> Boolean)? = null
+    var cb_delete: ((UUID) -> Boolean)? = null
+    var cb_restore: ((UUID) -> Boolean)? = null
+    var cb_archive: ((UUID) -> Boolean)? = null
+    var cb_unarchive: ((UUID) -> Boolean)? = null
 
     @Composable
     @OptIn(ExperimentalMaterial3Api::class)
@@ -86,57 +93,162 @@ object TopBar {
                 modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FilledIconButton(
-                    onClick = { },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        Lucide.X,
-                        contentDescription = "Close Item",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                if (DetailsScreen.editable) {
+                    FilledIconButton(
+                        onClick = {
+                            DetailsScreen.releaseSnapshot()
+                            DetailsScreen.editable = false
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Lucide.X,
+                            contentDescription = "Cancel",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
 
-                Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
+                    Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
 
-                FilledIconButton(
-                    onClick = { },
-                    modifier = Modifier.height(48.dp)
-                        .width(48.dp)
-                ) {
-                    Icon(
-                        Lucide.Trash2,
-                        contentDescription = "Bin",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                    FilledIconButton(
+                        onClick = {
+                            cb_save?.invoke()
+                        },
+                        modifier = Modifier.height(48.dp)
+                            .width(48.dp)
+                    ) {
+                        Icon(
+                            Lucide.Save,
+                            contentDescription = "Save",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                } else {
+                    FilledIconButton(
+                        onClick = {
+                            HomeScreen.c_panel = HomeScreenPanel.ItemsPanel
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            Lucide.X,
+                            contentDescription = "Close Item",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
 
-                FilledIconButton(
-                    onClick = { },
-                    modifier = Modifier.height(48.dp)
-                        .width(48.dp)
-                ) {
-                    Icon(
-                        Lucide.Archive,
-                        contentDescription = "Archive",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                    if (NavScreen.c_item == NavItem.Trash) {
+                        FilledIconButton(
+                            onClick = {
+                                cb_delete?.invoke(DetailsScreen.uuid)
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.Trash2,
+                                contentDescription = "Delete",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                FilledIconButton(
-                    onClick = { },
-                    modifier = Modifier.height(48.dp)
-                        .width(48.dp)
-                ) {
-                    Icon(
-                        Lucide.Pen,
-                        contentDescription = "Edit Item",
-                        modifier = Modifier.size(20.dp)
-                    )
+                        FilledIconButton(
+                            onClick = {
+                                cb_restore?.invoke(DetailsScreen.uuid)
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.RotateCcw,
+                                contentDescription = "Restore",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    } else if (NavScreen.c_item == NavItem.Archived) {
+                        FilledIconButton(
+                            onClick = {
+                                cb_unarchive?.invoke(DetailsScreen.uuid)
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.ArchiveRestore,
+                                contentDescription = "Un Archive",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        FilledIconButton(
+                            onClick = {
+                                cb_bin?.invoke(DetailsScreen.uuid)
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.Trash2,
+                                contentDescription = "Bin",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    } else {
+                        FilledIconButton(
+                            onClick = {
+                                cb_bin?.invoke(DetailsScreen.uuid)
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.Trash2,
+                                contentDescription = "Bin",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        FilledIconButton(
+                            onClick = {
+                                cb_archive?.invoke(DetailsScreen.uuid)
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.Archive,
+                                contentDescription = "Archive",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    if (NavScreen.c_item != NavItem.Trash) {
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        FilledIconButton(
+                            onClick = {
+                                DetailsScreen.takeSnapshot()
+                                DetailsScreen.editable = true
+                            },
+                            modifier = Modifier.height(48.dp)
+                                .width(48.dp)
+                        ) {
+                            Icon(
+                                Lucide.Pen,
+                                contentDescription = "Edit Item",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                 }
             }
         } else {

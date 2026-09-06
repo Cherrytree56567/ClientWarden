@@ -1,6 +1,11 @@
 package com.ct5.clientwarden
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +20,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,6 +75,9 @@ class AttachmentItem(var data: AttachmentItemData, var editable: Boolean) {
                 Spacer(modifier = Modifier.width(8.dp))
 
                 if (!editable) {
+                    /*
+                     * Attachment File Name
+                     */
                     Text(
                         data.name,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -77,6 +86,9 @@ class AttachmentItem(var data: AttachmentItemData, var editable: Boolean) {
 
                     Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
 
+                    /*
+                     * Attachment Button (Download)
+                     */
                     IconButton(onClick = {
                         DetailsScreen.cb_downloadAttachment?.invoke(data.id)
                     }, modifier = Modifier.size(22.dp)) {
@@ -84,6 +96,9 @@ class AttachmentItem(var data: AttachmentItemData, var editable: Boolean) {
                             modifier = Modifier.size(18.dp))
                     }
                 } else {
+                    /*
+                     * Editable Attachment File Name
+                     */
                     BasicTextView(
                         data.name,
                         cb_data = { data.name = it },
@@ -92,12 +107,36 @@ class AttachmentItem(var data: AttachmentItemData, var editable: Boolean) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    /*
+                     * Attachment Button (Delete)
+                     */
                     IconButton(onClick = {
                         DetailsScreen.cb_removeAttachment?.invoke(data.id)
                     }, modifier = Modifier.size(22.dp)) {
                         Icon(Lucide.Trash, contentDescription = "Delete",
                             modifier = Modifier.size(18.dp))
                     }
+                }
+            }
+
+            /*
+             * Progress Bar
+             */
+            AnimatedVisibility(
+                visible = data.progress > 0.0 && data.progress < 1.0,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    LinearProgressIndicator(
+                        progress = { data.progress.toFloat() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
                 }
             }
         }
