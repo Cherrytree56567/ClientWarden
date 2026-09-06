@@ -184,8 +184,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
       - [X] Item Icon, Name, Fav, Item Type
       - [X] Generic Item
       - [X] Field Item
-      - [ ] Attachment Item
-      - [ ] Show Items
+      - [X] Attachment Item
+      - [X] Show Items
     - [ ] Main Window
     - [ ] Login UI
     - [ ] Unlock UI
