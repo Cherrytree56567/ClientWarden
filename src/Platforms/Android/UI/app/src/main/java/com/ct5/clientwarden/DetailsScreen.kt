@@ -2,6 +2,9 @@ package com.ct5.clientwarden
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,23 +24,38 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,22 +65,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Eye
+import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Folder
 import com.composables.icons.lucide.Globe
+import com.composables.icons.lucide.GripVertical
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.StarOff
 import com.ct5.clientwarden.AttachmentItem
 import com.ct5.clientwarden.FieldItem
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
 /*
- * TODO: Make Folder Picker Scrollable
+ * TODO: Add progress bar to attachmentItem
+ *  + Edit Support
+ *  + Add Callbacks for Top Bar
+ *  + Add Multi Select Support
+ *  + Readme Stuff
  */
 object DetailsScreen {
     var cb_removeAttachment: ((String) -> Boolean)? = null
@@ -76,13 +113,22 @@ object DetailsScreen {
     var folderUUID: UUID = UUID(0L, 0L)
     var repromptItem: Boolean = false
     var type: ItemType = ItemType.Login
-    //var icon: ClientwardenImage = ClientwardenImage(type: ImageType.bundle, path: "profile1")
+    var icon: ClientwardenImage = ClientwardenImage.ImageIcon(Lucide.Globe)
     var editable: Boolean = false
-    var viewable: Boolean = false
     var favorite: Boolean = false
 
     var itemHistory = mutableStateListOf<String>()
-    var passwordHistory = mutableStateListOf<PasswordHistoryItem>()
+    var passwordHistory = mutableStateListOf<PasswordHistoryItem>(
+        PasswordHistoryItem("dat", "pw@@"),
+        PasswordHistoryItem("d3at", "pw@@"),
+        PasswordHistoryItem("d4at", "pw@@"),
+        PasswordHistoryItem("da5t", "pw@@"),
+        PasswordHistoryItem("da6t", "pw@@"),
+        PasswordHistoryItem("daft", "pw@@"),
+        PasswordHistoryItem("daydt", "pw@@"),
+        PasswordHistoryItem("dat", "pw@@"),
+        PasswordHistoryItem("dat", "pw@@")
+    )
     var notes: String = ""
 
     val l_genericItems = mutableStateListOf<GenericItemData>()
@@ -124,6 +170,7 @@ object DetailsScreen {
     @Composable
     fun view() {
         var f_expanded by remember { mutableStateOf(false) }
+        var pw_expanded by remember { mutableStateOf(false) }
 
         Column(modifier = Modifier.fillMaxSize()
             .verticalScroll(rememberScrollState())
@@ -141,12 +188,6 @@ object DetailsScreen {
                      * Details Row
                      */
                     Row(modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        /*
-                         * Item Icon
-                         *
-                         * TODO: This should be changed to a separate type
-                         *  which can handle Icon's, Images, etc.
-                         */
                         Box(
                             modifier = Modifier
                                 .size(38.dp)
@@ -156,11 +197,7 @@ object DetailsScreen {
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Lucide.Globe,
-                                contentDescription = "Item Icon",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
+                            icon.view(contentDesc = "Item Icon")
                         }
 
                         /*
@@ -331,7 +368,59 @@ object DetailsScreen {
             Text("View Password History", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.clickable {
+                    pw_expanded = true
+                }
+            )
+        }
 
+        if (pw_expanded) {
+            AlertDialog(
+                onDismissRequest = { pw_expanded = false }, title = { Text("Password History") },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 400.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        for (pwHist in passwordHistory) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    pwHist.date,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(
+                                        0.dp,
+                                        4.dp,
+                                        0.dp,
+                                        8.dp
+                                    )
+                                )
+
+                                Text(
+                                    pwHist.password,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { pw_expanded = false }) {
+                        Text("Done")
+                    }
                 }
             )
         }

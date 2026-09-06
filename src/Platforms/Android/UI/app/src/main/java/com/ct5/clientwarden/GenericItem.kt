@@ -135,35 +135,6 @@ data class GenericItemData(
 
 class GenericItem(var data: GenericItemData, var editable: Boolean) {
     @Composable
-    fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier, multiLine: Boolean = false) {
-        var m_data by remember(data) { mutableStateOf(data) }
-        BasicTextField(
-            value = m_data,
-            onValueChange = {
-                m_data = it
-                cb_data(it)
-            },
-            modifier = modifier
-                .then(
-                    if (multiLine) Modifier.heightIn(min = 34.dp)
-                    else Modifier.height(34.dp)
-                )
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceBright,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(horizontal = 14.dp, vertical = 6.dp),
-            singleLine = !multiLine,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            cursorBrush = SolidColor(
-                MaterialTheme.colorScheme.primary
-            )
-        )
-    }
-
-    @Composable
     fun view() {
         var p_visible by remember { mutableStateOf(false) }
         Column(modifier = Modifier

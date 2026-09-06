@@ -4,10 +4,12 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +29,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -51,6 +55,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,6 +80,7 @@ import com.composables.icons.lucide.SquareAsterisk
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.StickyNote
 import com.composables.icons.lucide.Trash2
+import com.ct5.clientwarden.DetailsScreen.passwordHistory
 import com.ct5.clientwarden.NavScreen.NavButton
 import com.ct5.clientwarden.NavScreen.folders
 import java.util.UUID
@@ -165,6 +171,10 @@ object ItemsScreen {
     var cb_restore: (() -> Boolean)? = null
     var cb_archive: (() -> Boolean)? = null
     var cb_unarchive: (() -> Boolean)? = null
+    var cb_repromptView: ((UUID, String) -> Boolean)? = null
+    var cb_view: ((UUID) -> Boolean)? = null
+
+    var rp_failure: String = ""
 
     fun SetItems(l_items: List<ItemElement>) {
         items = mutableListOf<ItemElement>()
@@ -179,7 +189,7 @@ object ItemsScreen {
          * A filled Button that has the top corners rounded, if its the start
          * or the bottom corners rouded, if its the end.
          */
-        FilledTonalButton(onClick = { },
+        FilledTonalButton(onClick = { cb_view?.invoke(item.uuid) },
             modifier = Modifier.fillMaxWidth()
                 .height(64.dp),
             shape = RoundedCornerShape(
@@ -462,6 +472,7 @@ object ItemsScreen {
 
     @Composable
     fun view() {
+        var rp_expanded by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier.fillMaxWidth()
                                .padding(16.dp)
@@ -475,6 +486,40 @@ object ItemsScreen {
             for ((i, item) in f_items.withIndex()) {
                 Item(item, start = i == 0, end = i == f_items.lastIndex)
             }
+        }
+
+        if (rp_expanded) {
+            var password: String = ""
+            AlertDialog(
+                onDismissRequest = { rp_expanded = false }, title = { Text("Reprompt") },
+                text = {
+                    Column {
+                        BasicTextView(password, { password = it }, Modifier.fillMaxWidth())
+                        AnimatedVisibility(
+                            visible = rp_failure != "",
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(rp_failure)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (cb_repromptView?.invoke(DetailsScreen.uuid, password) == false) {
+                            rp_failure = "Invalid Password"
+                        } else {
+                            rp_expanded = false
+                        }
+                        password = ""
+                    }) {
+                        Text("Done")
+                    }
+                }
+            )
         }
     }
 }

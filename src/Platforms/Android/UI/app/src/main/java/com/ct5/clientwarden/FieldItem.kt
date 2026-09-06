@@ -110,32 +110,6 @@ enum class IdentityLinkedIDs(override val id: Int, override val description: Str
 
 class FieldItem(var data: FieldItemData, var editable: Boolean) {
     @Composable
-    fun BasicTextView(data: String, cb_data: (String) -> Unit, modifier: Modifier = Modifier) {
-        var m_data by remember(data) { mutableStateOf(data) }
-        BasicTextField(
-            value = m_data,
-            onValueChange = {
-                m_data = it
-                cb_data(it)
-            },
-            modifier = modifier
-                .height(34.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(horizontal = 14.dp, vertical = 6.dp),
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            cursorBrush = SolidColor(
-                MaterialTheme.colorScheme.primary
-            )
-        )
-    }
-
-    @Composable
     fun view() {
         var p_visible by remember { mutableStateOf(false) }
         Column(
