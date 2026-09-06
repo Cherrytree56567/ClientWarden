@@ -25,4 +25,4 @@ STRIP={{ os.getenv("STRIP") }}
 
 [conf]
 tools.android:ndk_path={{ os.getenv("ANDROID_NDK_HOME") }}
-tools.build:compiler_executables={"c": "$CC", "cpp": "$CXX"}
+tools.build:compiler_executables={"c": "{{ os.getenv('CC') }}", "cpp": "{{ os.getenv('CXX') }}"}
