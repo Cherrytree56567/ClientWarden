@@ -28,48 +28,63 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.ct5.clientwarden.ui.theme.ClientwardenTheme
 
+enum class MainViews {
+    LoginUI,
+    UnlockUI,
+    VaultUI
+}
+
 class MainActivity : ComponentActivity() {
+    var c_view = mutableStateOf(MainViews.VaultUI)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MainScreen()
+            ClientwardenTheme {
+                if (c_view.value == MainViews.VaultUI) {
+                    VaultUI()
+                } else if (c_view.value == MainViews.LoginUI) {
+
+                }
+            }
         }
     }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen() {
-    ClientwardenTheme {
-        val navController = rememberNavController()
+fun VaultUI() {
+    val navController = rememberNavController()
 
-        Scaffold(
-            bottomBar = {
-                NavBar(navController = navController)
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier.fillMaxSize()
-                                   .padding(innerPadding)
-            ) {
-                AppNavHost(
-                    navController = navController,
-                    startDestination = NavTabs.HOME,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            if (TopBar.m_expanded) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                                       .clickable(
-                                           interactionSource = remember { MutableInteractionSource() },
-                                           indication = null
-                                       ) {
-                                           TopBar.m_expanded = false
-                                       }
-                )
-            }
+    Scaffold(
+        bottomBar = {
+            NavBar(navController = navController)
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize()
+            .padding(innerPadding)
+        ) {
+            AppNavHost(
+                navController = navController,
+                startDestination = NavTabs.HOME,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        /*
+         * This allows the Add pill in the top panel
+         * to close if we click somewhere else on the screen
+         */
+        if (TopBar.m_expanded) {
+            Box(modifier = Modifier.fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    TopBar.m_expanded = false
+                }
+            )
         }
     }
 }
@@ -82,5 +97,7 @@ fun MainScreen() {
 )
 @Composable
 fun Preview() {
-    MainScreen()
+    ClientwardenTheme {
+        VaultUI()
+    }
 }

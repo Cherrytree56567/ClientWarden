@@ -397,5 +397,5 @@ class GenericItem(var data: GenericItemData, var editable: Boolean) {
 )
 @Composable
 fun PreviewGeneric() {
-    MainScreen()
+    VaultUI()
 }

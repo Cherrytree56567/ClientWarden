@@ -343,5 +343,5 @@ class FieldItem(var data: FieldItemData, var editable: Boolean) {
 )
 @Composable
 fun PreviewField() {
-    MainScreen()
+    VaultUI()
 }

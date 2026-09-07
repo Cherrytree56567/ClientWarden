@@ -37,4 +37,16 @@ class ClientwardenImage: NSObject {
     private static var appSupportPath: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     }
+
+    override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? ClientwardenImage else { return false }
+        return type == other.type && path == other.path
+    }
+    
+    override var hash: Int {
+        var hasher = Hasher()
+        hasher.combine(type)
+        hasher.combine(path)
+        return hasher.finalize()
+    }
 }

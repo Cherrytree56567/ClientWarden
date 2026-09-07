@@ -3,11 +3,8 @@ import AppKit
 import AuthenticationServices
 
 /*
- * TODO:
- *  - Check for CW when getting Password
- *  - WARN: Using the launchClientwardenApp should ask for unlock prompt and then allow the user to use the passkey or whatev
- *  - Add Mutex
- *  - Get relyingParty and clientDataHash
+ * TODO: Add Mutex
+ *  - Add
  */
 class CredentialProviderViewController: ASCredentialProviderViewController {
     private var loginItems: [(uuid: String, title: String, username: String)] = []
@@ -18,6 +15,12 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     private var p_semaphore: DispatchSemaphore?
     private var c_relyingParty: String = ""
     private var c_clientDataHash: Data = Data()
+    private var p_serviceIdentifers: [ASCredentialServiceIdentifier] = []
+
+    @available(macOS 14.0, *)
+    private var p_registration: (ASPasskeyCredentialRequest, ASPasskeyCredentialIdentity)?
+    private var l_serviceIdentifiers: [ASCredentialServiceIdentifier] = []
+    private var p_passwordIdentity: ASPasswordCredentialIdentity?
     
     let logger = Logger(subsystem: BundleInfo.sharedID, category: "AutoFill")
 
@@ -162,6 +165,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         return p_result
     }
 
+    /*
+     * Used to pass raw Data in B64 to the CW App
+     */
     func requestClientwardenForData(requestName: String, requestValue: String) -> Data? {
         guard let s_res = requestClientwarden(requestName: requestName, requestValue: requestValue) else {
             return nil
@@ -169,10 +175,307 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         return Data(base64Encoded: s_res)
     }
     
+    /*
+     * This func is used to know if the Vault is Locked or Unlocked
+     */
     func clientwardenStatus() -> Bool {
         return requestClientwarden(requestName: "getState", requestValue: "") == "true"
     }
 
+    private func getLogins(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
+        /*
+         * Store a bunch of UUIDs for us to pass to the cw app to get the username's and title's
+         * of the items.
+         */
+        var UUIDs: [String] = []
+
+        /*
+         * Loop through the websites that an app reports and ask the CW app for matching logins
+         * and then add them to UUIDs
+         */
+        for serviceIdentifier in serviceIdentifiers {
+            var s_UUIDs: String? = requestClientwarden(requestName: "getLogins", requestValue: serviceIdentifier.identifier);
+
+            if let s_UUIDs, s_UUIDs != "" {
+                UUIDs.append(contentsOf: s_UUIDs.components(separatedBy: ","))
+            }
+        }
+
+        loginItems = []
+
+        for l_uuid in UUIDs {
+            var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
+            var username: String? = requestClientwarden(requestName: "getUsername", requestValue: l_uuid);
+
+            loginItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
+        }
+
+        DispatchQueue.main.async {
+            /*
+             * First, we have to remove the
+             * existing views
+             */
+            self.view.subviews.forEach { 
+                $0.removeFromSuperview() 
+            }
+            
+            /*
+             * Show the items
+             */
+            let stack = NSStackView()
+            stack.orientation = .vertical
+            stack.alignment = .leading
+            stack.spacing = 8
+            stack.translatesAutoresizingMaskIntoConstraints = false
+
+            for (index, item) in self.loginItems.enumerated() {
+                let b_item = NSButton(title: (item.username.isEmpty ?
+                                                  item.title :
+                                                    "\(item.title) — \(item.username)"), target: self, action: #selector(self.passwordSelected(_:)))
+                b_item.bezelStyle = .rounded
+                b_item.tag = index
+                stack.addArrangedSubview(b_item)
+            }
+            
+            /*
+             * From viewDidLoad
+             */
+            let button = NSButton(title: "Dismiss", target: self, action: #selector(self.cancel(_:)))
+            button.bezelStyle = .rounded
+            button.translatesAutoresizingMaskIntoConstraints = false
+            stack.addArrangedSubview(button)
+            
+            self.view.addSubview(stack)
+            
+            NSLayoutConstraint.activate([
+                stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+                stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            ])
+        }
+    }
+
+    @available(macOS 14.0, *)
+    private func createPasskey(request: ASPasskeyCredentialRequest, identity: ASPasskeyCredentialIdentity) {
+        /*
+         * Generate a passkey here
+         */
+        var requestStr = identity.relyingPartyIdentifier.data(using: .utf8)!.base64EncodedString() + "," + 
+                         identity.userName.data(using: .utf8)!.base64EncodedString() + "," + 
+                         identity.userHandle.base64EncodedString() + "," + 
+                         request.clientDataHash.base64EncodedString()
+            
+        var response: String? = requestClientwarden(requestName: "createPasskey", requestValue: requestStr);
+
+        if (response != nil) {
+            var responses = response!.components(separatedBy: ",")
+
+            if (responses.count < 2) {
+                extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+                return
+            }
+
+            let credentialId = Data(base64Encoded: responses[0])
+            let attestationObject = Data(base64Encoded: responses[1])
+
+            if (credentialId == nil || attestationObject == nil) {
+                extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
+                return
+            }
+
+            let credential = ASPasskeyRegistrationCredential(
+                relyingParty: identity.relyingPartyIdentifier,
+                clientDataHash: request.clientDataHash,
+                credentialID: credentialId!,
+                attestationObject: attestationObject!
+            )
+
+            extensionContext.completeRegistrationRequest(using: credential, completionHandler: nil)
+        }
+    }
+
+    private func getPasskeys(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
+        /*
+         * Store a bunch of UUIDs for us to pass to the cw app to get passkey's
+         */
+        var UUIDs: [String] = []
+
+        /*
+         * Loop through the websites that an app reports and ask the CW app for matching passkeys
+         * and then add them to UUIDs
+         */
+        for serviceIdentifier in serviceIdentifiers {
+            var s_UUIDs: String? = requestClientwarden(requestName: "getPasskeys", requestValue: serviceIdentifier.identifier);
+
+            if let s_UUIDs, s_UUIDs != "" {
+                UUIDs.append(contentsOf: s_UUIDs.components(separatedBy: ","))
+            }
+        }
+
+        passkeyItems = []
+
+        for l_uuid in UUIDs {
+            var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
+            var username: String? = requestClientwarden(requestName: "getUsername", requestValue: l_uuid);
+
+            passkeyItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
+        }
+
+        DispatchQueue.main.async {
+            /*
+             * First, we have to remove the
+             * existing views
+             */
+            self.view.subviews.forEach { 
+                $0.removeFromSuperview() 
+            }
+                
+            /*
+             * Show the items
+             */
+            let stack = NSStackView()
+            stack.orientation = .vertical
+            stack.alignment = .leading
+            stack.spacing = 8
+            stack.translatesAutoresizingMaskIntoConstraints = false
+
+            for (index, item) in self.passkeyItems.enumerated() {
+                let b_item = NSButton(title: (item.username.isEmpty ?
+                                                  item.title :
+                                                    "\(item.title) — \(item.username)"), target: self, action: #selector(self.passkeySelected(_:)))
+                b_item.bezelStyle = .rounded
+                b_item.tag = index
+                stack.addArrangedSubview(b_item)
+            }
+                
+            /*
+             * From viewDidLoad
+             */
+            let button = NSButton(title: "Dismiss", target: self, action: #selector(self.cancel(_:)))
+            button.bezelStyle = .rounded
+            button.translatesAutoresizingMaskIntoConstraints = false
+            stack.addArrangedSubview(button)
+               
+            self.view.addSubview(stack)
+            
+            NSLayoutConstraint.activate([
+                stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+                stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            ])
+        }
+    }
+
+    /*
+     * Mainly used for Quick Type
+     * Assisted with Claude
+     */
+    private func getPassword(for credentialIdentity: ASPasswordCredentialIdentity) {
+        guard let uuid = credentialIdentity.recordIdentifier, !uuid.isEmpty else {
+            logger.error("Failed due to no record identifier")
+
+            extensionContext.cancelRequest(
+                withError: NSError(
+                    domain: ASExtensionErrorDomain,
+                    code: ASExtensionError.failed.rawValue
+                )
+            )
+            return
+        }
+        /*
+         * Fail if clientwarden isnt running or is locked
+         */
+        if (!clientwardenAppRunning() || clientwardenStatus()) {
+            extensionContext.cancelRequest(
+                withError: NSError(
+                    domain: ASExtensionErrorDomain,
+                    code: ASExtensionError.userInteractionRequired.rawValue
+                )
+            )
+            return
+        }
+
+        /*
+         * Get Username
+         */
+        guard let username = requestClientwarden(
+            requestName: "getUsername",
+            requestValue: uuid
+        ) else {
+            logger.error("Failed to get username")
+
+            extensionContext.cancelRequest(
+                withError: NSError(
+                    domain: ASExtensionErrorDomain,
+                    code: ASExtensionError.failed.rawValue
+                )
+            )
+
+            return
+        }
+
+        /*
+         * Get Password
+         */
+        guard let password = requestClientwarden(
+            requestName: "getPassword",
+            requestValue: uuid
+        ) else {
+            logger.error("Failed to get password")
+
+            extensionContext.cancelRequest(
+                withError: NSError(
+                    domain: ASExtensionErrorDomain,
+                    code: ASExtensionError.failed.rawValue
+                )
+            )
+            return
+        }
+
+        /*
+         * Create Cred
+         */
+        let credential = ASPasswordCredential(
+            user: username,
+            password: password
+        )
+
+        extensionContext.completeRequest(
+            withSelectedCredential: credential,
+            completionHandler: nil
+        )
+    }
+
+    private func showLockedUI() {
+        DispatchQueue.main.async {
+            self.view.subviews.forEach { $0.removeFromSuperview() }
+
+            let label = NSTextField(labelWithString: "Clientwarden is locked.\nUnlock to use AutoFill.")
+            label.alignment = .center
+            label.maximumNumberOfLines = 2
+
+            let retryButton = NSButton(title: "Try Again", target: self, action: #selector(self.retryTapped(_:)))
+            retryButton.bezelStyle = .rounded
+            retryButton.keyEquivalent = "\r"
+
+            let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(self.cancel(_:)))
+            cancelButton.bezelStyle = .rounded
+
+            let stack = NSStackView(views: [label, retryButton, cancelButton])
+            stack.orientation = .vertical
+            stack.alignment = .centerX
+            stack.spacing = 12
+            stack.translatesAutoresizingMaskIntoConstraints = false
+
+            self.view.addSubview(stack)
+            NSLayoutConstraint.activate([
+                stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+                stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            ])
+        }
+    }
+
+    /*
+     * Cred Provider AutoFill Stuff
+     */
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -188,85 +491,19 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     }
 
     /*
-     Prepare your UI to list available credentials for the user to choose from. The items in
-     'serviceIdentifiers' describe the service the user is logging in to, so your extension can
-     prioritize the most relevant credentials in the list.
-    */
+     * Prepare your UI to list available credentials for the user to choose from. The items in
+     * 'serviceIdentifiers' describe the service the user is logging in to, so your extension can
+     * prioritize the most relevant credentials in the list.
+     *
+     *  * This one should be for getting Logins *
+     */
     override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
-        if (!clientwardenAppRunning()) {
-            launchClientwardenApp()
-        } else if (clientwardenStatus()) { // Check if CW App is running but is locked
+        l_serviceIdentifiers = serviceIdentifiers
+        if (!clientwardenAppRunning() || clientwardenStatus()) { // Check if CW App is running but is locked
+            showLockedUI()
             launchClientwardenApp()
         } else {
-            /*
-             * Store a bunch of UUIDs for us to pass to the cw app to get the username's and title's
-             * of the items.
-             */
-            var UUIDs: [String] = []
-
-            /*
-             * Loop through the websites that an app reports and ask the CW app for matching logins
-             * and then add them to UUIDs
-             */
-            for serviceIdentifier in serviceIdentifiers {
-                var s_UUIDs: String? = requestClientwarden(requestName: "getLogins", requestValue: serviceIdentifier.identifier);
-
-                if let s_UUIDs, s_UUIDs != "" {
-                    UUIDs.append(contentsOf: s_UUIDs.components(separatedBy: ","))
-                }
-            }
-
-            loginItems = []
-
-            for l_uuid in UUIDs {
-                var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
-                var username: String? = requestClientwarden(requestName: "getUsername", requestValue: l_uuid);
-
-                loginItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
-            }
-
-            DispatchQueue.main.async {
-                /*
-                 * First, we have to remove the
-                 * existing views
-                 */
-                self.view.subviews.forEach { 
-                    $0.removeFromSuperview() 
-                }
-                
-                /*
-                 * Show the items
-                 */
-                let stack = NSStackView()
-                stack.orientation = .vertical
-                stack.alignment = .leading
-                stack.spacing = 8
-                stack.translatesAutoresizingMaskIntoConstraints = false
-
-                for (index, item) in self.loginItems.enumerated() {
-                    let b_item = NSButton(title: (item.username.isEmpty ?
-                                                      item.title :
-                                                        "\(item.title) — \(item.username)"), target: self, action: #selector(self.passwordSelected(_:)))
-                    b_item.bezelStyle = .rounded
-                    b_item.tag = index
-                    stack.addArrangedSubview(b_item)
-                }
-                
-                /*
-                 * From viewDidLoad
-                 */
-                let button = NSButton(title: "Dismiss", target: self, action: #selector(self.cancel(_:)))
-                button.bezelStyle = .rounded
-                button.translatesAutoresizingMaskIntoConstraints = false
-                stack.addArrangedSubview(button)
-                
-                self.view.addSubview(stack)
-                
-                NSLayoutConstraint.activate([
-                    stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-                    stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
-                ])
-            }
+            getLogins(for: serviceIdentifiers)
         }
     }
 
@@ -277,27 +514,30 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
      Provide the password by completing the extension request with the associated ASPasswordCredential.
      If using the credential would require showing custom UI for authenticating the user, cancel
      the request with error code ASExtensionError.userInteractionRequired.
-
-    override func provideCredentialWithoutUserInteraction(for credentialIdentity: ASPasswordCredentialIdentity) {
-        let databaseIsUnlocked = true
-        if (databaseIsUnlocked) {
-            let passwordCredential = ASPasswordCredential(user: "j_appleseed", password: "apple1234")
-            self.extensionContext.completeRequest(withSelectedCredential: passwordCredential, completionHandler: nil)
-        } else {
-            self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code:ASExtensionError.userInteractionRequired.rawValue))
-        }
-    }
     */
+    override func provideCredentialWithoutUserInteraction(for credentialIdentity: ASPasswordCredentialIdentity) {
+        getPassword(for: credentialIdentity)
+    }
+    
 
     /*
      Implement this method if provideCredentialWithoutUserInteraction(for:) can fail with
      ASExtensionError.userInteractionRequired. In this case, the system may present your extension's
      UI and call this method. Show appropriate UI for authenticating the user then provide the password
      by completing the extension request with the associated ASPasswordCredential.
-
-    override func prepareInterfaceToProvideCredential(for credentialIdentity: ASPasswordCredentialIdentity) {
-    }
     */
+    override func prepareInterfaceToProvideCredential(for credentialIdentity: ASPasswordCredentialIdentity) {
+        p_passwordIdentity = credentialIdentity
+
+        if (!clientwardenAppRunning() || clientwardenStatus()) {
+            showLockedUI()
+            launchClientwardenApp()
+        } else {
+            p_passwordIdentity = nil
+            getPassword(for: credentialIdentity)
+        }
+    }
+    
 
     @objc
     func cancel(_ sender: AnyObject?) {
@@ -337,6 +577,11 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    /*
+     * Passkey Stuff
+     * TODO: PLZ move this out
+     */
     /*
      * From DashLane Example:
      * https://github.com/Dashlane/apple-credential-provider-example/blob/main/PasskeyProviderExtension/CredentialProviderViewController.swift
@@ -351,46 +596,54 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
             return
         }
 
-        if (!clientwardenAppRunning()) {
-            launchClientwardenApp()
-        } else if (clientwardenStatus()) { // Check if CW App is running but is locked
+        if (!clientwardenAppRunning() || clientwardenStatus()) { // Check if CW App is running but is locked
+            p_registration = (request, identity)
+            showLockedUI()
             launchClientwardenApp()
         } else {
-            /*
-             * Generate a passkey here
-             */
-            var requestStr = identity.relyingPartyIdentifier.data(using: .utf8)!.base64EncodedString() + "," + 
-                             identity.userName.data(using: .utf8)!.base64EncodedString() + "," + 
-                             identity.userHandle.base64EncodedString() + "," + 
-                             request.clientDataHash.base64EncodedString()
-            
-            var response: String? = requestClientwarden(requestName: "createPasskey", requestValue: requestStr);
+            createPasskey(request: request, identity: identity)
+        }
+    }
 
-            if (response != nil) {
-                var responses = response!.components(separatedBy: ",")
+    @objc private func retryTapped(_ sender: AnyObject?) {
+        if let identity = p_passwordIdentity {
+            p_passwordIdentity = nil
+            getPassword(for: identity)
+        } else if #available(macOS 14.0, *), let (request, identity) = p_registration {
+            p_registration = nil
+            createPasskey(request: request, identity: identity)
+        } else if (!l_serviceIdentifiers.isEmpty) {
+            getLogins(for: l_serviceIdentifiers)
+        } else if #available(macOS 14.0, *), !p_serviceIdentifers.isEmpty {
+            getPasskeys(for: p_serviceIdentifers)
+        }
+    }
 
-                if (responses.count < 2) {
-                    extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
-                    return
-                }
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        NotificationCenter.default.removeObserver(self, name: NSApplication.didBecomeActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(appBecameActive),
+            name: NSApplication.didBecomeActiveNotification, object: nil
+        )
+    }
 
-                let credentialId = Data(base64Encoded: responses[0])
-                let attestationObject = Data(base64Encoded: responses[1])
+    @objc private func appBecameActive() {
+        if (!clientwardenAppRunning() || clientwardenStatus()) {
+            return
+        }
 
-                if (credentialId == nil || attestationObject == nil) {
-                    extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue))
-                    return
-                }
-
-                let credential = ASPasskeyRegistrationCredential(
-                    relyingParty: identity.relyingPartyIdentifier,
-                    clientDataHash: request.clientDataHash,
-                    credentialID: credentialId!,
-                    attestationObject: attestationObject!
-                )
-
-                extensionContext.completeRegistrationRequest(using: credential, completionHandler: nil)
-            }
+        /*
+         * Check if we should create a passkey or get Passkeys
+         */
+        if let identity = p_passwordIdentity {
+            p_passwordIdentity = nil
+            getPassword(for: identity)
+        } else if #available(macOS 14.0, *), let (request, identity) = p_registration {
+            p_registration = nil
+            createPasskey(request: request, identity: identity)
+        } else if #available(macOS 14.0, *), (!p_serviceIdentifers.isEmpty) {
+            getPasskeys(for: p_serviceIdentifers)
         }
     }
 
@@ -401,80 +654,13 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier], requestParameters: ASPasskeyCredentialRequestParameters) {        
         c_relyingParty = requestParameters.relyingPartyIdentifier
         c_clientDataHash = requestParameters.clientDataHash
+        p_serviceIdentifers = serviceIdentifiers
 
-        if (!clientwardenAppRunning()) {
-            launchClientwardenApp()
-        } else if (clientwardenStatus()) { // Check if CW App is running but is locked
+        if (!clientwardenAppRunning() || clientwardenStatus()) { // Check if CW App is running but is locked
+            showLockedUI()
             launchClientwardenApp()
         } else {
-            /*
-             * Store a bunch of UUIDs for us to pass to the cw app to get passkey's
-             */
-            var UUIDs: [String] = []
-
-            /*
-             * Loop through the websites that an app reports and ask the CW app for matching passkeys
-             * and then add them to UUIDs
-             */
-            for serviceIdentifier in serviceIdentifiers {
-                var s_UUIDs: String? = requestClientwarden(requestName: "getPasskeys", requestValue: serviceIdentifier.identifier);
-
-                if let s_UUIDs, s_UUIDs != "" {
-                    UUIDs.append(contentsOf: s_UUIDs.components(separatedBy: ","))
-                }
-            }
-
-            passkeyItems = []
-
-            for l_uuid in UUIDs {
-                var title: String? = requestClientwarden(requestName: "getTitle", requestValue: l_uuid);
-                var username: String? = requestClientwarden(requestName: "getUsername", requestValue: l_uuid);
-
-                passkeyItems.append((l_uuid, title ?? "Unknown", username ?? "Unknown"))
-            }
-
-            DispatchQueue.main.async {
-                /*
-                 * First, we have to remove the
-                 * existing views
-                 */
-                self.view.subviews.forEach { 
-                    $0.removeFromSuperview() 
-                }
-                
-                /*
-                 * Show the items
-                 */
-                let stack = NSStackView()
-                stack.orientation = .vertical
-                stack.alignment = .leading
-                stack.spacing = 8
-                stack.translatesAutoresizingMaskIntoConstraints = false
-
-                for (index, item) in self.passkeyItems.enumerated() {
-                    let b_item = NSButton(title: (item.username.isEmpty ?
-                                                      item.title :
-                                                        "\(item.title) — \(item.username)"), target: self, action: #selector(self.passkeySelected(_:)))
-                    b_item.bezelStyle = .rounded
-                    b_item.tag = index
-                    stack.addArrangedSubview(b_item)
-                }
-                
-                /*
-                 * From viewDidLoad
-                 */
-                let button = NSButton(title: "Dismiss", target: self, action: #selector(self.cancel(_:)))
-                button.bezelStyle = .rounded
-                button.translatesAutoresizingMaskIntoConstraints = false
-                stack.addArrangedSubview(button)
-                
-                self.view.addSubview(stack)
-                
-                NSLayoutConstraint.activate([
-                    stack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-                    stack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
-                ])
-            }
+            getPasskeys(for: p_serviceIdentifers)
         }
     }
 

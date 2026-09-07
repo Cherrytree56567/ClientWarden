@@ -531,5 +531,5 @@ object ItemsScreen {
 )
 @Composable
 fun PreviewItems() {
-    MainScreen()
+    VaultUI()
 }

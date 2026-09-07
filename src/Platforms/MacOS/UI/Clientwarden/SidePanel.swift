@@ -458,6 +458,7 @@ struct SidePanelView: View {
                 )
                 .imageScale(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.opacity)
             } else {
                 ScrollView {
                     HStack {
@@ -681,6 +682,8 @@ struct SidePanelView: View {
                 }
                 .scrollIndicators(.never)
                 .padding(.bottom, 8)
+                .id(data.uuid)
+                .transition(.opacity)
             }
         }
         .padding(16)

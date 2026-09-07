@@ -180,14 +180,17 @@ You might need to use the `-s compiler.cppstd=20` flag.
       - [X] Search Input
       - [X] New Item Button
     - [X] Clean Up
-    - [ ] Vault UI
+    - [X] Vault UI
       - [X] Item Icon, Name, Fav, Item Type
       - [X] Generic Item
       - [X] Field Item
       - [X] Attachment Item
       - [X] Show Items
-    - [ ] Main Window
+    - [X] Main Window
     - [ ] Login UI
+      - [ ] Username/Password UI
+      - [ ] TOTP/Device Verify UI
+      - [ ] Passkey UI
     - [ ] Unlock UI
     - [ ] Passkey UI
     - [ ] Settings UI

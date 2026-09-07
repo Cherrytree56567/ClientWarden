@@ -73,11 +73,6 @@ import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.StickyNote
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.X
-import com.ct5.clientwarden.ItemsScreen.cb_archive
-import com.ct5.clientwarden.ItemsScreen.cb_bin
-import com.ct5.clientwarden.ItemsScreen.cb_delete
-import com.ct5.clientwarden.ItemsScreen.cb_restore
-import com.ct5.clientwarden.ItemsScreen.cb_unarchive
 import java.util.UUID
 
 sealed interface NavItem {
@@ -627,5 +622,5 @@ object NavScreen {
 )
 @Composable
 fun PreviewNav() {
-    MainScreen()
+    VaultUI()
 }

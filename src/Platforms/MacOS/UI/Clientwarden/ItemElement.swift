@@ -16,11 +16,20 @@ class ItemElement: NSObject, Identifiable {
         self.image = image
     }
     
-    static func == (old: ItemElement, new: ItemElement) -> Bool {
-        old.uuid == new.uuid &&
-        old.name == new.name &&
-        old.type == new.type &&
-        old.image === new.image
+    override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? ItemElement else { return false }
+        return uuid == other.uuid &&
+            name == other.name &&
+            type == other.type &&
+            image == other.image
+    }
+
+    override var hash: Int {
+        var hasher = Hasher()
+        hasher.combine(uuid)
+        hasher.combine(name)
+        hasher.combine(type)
+        return hasher.finalize()
     }
 }
 

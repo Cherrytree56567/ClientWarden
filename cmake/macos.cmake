@@ -19,7 +19,7 @@ function(buildUI _target)
         XCODE_ATTRIBUTE_PRODUCT_TYPE "com.apple.product-type.app-extension"
         XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
         XCODE_ATTRIBUTE_SDKROOT "macosx"
-        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
+        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "14.0"
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/ClientwardenAutofill.entitlements"
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/src/Platforms/MacOS/ClientwardenAutofill/Info.plist"
     )
@@ -77,7 +77,7 @@ function(buildUI _target)
     
     target_sources(${_target} PRIVATE ${MAC_FILES} ${SwiftUI} ${SwiftUIAssets} ${ICON_FILE})
     target_include_directories(${_target} PRIVATE src/Platforms/MacOS)
-    target_link_libraries(${_target} "-framework Cocoa")
+    target_link_libraries(${_target} PRIVATE "-framework Cocoa")
     target_compile_definitions(${_target} PRIVATE MSGPACK_DISABLE_LEGACY_NIL NON_XCODE_BUILD)
     set_target_properties(${_target} PROPERTIES
         MACOSX_BUNDLE_GUI_IDENTIFIER ${CW_IDENTIFIER}

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
@@ -16,7 +17,7 @@ enum class HomeScreenPanel {
 }
 
 object HomeScreen {
-    var c_panel: HomeScreenPanel = HomeScreenPanel.DetailsScreen
+    var c_panel = mutableStateOf(HomeScreenPanel.NavPanel)
     @Composable
     fun view(modifier: Modifier = Modifier) {
         Column(modifier = modifier.fillMaxSize()) {
@@ -34,7 +35,7 @@ object HomeScreen {
                 modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                when (c_panel) {
+                when (c_panel.value) {
                     HomeScreenPanel.NavPanel -> NavScreen.view()
                     HomeScreenPanel.ItemsPanel -> ItemsScreen.view()
                     HomeScreenPanel.DetailsScreen -> DetailsScreen.view()

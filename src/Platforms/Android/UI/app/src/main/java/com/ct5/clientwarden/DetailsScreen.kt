@@ -509,5 +509,5 @@ object DetailsScreen {
 )
 @Composable
 fun PreviewDetails() {
-    MainScreen()
+    VaultUI()
 }

@@ -331,8 +331,9 @@ struct GenericItem: View {
                             .labelsHidden()
                         } else if (data.type == .ml_generic || data.type == .ml_password) {
                             TextEditor(text: Binding(get: { data.f_value() }, set: { data.value = $0 }))
-                                .frame(minHeight: 100)
+                                .frame(height: 100)
                                 .scrollContentBackground(.hidden)
+                                .scrollIndicators(.hidden)
                         } else if (data.type == .generic_4) {
                             TextField("Value", text: Binding(get: {
                                 data.value.replacingOccurrences(of: "\n", with: " ")

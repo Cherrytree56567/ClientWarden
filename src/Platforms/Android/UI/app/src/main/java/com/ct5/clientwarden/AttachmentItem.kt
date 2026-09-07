@@ -151,5 +151,5 @@ class AttachmentItem(var data: AttachmentItemData, var editable: Boolean) {
 )
 @Composable
 fun PreviewAttachment() {
-    MainScreen()
+    VaultUI()
 }

@@ -88,7 +88,7 @@ object TopBar {
     @Composable
     @OptIn(ExperimentalMaterial3Api::class)
     fun view() {
-        if (HomeScreen.c_panel == HomeScreenPanel.DetailsScreen) {
+        if (HomeScreen.c_panel.value == HomeScreenPanel.DetailsScreen) {
             Row(
                 modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -126,7 +126,7 @@ object TopBar {
                 } else {
                     FilledIconButton(
                         onClick = {
-                            HomeScreen.c_panel = HomeScreenPanel.ItemsPanel
+                            HomeScreen.c_panel.value = HomeScreenPanel.ItemsPanel
                         },
                         modifier = Modifier.size(48.dp)
                     ) {
@@ -409,5 +409,5 @@ object TopBar {
 )
 @Composable
 fun PreviewTopBar() {
-    MainScreen()
+    VaultUI()
 }
