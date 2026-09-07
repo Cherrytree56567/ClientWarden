@@ -2,14 +2,13 @@ include(cmake/versioning.cmake)
 
 function(buildUI _target)
     if (WIN32)
-        set(GRADLE_RUN src/Platforms/Android/UI/gradlew.bat)
+        set(GRADLE_RUN ${CMAKE_CURRENT_SOURCE_DIR}/src/Platforms/Android/UI/gradlew.bat)
     else()
-        set(GRADLE_RUN src/Platforms/Android/UI/gradlew)
+        set(GRADLE_RUN ${CMAKE_CURRENT_SOURCE_DIR}/src/Platforms/Android/UI/gradlew)
     endif()
 
     add_custom_target(UI ALL
         COMMAND ${GRADLE_RUN} :app:assembleDebug
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/Platforms/Android/UI/
         COMMENT "Building Android UI through GradleW"
     )
 
