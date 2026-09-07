@@ -11,6 +11,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
+[![Discord][discord-shield]][discord-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -246,5 +247,7 @@ Thanks to:
 [issues-url]: https://github.com/Cherrytree56567/ClientWarden/issues
 [license-shield]: https://img.shields.io/github/license/Cherrytree56567/ClientWarden.svg?style=for-the-badge
 [license-url]: https://github.com/Cherrytree56567/ClientWarden/blob/master/LICENSE
+[discord-shield]: https://img.shields.io/badge/Discord-Join%20Us-5865F2?logo=discord&logoColor=white&style=for-the-badge
+[discord-url]: https://discord.gg/SrprsdYnu7
 [product-screenshot]: https://github.com/Cherrytree56567/ClientWarden/raw/refs/heads/main/assets/demo.gif
 
