@@ -49,8 +49,8 @@ jobs:
       uses: actions/cache@v5
       with: 
         path: build
-        key: cmake-${{ runner.os }}-android-v4-${{ hashFiles('**/CMakeLists.txt', '**/android.cmake', '**/versioning.cmake') }}
-        restore-keys: cmake-${{ runner.os }}-android-v3-
+        key: cmake-${{ runner.os }}-android-v6-${{ hashFiles('**/CMakeLists.txt', '**/android.cmake', '**/versioning.cmake') }}
+        restore-keys: cmake-${{ runner.os }}-android-v6-
       
     - name: Install Dependencies
       run: |
