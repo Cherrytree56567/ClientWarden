@@ -102,7 +102,7 @@ target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
 
 target_include_directories(clientwarden PRIVATE src/Vault src/Platforms/)
 
-if (Android)
+if (ANDROID)
     target_compile_options(clientwarden PRIVATE -fexperimental-library)
     target_link_options(clientwarden PRIVATE -fexperimental-library)
 endif()
