@@ -71,5 +71,5 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ClientWarden-Release.zip
-        path: build/Release
+        path: build/
         archive: true
