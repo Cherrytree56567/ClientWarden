@@ -35,7 +35,7 @@ enum class MainViews {
 }
 
 class MainActivity : ComponentActivity() {
-    var c_view = mutableStateOf(MainViews.VaultUI)
+    var c_view = mutableStateOf(MainViews.LoginUI)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
                 if (c_view.value == MainViews.VaultUI) {
                     VaultUI()
                 } else if (c_view.value == MainViews.LoginUI) {
-
+                    LoginScreen.view()
                 }
             }
         }

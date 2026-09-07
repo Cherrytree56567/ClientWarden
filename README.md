@@ -188,10 +188,10 @@ You might need to use the `-s compiler.cppstd=20` flag.
       - [X] Attachment Item
       - [X] Show Items
     - [X] Main Window
-    - [ ] Login UI
-      - [ ] Username/Password UI
-      - [ ] TOTP/Device Verify UI
-      - [ ] Passkey UI
+    - [X] Login UI
+      - [X] Username/Password UI
+      - [X] TOTP/Device Verify UI
+      - [X] Passkey UI
     - [ ] Unlock UI
     - [ ] Passkey UI
     - [ ] Settings UI
