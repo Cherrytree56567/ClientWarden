@@ -49,28 +49,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ArrowRight
 import com.composables.icons.lucide.FingerprintPattern
-import com.composables.icons.lucide.KeyRound
 import com.composables.icons.lucide.Lucide
 import com.ct5.clientwarden.ui.theme.ClientwardenTheme
 import kotlinx.coroutines.delay
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
-enum class LoginScreenType {
-    Generic,
-    TOTP,
-    DeviceVerify,
-    Passkey
-}
-
-object LoginScreen {
-    var email = mutableStateOf("")
+object UnlockScreen {
     var password = mutableStateOf("")
-    var code = mutableStateOf("")
-    var s_type = mutableStateOf(LoginScreenType.Generic)
 
-    var cb_login: ((String, String) -> Boolean)? = null
-    var cb_loginCode: ((String) -> Boolean)? = null
+    var cb_unlock: ((String) -> Boolean)? = null
 
     @Composable
     fun view() {
@@ -107,100 +95,48 @@ object LoginScreen {
                 ) { t_clicked = true }
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /*
+             * Password Field
+             */
+            OutlinedTextField(
+                value = password.value,
+                onValueChange = { password.value = it },
+                label = { Text("Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                shape = RoundedCornerShape(64.dp),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (s_type.value == LoginScreenType.Generic) {
-                /*
-                 * Email Field
-                 */
-                 OutlinedTextField(
-                    value = email.value,
-                    onValueChange = { email.value = it },
-                    label = { Text("Email") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    shape = RoundedCornerShape(64.dp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                /*
-                 * Password Field
-                 */
-                OutlinedTextField(
-                    value = password.value,
-                    onValueChange = { password.value = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    shape = RoundedCornerShape(64.dp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else if (s_type.value == LoginScreenType.TOTP ||
-                s_type.value == LoginScreenType.DeviceVerify) {
-                /*
-                 * TOTP/Device Verify Field
-                 */
-                OutlinedTextField(
-                    value = code.value,
-                    onValueChange = { code.value = it },
-                    label = {
-                        Text(if (s_type.value == LoginScreenType.TOTP) "TOTP Code"
-                            else "Device Verification Code"
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    shape = RoundedCornerShape(64.dp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else if (s_type.value == LoginScreenType.Passkey) {
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    FilledIconButton(
-                        onClick = {
-                            /*
-                             * TODO: Passkey Support
-                             */
-                        }
-                    ) {
-                        Icon(Lucide.KeyRound,
-                            contentDescription = "Passkey")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                FilledIconButton(
+                    onClick = {
+                        /*
+                         * TODO: Biometric Support
+                         */
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Button(
-                        onClick = {
-
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Cancel")
-                    }
+                ) {
+                    Icon(
+                        Lucide.FingerprintPattern,
+                        contentDescription = "Biometric"
+                    )
                 }
-            }
 
-            if (s_type.value != LoginScreenType.Passkey) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Button(
                     onClick = {
-                        if (s_type.value == LoginScreenType.Generic) {
-                            if (cb_login?.invoke(email.value, password.value) == true) {
-                                email.value = ""
-                            }
-                            password.value = ""
-                        } else if (s_type.value == LoginScreenType.TOTP ||
-                            s_type.value == LoginScreenType.DeviceVerify) {
-                            cb_loginCode?.invoke(code.value)
-                            code.value = ""
-                        }
+                        cb_unlock?.invoke(password.value)
+                        password.value = ""
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Log In")
+                    Text("Unlock")
                 }
             }
         }
@@ -215,10 +151,10 @@ object LoginScreen {
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
-fun PreviewLogin() {
+fun PreviewUnlock() {
     ClientwardenTheme {
         Scaffold() {
-            LoginScreen.view()
+            UnlockScreen.view()
         }
     }
 }
