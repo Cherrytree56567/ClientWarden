@@ -74,22 +74,6 @@ object LoginScreen {
 
     @Composable
     fun view() {
-        var t_clicked by remember { mutableStateOf(false) }
-
-        val textColor by animateColorAsState(
-            targetValue = if (t_clicked) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.inverseSurface,
-            animationSpec = tween(durationMillis = 800),
-            label = "textColor"
-        )
-
-        LaunchedEffect(t_clicked) {
-            if (t_clicked) {
-                delay(5000.milliseconds)
-                t_clicked = false
-            }
-        }
-
         Column(modifier = Modifier.fillMaxSize().padding(64.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center) {
@@ -98,14 +82,7 @@ object LoginScreen {
              * I wanted the header to have an easter egg bc
              * why not
              */
-            Text("Clientwarden", style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = textColor,
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { t_clicked = true }
-            )
+            ClientwardenEasterText()
 
             Spacer(modifier = Modifier.height(12.dp))
 

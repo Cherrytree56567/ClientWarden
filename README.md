@@ -194,8 +194,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
       - [X] Passkey UI
     - [X] Unlock UI
     - [X] Passkey UI
-    - [ ] Settings UI
-    - [ ] About UI
+    - [X] Settings UI
+    - [X] About UI
     - [ ] Passkey Support
     - [ ] Biometric Support
 

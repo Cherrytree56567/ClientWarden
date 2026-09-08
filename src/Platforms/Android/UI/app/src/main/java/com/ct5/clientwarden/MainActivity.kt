@@ -35,7 +35,7 @@ enum class MainViews {
 }
 
 class MainActivity : ComponentActivity() {
-    var c_view = mutableStateOf(MainViews.UnlockUI)
+    var c_view = mutableStateOf(MainViews.VaultUI)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +69,7 @@ fun VaultUI() {
         ) {
             AppNavHost(
                 navController = navController,
-                startDestination = NavTabs.HOME,
+                startDestination = NavTabs.SETTINGS,
                 modifier = Modifier.weight(1f)
             )
         }
