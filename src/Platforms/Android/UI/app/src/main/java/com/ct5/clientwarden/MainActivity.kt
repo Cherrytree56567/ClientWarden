@@ -54,6 +54,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/*
+ * Next Step:
+ *  - Setup Vault UI Bridge (some weird JNI Stuff)
+ */
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun VaultUI() {
@@ -69,7 +73,7 @@ fun VaultUI() {
         ) {
             AppNavHost(
                 navController = navController,
-                startDestination = NavTabs.SETTINGS,
+                startDestination = NavTabs.HOME,
                 modifier = Modifier.weight(1f)
             )
         }

@@ -98,7 +98,7 @@ enum class SettingsSelection {
     NONE
 }
 object SettingsScreen {
-    var c_item = mutableStateOf(SettingsSelection.About)
+    var c_item = mutableStateOf(SettingsSelection.NONE)
 
     @Composable
     fun SettingButton(text: String, icon: ImageVector = Lucide.AArrowDown, onClick: () -> Unit = {},
@@ -314,15 +314,15 @@ object SettingsScreen {
             Column(modifier = Modifier.padding(16.dp)) {
                 if (c_item.value == SettingsSelection.NONE) {
                     SettingButton("Security", Lucide.Shield, {
-
+                        c_item.value = SettingsSelection.Security
                     }, true)
 
                     SettingButton("AutoFill", Lucide.Check, {
-
+                        c_item.value = SettingsSelection.AutoFill
                     })
 
                     SettingButton("About", Lucide.BadgeCheck, {
-
+                        c_item.value = SettingsSelection.About
                     }, false, true)
                 } else if (c_item.value == SettingsSelection.Security) {
                     SettingsSwitch("Unlock with Biometrics", {
