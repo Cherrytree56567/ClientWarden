@@ -22,5 +22,25 @@ dependencyResolutionManagement {
     }
 }
 
+android {
+    defaultConfig {
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("src/main/jniLibs")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+}
+
 rootProject.name = "Clientwarden"
 include(":app")

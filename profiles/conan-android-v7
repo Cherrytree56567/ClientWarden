@@ -1,0 +1,28 @@
+[settings]
+os=Android
+os.api_level=24
+arch=armv7
+compiler=clang
+compiler.version=18
+compiler.libcxx=c++_shared
+compiler.cppstd=20
+build_type=Release
+
+[options]
+boost/*:without_cobalt=True
+boost/*:without_context=True
+boost/*:without_coroutine=True
+boost/*:without_fiber=True
+boost/*:without_asio=True
+boost/*:without_process=True
+
+[buildenv]
+CC={{ os.getenv("CC") }}
+CXX={{ os.getenv("CXX") }}
+AR={{ os.getenv("AR") }}
+RANLIB={{ os.getenv("RANLIB") }}
+STRIP={{ os.getenv("STRIP") }}
+
+[conf]
+tools.android:ndk_path={{ os.getenv("ANDROID_NDK_HOME") }}
+tools.build:compiler_executables={"c": "{{ os.getenv('CC') }}", "cpp": "{{ os.getenv('CXX') }}"}

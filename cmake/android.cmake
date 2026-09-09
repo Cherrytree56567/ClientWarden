@@ -20,5 +20,12 @@ function(buildUI _target)
 
     target_include_directories(${_target} PRIVATE src/Platforms/Android/)
 
+    if (ANDROID)
+        set_target_properties(clientwarden PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Platforms/Android/UI/app/src/main/jniLibs/${ANDROID_ABI}
+        )
+    endif()
+
     add_dependencies(UI ${_target})
 endfunction()

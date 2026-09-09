@@ -55,12 +55,13 @@ jobs:
     - name: Install Dependencies
       run: |
           mkdir -p build
-          conan install . --output-folder=build --build=missing -pr:h=./profiles/conan-android -s build_type=${{env.BUILD_TYPE}} -c tools.build:jobs=4
+          conan install . --output-folder=build --build=missing -pr:h=./profiles/conan-android-v8 -s build_type=${{env.BUILD_TYPE}} -c tools.build:jobs=4
       
     - name: Configure CMake
       run: |
           cd build
-          cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=build/${{env.BUILD_TYPE}}/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DANDROID=True -DANDROID_ABI=arm64-v8a
+          cp "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" src/Platforms/Android/UI/app/src/main/jniLibs/arm64-v8a/
 
     - name: Build
       run: |
