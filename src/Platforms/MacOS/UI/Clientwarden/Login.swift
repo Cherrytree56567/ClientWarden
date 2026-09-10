@@ -179,6 +179,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Vault URL", text: $data.vaultURL)
                             .focused($focusedField, equals: .VaultURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("Main URL")
                             .padding(.leading, 4)
@@ -187,6 +188,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Main URL", text: $data.mainURL)
                             .focused($focusedField, equals: .MainURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("API URL")
                             .padding(.leading, 4)
@@ -195,6 +197,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("API URL", text: $data.apiURL)
                             .focused($focusedField, equals: .APIURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("Icon URL")
                             .padding(.leading, 4)
@@ -203,6 +206,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Icon URL", text: $data.iconURL)
                             .focused($focusedField, equals: .IconURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("WebSocket URL")
                             .padding(.leading, 4)
@@ -210,6 +214,7 @@ struct LoginView: View {
                             .font(.caption)
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("WebSocket URL", text: $data.wssURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                             .focused($focusedField, equals: .WebSocketURL)
                         Spacer()
                     }
@@ -221,6 +226,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Vault URL", text: $data.vaultURL)
                             .focused($focusedField, equals: .VaultURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("Main URL")
                             .padding(.leading, 4)
@@ -229,6 +235,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Main URL", text: $data.mainURL)
                             .focused($focusedField, equals: .MainURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("API URL")
                             .padding(.leading, 4)
@@ -237,6 +244,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("API URL", text: $data.apiURL)
                             .focused($focusedField, equals: .APIURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("Icon URL")
                             .padding(.leading, 4)
@@ -245,6 +253,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("Icon URL", text: $data.iconURL)
                             .focused($focusedField, equals: .IconURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         
                         Text("WebSocket URL")
                             .padding(.leading, 4)
@@ -253,6 +262,7 @@ struct LoginView: View {
                             .frame(maxWidth: 200, alignment: .leading)
                         TextField("WebSocket URL", text: $data.wssURL)
                             .focused($focusedField, equals: .WebSocketURL)
+                            .glassEffect(.regular, in: .rect(cornerRadius: 8))
                         Spacer()
                     }
                 }
@@ -280,7 +290,12 @@ struct LoginView: View {
             }
             .frame(maxWidth: 200, maxHeight: .infinity)
             .padding(8)
-            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+            .padding(.trailing, 8)
+            .overlay(alignment: .trailing) {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 1.0)
+            }
             .padding(8)
             
             Spacer()

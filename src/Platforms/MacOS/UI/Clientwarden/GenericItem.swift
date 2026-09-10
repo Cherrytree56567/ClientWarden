@@ -341,6 +341,7 @@ struct GenericItem: View {
                                 .lineLimit(1)
                                 .padding(-4)
                                 .padding(.trailing, 4)
+                                
                             
                             TextField("Value", text: Binding(get: {
                                 data.value_1.replacingOccurrences(of: "\n", with: " ")

@@ -127,3 +127,21 @@ struct DragableItemElement: Codable, Transferable {
         CodableRepresentation(contentType: .data)
     }
 }
+
+struct VisualEffectBackground: NSViewRepresentable {
+    var material: NSVisualEffectView.Material = .sidebar
+    var blendingMode: NSVisualEffectView.BlendingMode = .withinWindow
+    var isEmphasized: Bool = false
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
+        nsView.isEmphasized = isEmphasized
+    }
+}

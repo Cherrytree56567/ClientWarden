@@ -68,7 +68,7 @@ struct ItemsPanelView: View {
                 TextField("Search", text: $data.searchQuery)
                     .textFieldStyle(.plain)
                     .padding(8)
-                    .glassEffect(.regular.interactive())
+                    .glassEffect(.regular)
                     .focused($isFocused)
                     .onChange(of: data.searchQuery) { _,_ in
                         data.query()
@@ -118,6 +118,10 @@ struct ItemsPanelView: View {
                 }
             }
             .padding(8)
+            .background(
+                AnyShapeStyle(Material.ultraThinMaterial)
+            )
+            
             
             VStack {
                 if (data.searchQuery != "" && data.filteredElements.isEmpty) {
@@ -203,8 +207,7 @@ struct ItemsPanelView: View {
             }
             .background {
                 RoundedRectangle(cornerRadius: 0, style: .continuous)
-                    .stroke(lineWidth: 0)
-                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
             }
             .padding(.bottom, -9)
             .padding(.leading, -1)

@@ -339,12 +339,13 @@ struct NavigationPanelView: View {
                 UnevenRoundedRectangle(
                     topLeadingRadius: 0,
                     bottomLeadingRadius: 10,
-                    bottomTrailingRadius: 10,
+                    bottomTrailingRadius: 0,
                     topTrailingRadius: 0
                 )
                 .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
             )
             .animation(.spring(response: 0.4, dampingFraction: 0.8))
+            .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
         }
         .onChange(of: data.selection) { oldValue, newValue in
             SidePanel.instance.closeItem()
@@ -390,6 +391,7 @@ struct NavigationPanelView: View {
                 }
             }
         }
+        .frame(width: 175)
     }
 }
 

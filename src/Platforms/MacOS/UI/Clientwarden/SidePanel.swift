@@ -692,7 +692,6 @@ struct SidePanelView: View {
         .background {
             RoundedRectangle(cornerRadius: 0, style: .continuous)
                 .stroke(lineWidth: 0)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
         }
         .padding(.top, -1)
         .padding(.trailing, -1)
