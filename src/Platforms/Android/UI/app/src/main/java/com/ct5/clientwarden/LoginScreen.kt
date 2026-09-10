@@ -253,7 +253,7 @@ object LoginScreen {
                 Button(
                     onClick = {
                         if (s_type.value == LoginScreenType.Generic) {
-                            if (cb_login?.invoke(email.value, password.value) == true) {
+                            if (cb_login?.invoke(email.value, password.value, vaultURL.value, mainURL.value, apiURL.value, iconURL.value, wssURL.value) == true) {
                                 email.value = ""
                             }
                             password.value = ""
