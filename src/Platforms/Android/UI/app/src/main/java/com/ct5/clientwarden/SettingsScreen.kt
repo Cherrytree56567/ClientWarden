@@ -82,8 +82,13 @@ import com.ct5.clientwarden.ui.theme.ClientwardenTheme
 import java.util.UUID
 import android.net.Uri
 import android.content.Intent
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
@@ -307,137 +312,183 @@ object SettingsScreen {
         var rotation = remember { Animatable(0f) }
         var c_count by remember { mutableStateOf(0) }
         var l_time by remember { mutableStateOf(0L) }
+
+        BackHandler(enabled = c_item.value != SettingsSelection.NONE) {
+            c_item.value = SettingsSelection.NONE
+        }
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopStart
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                if (c_item.value == SettingsSelection.NONE) {
-                    SettingButton("Security", Lucide.Shield, {
-                        c_item.value = SettingsSelection.Security
-                    }, true)
+            AnimatedContent(
+                targetState = c_item.value,
+                transitionSpec = {
+                    if (targetState == SettingsSelection.NONE) {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(250)
+                        ) + fadeIn(
+                            animationSpec = tween(250)
+                        ) togetherWith
+                                slideOutHorizontally(
+                                    targetOffsetX = { it },
+                                    animationSpec = tween(250)
+                                ) + fadeOut(
+                            animationSpec = tween(150)
+                        )
+                    } else {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(250)
+                        ) + fadeIn(
+                            animationSpec = tween(250)
+                        ) togetherWith
+                                slideOutHorizontally(
+                                    targetOffsetX = { -it },
+                                    animationSpec = tween(250)
+                                ) + fadeOut(
+                            animationSpec = tween(150)
+                        )
+                    }
+                },
+                label = "settings_nav"
+            ) { item ->
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (item == SettingsSelection.NONE) {
+                        SettingButton("Security", Lucide.Shield, {
+                            c_item.value = SettingsSelection.Security
+                        }, true)
 
-                    SettingButton("AutoFill", Lucide.Check, {
-                        c_item.value = SettingsSelection.AutoFill
-                    })
+                        SettingButton("AutoFill", Lucide.Check, {
+                            c_item.value = SettingsSelection.AutoFill
+                        })
 
-                    SettingButton("About", Lucide.BadgeCheck, {
-                        c_item.value = SettingsSelection.About
-                    }, false, true)
-                } else if (c_item.value == SettingsSelection.Security) {
-                    SettingsSwitch("Unlock with Biometrics", {
+                        SettingButton("About", Lucide.BadgeCheck, {
+                            c_item.value = SettingsSelection.About
+                        }, false, true)
+                    } else if (item == SettingsSelection.Security) {
+                        SettingsSwitch("Unlock with Biometrics", {
 
-                    }, true)
+                        }, true)
 
-                    var selected by remember { mutableStateOf("Immediate") }
+                        var selected by remember { mutableStateOf("Immediate") }
 
-                    SettingsDropdown(
-                        text = "Session Timeout",
-                        options = listOf(
-                            "Immediate",
-                            "1 minute",
-                            "5 minutes",
-                            "15 minutes",
-                            "30 minutes",
-                            "1 hour",
-                            "4 hours",
-                            "Never"
-                        ),
-                        selected = selected,
-                        onSelectedChange = { selected = it }
-                    )
+                        SettingsDropdown(
+                            text = "Session Timeout",
+                            options = listOf(
+                                "Immediate",
+                                "1 minute",
+                                "5 minutes",
+                                "15 minutes",
+                                "30 minutes",
+                                "1 hour",
+                                "4 hours",
+                                "Never"
+                            ),
+                            selected = selected,
+                            onSelectedChange = { selected = it }
+                        )
 
-                    SettingButton("Lock", onClick = {
+                        SettingButton("Lock", onClick = {
 
-                    })
+                        })
 
-                    SettingButton("Log Out", onClick = {
+                        SettingButton("Log Out", onClick = {
 
-                    }, end = true)
-                } else if (c_item.value == SettingsSelection.AutoFill) {
-                    SettingsSwitch("AutoFill", {
+                        }, end = true)
+                    } else if (item == SettingsSelection.AutoFill) {
+                        SettingsSwitch("AutoFill", {
 
-                    }, true, true)
-                } else if (c_item.value == SettingsSelection.About) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center) {
-                        Box(
-                            modifier = Modifier
-                                .size(128.dp)
-                                .clip(RoundedCornerShape(30))
-                                .clickable {
-                                    val now = System.currentTimeMillis()
-                                    if (now - l_time > 500) {
-                                        c_count = 1
-                                    } else {
-                                        c_count++
-                                    }
-                                    l_time = now
+                        }, true, true)
+                    } else if (item == SettingsSelection.About) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(128.dp)
+                                    .clip(RoundedCornerShape(30))
+                                    .clickable {
+                                        val now = System.currentTimeMillis()
+                                        if (now - l_time > 500) {
+                                            c_count = 1
+                                        } else {
+                                            c_count++
+                                        }
+                                        l_time = now
 
-                                    if (c_count == 3) {
-                                        c_count = 0
-                                        if (!rotation.isRunning) {
-                                            scope.launch {
-                                                rotation.animateTo(
-                                                    targetValue = rotation.value + 360f,
-                                                    animationSpec = tween(
-                                                        durationMillis = 600,
-                                                        easing = FastOutSlowInEasing
+                                        if (c_count == 3) {
+                                            c_count = 0
+                                            if (!rotation.isRunning) {
+                                                scope.launch {
+                                                    rotation.animateTo(
+                                                        targetValue = rotation.value + 360f,
+                                                        animationSpec = tween(
+                                                            durationMillis = 600,
+                                                            easing = FastOutSlowInEasing
+                                                        )
                                                     )
-                                                )
 
-                                                rotation.snapTo(rotation.value % 360f)
+                                                    rotation.snapTo(rotation.value % 360f)
+                                                }
                                             }
                                         }
                                     }
-                                }
-                                .graphicsLayer { rotationZ = rotation.value }
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.mipmap.ic_launcher_background),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize()
-                                    .scale(1.5f)
-                            )
-                            Image(
-                                painter = painterResource(id = R.mipmap.ic_launcher_foreground),
-                                contentDescription = "App icon",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .scale(1.5f)
-                            )
-                        }
+                                    .graphicsLayer { rotationZ = rotation.value }
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.mipmap.ic_launcher_background),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize()
+                                        .scale(1.5f)
+                                )
+                                Image(
+                                    painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+                                    contentDescription = "App icon",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .scale(1.5f)
+                                )
+                            }
 
-                        Spacer(modifier = Modifier.height(32.dp))
+                            Spacer(modifier = Modifier.height(32.dp))
 
-                        ClientwardenEasterText()
+                            ClientwardenEasterText()
 
-                        Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
 
-                        Text("Version 0482A1A Release",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium)
-
-                        Spacer(modifier = Modifier.weight(1f).fillMaxHeight())
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Github",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.clickable {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        "https://github.com/Cherrytree56567/ClientWarden".toUri()
-                                    )
-                                    context.startActivity(intent)
-                                })
-
-                            Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
-
-                            Text("Made By CT5",
+                            Text(
+                                "Version 0482A1A Release",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium)
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            Spacer(modifier = Modifier.weight(1f).fillMaxHeight())
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "Github",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.clickable {
+                                        val intent = Intent(
+                                            Intent.ACTION_VIEW,
+                                            "https://github.com/Cherrytree56567/ClientWarden".toUri()
+                                        )
+                                        context.startActivity(intent)
+                                    })
+
+                                Spacer(modifier = Modifier.weight(1f).fillMaxWidth())
+
+                                Text(
+                                    "Made By CT5",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 }

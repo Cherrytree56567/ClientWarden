@@ -118,7 +118,7 @@ You might need to use the `-s compiler.cppstd=20` flag.
    git clone https://github.com/Cherrytree56567/ClientWarden.git
    ```
 3. Prerequisites
-4. Build
+4. Build (add `-DLINUX=1` to the `cmake ..` command to build the Linux version on MacOS)
    ```sh
    cd build
    cmake .. -DCMAKE_TOOLCHAIN_FILE=build/Debug/generators/conan_toolchain.cmake -G Xcode

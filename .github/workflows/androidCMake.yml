@@ -74,3 +74,10 @@ jobs:
         name: ClientWarden-Release.zip
         path: src/Platforms/Android/UI/app/build/outputs/apk/debug
         archive: true
+
+    - name: Upload Artifact Build
+      uses: actions/upload-artifact@v7
+      with:
+        name: ClientWarden-Build.zip
+        path: build
+        archive: true

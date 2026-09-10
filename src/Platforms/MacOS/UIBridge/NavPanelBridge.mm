@@ -115,7 +115,7 @@
                     break;
             }
 
-            ItemElement *element = [[ItemElement alloc] initWithName:name uuid:uuid type:i_type image:img];
+            ItemElement* element = [[ItemElement alloc] initWithName:name uuid:uuid type:i_type image:img];
 
             [items addObject:element];
         }
@@ -524,7 +524,7 @@
  * RenameFolder uses a UUID and name and passes back a result bool
  */
 + (void)cb_RenameFolder {
-    NavigationPanel.instance.cb_renameFolder = ^BOOL(NSUUID *uuid, NSString *name) {
+    NavigationPanel.instance.cb_renameFolder = ^BOOL(NSUUID* uuid, NSString* name) {
         try {
             ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
 

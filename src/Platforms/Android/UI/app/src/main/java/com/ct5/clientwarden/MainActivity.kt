@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import com.ct5.clientwarden.HomeScreen.c_panel
 import com.ct5.clientwarden.ui.theme.ClientwardenTheme
 
 enum class MainViews {
@@ -34,19 +35,26 @@ enum class MainViews {
     VaultUI
 }
 
+object MainActivityObject {
+    var c_view = mutableStateOf(MainViews.LoginUI)
+
+    fun setUIType(ordinal: Int) {
+        c_view.value = MainViews.entries[ordinal]
+    }
+}
+
 class MainActivity : ComponentActivity() {
-    var c_view = mutableStateOf(MainViews.VaultUI)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ClientwardenTheme {
-                if (c_view.value == MainViews.VaultUI) {
+                if (MainActivityObject.c_view.value == MainViews.VaultUI) {
                     VaultUI()
-                } else if (c_view.value == MainViews.LoginUI) {
+                } else if (MainActivityObject.c_view.value == MainViews.LoginUI) {
                     LoginScreen.view()
-                } else if (c_view.value == MainViews.UnlockUI) {
+                } else if (MainActivityObject.c_view.value == MainViews.UnlockUI) {
                     UnlockScreen.view()
                 }
             }
