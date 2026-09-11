@@ -288,7 +288,7 @@ namespace ClientWarden {
 
         std::string msg;
 
-        jthread reader([&](stop_token) {
+        std::jthread reader([&](std::stop_token) {
             while (shouldThread) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
@@ -367,7 +367,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Accept", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },

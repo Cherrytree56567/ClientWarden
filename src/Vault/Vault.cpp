@@ -622,7 +622,7 @@ namespace ClientWarden {
         session.connectivityThread.start();
         session.autoLockThread.start();
 
-        jthread t([&] {
+        std::jthread t([&] {
             Sync();
         });
 

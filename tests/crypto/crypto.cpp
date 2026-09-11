@@ -131,26 +131,48 @@ TEST_CASE("Cipher String (2)") {
     REQUIRE(result == "2.mnIBpndY7sS+DSZQDSKsMA==|OdC0I2BW6Po3UdfDFGTJ+Q==");
 }
 
-TEST_CASE("Make Key (600 000)") {
+TEST_CASE("Make Key (600 000) (PBKDF)") {
     ClientWarden::VaultCrypto crypto(true);
 
     std::string password = "Cl1entW@rden!2345";
     std::string salt = "cwuser@ct5.app";
 
-    Botan::secure_vector<uint8_t> result = crypto.makeKey(password, salt, 600000);
+    Botan::secure_vector<uint8_t> result = crypto.makeKey(password, salt, 0, 600000, 0, 0);
 
     REQUIRE(ClientWarden::b64Encode(result) == "ZpUXcWr1drwwXyagHbbYKjkU/jAR6e2MlvAo8WoWmGY=");
 }
 
-TEST_CASE("Make Key (6 000 000)") {
+TEST_CASE("Make Key (6 000 000) (PBKDF)") {
     ClientWarden::VaultCrypto crypto(true);
 
     std::string password = "Cl1entW@rden!2345";
     std::string salt = "cwuser@ct5.app";
 
-    Botan::secure_vector<uint8_t> result = crypto.makeKey(password, salt, 6000000);
+    Botan::secure_vector<uint8_t> result = crypto.makeKey(password, salt, 0, 6000000, 0, 0);
 
     REQUIRE(ClientWarden::b64Encode(result) == "jIYLWmvcnFcr3+WwlsyJtGGoAvd2rrtOG2v5EOoA1C4=");
+}
+
+TEST_CASE("Make Key (600 000) (Argon2ID)") {
+    ClientWarden::VaultCrypto crypto(true);
+
+    std::string password = "Cl1entW@rden!2345";
+    std::string salt = "cwuser@ct5.app";
+
+    Botan::secure_vector<uint8_t> result = crypto.makeKey(password, salt, 1, 4, 64, 4);
+
+    REQUIRE(ClientWarden::b64Encode(result) == "auOZsuNBQ1HNt5CHg3oDaVnLtx92PUI16tlKn/rexuA=");
+}
+
+TEST_CASE("Make Key (6 000 000) (Argon2ID)") {
+    ClientWarden::VaultCrypto crypto(true);
+
+    std::string password = "Cl1entW@rden!2345";
+    std::string salt = "cwuser@ct5.app";
+
+    Botan::secure_vector<uint8_t> result = crypto.makeKey(password, salt, 1, 10, 64, 4);
+
+    REQUIRE(ClientWarden::b64Encode(result) == "D91klz4hoik9kPH29gzUGWLItfo+qLfF5cRIODDqtlE=");
 }
 
 TEST_CASE("HashedPassword Test") {

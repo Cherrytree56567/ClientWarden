@@ -25,7 +25,6 @@ find_package(OpenSSL REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Boost REQUIRED COMPONENTS url)
-find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Botan CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
@@ -49,11 +48,12 @@ set(FILES
     ../src/Vault/Vault.cpp
     Storage/Storage.cpp
     Clipboard/Clipboard.cpp
+    httplib/httplib.cpp
 )
 
 
-add_executable(tests test.cpp crypto/crypto_pbkdf.cpp crypto/crypto_pbkdf_fail.cpp utils/utils.cpp ${FILES})
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
+add_executable(tests test.cpp crypto/crypto.cpp crypto/crypto_fail.cpp network/network.cpp utils/utils.cpp ${FILES})
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 
 if(APPLE)
     find_library(CFNETWORK_FRAMEWORK CFNetwork REQUIRED)
@@ -67,6 +67,7 @@ endif()
 
 target_include_directories(tests PUBLIC
     ../src/Vault
+    httplib
     .
 )
 
