@@ -73,10 +73,12 @@ target_include_directories(tests PUBLIC
 
 target_compile_definitions(tests PRIVATE MSGPACK_DISABLE_LEGACY_NIL)
 
-add_custom_command(TARGET tests POST_BUILD
-    COMMAND codesign --force --deep --sign - $<TARGET_FILE:tests>
-    COMMENT "Sign Bin to prevent failure"
-)
+if (APPLE)
+    add_custom_command(TARGET tests POST_BUILD
+        COMMAND codesign --force --deep --sign - $<TARGET_FILE:tests>
+        COMMENT "Sign Bin to prevent failure"
+    )
+endif()
 
 include(CTest)
 include(Catch)
