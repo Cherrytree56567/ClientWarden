@@ -51,10 +51,3 @@ jobs:
       run: |
           cd tests/build
           ctest --output-on-failure
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: ClientWarden-Release.zip
-        path: build/Release
-        archive: true
