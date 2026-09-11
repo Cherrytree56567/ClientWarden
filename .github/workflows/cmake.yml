@@ -25,8 +25,8 @@ jobs:
       uses: actions/cache@v5
       with: 
         path: build
-        key: cmake-${{ hashFiles('**/CMakeLists.txt', '**/macos.cmake', '**/windows.cmake', '**/versioning.cmake') }}
-        restore-keys: cmake-
+        key: cmake-v1-${{ hashFiles('**/CMakeLists.txt', '**/macos.cmake', '**/windows.cmake', '**/versioning.cmake') }}
+        restore-keys: cmake-v1-
       
     - name: Install Dependencies
       run: |
