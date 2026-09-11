@@ -71,10 +71,6 @@ namespace httplib {
         g_h_data.url = url;
         g_h_data.headers = headers;
 
-        if (url == "/api/accounts/profile") {
-            err->status = 401;
-        }
-
         return err;
     }
 

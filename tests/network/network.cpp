@@ -323,7 +323,7 @@ TEST_CASE("getVault Test") {
 
     std::optional<nlohmann::json> result = network.getVault(token);
 
-    bool urlTest = httplib::g_h_data.url == "/identity/connect/token";
+    bool urlTest = httplib::g_h_data.url == "/api/sync";
     bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
     bool bwClienVersionTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
 
