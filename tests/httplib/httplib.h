@@ -3,6 +3,7 @@
 #include <map>
 #include <functional>
 #include <memory>
+#include <regex>
 
 namespace httplib {
 
@@ -42,6 +43,8 @@ namespace httplib {
         std::string url;
         std::string value;
         std::string type;
+        std::string wsData = "{}\x1e";
+        bool runWS = true;
     };
 
     inline httplibData g_h_data = httplibData();

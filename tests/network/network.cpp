@@ -673,3 +673,267 @@ TEST_CASE("UnArchiveItem (multiple) Test") {
     CHECK(acceptTest);
     CHECK(authTest);
 }
+
+TEST_CASE("AddAttachment Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string uuid = "CT5";
+    std::string token = "t0k3n";
+    std::string encFileCont = "uf8ews87fy";
+    std::string encFileName = "wsouyt9y7t";
+    std::string attKey = "detrfthhy5t5ter";
+
+    std::optional<nlohmann::json> result = network.AddAttachment(uuid, encFileCont, encFileName, attKey, token, [](float progress) {});
+
+    bool urlTest = httplib::g_h_data.url == ("/api/ciphers/CT5/attachment/att");
+    bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
+    bool bwClientVersionTest = httplib::g_h_data.headers.find("bitwarden-client-version") != httplib::g_h_data.headers.end();
+
+    auto au_it = httplib::g_h_data.headers.find("Authorization");
+    bool authTest = (au_it != httplib::g_h_data.headers.end() && au_it->second == ("Bearer " + token));
+
+    bool itemsTest = httplib::g_h_data.items.size() == 1
+        && httplib::g_h_data.items[0].name == "data"
+        && httplib::g_h_data.items[0].content == encFileCont
+        && httplib::g_h_data.items[0].filename == encFileName
+        && httplib::g_h_data.items[0].content_type == "application/octet-stream";
+
+    REQUIRE(result.has_value());
+    CHECK(urlTest);
+    CHECK(bwClientNameTest);
+    CHECK(bwClientVersionTest);
+    CHECK(authTest);
+    CHECK(itemsTest);
+}
+
+TEST_CASE("RemoveAttachment Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string uuid = "CT5";
+    std::string token = "t0k3n";
+    std::string attID = "54eytrd";
+
+    bool result = network.RemoveAttachment(uuid, attID, token);
+
+    bool urlTest = httplib::g_h_data.url == ("/api/ciphers/CT5/attachment/54eytrd");
+    bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
+    bool bwClientVersionTest = httplib::g_h_data.headers.find("bitwarden-client-version") != httplib::g_h_data.headers.end();
+
+    auto a_it = httplib::g_h_data.headers.find("Content-Type");
+    bool acceptTest = (a_it != httplib::g_h_data.headers.end() && a_it->second == "application/json");
+
+    auto au_it = httplib::g_h_data.headers.find("Authorization");
+    bool authTest = (au_it != httplib::g_h_data.headers.end() && au_it->second == ("Bearer " + token));
+
+    REQUIRE(result);
+    CHECK(urlTest);
+    CHECK(bwClientNameTest);
+    CHECK(bwClientVersionTest);
+    CHECK(acceptTest);
+    CHECK(authTest);
+}
+
+TEST_CASE("DownloadAttachment Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string uuid = "CT5";
+    std::string token = "t0k3n";
+    std::string attID = "54eytrd";
+
+    std::optional<std::pair<std::string, nlohmann::json>> result = network.DownloadAttachment(uuid, attID, token, [](float progress) {});
+
+    bool urlTest = httplib::g_h_data.url == "att123";
+    bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
+    bool bwClientVersionTest = httplib::g_h_data.headers.find("bitwarden-client-version") != httplib::g_h_data.headers.end();
+
+    auto a_it = httplib::g_h_data.headers.find("Content-Type");
+    bool acceptTest = (a_it != httplib::g_h_data.headers.end() && a_it->second == "application/json");
+
+    auto au_it = httplib::g_h_data.headers.find("Authorization");
+    bool authTest = (au_it != httplib::g_h_data.headers.end() && au_it->second == ("Bearer " + token));
+
+    REQUIRE(result.has_value());
+    CHECK(urlTest);
+    CHECK(bwClientNameTest);
+    CHECK(bwClientVersionTest);
+    CHECK(acceptTest);
+    CHECK(authTest);
+}
+
+TEST_CASE("CreateFolder Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string folderName = "CT5";
+    std::string token = "t0k3n";
+
+    std::optional<nlohmann::json> result = network.CreateFolder(folderName, token);
+
+    bool urlTest = httplib::g_h_data.url == "/api/folders";
+    bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
+    bool bwClientVersionTest = httplib::g_h_data.headers.find("bitwarden-client-version") != httplib::g_h_data.headers.end();
+    bool contentTest = httplib::g_h_data.type == "application/json";
+
+    auto a_it = httplib::g_h_data.headers.find("Content-Type");
+    bool acceptTest = (a_it != httplib::g_h_data.headers.end() && a_it->second == "application/json");
+
+    auto au_it = httplib::g_h_data.headers.find("Authorization");
+    bool authTest = (au_it != httplib::g_h_data.headers.end() && au_it->second == ("Bearer " + token));
+
+    bool valueTest = nlohmann::json::accept(httplib::g_h_data.value);
+    bool idValidTest = false;
+
+    if (valueTest) {
+        nlohmann::json p_value = nlohmann::json::parse(httplib::g_h_data.value);
+
+        idValidTest = p_value.contains("name")
+            && p_value["name"].is_string()
+            && p_value["name"].get<std::string>() == folderName;
+    }
+
+    REQUIRE(result.has_value());
+    CHECK(urlTest);
+    CHECK(bwClientNameTest);
+    CHECK(bwClientVersionTest);
+    CHECK(contentTest);
+    CHECK(acceptTest);
+    CHECK(authTest);
+    CHECK(valueTest);
+    CHECK(idValidTest);
+}
+
+TEST_CASE("RenameFolder Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string folderName = "CT5";
+    std::string uuid = "x4rwf";
+    std::string token = "t0k3n";
+
+    std::optional<nlohmann::json> result = network.RenameFolder(uuid, folderName, token);
+
+    bool urlTest = httplib::g_h_data.url == ("/api/folders/x4rwf");
+    bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
+    bool bwClientVersionTest = httplib::g_h_data.headers.find("bitwarden-client-version") != httplib::g_h_data.headers.end();
+    bool contentTest = httplib::g_h_data.type == "application/json";
+
+    auto a_it = httplib::g_h_data.headers.find("Content-Type");
+    bool acceptTest = (a_it != httplib::g_h_data.headers.end() && a_it->second == "application/json");
+
+    auto au_it = httplib::g_h_data.headers.find("Authorization");
+    bool authTest = (au_it != httplib::g_h_data.headers.end() && au_it->second == ("Bearer " + token));
+
+    bool valueTest = nlohmann::json::accept(httplib::g_h_data.value);
+    bool idValidTest = false;
+
+    if (valueTest) {
+        nlohmann::json p_value = nlohmann::json::parse(httplib::g_h_data.value);
+
+        idValidTest = p_value.contains("name")
+            && p_value["name"].is_string()
+            && p_value["name"].get<std::string>() == folderName;
+    }
+
+    REQUIRE(result.has_value());
+    CHECK(urlTest);
+    CHECK(bwClientNameTest);
+    CHECK(bwClientVersionTest);
+    CHECK(contentTest);
+    CHECK(acceptTest);
+    CHECK(authTest);
+    CHECK(valueTest);
+    CHECK(idValidTest);
+}
+
+TEST_CASE("DeleteFolder Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string uuid = "x4rwf";
+    std::string token = "t0k3n";
+
+    bool result = network.DeleteFolder(uuid, token);
+
+    bool urlTest = httplib::g_h_data.url == ("/api/folders/x4rwf");
+    bool bwClientNameTest = httplib::g_h_data.headers.find("bitwarden-client-name") != httplib::g_h_data.headers.end();
+    bool bwClientVersionTest = httplib::g_h_data.headers.find("bitwarden-client-version") != httplib::g_h_data.headers.end();
+
+    auto a_it = httplib::g_h_data.headers.find("Content-Type");
+    bool acceptTest = (a_it != httplib::g_h_data.headers.end() && a_it->second == "application/json");
+
+    auto au_it = httplib::g_h_data.headers.find("Authorization");
+    bool authTest = (au_it != httplib::g_h_data.headers.end() && au_it->second == ("Bearer " + token));
+
+    REQUIRE(result);
+    CHECK(urlTest);
+    CHECK(bwClientNameTest);
+    CHECK(bwClientVersionTest);
+    CHECK(acceptTest);
+    CHECK(authTest);
+}
+
+TEST_CASE("DownloadIcon Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    std::string url = "goog";
+
+    std::optional<std::vector<uint8_t>> result = network.DownloadIcon(url);
+
+    bool urlTest = httplib::g_h_data.url == "/goog/icon.png";
+
+    REQUIRE(result);
+    CHECK(urlTest);
+}
+
+TEST_CASE("websocketLoop Test") {
+    ClientWarden::VaultNetwork network;
+
+    network.initNetwork("a.com", "b.com", "c.com", "d.com");
+
+    constexpr char rawMsg[] = "\x00\x95\x01\xc0\xc0\xc0\x91\x82\xa4Type\x05\xa7Payload\x81\xa2Id" "\xaa" "cipher-123";
+
+    std::string fakeMsg(rawMsg, sizeof(rawMsg) - 1);
+
+    httplib::g_h_data.wsData = fakeMsg;
+    httplib::g_h_data.runWS = true;
+
+    std::vector<int> notifiedTypes;
+    std::mutex notifiedMutex;
+    std::condition_variable notifiedCv;
+    std::atomic<bool> shouldThread { true };
+
+    std::thread l_thread([&]() {
+        bool result = network.websocketLoop([&](int notifyType) { 
+            {
+                std::lock_guard<std::mutex> lock(notifiedMutex);
+                notifiedTypes.push_back(notifyType);
+            }
+            notifiedCv.notify_one();
+        }, "t0k3n", "ct5://", shouldThread);
+    });
+
+    {
+        std::unique_lock<std::mutex> lock(notifiedMutex);
+        bool received = notifiedCv.wait_for(lock, std::chrono::seconds(2), [&]() { return !notifiedTypes.empty(); });
+        REQUIRE(received);
+    }
+
+    shouldThread = false;
+    httplib::g_h_data.runWS = false;
+
+    l_thread.join();
+
+    REQUIRE(notifiedTypes.size() == 1);
+    CHECK(notifiedTypes[0] == 5);
+}
