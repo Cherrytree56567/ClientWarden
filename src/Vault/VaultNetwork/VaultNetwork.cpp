@@ -387,6 +387,9 @@ namespace ClientWarden {
         return nlohmann::json::parse(res->body);
     }
 
+    /*
+     * WARNING: I dont know if changing Authorization to Authorization does anything
+     */
     std::optional<nlohmann::json> VaultNetwork::NewItem(nlohmann::json encryptedData, std::string accessString) {
         if (!init) {
             return std::nullopt;
@@ -394,7 +397,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -421,7 +424,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -454,7 +457,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -481,7 +484,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -508,7 +511,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -535,7 +538,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -566,7 +569,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -596,7 +599,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -627,7 +630,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -658,7 +661,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
         };
@@ -732,7 +735,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -760,7 +763,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -826,7 +829,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -854,7 +857,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
@@ -881,7 +884,7 @@ namespace ClientWarden {
         
         std::lock_guard<std::mutex> lock(vaultClientMutex);
         httplib::Headers headers = {
-            { "authorization", "Bearer " + accessString },
+            { "Authorization", "Bearer " + accessString },
             { "Content-Type", "application/json" },
             { "bitwarden-client-name", "desktop" },
             { "bitwarden-client-version", "2026.3.0" },
