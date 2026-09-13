@@ -16,9 +16,10 @@ struct PreviewData {
                         SidePanel.instance.icon = ClientwardenImage(type: ImageType.bundle, path: "profile1")
                         SidePanel.instance.favorite = false
                         SidePanel.instance.itemFields = [
-                            GenericItemData(title: "Name", value: "Mr John Jones Smith", type: GenericItemType.generic_4),
+                            GenericItemData(title: "Name", value: "Mr", value_1: "John", value_2: "Jones", value_3: "Smith"),
                             GenericItemData(title: "Email", value: "test@example.com", type: GenericItemType.generic),
                             GenericItemData(title: "Password", value: "pass123", type:GenericItemType.password),
+                            GenericItemData(title: "Card Expiry", value: "12/2027", type: GenericItemType.date),
                             GenericItemData(title: "Two Factor Auth", value: "SFDD", type: GenericItemType.totp, cb_getTOTP: {
                                 let now = Int64(Date().timeIntervalSince1970)
                                 let step: Int64 = 30
@@ -33,6 +34,9 @@ struct PreviewData {
                             FieldItemData(title: "Hid", value: "Some T", type: FieldItemType.hidden),
                             FieldItemData(title: "Chk", value: "false", type: FieldItemType.checkbox),
                             FieldItemData(title: "Lin", value: "101", type: FieldItemType.linked),
+                        ]
+                        SidePanel.instance.attachmentItems = [
+                            AttachmentItemData(AttachID: "a5", name: "")
                         ]
                         SidePanel.instance.itemHistory = [
                             "Last Edited: idk",

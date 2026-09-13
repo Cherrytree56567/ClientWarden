@@ -360,6 +360,14 @@ struct NavigationPanelView: View {
         }
         .alert("Rename", isPresented: $showRenameAlert) {
             TextField("Folder Name", text: $folderName)
+                .textFieldStyle(.plain)
+                .padding(4)
+                .background(Color.gray.opacity(0.15))
+                .cornerRadius(8)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                }
             Button("Cancel", role: .cancel) { }
             Button("Confirm") {
                 data.renameFolder(folderId: renameAlertId, str: folderName)
@@ -373,6 +381,7 @@ struct NavigationPanelView: View {
                 if let result = data.cb_deleteFolder?(showDeleteFolder.id) {
                     if (result) {
                         data.folders.removeAll { $0.id == showDeleteFolder.id }
+                        data.selection = .all_items
                     } else {
                         ToastStore.instance.toasts.append(Toast(message: "Failed to delete folder"))
                     }
@@ -391,7 +400,7 @@ struct NavigationPanelView: View {
                 }
             }
         }
-        .frame(width: 175)
+        .frame(minWidth: 175)
     }
 }
 

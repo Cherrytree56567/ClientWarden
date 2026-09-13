@@ -198,6 +198,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
     - [X] About UI
     - [ ] Passkey Support
     - [ ] Biometric Support
+  - [ ] Support Bank Account, Passport and Drivers License
+  - [ ] Support new version (remove data key in JSON)
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 

@@ -82,9 +82,18 @@ struct FieldItem: View {
             if (data.type != FieldItemType.checkbox) {
                 if (editable) {
                     TextField("Title", text: $data.title)
+                        .textFieldStyle(.plain)
+                        .padding(4)
+                        .lineLimit(6)
+                        .background(Color.gray.opacity(0.15))
+                        .cornerRadius(8)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                        }
                         .font(.caption)
                         .foregroundColor(Color.gray)
-                        .padding(.bottom, -6)
+                        .padding(.bottom, -4)
                         .padding(.leading, 2)
                         .padding(.trailing, 2)
                 } else {
@@ -114,11 +123,22 @@ struct FieldItem: View {
                                 data.value = ($0 ? "true" : "false")
                             }
                         }))
+                        .scaleEffect(1.25)
                         .labelsHidden()
                         .padding(.trailing, -2)
                         if (editable) {
                             HStack {
                                 TextField("Value", text: $data.title)
+                                    .textFieldStyle(.plain)
+                                    .padding(4)
+                                    .lineLimit(6)
+                                    .background(Color.gray.opacity(0.15))
+                                    .cornerRadius(8)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                    }
+                                
                                 Button {
                                     onRemove?()
                                 } label: {
@@ -135,6 +155,15 @@ struct FieldItem: View {
                     if (editable) {
                         HStack {
                             TextField("Value", text: $data.value, axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .lineLimit(6)
                                 .padding(.top, -4)
                             Button {
@@ -263,6 +292,15 @@ struct FieldItem: View {
                     if (editable) {
                         HStack {
                             TextField("Value", text: Binding(get: { data.value }, set: { data.value = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .lineLimit(6)
                                 .padding(.top, -4)
                             

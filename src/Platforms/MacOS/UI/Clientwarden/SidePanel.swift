@@ -478,8 +478,17 @@ struct SidePanelView: View {
                         VStack(alignment: .leading) {
                             if (data.editable) {
                                 TextField("Title", text: $data.name)
-                                    .font(.system(size: 18, weight: .bold))
-                                    .padding(.top, 4)
+                                    .textFieldStyle(.plain)
+                                    .padding(4)
+                                    .background(Color.gray.opacity(0.15))
+                                    .cornerRadius(8)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                    }
+                                    .font(.system(size: 16, weight: .bold))
+                                    .padding(.top, 2)
+                                    .padding(.bottom, 2)
                             } else {
                                 Text(data.name)
                                     .font(.system(size: 18, weight: .bold))
@@ -496,18 +505,14 @@ struct SidePanelView: View {
                         Button {
                             data.toggleFavorite()
                         } label: {
-                            if (data.favorite) {
-                                Image(systemName: "star.fill")
-                                    .font(.subheadline)
-                                    .padding(8)
-                                    .foregroundStyle(Color.orange)
-                            } else {
-                                Image(systemName: "star")
-                                    .font(.subheadline)
-                                    .padding(8)
-                            }
+                            Image(systemName: data.favorite ? "star.fill" : "star")
+                                .font(.subheadline)
+                                .padding(8)
+                                .foregroundStyle(data.favorite ? Color.orange : Color.primary)
+                                .contentTransition(.symbolEffect(.replace))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(BorderlessButtonStyle())
+                        .contentShape(Circle())
                         .glassEffect(.regular.interactive(), in: Circle())
                     }
                     
@@ -516,6 +521,8 @@ struct SidePanelView: View {
                             Text(option.name).tag(option.uuid)
                         }
                     }
+                    .contentTransition(.opacity)
+                    .animation(.easeInOut(duration: 0.25), value: data.folderUUID)
                     .labelsHidden()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .pickerStyle(.menu)
@@ -558,42 +565,48 @@ struct SidePanelView: View {
                             Text("Fields")
                                 .font(.caption)
                                 .padding(.leading, 2)
+                            
                             Spacer()
-                            Button() {
-                                showNewFieldCallout = true
-                            } label: {
-                                Image(systemName: "plus")
-                                    .padding(3)
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
-                            .glassEffect(in: Circle())
-                            .padding(.top, 0)
-                            .popover(isPresented: $showNewFieldCallout, arrowEdge: .leading) {
-                                Menu {
-                                    Button("Text Field") {
-                                        data.customFields.append(FieldItemData(title: "New Field", value: "", type: .text))
-                                        showNewFieldCallout = false
-                                    }
-                                    Button("Hidden Field") {
-                                        data.customFields.append(FieldItemData(title: "New Field", value: "", type: .hidden))
-                                        showNewFieldCallout = false
-                                    }
-                                    Button("Checkbox") {
-                                        data.customFields.append(FieldItemData(title: "New Field", value: "false", type: .checkbox))
-                                        showNewFieldCallout = false
-                                    }
-                                    if (data.type != ItemType.SSHKey && data.type != ItemType.Note) {
-                                        Button("Linked Field") {
-                                            data.customFields.append(FieldItemData(title: "New Field", value: "", type: .linked))
+                            
+                            GlassEffectContainer {
+                                Button() {
+                                    showNewFieldCallout = true
+                                } label: {
+                                    Image(systemName: showNewFieldCallout ? "xmark" : "plus")
+                                        .padding(4)
+                                        .glassEffect(.regular.interactive(), in: Circle())
+                                }
+                                .buttonStyle(BorderlessButtonStyle())
+                                .glassEffect(.regular.interactive(), in: Circle())
+                                .padding(.top, 0)
+                                .contentTransition(.symbolEffect(.replace))
+                                .popover(isPresented: $showNewFieldCallout, arrowEdge: .leading) {
+                                    Menu {
+                                        Button("Text Field") {
+                                            data.customFields.append(FieldItemData(title: "New Field", value: "", type: .text))
                                             showNewFieldCallout = false
                                         }
+                                        Button("Hidden Field") {
+                                            data.customFields.append(FieldItemData(title: "New Field", value: "", type: .hidden))
+                                            showNewFieldCallout = false
+                                        }
+                                        Button("Checkbox") {
+                                            data.customFields.append(FieldItemData(title: "New Field", value: "false", type: .checkbox))
+                                            showNewFieldCallout = false
+                                        }
+                                        if (data.type != ItemType.SSHKey && data.type != ItemType.Note) {
+                                            Button("Linked Field") {
+                                                data.customFields.append(FieldItemData(title: "New Field", value: "", type: .linked))
+                                                showNewFieldCallout = false
+                                            }
+                                        }
+                                    } label: {
+                                        Label("Add field", systemImage: "plus.circle")
                                     }
-                                } label: {
-                                    Label("Add field", systemImage: "plus.circle")
+                                    .menuStyle(.borderlessButton)
+                                    .padding(.top, 5)
+                                    .padding(.bottom, 5)
                                 }
-                                .menuStyle(.borderlessButton)
-                                .padding(.top, 5)
-                                .padding(.bottom, 5)
                             }
                         }
                     }
@@ -621,16 +634,21 @@ struct SidePanelView: View {
                             Text("Attachments")
                                 .font(.caption)
                                 .padding(.leading, 2)
+                            
                             Spacer()
-                            Button() {
-                                data.uploadAttachment()
-                            } label: {
-                                Image(systemName: "plus")
-                                    .padding(3)
+                            
+                            GlassEffectContainer {
+                                Button() {
+                                    data.uploadAttachment()
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .padding(3)
+                                        .glassEffect(.regular.interactive(), in: Circle())
+                                }
+                                .buttonStyle(BorderlessButtonStyle())
+                                .glassEffect(.regular.interactive(), in: Circle())
+                                .padding(.top, 0)
                             }
-                            .buttonStyle(BorderlessButtonStyle())
-                            .glassEffect(in: Circle())
-                            .padding(.top, 0)
                         }
                     }
                     
@@ -838,6 +856,7 @@ struct SidePanelView: View {
                         }
                         .glassEffect(.regular.interactive(), in: Circle())
                     }
+                    .sharedBackgroundVisibility(.hidden)
                 }
             } else if (!ItemsPanel.instance.selectedItems.isEmpty) {
                 if (NavigationPanel.instance.selection == NavItems.archived) {
@@ -932,6 +951,15 @@ struct SidePanelView: View {
                 Text("Enter Password to see Item")
                     .padding(.top, 8)
                 SecureField("Password", text: $data.repromptPassword)
+                    .textFieldStyle(.plain)
+                    .padding(4)
+                    .lineLimit(6)
+                    .background(Color.gray.opacity(0.15))
+                    .cornerRadius(8)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                    }
                     .padding(.leading, 4)
                     .padding(.trailing, 4)
                     .frame(width: 180)

@@ -46,6 +46,15 @@ struct AttachmentItem: View {
                 
                 if (editable) {
                     TextField("Name", text: $data.name)
+                        .textFieldStyle(.plain)
+                        .padding(4)
+                        .lineLimit(6)
+                        .background(Color.gray.opacity(0.15))
+                        .cornerRadius(8)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                        }
                 } else {
                     Text(verbatim: data.name)
                 }

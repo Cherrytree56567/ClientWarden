@@ -322,6 +322,32 @@ namespace ClientWarden {
     LoginItem* LoginItem::SetPassword(std::string& password) {
         if (!init) return this;
         if (!data.contains("login") || !data["login"].is_object()) return this;
+
+        /*
+         * We should be checking if the login thing has a password
+         * otherwise we will get a null
+         */
+        if (data["login"].contains("password") && data["login"]["password"].is_string()) {
+            if (!data.contains("passwordHistory") || !data["passwordHistory"].is_array()) {
+                data["passwordHistory"] = nlohmann::json::array();
+            }
+
+            if (!fieldData.contains("PasswordHistory") || !fieldData["PasswordHistory"].is_array()) {
+                fieldData["PasswordHistory"] = nlohmann::json::array();
+            }
+
+            nlohmann::json h_entry;
+            h_entry["lastUsedDate"] = getBitwardenTime();
+            h_entry["password"] = data["login"]["password"];
+
+            nlohmann::json fh_entry;
+            h_entry["LastUsedDate"] = getBitwardenTime();
+            h_entry["Password"] = data["login"]["password"];
+
+            data["passwordHistory"].push_back(h_entry);
+            fieldData["PasswordHistory"].push_back(fh_entry);
+        }
+
         fieldData["Password"] = localVault.crypto.Encrypt(password, itemEncKey, itemMacKey);
         data["login"]["password"] = localVault.crypto.Encrypt(password, itemEncKey, itemMacKey);
         OPENSSL_cleanse(password.data(), password.size());

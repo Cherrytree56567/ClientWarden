@@ -181,7 +181,7 @@ struct GenericItem: View {
     var body: some View {
         VStack(alignment: .leading) {
             if (data.type == GenericItemType.password && editable && data.title == "Password") {
-                HStack {
+                VStack(alignment: .leading) {
                     Text("Password Generator")
                         .padding(.leading, 8)
                     Spacer()
@@ -199,17 +199,19 @@ struct GenericItem: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                     .controlSize(.small)
-                    .padding(.trailing, 8)
+                    .padding(.leading, 8)
                     .onChange(of: passwordGenTab) { _, newTab in
-                        switch newTab {
-                            case 0: 
+                        withAnimation(.easeInOut(duration: 1)) {
+                            switch newTab {
+                            case 0:
                                 size = 16
-                            case 1: 
+                            case 1:
                                 size = 4
-                            case 2: 
+                            case 2:
                                 size = 8
-                            default: 
+                            default:
                                 break
+                            }
                         }
                     }
                 }
@@ -232,33 +234,50 @@ struct GenericItem: View {
                     .padding(.trailing, 2)
                     .animation(.easeInOut(duration: 1), value: passwordGenTab)
                     
-                    Button {
-                        data.value = SidePanel.instance.generatePassword(passwordType: passwordGenTab, numbers: numbers, symbols: symbols, caps: caps, size: size)
-                    } label: {
-                        Image(systemName: "escape")
-                            .padding(6)
+                    GlassEffectContainer {
+                        Button {
+                            data.value = SidePanel.instance.generatePassword(passwordType: passwordGenTab, numbers: numbers, symbols: symbols, caps: caps, size: size)
+                        } label: {
+                            Image(systemName: "escape")
+                                .padding(6)
+                                .glassEffect(.regular.interactive(), in: Circle())
+                        }
+                        .buttonStyle(BorderlessButtonStyle())
+                        .glassEffect(.regular.interactive(), in: Circle())
+                        .padding(.trailing, 8)
                     }
-                    .buttonStyle(BorderlessButtonStyle())
-                    .glassEffect(in: Circle())
-                    .padding(.trailing, 8)
                 }
-                .padding(.bottom, passwordGenTab == 2 ? 8 : 0)
                 
-                HStack {
-                    if (passwordGenTab == 0) {
-                        Toggle("Numbers", isOn: $numbers)
-                            .transition(.opacity.combined(with: .move(edge: .leading)))
-                        Toggle("Symbols", isOn: $symbols)
-                            .transition(.opacity.combined(with: .move(edge: .leading)))
-                    }
+                HStack(spacing: 0) {
+                    Toggle("Numbers", isOn: $numbers)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(passwordGenTab == 0 ? 1 : 0)
+                        .frame(width: passwordGenTab == 0 ? nil : 0)
+                        .padding(.trailing, passwordGenTab == 0 ? 8 : 0)
+                        .clipped()
+                        .allowsHitTesting(passwordGenTab == 0)
                     
-                    if (passwordGenTab == 0 || passwordGenTab == 1) {
-                        Toggle("Caps", isOn: $caps)
-                            .transition(.opacity.combined(with: .move(edge: .leading)))
-                    }
+                    Toggle("Symbols", isOn: $symbols)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(passwordGenTab == 0 ? 1 : 0)
+                        .frame(width: passwordGenTab == 0 ? nil : 0)
+                        .padding(.trailing, passwordGenTab == 0 ? 8 : 0)
+                        .clipped()
+                        .allowsHitTesting(passwordGenTab == 0)
+                    
+                    Toggle("Caps", isOn: $caps)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(passwordGenTab == 0 || passwordGenTab == 1 ? 1 : 0)
+                        .allowsHitTesting(passwordGenTab == 0 || passwordGenTab == 1)
                 }
+                .frame(height: passwordGenTab == 2 ? 0 : nil)
+                .clipped()
                 .padding(.leading, 8)
                 .padding(.trailing, 8)
+                .padding(.bottom, passwordGenTab == 2 ? 0 : 4)
                 .animation(.easeInOut(duration: 0.25), value: passwordGenTab)
             }
             
@@ -328,6 +347,14 @@ struct GenericItem: View {
                                 displayedComponents: [.date]
                             )
                             .datePickerStyle(.compact)
+                            .padding(4)
+                            .lineLimit(6)
+                            .background(Color.gray.opacity(0.15))
+                            .cornerRadius(8)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                            }
                             .labelsHidden()
                         } else if (data.type == .ml_generic || data.type == .ml_password) {
                             TextEditor(text: Binding(get: { data.f_value() }, set: { data.value = $0 }))
@@ -338,34 +365,73 @@ struct GenericItem: View {
                             TextField("Value", text: Binding(get: {
                                 data.value.replacingOccurrences(of: "\n", with: " ")
                             }, set: { data.value = $0 }), axis: .vertical)
-                                .lineLimit(1)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .padding(-4)
                                 .padding(.trailing, 4)
-                                
+                                .frame(width: 40)
                             
                             TextField("Value", text: Binding(get: {
                                 data.value_1.replacingOccurrences(of: "\n", with: " ")
                             }, set: { data.value_1 = $0 }), axis: .vertical)
-                                .lineLimit(1)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .padding(-4)
                                 .padding(.trailing, 4)
                             
                             TextField("Value", text: Binding(get: {
                                 data.value_2.replacingOccurrences(of: "\n", with: " ")
                             }, set: { data.value_2 = $0 }), axis: .vertical)
-                                .lineLimit(1)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .padding(-4)
                                 .padding(.trailing, 4)
                             
                             TextField("Value", text: Binding(get: {
                                 data.value_3.replacingOccurrences(of: "\n", with: " ")
                             }, set: { data.value_3 = $0 }), axis: .vertical)
-                                .lineLimit(1)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .padding(-4)
-                                .padding(.trailing, 4)
                         } else {
                             TextField("Value", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
                                 .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
                                 .padding(-4)
                         }
                     } else {
