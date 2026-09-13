@@ -141,6 +141,7 @@ namespace ClientWarden {
         VaultCrypto crypto;
         VaultNetwork network;
         VaultProfile profile;
+        VaultFeatures features;
         AuthState state;
         Storage storage;
         Clipboard clipboard;

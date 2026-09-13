@@ -239,7 +239,9 @@ namespace ClientWarden {
         itemMacKey.clear();
 
         data["revisionDate"] = getBitwardenTime();
-        data["data"] = (std::string)fieldData.dump();
+        if (!localVault.features.checkAbove26_6_0()) {
+            data["data"] = (std::string)fieldData.dump();
+        }
         if (isBeingCreated || (data.contains("createdOffline") && data["createdOffline"] == true)) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, !(data.contains("createdOffline") && data["createdOffline"] == true), data);
             if (result.has_value()) {
@@ -320,7 +322,9 @@ namespace ClientWarden {
 
         data["revisionDate"] = getBitwardenTime();
         data["deletedDate"] = getBitwardenTime();
-        data["data"] = (std::string)fieldData.dump();
+        if (!localVault.features.checkAbove26_6_0()) {
+            data["data"] = (std::string)fieldData.dump();
+        }
         if (isBeingCreated) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;
@@ -354,7 +358,9 @@ namespace ClientWarden {
 
         data["revisionDate"] = getBitwardenTime();
         data["deletedDate"] = nullptr;
-        data["data"] = (std::string)fieldData.dump();
+        if (!localVault.features.checkAbove26_6_0()) {
+            data["data"] = (std::string)fieldData.dump();
+        }
         if (isBeingCreated) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;
@@ -388,7 +394,9 @@ namespace ClientWarden {
 
         data["revisionDate"] = getBitwardenTime();
         data["archivedDate"] = getBitwardenTime();
-        data["data"] = (std::string)fieldData.dump();
+        if (!localVault.features.checkAbove26_6_0()) {
+            data["data"] = (std::string)fieldData.dump();
+        }
         if (isBeingCreated) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;
@@ -422,7 +430,9 @@ namespace ClientWarden {
 
         data["revisionDate"] = getBitwardenTime();
         data["archivedDate"] = nullptr;
-        data["data"] = (std::string)fieldData.dump();
+        if (!localVault.features.checkAbove26_6_0()) {
+            data["data"] = (std::string)fieldData.dump();
+        }
         if (isBeingCreated) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, true, data);
             return;

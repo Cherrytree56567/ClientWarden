@@ -63,6 +63,7 @@ namespace ClientWarden {
         bool DeleteFolder(std::string folderUUID, std::string accessString);
 
         std::optional<std::vector<uint8_t>> DownloadIcon(std::string url);
+        std::optional<std::string> getVersion();
 
         VaultConnectivity getConnectivity();
     private:

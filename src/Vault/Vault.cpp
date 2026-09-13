@@ -201,6 +201,12 @@ namespace ClientWarden {
         session.connectivityThread.setCallback([this](const std::atomic<bool>& shouldThread) {
             while (shouldThread.load()) {
                 network.checkConnectivity();
+                if (network.getConnectivity() == VaultConnectivity::Online && features.pendingNetworkCheck()) {
+                    std::optional<std::string> res = network.getVersion();
+                    if (res.has_value()) {
+                        features.determineVaultVersion(res.value());
+                    }
+                }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             return true;
@@ -268,6 +274,19 @@ namespace ClientWarden {
 
             storage.write("settings.json", session.settingsData->dump(2));
             lock_sdset.unlock();
+        }
+
+        features.determineVaultVersion(*session.vaultData);
+
+        /*
+         * TODO: Do Network Determination
+        */
+        
+        if (network.getConnectivity() == VaultConnectivity::Online) {
+            std::optional<std::string> res = network.getVersion();
+            if (res.has_value()) {
+                features.determineVaultVersion(res.value());
+            }
         }
     }
 

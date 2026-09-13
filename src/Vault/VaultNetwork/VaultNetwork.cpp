@@ -931,6 +931,25 @@ namespace ClientWarden {
         return std::vector<uint8_t>(res->body.begin(), res->body.end());
     }
 
+    std::optional<std::string> VaultNetwork::getVersion() {
+        if (!init) {
+            return std::nullopt;
+        }
+
+        auto res = apiClient->Get("/api/config");
+
+        if (!res) {
+            logger->error("getVersion request failed");
+            return std::nullopt;
+        }
+        if (res->status != 200) {
+            logger->error("getVersion failed: {}", res->status);
+            return std::nullopt;
+        }
+
+        return res->body;
+    }
+
     VaultConnectivity VaultNetwork::getConnectivity() {
         return connectivity;
     }

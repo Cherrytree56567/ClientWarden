@@ -24,7 +24,9 @@ namespace ClientWarden {
         data["card"] = nullptr;
         data["collectionIds"] = nlohmann::json::array();
         data["creationDate"] = getBitwardenTime();
-        data["data"] = "";
+        if (!localVault.features.checkAbove26_6_0()) {
+            data["data"] = "";
+        }
         data["deletedDate"] = nullptr;
         data["edit"] = true;
         data["favorite"] = false;
@@ -566,7 +568,9 @@ namespace ClientWarden {
         newdata["card"] = nullptr;
         newdata["collectionIds"] = nlohmann::json::array();
         newdata["creationDate"] = getBitwardenTime();
-        newdata["data"] = "";
+        if (!localVault.features.checkAbove26_6_0()) {
+            newdata["data"] = "";
+        }
         newdata["deletedDate"] = nullptr;
         newdata["edit"] = true;
         newdata["favorite"] = oldFavorite;
@@ -734,7 +738,9 @@ namespace ClientWarden {
         oldReprompt = 0;
 
         newdata["revisionDate"] = getBitwardenTime();
-        newdata["data"] = (std::string)newfieldData.dump();
+        if (!localVault.features.checkAbove26_6_0()) {
+            newdata["data"] = (std::string)newfieldData.dump();
+        }
         std::optional<nlohmann::json> result = localVault.NewItem(newdata);
         if (!result.has_value()) {
             logger->warn("Failed to add New Item Online");

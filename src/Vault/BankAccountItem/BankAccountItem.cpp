@@ -1,20 +1,20 @@
-#include "LoginItem.h"
+#include "BankAccountItem.h"
 #include "Vault.h"
 
 namespace ClientWarden {
-    LoginItem::LoginItem(Vault& vault, std::string uuid) : GenericItemImpl<LoginItem>(vault, uuid) {
+    BankAccountItem::BankAccountItem(Vault& vault, std::string uuid) : GenericItemImpl<BankAccountItem>(vault, uuid) {
         init = false;
         if (data.contains("type")) {
-            if (data["type"].get<int>() == 1) {
+            if (data["type"].get<int>() == 6) {
                 init = true;
             }
         }
-        if (!data.contains("login")) {
+        if (!data.contains("bankAccount")) {
             init = false;
         }
     }
 
-    LoginItem::LoginItem(Vault& vault) : GenericItemImpl<LoginItem>(vault) {
+    BankAccountItem::BankAccountItem(Vault& vault) : GenericItemImpl<BankAccountItem>(vault) {
         auto keys = localVault.crypto.generateEncMacKeys();
         itemEncKey = keys.first;
         itemMacKey = keys.second;
@@ -38,15 +38,17 @@ namespace ClientWarden {
         mainKey.insert(mainKey.end(), itemMacKey.begin(), itemMacKey.end());
         data["key"] = localVault.crypto.Encrypt(mainKey, *localVault.session.encKey, *localVault.session.macKey);
         Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
-        data["login"] = nlohmann::json::object();
-        data["login"]["autofillOnPageLoad"] = nullptr;
-        data["login"]["fido2Credentials"] = nullptr;
-        data["login"]["password"] = nullptr;
-        data["login"]["passwordRevisionDate"] = nullptr;
-        data["login"]["totp"] = nullptr;
-        data["login"]["uri"] = nullptr;
-        data["login"]["uris"] = nlohmann::json::array();
-        data["login"]["username"] = nullptr;
+        data["bankAccount"] = nlohmann::json::object();
+        data["bankAccount"]["bankName"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["nameOnAccount"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["accountType"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["accountNumber"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["routingNumber"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["branchNumber"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["pin"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["swiftCode"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["iban"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["bankAccount"]["bankContactPhone"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["name"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["notes"] = nullptr;
         data["object"] = "cipherDetails";
@@ -66,17 +68,11 @@ namespace ClientWarden {
         fieldData["Fields"] = nlohmann::json::array();
         fieldData["Name"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         fieldData["Notes"] = nullptr;
-        fieldData["Password"] = nullptr;
-        fieldData["PasswordHistory"] = nullptr;
-        fieldData["PasswordRevisionDate"] = nullptr;
-        fieldData["Uris"] = nlohmann::json::array();
-        fieldData["Username"] = nullptr;
-        fieldData["Totp"] = nullptr;
 
         init = true;
     }
 
-    LoginItem* LoginItem::Duplicate(std::string& id) {
+    BankAccountItem* BankAccountItem::Duplicate(std::string& id) {
         auto keys = localVault.crypto.generateEncMacKeys();
         auto newitemEncKey = keys.first;
         auto newitemMacKey = keys.second;
@@ -85,12 +81,17 @@ namespace ClientWarden {
          * SECRET DATA
         */
         std::string oldName;
-        std::string oldUsername;
-        std::string oldPassword;
-        std::string oldTOTP;
+        std::string oldBankName;
+        std::string oldNameOnAccount;
+        std::string oldAccountType;
+        std::string oldAccountNumber;
+        std::string oldRoutingNumber;
+        std::string oldBranchNumber;
+        std::string oldPin;
+        std::string oldSwiftCode;
+        std::string oldIBAN;
+        std::string oldBankContactPhone;
         std::string oldNotes;
-        std::string olduri = "";
-        std::vector<std::string> oldWebsites;
         std::vector<std::tuple<CustomFieldType, std::string, std::string>> oldFields;
 
         bool oldFavorite = false;
@@ -315,7 +316,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::SetUsername(std::string& username) {
+    BankAccountItem* BankAccountItem::SetUsername(std::string& username) {
         if (!init) return this;
         if (!data.contains("login") || !data["login"].is_object()) return this;
         fieldData["Username"] = localVault.crypto.Encrypt(username, itemEncKey, itemMacKey);
@@ -325,7 +326,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::SetPassword(std::string& password) {
+    BankAccountItem* BankAccountItem::SetPassword(std::string& password) {
         if (!init) return this;
         if (!data.contains("login") || !data["login"].is_object()) return this;
 
@@ -361,7 +362,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::SetTotp(std::string& totp) {
+    BankAccountItem* BankAccountItem::SetTotp(std::string& totp) {
         if (!init) return this;
         if (!data.contains("login") || !data["login"].is_object()) return this;
         fieldData["Totp"] = localVault.crypto.Encrypt(totp, itemEncKey, itemMacKey);
@@ -371,7 +372,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::AddWebsite(std::string& website) {
+    BankAccountItem* BankAccountItem::AddWebsite(std::string& website) {
         if (!init) return this;
         if (!data.contains("login") || !data["login"].is_object()) return this;
         nlohmann::json uriData;
@@ -390,7 +391,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::RemoveWebsite(std::string& website) {
+    BankAccountItem* BankAccountItem::RemoveWebsite(std::string& website) {
         if (!init) return this;
         if (!data.contains("login") || !data["login"].is_object()) return this;
         if (!data["login"].contains("uri") || !data["login"].contains("uris")) return this;
@@ -437,7 +438,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetUsername(std::string& username) {
+    BankAccountItem* BankAccountItem::GetUsername(std::string& username) {
         if (!init) return this;
         if (!data["login"].is_object()) return this;
         if (!data["login"].contains("username")) return this;
@@ -446,7 +447,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetPassword(std::string& password) {
+    BankAccountItem* BankAccountItem::GetPassword(std::string& password) {
         if (!init) return this;
         if (!data["login"].is_object()) return this;
         if (!data["login"].contains("password")) return this;
@@ -455,7 +456,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetTotpSecret(std::string& totp) {
+    BankAccountItem* BankAccountItem::GetTotpSecret(std::string& totp) {
         if (!init) return this;
         if (!data["login"].is_object()) return this;
         if (!data["login"].contains("totp")) return this;
@@ -466,7 +467,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetTotp(TOTPCode& totp) {
+    BankAccountItem* BankAccountItem::GetTotp(TOTPCode& totp) {
         if (!init) return this;
         if (!data["login"].is_object()) return this;
         if (!data["login"].contains("totp")) return this;
@@ -544,7 +545,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetWebsites(std::vector<std::string>& websites) {
+    BankAccountItem* BankAccountItem::GetWebsites(std::vector<std::string>& websites) {
         if (!init) return this;
         if (!data["login"].contains("uris")) return this;
         if (!data["login"]["uris"].is_array()) return this;
@@ -555,7 +556,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value) {
+    BankAccountItem* BankAccountItem::GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value) {
         if (!init) return this;
         if (!data["login"].contains("passwordRevisionDate")) return this;
         if (!data.contains("passwordHistory")) return this;
@@ -572,7 +573,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetPasskeyCreationDate(std::vector<std::time_t>& value) {
+    BankAccountItem* BankAccountItem::GetPasskeyCreationDate(std::vector<std::time_t>& value) {
         if (!init) return this;
         if (!data["login"].contains("fido2Credentials")) return this;
         if (!data["login"]["fido2Credentials"].is_array()) return this;
@@ -585,7 +586,7 @@ namespace ClientWarden {
         return this;
     }
 
-    LoginItem* LoginItem::GetType(CipherType& val) {
+    BankAccountItem* BankAccountItem::GetType(CipherType& val) {
         val = CipherType::Login;
         return this;
     }
