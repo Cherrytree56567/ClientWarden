@@ -22,6 +22,9 @@ enum ItemType: Int {
     case Identity
     case Note
     case SSHKey
+    case BankAccount
+    case DriversLicense
+    case Passport
     
     var description: String {
         switch self {
@@ -30,6 +33,9 @@ enum ItemType: Int {
             case .Identity: return "Identity"
             case .Note: return "Note"
             case .SSHKey: return "SSH Key"
+            case .BankAccount: return "Bank Account"
+            case .DriversLicense: return "Drivers License"
+            case .Passport: return "Passport"
         }
     }
 }

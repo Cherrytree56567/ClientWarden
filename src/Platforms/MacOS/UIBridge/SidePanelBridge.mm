@@ -9,6 +9,9 @@
 #include "IdentityItem/IdentityItem.h"
 #include "NoteItem/NoteItem.h"
 #include "SSHKeyItem/SSHKeyItem.h"
+#include "BankAccountItem/BankAccountItem.h"
+#include "DriversLicenseItem/DriversLicenseItem.h"
+#include "PassportItem/PassportItem.h"
 #include "Folder/Folder.h"
 #include "PasswordGenerator/PasswordGenerator.h"
 #include "Vault.h"
@@ -141,6 +144,27 @@
                      ->Close();
                 
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            } else if (i_type == ItemTypeBankAccount) {
+                v_inst.GetItem<ClientWarden::BankAccountItem>(c_uuid)
+                     ->GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"dollarsign.circle"];
+            } else if (i_type == ItemTypeDriversLicense) {
+                v_inst.GetItem<ClientWarden::DriversLicenseItem>(c_uuid)
+                     ->GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
+            } else if (i_type == ItemTypePassport) {
+                v_inst.GetItem<ClientWarden::PassportItem>(c_uuid)
+                     ->GetName(c_name)
+                     ->Duplicate(c_dupUUID)
+                     ->Close();
+                
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
             }
 
             NSString* name = [NSString stringWithUTF8String: c_name.c_str()];
@@ -566,6 +590,15 @@ static bool sidebar(NSUUID* uuid) {
             case ClientWarden::CipherType::SSHKey:
                 type = ItemTypeSSHKey;
                 break;
+            case ClientWarden::CipherType::BankAccount:
+                type = ItemTypeBankAccount;
+                break;
+            case ClientWarden::CipherType::DriversLicense:
+                type = ItemTypeDriversLicense;
+                break;
+            case ClientWarden::CipherType::Passport:
+                type = ItemTypePassport;
+                break;
             default:
                 type = ItemTypeLogin;
                 break;
@@ -961,6 +994,21 @@ static bool sidebar(NSUUID* uuid) {
             c_privKey.clear();
             OPENSSL_cleanse(c_pubKey.data(), c_pubKey.size());
             c_pubKey.clear();
+        } else if (c_type == ClientWarden::CipherType::BankAccount) {
+            /*
+             * TODO: Implement Bank Account
+             */
+            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"dollarsign.circle"];
+        } else if (c_type == ClientWarden::CipherType::DriversLicense) {
+            /*
+             * TODO: Implement Drivers License
+             */
+            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
+        } else if (c_type == ClientWarden::CipherType::Passport) {
+            /*
+             * TODO: Implement Passport
+             */
+            img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
         }
 
         [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img repromptItem:reprompt folderUUID:folderUUID favorite:favorite 
@@ -1533,6 +1581,18 @@ static bool sidebar(NSUUID* uuid) {
                 c_privKey.clear();
                 OPENSSL_cleanse((void*)c_pubKey.data(), c_pubKey.size());
                 c_pubKey.clear();
+            } else if (type == ItemTypeBankAccount) {
+                /*
+                 * TODO: Implement Bank Account
+                 */
+            } else if (type == ItemTypeDriversLicense) {
+                /*
+                 * TODO: Implement Drivers License
+                 */
+            } else if (type == ItemTypePassport) {
+                /*
+                 * TODO: Implement Passport
+                 */
             }
 
             return YES;

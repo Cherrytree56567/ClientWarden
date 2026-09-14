@@ -13,13 +13,15 @@ namespace ClientWarden {
         while (std::getline(ss_version, s_version, '.')) {
             p_version.push_back(std::stoi(s_version));
         }
+
+        return p_version;
     }
     
     int VaultFeatures::compareVersions(std::string v1, std::string v2) {
-        std::vector<int> s_v1 = parseVersion(v1);
-        std::vector<int> s_v2 = parseVersion(v2);
+        std::vector<int> s_v1 = splitVersion(v1);
+        std::vector<int> s_v2 = splitVersion(v2);
 
-        size_t m_length = std::max(va.size(), vb.size());
+        size_t m_length = std::max(s_v1.size(), s_v2.size());
 
         for (size_t i = 0; i < m_length; ++i) {
             int p_v1 = (i < s_v1.size()) ? s_v1[i] : 0;

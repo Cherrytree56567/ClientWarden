@@ -12,6 +12,10 @@
 #include "Clientwarden.h"
 
 namespace ClientWarden {
+    /*
+     * From Bitwarden Clients:
+     * https://github.com/bitwarden/clients/blob/main/libs/common/src/vault/models/domain/bank-account.ts
+    */
     class BankAccountItem : public GenericItemImpl<BankAccountItem> {
     public:
         BankAccountItem(Vault& vault, std::string uuid); // Existing Item

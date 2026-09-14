@@ -7,6 +7,7 @@
 #include "VaultNetwork/VaultNetwork.h"
 #include "VaultSession/VaultSession.h"
 #include "VaultProfile/VaultProfile.h"
+#include "VaultFeatures/VaultFeatures.h"
 #include "Storage/Storage.h"
 
 #include "Folder/Folder.h"

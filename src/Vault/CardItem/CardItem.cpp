@@ -56,6 +56,11 @@ namespace ClientWarden {
         data["permissions"]["restore"] = true;
         data["reprompt"] = 0;
         data["revisionDate"] = nullptr;
+        if (!localVault.features.checkAbove26_8_1()) {
+            data["bankAccount"] = nullptr;
+            data["driversLicense"] = nullptr;
+            data["passport"] = nullptr;
+        }
         data["secureNote"] = nullptr;
         data["sshKey"] = nullptr;
         data["type"] = 3;
@@ -300,6 +305,11 @@ namespace ClientWarden {
         newdata["permissions"]["restore"] = true;
         newdata["reprompt"] = oldReprompt;
         newdata["revisionDate"] = nullptr;
+        if (!localVault.features.checkAbove26_8_1()) {
+            newdata["bankAccount"] = nullptr;
+            newdata["driversLicense"] = nullptr;
+            newdata["passport"] = nullptr;
+        }
         newdata["secureNote"] = nullptr;
         newdata["sshKey"] = nullptr;
         newdata["type"] = 3;

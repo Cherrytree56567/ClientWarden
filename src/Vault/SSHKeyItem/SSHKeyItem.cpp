@@ -51,6 +51,11 @@ namespace ClientWarden {
         data["reprompt"] = 0;
         data["revisionDate"] = nullptr;
         data["secureNote"] = nullptr;
+        if (!localVault.features.checkAbove26_8_1()) {
+            data["bankAccount"] = nullptr;
+            data["driversLicense"] = nullptr;
+            data["passport"] = nullptr;
+        }
         data["sshKey"] = nlohmann::json::object();
         data["sshKey"]["keyFingerprint"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
         data["sshKey"]["privateKey"] = localVault.crypto.Encrypt(" ", itemEncKey, itemMacKey);
@@ -222,6 +227,11 @@ namespace ClientWarden {
         newdata["permissions"]["delete"] = true;
         newdata["permissions"]["restore"] = true;
         newdata["reprompt"] = oldReprompt;
+        if (!localVault.features.checkAbove26_8_1()) {
+            newdata["bankAccount"] = nullptr;
+            newdata["driversLicense"] = nullptr;
+            newdata["passport"] = nullptr;
+        }
         newdata["revisionDate"] = nullptr;
         newdata["secureNote"] = nullptr;
         newdata["sshKey"] = nlohmann::json::object();

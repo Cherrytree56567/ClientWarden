@@ -4,7 +4,7 @@
 namespace ClientWarden {
     BankAccountItem::BankAccountItem(Vault& vault, std::string uuid) : GenericItemImpl<BankAccountItem>(vault, uuid) {
         init = false;
-        if (data.contains("type")) {
+        if (data.contains("type") && data["type"].is_number()) {
             if (data["type"].get<int>() == 6) {
                 init = true;
             }
@@ -38,6 +38,7 @@ namespace ClientWarden {
         mainKey.insert(mainKey.end(), itemMacKey.begin(), itemMacKey.end());
         data["key"] = localVault.crypto.Encrypt(mainKey, *localVault.session.encKey, *localVault.session.macKey);
         Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
+        data["login"] = nullptr;
         data["bankAccount"] = nlohmann::json::object();
         data["bankAccount"]["bankName"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["bankAccount"]["nameOnAccount"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
@@ -49,6 +50,8 @@ namespace ClientWarden {
         data["bankAccount"]["swiftCode"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["bankAccount"]["iban"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["bankAccount"]["bankContactPhone"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
+        data["driversLicense"] = nullptr;
+        data["passport"] = nullptr;
         data["name"] = localVault.crypto.Encrypt("", itemEncKey, itemMacKey);
         data["notes"] = nullptr;
         data["object"] = "cipherDetails";
@@ -62,7 +65,7 @@ namespace ClientWarden {
         data["revisionDate"] = nullptr;
         data["secureNote"] = nullptr;
         data["sshKey"] = nullptr;
-        data["type"] = 1;
+        data["type"] = 6;
         data["viewPassword"] = true;
 
         fieldData["Fields"] = nlohmann::json::array();
@@ -101,23 +104,36 @@ namespace ClientWarden {
             oldName = localVault.crypto.DecryptAsStr(data["name"], itemEncKey, itemMacKey);
         }
 
-        if (data.contains("login") && data["login"].is_object()) {
-            if (data["login"].contains("username") && data["login"]["username"].is_string()) {
-                oldUsername = localVault.crypto.DecryptAsStr(data["login"]["username"], itemEncKey, itemMacKey);
+        if (data.contains("bankAccount") && data["bankAccount"].is_object()) {
+            if (data["bankAccount"].contains("bankName") && data["bankAccount"]["bankName"].is_string()) {
+                oldBankName = localVault.crypto.DecryptAsStr(data["bankAccount"]["bankName"], itemEncKey, itemMacKey);
             }
-            if (data["login"].contains("password") && data["login"]["password"].is_string()) {
-                oldPassword = localVault.crypto.DecryptAsStr(data["login"]["password"], itemEncKey, itemMacKey);
+            if (data["bankAccount"].contains("nameOnAccount") && data["bankAccount"]["nameOnAccount"].is_string()) {
+                oldNameOnAccount = localVault.crypto.DecryptAsStr(data["bankAccount"]["nameOnAccount"], itemEncKey, itemMacKey);
             }
-            if (data["login"].contains("totp") && data["login"]["totp"].is_string()) {
-                oldTOTP = localVault.crypto.DecryptAsStr(data["login"]["totp"], itemEncKey, itemMacKey);
+            if (data["bankAccount"].contains("accountType") && data["bankAccount"]["accountType"].is_string()) {
+                oldAccountType = localVault.crypto.DecryptAsStr(data["bankAccount"]["accountType"], itemEncKey, itemMacKey);
             }
-            if (data["login"].contains("uris") && data["login"]["uris"].is_array()) {
-                if (data["login"]["uris"].size() > 0) {
-                    olduri = localVault.crypto.DecryptAsStr(data["login"]["uris"][0]["uri"], itemEncKey, itemMacKey);
-                }
-                for (auto& web : data["login"]["uris"]) {
-                    oldWebsites.push_back(localVault.crypto.DecryptAsStr(web["uri"], itemEncKey, itemMacKey));
-                }
+            if (data["bankAccount"].contains("accountNumber") && data["bankAccount"]["accountNumber"].is_string()) {
+                oldAccountNumber = localVault.crypto.DecryptAsStr(data["bankAccount"]["accountNumber"], itemEncKey, itemMacKey);
+            }
+            if (data["bankAccount"].contains("routingNumber") && data["bankAccount"]["routingNumber"].is_string()) {
+                oldRoutingNumber = localVault.crypto.DecryptAsStr(data["bankAccount"]["routingNumber"], itemEncKey, itemMacKey);
+            }
+            if (data["bankAccount"].contains("branchNumber") && data["bankAccount"]["branchNumber"].is_string()) {
+                oldBranchNumber = localVault.crypto.DecryptAsStr(data["bankAccount"]["branchNumber"], itemEncKey, itemMacKey);
+            }
+            if (data["bankAccount"].contains("pin") && data["bankAccount"]["pin"].is_string()) {
+                oldPin = localVault.crypto.DecryptAsStr(data["bankAccount"]["pin"], itemEncKey, itemMacKey);
+            }
+            if (data["bankAccount"].contains("swiftCode") && data["bankAccount"]["swiftCode"].is_string()) {
+                oldSwiftCode = localVault.crypto.DecryptAsStr(data["bankAccount"]["swiftCode"], itemEncKey, itemMacKey);
+            }
+            if (data["bankAccount"].contains("iban") && data["bankAccount"]["iban"].is_string()) {
+                oldIBAN = localVault.crypto.DecryptAsStr(data["bankAccount"]["iban"], itemEncKey, itemMacKey);
+            }
+            if (data["bankAccount"].contains("bankContactPhone") && data["bankAccount"]["bankContactPhone"].is_string()) {
+                oldBankContactPhone = localVault.crypto.DecryptAsStr(data["bankAccount"]["bankContactPhone"], itemEncKey, itemMacKey);
             }
         }
 
@@ -169,19 +185,20 @@ namespace ClientWarden {
         mainKey.insert(mainKey.end(), newitemMacKey.begin(), newitemMacKey.end());
         newdata["key"] = localVault.crypto.Encrypt(mainKey, *localVault.session.encKey, *localVault.session.macKey);
         Botan::secure_scrub_memory(mainKey.data(), mainKey.size());
-        newdata["login"] = nlohmann::json::object();
-        newdata["login"]["autofillOnPageLoad"] = nullptr;
-        newdata["login"]["fido2Credentials"] = nullptr;
-        newdata["login"]["password"] = localVault.crypto.Encrypt(oldPassword, newitemEncKey, newitemMacKey);
-        newdata["login"]["passwordRevisionDate"] = nullptr;
-        newdata["login"]["totp"] = localVault.crypto.Encrypt(oldTOTP, newitemEncKey, newitemMacKey);
-        if (olduri != "") {
-            newdata["login"]["uri"] = localVault.crypto.Encrypt(olduri, newitemEncKey, newitemMacKey);
-        } else {
-            newdata["login"]["uri"] = nullptr;
-        }
-        newdata["login"]["uris"] = nlohmann::json::array();
-        newdata["login"]["username"] = localVault.crypto.Encrypt(oldUsername, newitemEncKey, newitemMacKey);
+        newdata["driversLicense"] = nullptr;
+        newdata["passport"] = nullptr;
+        newdata["login"] = nullptr;
+        newdata["bankAccount"] = nlohmann::json::object();
+        newdata["bankAccount"]["bankName"] = localVault.crypto.Encrypt(oldBankName, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["nameOnAccount"] = localVault.crypto.Encrypt(oldNameOnAccount, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["accountType"] = localVault.crypto.Encrypt(oldAccountType, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["accountNumber"] = localVault.crypto.Encrypt(oldAccountNumber, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["routingNumber"] = localVault.crypto.Encrypt(oldRoutingNumber, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["branchNumber"] = localVault.crypto.Encrypt(oldBranchNumber, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["pin"] = localVault.crypto.Encrypt(oldPin, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["swiftCode"] = localVault.crypto.Encrypt(oldSwiftCode, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["iban"] = localVault.crypto.Encrypt(oldIBAN, newitemEncKey, newitemMacKey);
+        newdata["bankAccount"]["bankContactPhone"] = localVault.crypto.Encrypt(oldBankContactPhone, newitemEncKey, newitemMacKey);
         newdata["name"] = localVault.crypto.Encrypt(oldName, newitemEncKey, newitemMacKey);
         newdata["notes"] = localVault.crypto.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
         newdata["object"] = "cipherDetails";
@@ -195,35 +212,12 @@ namespace ClientWarden {
         newdata["revisionDate"] = nullptr;
         newdata["secureNote"] = nullptr;
         newdata["sshKey"] = nullptr;
-        newdata["type"] = 1;
+        newdata["type"] = 6;
         newdata["viewPassword"] = true;
 
         newfieldData["Fields"] = nlohmann::json::array();
         newfieldData["Name"] = localVault.crypto.Encrypt(oldName, newitemEncKey, newitemMacKey);
         newfieldData["Notes"] = localVault.crypto.Encrypt(oldNotes, newitemEncKey, newitemMacKey);
-        newfieldData["Password"] = localVault.crypto.Encrypt(oldPassword, newitemEncKey, newitemMacKey);
-        newfieldData["PasswordHistory"] = nullptr;
-        newfieldData["PasswordRevisionDate"] = nullptr;
-        newfieldData["Uris"] = nlohmann::json::array();
-        newfieldData["Username"] = localVault.crypto.Encrypt(oldUsername, newitemEncKey, newitemMacKey);
-        newfieldData["Totp"] = localVault.crypto.Encrypt(oldTOTP, newitemEncKey, newitemMacKey);
-
-        for (auto& web : oldWebsites) {
-            nlohmann::json uriData;
-            uriData["match"] = nullptr;
-            uriData["uri"] = localVault.crypto.Encrypt(web, newitemEncKey, newitemMacKey);
-            uriData["uriChecksum"] = localVault.crypto.getUriChecksum(web, newitemEncKey, newitemMacKey);
-
-            nlohmann::json dataUriField;
-            dataUriField["Uri"] = localVault.crypto.Encrypt(web, newitemEncKey, newitemMacKey);
-            dataUriField["UriChecksum"] = localVault.crypto.getUriChecksum(web, newitemEncKey, newitemMacKey);
-
-            newfieldData["Uris"].push_back(dataUriField);
-            newdata["login"]["uris"].push_back(uriData);
-
-            OPENSSL_cleanse(web.data(), web.size());
-            web.clear();
-        }
 
         for (auto& [type, name, value] : oldFields) {
             nlohmann::json addFieldData;
@@ -274,19 +268,31 @@ namespace ClientWarden {
             OPENSSL_cleanse(value.data(), value.size());
             value.clear();
         }
-
+        
         OPENSSL_cleanse(oldName.data(), oldName.size());
         oldName.clear();
-        OPENSSL_cleanse(oldUsername.data(), oldUsername.size());
-        oldUsername.clear();
-        OPENSSL_cleanse(oldPassword.data(), oldPassword.size());
-        oldPassword.clear();
-        OPENSSL_cleanse(oldTOTP.data(), oldTOTP.size());
-        oldTOTP.clear();
+        OPENSSL_cleanse(oldBankName.data(), oldBankName.size());
+        oldBankName.clear();
+        OPENSSL_cleanse(oldNameOnAccount.data(), oldNameOnAccount.size());
+        oldNameOnAccount.clear();
+        OPENSSL_cleanse(oldAccountType.data(), oldAccountType.size());
+        oldAccountType.clear();
+        OPENSSL_cleanse(oldAccountNumber.data(), oldAccountNumber.size());
+        oldAccountNumber.clear();
+        OPENSSL_cleanse(oldRoutingNumber.data(), oldRoutingNumber.size());
+        oldRoutingNumber.clear();
+        OPENSSL_cleanse(oldBranchNumber.data(), oldBranchNumber.size());
+        oldBranchNumber.clear();
+        OPENSSL_cleanse(oldPin.data(), oldPin.size());
+        oldPin.clear();
+        OPENSSL_cleanse(oldSwiftCode.data(), oldSwiftCode.size());
+        oldSwiftCode.clear();
+        OPENSSL_cleanse(oldIBAN.data(), oldIBAN.size());
+        oldIBAN.clear();
+        OPENSSL_cleanse(oldBankContactPhone.data(), oldBankContactPhone.size());
+        oldBankContactPhone.clear();
         OPENSSL_cleanse(oldNotes.data(), oldNotes.size());
         oldNotes.clear();
-        OPENSSL_cleanse(olduri.data(), olduri.size());
-        olduri.clear();
         Botan::secure_scrub_memory(newitemEncKey.data(), newitemEncKey.size());
         Botan::secure_scrub_memory(newitemMacKey.data(), newitemMacKey.size());
 
@@ -316,278 +322,238 @@ namespace ClientWarden {
         return this;
     }
 
-    BankAccountItem* BankAccountItem::SetUsername(std::string& username) {
+    BankAccountItem* BankAccountItem::SetBankName(std::string& bankName) {
         if (!init) return this;
-        if (!data.contains("login") || !data["login"].is_object()) return this;
-        fieldData["Username"] = localVault.crypto.Encrypt(username, itemEncKey, itemMacKey);
-        data["login"]["username"] = localVault.crypto.Encrypt(username, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(username.data(), username.size());
-        username.clear();
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
+
+        fieldData["BankName"] = localVault.crypto.Encrypt(bankName, itemEncKey, itemMacKey);
+        data["bankAccount"]["bankName"] = localVault.crypto.Encrypt(bankName, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(bankName.data(), bankName.size());
+        bankName.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::SetPassword(std::string& password) {
+    BankAccountItem* BankAccountItem::SetNameOnAccount(std::string& nameOnAccount) {
         if (!init) return this;
-        if (!data.contains("login") || !data["login"].is_object()) return this;
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
 
-        /*
-         * We should be checking if the login thing has a password
-         * otherwise we will get a null
-         */
-        if (data["login"].contains("password") && data["login"]["password"].is_string()) {
-            if (!data.contains("passwordHistory") || !data["passwordHistory"].is_array()) {
-                data["passwordHistory"] = nlohmann::json::array();
-            }
+        fieldData["NameOnAccount"] = localVault.crypto.Encrypt(nameOnAccount, itemEncKey, itemMacKey);
+        data["bankAccount"]["nameOnAccount"] = localVault.crypto.Encrypt(nameOnAccount, itemEncKey, itemMacKey);
 
-            if (!fieldData.contains("PasswordHistory") || !fieldData["PasswordHistory"].is_array()) {
-                fieldData["PasswordHistory"] = nlohmann::json::array();
-            }
-
-            nlohmann::json h_entry;
-            h_entry["lastUsedDate"] = getBitwardenTime();
-            h_entry["password"] = data["login"]["password"];
-
-            nlohmann::json fh_entry;
-            h_entry["LastUsedDate"] = getBitwardenTime();
-            h_entry["Password"] = data["login"]["password"];
-
-            data["passwordHistory"].push_back(h_entry);
-            fieldData["PasswordHistory"].push_back(fh_entry);
-        }
-
-        fieldData["Password"] = localVault.crypto.Encrypt(password, itemEncKey, itemMacKey);
-        data["login"]["password"] = localVault.crypto.Encrypt(password, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(password.data(), password.size());
-        password.clear();
+        OPENSSL_cleanse(nameOnAccount.data(), nameOnAccount.size());
+        nameOnAccount.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::SetTotp(std::string& totp) {
+    BankAccountItem* BankAccountItem::SetAccountType(std::string& accountType) {
         if (!init) return this;
-        if (!data.contains("login") || !data["login"].is_object()) return this;
-        fieldData["Totp"] = localVault.crypto.Encrypt(totp, itemEncKey, itemMacKey);
-        data["login"]["totp"] = localVault.crypto.Encrypt(totp, itemEncKey, itemMacKey);
-        OPENSSL_cleanse(totp.data(), totp.size());
-        totp.clear();
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
+
+        fieldData["AccountType"] = localVault.crypto.Encrypt(accountType, itemEncKey, itemMacKey);
+        data["bankAccount"]["accountType"] = localVault.crypto.Encrypt(accountType, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(accountType.data(), accountType.size());
+        accountType.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::AddWebsite(std::string& website) {
+    BankAccountItem* BankAccountItem::SetAccountNumber(std::string& accountNumber) {
         if (!init) return this;
-        if (!data.contains("login") || !data["login"].is_object()) return this;
-        nlohmann::json uriData;
-        uriData["match"] = nullptr;
-        uriData["uri"] = localVault.crypto.Encrypt(website, itemEncKey, itemMacKey);
-        uriData["uriChecksum"] = localVault.crypto.getUriChecksum(website, itemEncKey, itemMacKey);
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
 
-        nlohmann::json dataUriField;
-        dataUriField["Uri"] = localVault.crypto.Encrypt(website, itemEncKey, itemMacKey);
-        dataUriField["UriChecksum"] = localVault.crypto.getUriChecksum(website, itemEncKey, itemMacKey);
+        fieldData["AccountNumber"] = localVault.crypto.Encrypt(accountNumber, itemEncKey, itemMacKey);
+        data["bankAccount"]["accountNumber"] = localVault.crypto.Encrypt(accountNumber, itemEncKey, itemMacKey);
 
-        fieldData["Uris"].push_back(dataUriField);
-        data["login"]["uris"].push_back(uriData);
-        OPENSSL_cleanse(website.data(), website.size());
-        website.clear();
+        OPENSSL_cleanse(accountNumber.data(), accountNumber.size());
+        accountNumber.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::RemoveWebsite(std::string& website) {
+    BankAccountItem* BankAccountItem::SetRoutingNumber(std::string& routingNumber) {
         if (!init) return this;
-        if (!data.contains("login") || !data["login"].is_object()) return this;
-        if (!data["login"].contains("uri") || !data["login"].contains("uris")) return this;
-        if (data["login"]["uri"].is_string())  {
-            std::string decUri = localVault.crypto.DecryptAsStr(data["login"]["uri"], itemEncKey, itemMacKey);
-            if (decUri == website) {
-                data["login"]["uri"] = nullptr;
-            }
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
 
-            OPENSSL_cleanse(decUri.data(), decUri.size());
-            decUri.clear();
-        }
+        fieldData["RoutingNumber"] = localVault.crypto.Encrypt(routingNumber, itemEncKey, itemMacKey);
+        data["bankAccount"]["routingNumber"] = localVault.crypto.Encrypt(routingNumber, itemEncKey, itemMacKey);
 
-        auto& uris = data["login"]["uris"];
-        for (auto it = uris.begin(); it != uris.end(); ++it) {
-            std::string decWeb = localVault.crypto.DecryptAsStr((*it)["uri"], itemEncKey, itemMacKey);
-            if (decWeb == website) {
-                OPENSSL_cleanse(decWeb.data(), decWeb.size());
-                decWeb.clear();
-                uris.erase(it);
-                break;
-            }
-
-            OPENSSL_cleanse(decWeb.data(), decWeb.size());
-            decWeb.clear();
-        }
-
-        auto& urisField = fieldData["Uris"];
-        for (auto it = urisField.begin(); it != urisField.end(); ++it) {
-            std::string decWeb = localVault.crypto.DecryptAsStr((*it)["Uri"], itemEncKey, itemMacKey);
-            if (decWeb == website) {
-                OPENSSL_cleanse(decWeb.data(), decWeb.size());
-                decWeb.clear();
-                urisField.erase(it);
-                break;
-            }
-
-            OPENSSL_cleanse(decWeb.data(), decWeb.size());
-            decWeb.clear();
-        }
-
-        OPENSSL_cleanse(website.data(), website.size());
-        website.clear();
+        OPENSSL_cleanse(routingNumber.data(), routingNumber.size());
+        routingNumber.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetUsername(std::string& username) {
+    BankAccountItem* BankAccountItem::SetBranchNumber(std::string& branchNumber) {
         if (!init) return this;
-        if (!data["login"].is_object()) return this;
-        if (!data["login"].contains("username")) return this;
-        if (!data["login"]["username"].is_string()) return this;
-        username = localVault.crypto.DecryptAsStr(data["login"]["username"], itemEncKey, itemMacKey);
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
+
+        fieldData["BranchNumber"] = localVault.crypto.Encrypt(branchNumber, itemEncKey, itemMacKey);
+        data["bankAccount"]["branchNumber"] = localVault.crypto.Encrypt(branchNumber, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(branchNumber.data(), branchNumber.size());
+        branchNumber.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetPassword(std::string& password) {
+    BankAccountItem* BankAccountItem::SetPin(std::string& pin) {
         if (!init) return this;
-        if (!data["login"].is_object()) return this;
-        if (!data["login"].contains("password")) return this;
-        if (!data["login"]["password"].is_string()) return this;
-        password = localVault.crypto.DecryptAsStr(data["login"]["password"], itemEncKey, itemMacKey);
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
+
+        fieldData["Pin"] = localVault.crypto.Encrypt(pin, itemEncKey, itemMacKey);
+        data["bankAccount"]["pin"] = localVault.crypto.Encrypt(pin, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(pin.data(), pin.size());
+        pin.clear();
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetTotpSecret(std::string& totp) {
+    BankAccountItem* BankAccountItem::SetSwiftCode(std::string& swiftCode) {
         if (!init) return this;
-        if (!data["login"].is_object()) return this;
-        if (!data["login"].contains("totp")) return this;
-        if (!data["login"]["totp"].is_string()) return this;
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
 
-        totp = localVault.crypto.DecryptAsStr(data["login"]["totp"], itemEncKey, itemMacKey);
+        fieldData["SwiftCode"] = localVault.crypto.Encrypt(swiftCode, itemEncKey, itemMacKey);
+        data["bankAccount"]["swiftCode"] = localVault.crypto.Encrypt(swiftCode, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(swiftCode.data(), swiftCode.size());
+        swiftCode.clear();
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::SetIBAN(std::string& iban) {
+        if (!init) return this;
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
+
+        fieldData["Iban"] = localVault.crypto.Encrypt(iban, itemEncKey, itemMacKey);
+        data["bankAccount"]["iban"] = localVault.crypto.Encrypt(iban, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(iban.data(), iban.size());
+        iban.clear();
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::SetBankContactPhone(std::string& bankContactPhone) {
+        if (!init) return this;
+        if (!data.contains("bankAccount") || !data["bankAccount"].is_object()) return this;
+
+        fieldData["BankContactPhone"] = localVault.crypto.Encrypt(bankContactPhone, itemEncKey, itemMacKey);
+        data["bankAccount"]["bankContactPhone"] = localVault.crypto.Encrypt(bankContactPhone, itemEncKey, itemMacKey);
+
+        OPENSSL_cleanse(bankContactPhone.data(), bankContactPhone.size());
+        bankContactPhone.clear();
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::GetBankName(std::string& bankName) {
+        if (!init) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("bankName")) return this;
+        if (!data["bankAccount"]["bankName"].is_string()) return this;
+
+        bankName = localVault.crypto.DecryptAsStr(data["bankAccount"]["bankName"], itemEncKey, itemMacKey);
 
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetTotp(TOTPCode& totp) {
+    BankAccountItem* BankAccountItem::GetNameOnAccount(std::string& nameOnAccount) {
         if (!init) return this;
-        if (!data["login"].is_object()) return this;
-        if (!data["login"].contains("totp")) return this;
-        if (!data["login"]["totp"].is_string()) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("nameOnAccount")) return this;
+        if (!data["bankAccount"]["nameOnAccount"].is_string()) return this;
 
-        try {
-            std::string totpURI = localVault.crypto.DecryptAsStr(data["login"]["totp"], itemEncKey, itemMacKey);
-
-            if (totpURI == "") return this;
-
-            boost::urls::url_view uri(totpURI);
-
-            auto params = uri.params();
-            
-            std::string secret = "";
-            std::string algo = "";
-            int digits = 0;
-            int period = 0;
-
-            for (auto p : params) {
-                if (p.key == "secret") {
-                    secret = p.value;
-                } else if (p.key == "algorithm") {
-                    algo = p.value;
-                } else if (p.key == "digits") {
-                    digits = std::stoi(p.value);
-                } else if (p.key == "period") {
-                    period = std::stoi(p.value);
-                }
-            }
-
-            if (secret == "" || algo == "" || digits == 0 || period == 0) {
-                secret = totpURI;
-                digits = 6;
-                period = 30;
-            }
-
-            OPENSSL_cleanse(totpURI.data(), totpURI.size());
-
-            Botan::secure_vector<uint8_t> secureSecret = Botan::base32_decode(secret);
-
-            OPENSSL_cleanse(secret.data(), secret.size());
-
-            if (algo == "sha256" || algo == "SHA256") {
-                algo = "SHA-256";
-            } else if (algo == "sha512" || algo == "SHA512") {
-                algo = "SHA-512";
-            } else {
-                algo = "SHA-1";
-            }
-
-            if (digits > 8 || digits < 6) {
-                digits = 6;
-            }
-
-            Botan::TOTP totpCode(secureSecret.data(), secureSecret.size(), algo, digits, period);
-
-            uint32_t code = totpCode.generate_totp(std::chrono::system_clock::now());
-
-            std::time_t now = std::time(nullptr);
-
-            std::time_t currentStep = (now / period) * period;
-            std::time_t nextRefresh = currentStep + period;
-
-            std::ostringstream oss;
-            oss << std::setw(digits) << std::setfill('0') << code;
-            totp.code = oss.str();
-            totp.remaining = nextRefresh;
-            totp.period = period;
-        } catch (...) {
-            logger->info("Failed to get TOTP");
-            return this;
-        }
+        nameOnAccount = localVault.crypto.DecryptAsStr(data["bankAccount"]["nameOnAccount"], itemEncKey, itemMacKey);
 
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetWebsites(std::vector<std::string>& websites) {
+    BankAccountItem* BankAccountItem::GetAccountType(std::string& accountType) {
         if (!init) return this;
-        if (!data["login"].contains("uris")) return this;
-        if (!data["login"]["uris"].is_array()) return this;
-        websites.clear();
-        for (auto& uri : data["login"]["uris"]) {
-            websites.push_back(localVault.crypto.DecryptAsStr(uri["uri"], itemEncKey, itemMacKey));
-        }
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("accountType")) return this;
+        if (!data["bankAccount"]["accountType"].is_string()) return this;
+
+        accountType = localVault.crypto.DecryptAsStr(data["bankAccount"]["accountType"], itemEncKey, itemMacKey);
+
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetPasswordHistory(std::vector<std::pair<std::time_t, std::string>>& value) {
+    BankAccountItem* BankAccountItem::GetAccountNumber(std::string& accountNumber) {
         if (!init) return this;
-        if (!data["login"].contains("passwordRevisionDate")) return this;
-        if (!data.contains("passwordHistory")) return this;
-        if (data["passwordHistory"].is_null()) return this;
-        if (!data["login"]["passwordRevisionDate"].is_null()) {
-            for (auto& revHist : data["passwordHistory"]) {
-                if (!revHist.contains("lastUsedDate")) continue;
-                if (!revHist.contains("password")) continue;
-                std::time_t revTime = BitwardenTime(revHist["lastUsedDate"]);
-                std::string password = localVault.crypto.DecryptAsStr(revHist["password"], itemEncKey, itemMacKey);
-                value.emplace_back(std::move(revTime), std::move(password));
-            }
-        }
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("accountNumber")) return this;
+        if (!data["bankAccount"]["accountNumber"].is_string()) return this;
+
+        accountNumber = localVault.crypto.DecryptAsStr(data["bankAccount"]["accountNumber"], itemEncKey, itemMacKey);
+
         return this;
     }
 
-    BankAccountItem* BankAccountItem::GetPasskeyCreationDate(std::vector<std::time_t>& value) {
+    BankAccountItem* BankAccountItem::GetRoutingNumber(std::string& routingNumber) {
         if (!init) return this;
-        if (!data["login"].contains("fido2Credentials")) return this;
-        if (!data["login"]["fido2Credentials"].is_array()) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("routingNumber")) return this;
+        if (!data["bankAccount"]["routingNumber"].is_string()) return this;
 
-        for (auto& passk : data["login"]["fido2Credentials"]) {
-            if (!passk.contains("creationDate")) return this;
-            if (!passk["creationDate"].is_string()) return this;
-            value.push_back(BitwardenTime(passk["creationDate"].get<std::string>()));
-        }
+        routingNumber = localVault.crypto.DecryptAsStr(data["bankAccount"]["routingNumber"], itemEncKey, itemMacKey);
+
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::GetBranchNumber(std::string& branchNumber) {
+        if (!init) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("branchNumber")) return this;
+        if (!data["bankAccount"]["branchNumber"].is_string()) return this;
+
+        branchNumber = localVault.crypto.DecryptAsStr(data["bankAccount"]["branchNumber"], itemEncKey, itemMacKey);
+
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::GetPin(std::string& pin) {
+        if (!init) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("pin")) return this;
+        if (!data["bankAccount"]["pin"].is_string()) return this;
+
+        pin = localVault.crypto.DecryptAsStr(data["bankAccount"]["pin"], itemEncKey, itemMacKey);
+
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::GetSwiftCode(std::string& swiftCode) {
+        if (!init) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("swiftCode")) return this;
+        if (!data["bankAccount"]["swiftCode"].is_string()) return this;
+
+        swiftCode = localVault.crypto.DecryptAsStr(data["bankAccount"]["swiftCode"], itemEncKey, itemMacKey);
+
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::GetIBAN(std::string& iban) {
+        if (!init) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("iban")) return this;
+        if (!data["bankAccount"]["iban"].is_string()) return this;
+
+        iban = localVault.crypto.DecryptAsStr(data["bankAccount"]["iban"], itemEncKey, itemMacKey);
+
+        return this;
+    }
+
+    BankAccountItem* BankAccountItem::GetBankContactPhone(std::string& bankContactPhone) {
+        if (!init) return this;
+        if (!data["bankAccount"].is_object()) return this;
+        if (!data["bankAccount"].contains("bankContactPhone")) return this;
+        if (!data["bankAccount"]["bankContactPhone"].is_string()) return this;
+
+        bankContactPhone = localVault.crypto.DecryptAsStr(data["bankAccount"]["bankContactPhone"], itemEncKey, itemMacKey);
+
         return this;
     }
 
     BankAccountItem* BankAccountItem::GetType(CipherType& val) {
-        val = CipherType::Login;
+        val = CipherType::BankAccount;
         return this;
     }
 }

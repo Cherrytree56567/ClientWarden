@@ -8,6 +8,9 @@
 #include "IdentityItem/IdentityItem.h"
 #include "NoteItem/NoteItem.h"
 #include "SSHKeyItem/SSHKeyItem.h"
+#include "BankAccountItem/BankAccountItem.h"
+#include "DriversLicenseItem/DriversLicenseItem.h"
+#include "PassportItem/PassportItem.h"
 #include "Folder/Folder.h"
 #include "Vault.h"
 
@@ -79,6 +82,12 @@
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (cipher.first == ClientWarden::CipherType::SSHKey) {
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            } else if (cipher.first == ClientWarden::CipherType::BankAccount) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"dollarsign.circle"];
+            } else if (cipher.first == ClientWarden::CipherType::DriversLicense) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
+            } else if (cipher.first == ClientWarden::CipherType::Passport) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
             }
 
             ItemType i_type;
@@ -97,6 +106,15 @@
                     break;
                 case ClientWarden::CipherType::SSHKey:
                     i_type = ItemTypeSSHKey;
+                    break;
+                case ClientWarden::CipherType::BankAccount:
+                    i_type = ItemTypeBankAccount;
+                    break;
+                case ClientWarden::CipherType::DriversLicense:
+                    i_type = ItemTypeDriversLicense;
+                    break;
+                case ClientWarden::CipherType::Passport:
+                    i_type = ItemTypePassport;
                     break;
                 default:
                     i_type = ItemTypeLogin;
@@ -180,6 +198,15 @@
             } else if (i_type == ItemTypeSSHKey) {
                 item = v_inst.CreateItem<ClientWarden::SSHKeyItem>();
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            } else if (i_type == ItemTypeBankAccount) {
+                item = v_inst.CreateItem<ClientWarden::BankAccountItem>();
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"dollarsign.circle"];
+            } else if (i_type == ItemTypeDriversLicense) {
+                item = v_inst.CreateItem<ClientWarden::DriversLicenseItem>();
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
+            } else if (i_type == ItemTypePassport) {
+                item = v_inst.CreateItem<ClientWarden::PassportItem>();
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     Toast* toast = [[Toast alloc] initWithMessage:@"Failed to create new item: Invalid Item Type"];

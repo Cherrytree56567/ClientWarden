@@ -47,6 +47,11 @@ namespace ClientWarden {
         data["permissions"]["restore"] = true;
         data["reprompt"] = 0;
         data["revisionDate"] = nullptr;
+        if (!localVault.features.checkAbove26_8_1()) {
+            data["bankAccount"] = nullptr;
+            data["driversLicense"] = nullptr;
+            data["passport"] = nullptr;
+        }
         data["secureNote"] = nlohmann::json::object();
         data["secureNote"]["type"] = 0;
         data["sshKey"] = nullptr;
@@ -140,6 +145,11 @@ namespace ClientWarden {
         newdata["permissions"]["restore"] = true;
         newdata["reprompt"] = oldReprompt;
         newdata["revisionDate"] = nullptr;
+        if (!localVault.features.checkAbove26_8_1()) {
+            newdata["bankAccount"] = nullptr;
+            newdata["driversLicense"] = nullptr;
+            newdata["passport"] = nullptr;
+        }
         newdata["secureNote"] = nlohmann::json::object();
         newdata["secureNote"]["type"] = 0;
         newdata["sshKey"] = nullptr;
