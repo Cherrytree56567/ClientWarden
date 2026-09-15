@@ -20,12 +20,15 @@ import Combine
 enum GenericItemType: Int {
     case generic
     case generic_4
+    case generic_3
+    case generic_2
     case password
     case totp
     case website
     case ml_generic
     case ml_password
     case date
+    case date_3
 }
 
 @objcMembers
@@ -65,6 +68,21 @@ class GenericItemData : NSObject, Identifiable, ObservableObject {
         self.value_2 = value_2
         self.value_3 = value_3
         self.type = .generic_4
+    }
+    
+    init(title: String, value: String, value_1: String, value_2: String) {
+        self.title = title
+        self.value = value
+        self.value_1 = value_1
+        self.value_2 = value_2
+        self.type = .generic_3
+    }
+    
+    init(title: String, value: String, value_1: String) {
+        self.title = title
+        self.value = value
+        self.value_1 = value_1
+        self.type = .generic_2
     }
     
     init(title: String, value: String, type: GenericItemType, cb_getTOTP: (() -> TOTPResult)?) {
@@ -157,16 +175,27 @@ struct GenericItem: View {
             set: { data.value = $0.joined(separator: "\n") }
         )
     }
-    private var dateBinding: Binding<Date> {
-        Binding(
+    
+    private static var formatterCache: [String: DateFormatter] = [:]
+    
+    private static func dateFormatter(format: String) -> DateFormatter {
+        if let cached = formatterCache[format] {
+            return cached
+        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = format
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatterCache[format] = formatter
+        return formatter
+    }
+    
+    private func dateBinding(format: String) -> Binding<Date> {
+        let formatter = Self.dateFormatter(format: format)
+        return Binding(
             get: {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "MM/yyyy"
                 return formatter.date(from: data.value) ?? Date()
             },
             set: { newDate in
-                let formatter = DateFormatter()
-                formatter.dateFormat = "MM/yyyy"
                 data.value = formatter.string(from: newDate)
             }
         )
@@ -340,10 +369,10 @@ struct GenericItem: View {
                                         .frame(maxWidth: .infinity, alignment: .center)
                                 }
                             }
-                        } else if (data.type == GenericItemType.date) {
+                        } else if (data.type == GenericItemType.date || data.type == GenericItemType.date_3) {
                             DatePicker(
                                 "",
-                                selection: dateBinding,
+                                selection: dateBinding(format: (data.type == GenericItemType.date ? "MM/yyyy" : "dd/MM/yyyy")),
                                 displayedComponents: [.date]
                             )
                             .datePickerStyle(.compact)
@@ -421,6 +450,82 @@ struct GenericItem: View {
                                         .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
                                 }
                                 .padding(-4)
+                        } else if (data.type == .generic_3) {
+                            TextField("Value", text: Binding(get: {
+                                data.value.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                            
+                            TextField("Value", text: Binding(get: {
+                                data.value_1.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value_1 = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                            
+                            TextField("Value", text: Binding(get: {
+                                data.value_2.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value_2 = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                        } else if (data.type == .generic_2) {
+                            TextField("Value", text: Binding(get: {
+                                data.value.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                            
+                            TextField("Value", text: Binding(get: {
+                                data.value_1.replacingOccurrences(of: "\n", with: " ")
+                            }, set: { data.value_1 = $0 }), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .padding(4)
+                                .lineLimit(6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                }
+                                .padding(-4)
+                                .padding(.trailing, 4)
+                                .frame(width: 100)
                         } else {
                             TextField("Value", text: Binding(get: { data.f_value() }, set: { data.value = $0 }), axis: .vertical)
                                 .textFieldStyle(.plain)
@@ -499,6 +604,12 @@ struct GenericItem: View {
                             }
                         } else if (data.type == GenericItemType.generic_4) {
                             Text(verbatim: "\(data.value) \(data.value_1) \(data.value_2) \(data.value_3)"
+                                .trimmingCharacters(in: .whitespaces))
+                        } else if (data.type == GenericItemType.generic_3) {
+                            Text(verbatim: "\(data.value) \(data.value_1) \(data.value_2)"
+                                .trimmingCharacters(in: .whitespaces))
+                        } else if (data.type == GenericItemType.generic_2) {
+                            Text(verbatim: "\(data.value) \(data.value_1)"
                                 .trimmingCharacters(in: .whitespaces))
                         } else {
                             Text(verbatim: data.f_value())

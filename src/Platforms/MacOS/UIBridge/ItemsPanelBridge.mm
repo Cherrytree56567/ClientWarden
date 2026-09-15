@@ -88,6 +88,8 @@
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
             } else if (cipher.first == ClientWarden::CipherType::Passport) {
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
+            } else {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"questionmark.app.dashed"];
             }
 
             ItemType i_type;
@@ -117,7 +119,7 @@
                     i_type = ItemTypePassport;
                     break;
                 default:
-                    i_type = ItemTypeLogin;
+                    i_type = ItemTypeNote;
                     break;
             }
 

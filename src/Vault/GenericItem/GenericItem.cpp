@@ -242,26 +242,42 @@ namespace ClientWarden {
         if (!localVault.features.checkAbove26_6_0()) {
             data["data"] = (std::string)fieldData.dump();
         }
+
+        /*
+         * DO NOT SET VaultOPS here to true, as that will
+         * create a new item. Remember that this if stat
+         * is responsible for offline items and new items
+         * which are very different.
+        */
         if (isBeingCreated || (data.contains("createdOffline") && data["createdOffline"] == true)) {
             std::optional<nlohmann::json> result = localVault.NewItem(data, !(data.contains("createdOffline") && data["createdOffline"] == true), data);
             if (result.has_value()) {
                 if (result.value().contains("id") && result.value()["id"].is_string()) {
                     data["id"] = result.value()["id"];
+                    data.erase("createdOffline");
+                } else {
+                    return;
                 }
+            } else {
+                data["createdOffline"] = true;
             }
-            return;
         }
 
-        std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
-        auto& ciphers = (*localVault.session.vaultData)["ciphers"];
-        lock_vdget.unlock();
+        /*
+         * This is to automatically unlock the thread
+         * DO NOT REMOVE THIS
+        */
+        {
+            std::unique_lock<std::recursive_mutex> lock_vdget(localVault.session.vaultDataMutex);
+            auto& ciphers = (*localVault.session.vaultData)["ciphers"];
 
-        auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
-            return cipher["id"] == data["id"];
-        });
+            auto it = std::find_if(ciphers.begin(), ciphers.end(), [&](const nlohmann::json& cipher) {
+                return cipher["id"] == data["id"];
+            });
 
-        if (it != ciphers.end()) {
-            *it = data;
+            if (it != ciphers.end()) {
+                *it = data;
+            }
         }
 
         /*

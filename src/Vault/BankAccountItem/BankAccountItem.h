@@ -15,6 +15,12 @@ namespace ClientWarden {
     /*
      * From Bitwarden Clients:
      * https://github.com/bitwarden/clients/blob/main/libs/common/src/vault/models/domain/bank-account.ts
+     * 
+     * Sensitive:
+     *  - accountNumber
+     *  - pin
+     *  - iban
+     *  - routingNumber
     */
     class BankAccountItem : public GenericItemImpl<BankAccountItem> {
     public:

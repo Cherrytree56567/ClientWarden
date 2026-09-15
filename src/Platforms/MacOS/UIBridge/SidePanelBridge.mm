@@ -995,20 +995,361 @@ static bool sidebar(NSUUID* uuid) {
             OPENSSL_cleanse(c_pubKey.data(), c_pubKey.size());
             c_pubKey.clear();
         } else if (c_type == ClientWarden::CipherType::BankAccount) {
-            /*
-             * TODO: Implement Bank Account
-             */
+            std::string c_bankName = "";
+            std::string c_nameOnAccount = "";
+            std::string c_accountType = "";
+            std::string c_accountNumber = "";
+            std::string c_routingNumber = "";
+            std::string c_branchNumber = "";
+            std::string c_pin = "";
+            std::string c_swiftCode = "";
+            std::string c_iban = "";
+            std::string c_bankContactPhone = "";
+
+            v_inst.GetItem<ClientWarden::BankAccountItem>(c_uuid)
+                 ->GetBankName(c_bankName)
+                 ->GetNameOnAccount(c_nameOnAccount)
+                 ->GetAccountType(c_accountType)
+                 ->GetAccountNumber(c_accountNumber)
+                 ->GetRoutingNumber(c_routingNumber)
+                 ->GetBranchNumber(c_branchNumber)
+                 ->GetPin(c_pin)
+                 ->GetSwiftCode(c_swiftCode)
+                 ->GetIBAN(c_iban)
+                 ->GetBankContactPhone(c_bankContactPhone)
+                 ->Close();
+
+            NSString* bankName = [NSString stringWithUTF8String: c_bankName.c_str()];
+            NSString* nameOnAccount = [NSString stringWithUTF8String: c_nameOnAccount.c_str()];
+            NSString* accountType = [NSString stringWithUTF8String: c_accountType.c_str()];
+            NSString* accountNumber = [NSString stringWithUTF8String: c_accountNumber.c_str()];
+            NSString* routingNumber = [NSString stringWithUTF8String: c_routingNumber.c_str()];
+            NSString* branchNumber = [NSString stringWithUTF8String: c_branchNumber.c_str()];
+            NSString* pin = [NSString stringWithUTF8String: c_pin.c_str()];
+            NSString* swiftCode = [NSString stringWithUTF8String: c_swiftCode.c_str()];
+            NSString* iban = [NSString stringWithUTF8String: c_iban.c_str()];
+            NSString* bankContactPhone = [NSString stringWithUTF8String: c_bankContactPhone.c_str()];
+
+            GenericItemData* bankNameItem = [[GenericItemData alloc] initWithTitle: @"Bank Name"
+                                                                  value: bankName
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* nameOnAccountItem = [[GenericItemData alloc] initWithTitle: @"Name On Account"
+                                                                  value: nameOnAccount
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* accountTypeItem = [[GenericItemData alloc] initWithTitle: @"Account Type"
+                                                                  value: accountType
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* accountNumberItem = [[GenericItemData alloc] initWithTitle: @"Account Number"
+                                                                  value: accountNumber
+                                                                  type:GenericItemTypePassword];
+
+            GenericItemData* routingNumberItem = [[GenericItemData alloc] initWithTitle: @"Routing Number"
+                                                                  value: routingNumber
+                                                                  type:GenericItemTypePassword];
+
+            GenericItemData* branchNumberItem = [[GenericItemData alloc] initWithTitle: @"Branch Number"
+                                                                  value: branchNumber
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* pinItem = [[GenericItemData alloc] initWithTitle: @"Pin"
+                                                                  value: pin
+                                                                  type:GenericItemTypePassword];
+
+            GenericItemData* swiftCodeItem = [[GenericItemData alloc] initWithTitle: @"Swift Code"
+                                                                  value: swiftCode
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* ibanItem = [[GenericItemData alloc] initWithTitle: @"IBAN"
+                                                                  value: iban
+                                                                  type:GenericItemTypePassword];
+
+            GenericItemData* bankContactPhoneItem = [[GenericItemData alloc] initWithTitle: @"Bank Contact Phone"
+                                                                  value: bankContactPhone
+                                                                  type:GenericItemTypeGeneric];
+                
+            [itemFields addObject: bankNameItem];
+            [itemFields addObject: nameOnAccountItem];
+            [itemFields addObject: accountTypeItem];
+            [itemFields addObject: accountNumberItem];
+            [itemFields addObject: routingNumberItem];
+            [itemFields addObject: branchNumberItem];
+            [itemFields addObject: pinItem];
+            [itemFields addObject: swiftCodeItem];
+            [itemFields addObject: ibanItem];
+            [itemFields addObject: bankContactPhoneItem];
+
             img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"dollarsign.circle"];
+            
+            OPENSSL_cleanse(c_bankName.data(), c_bankName.size());
+            c_bankName.clear();
+            OPENSSL_cleanse(c_nameOnAccount.data(), c_nameOnAccount.size());
+            c_nameOnAccount.clear();
+            OPENSSL_cleanse(c_accountType.data(), c_accountType.size());
+            c_accountType.clear();
+            OPENSSL_cleanse(c_accountNumber.data(), c_accountNumber.size());
+            c_accountNumber.clear();
+            OPENSSL_cleanse(c_routingNumber.data(), c_routingNumber.size());
+            c_routingNumber.clear();
+            OPENSSL_cleanse(c_branchNumber.data(), c_branchNumber.size());
+            c_branchNumber.clear();
+            OPENSSL_cleanse(c_pin.data(), c_pin.size());
+            c_pin.clear();
+            OPENSSL_cleanse(c_swiftCode.data(), c_swiftCode.size());
+            c_swiftCode.clear();
+            OPENSSL_cleanse(c_iban.data(), c_iban.size());
+            c_iban.clear();
+            OPENSSL_cleanse(c_bankContactPhone.data(), c_bankContactPhone.size());
+            c_bankContactPhone.clear();
         } else if (c_type == ClientWarden::CipherType::DriversLicense) {
-            /*
-             * TODO: Implement Drivers License
-             */
+            std::string c_firstName = "";
+            std::string c_middleName = "";
+            std::string c_lastName = "";
+            std::string c_dateOfBirth = "";
+            std::string c_licenseNumber = "";
+            std::string c_issuingCountry = "";
+            std::string c_issuingState = "";
+            std::string c_issueDate = "";
+            std::string c_expirationDate = "";
+            std::string c_issuingAuthority = "";
+            std::string c_licenseClass = "";
+
+            v_inst.GetItem<ClientWarden::DriversLicenseItem>(c_uuid)
+                 ->GetFirstName(c_firstName)
+                 ->GetMiddleName(c_middleName)
+                 ->GetLastName(c_lastName)
+                 ->GetDateOfBirth(c_dateOfBirth)
+                 ->GetLicenseNumber(c_licenseNumber)
+                 ->GetIssuingCountry(c_issuingCountry)
+                 ->GetIssuingState(c_issuingState)
+                 ->GetIssueDate(c_issueDate)
+                 ->GetExpirationDate(c_expirationDate)
+                 ->GetIssuingAuthority(c_issuingAuthority)
+                 ->GetLicenseClass(c_licenseClass)
+                 ->Close();
+
+            NSString* firstName = [NSString stringWithUTF8String: c_firstName.c_str()];
+            NSString* middleName = [NSString stringWithUTF8String: c_middleName.c_str()];
+            NSString* lastName = [NSString stringWithUTF8String: c_lastName.c_str()];
+            NSString* dateOfBirth = [NSString stringWithUTF8String: c_dateOfBirth.c_str()];
+            NSString* licenseNumber = [NSString stringWithUTF8String: c_licenseNumber.c_str()];
+            NSString* issuingCountry = [NSString stringWithUTF8String: c_issuingCountry.c_str()];
+            NSString* issuingState = [NSString stringWithUTF8String: c_issuingState.c_str()];
+            NSString* issueDate = [NSString stringWithUTF8String: c_issueDate.c_str()];
+            NSString* expirationDate = [NSString stringWithUTF8String: c_expirationDate.c_str()];
+            NSString* issuingAuthority = [NSString stringWithUTF8String: c_issuingAuthority.c_str()];
+            NSString* licenseClass = [NSString stringWithUTF8String: c_licenseClass.c_str()];
+
+            GenericItemData* nameItem = [[GenericItemData alloc] initWithTitle: @"Name"
+                                                                  value: firstName
+                                                                  value_1: middleName
+                                                                  value_2: lastName];
+
+            GenericItemData* dateOfBirthItem = [[GenericItemData alloc] initWithTitle: @"Date of Birth"
+                                                                  value: dateOfBirth
+                                                                  type:GenericItemTypeDate_3];
+
+            GenericItemData* licenseNumberItem = [[GenericItemData alloc] initWithTitle: @"License Number"
+                                                                  value: licenseNumber
+                                                                  type:GenericItemTypePassword];
+
+            GenericItemData* issuingCountryItem = [[GenericItemData alloc] initWithTitle: @"Issuing Country"
+                                                                  value: issuingCountry
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* issuingStateItem = [[GenericItemData alloc] initWithTitle: @"Issuing State"
+                                                                  value: issuingState
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* issueDateItem = [[GenericItemData alloc] initWithTitle: @"Issuing Date"
+                                                                  value: issueDate
+                                                                  type:GenericItemTypeDate_3];
+
+            GenericItemData* expirationDateItem = [[GenericItemData alloc] initWithTitle: @"Expiration Date"
+                                                                  value: expirationDate
+                                                                  type:GenericItemTypeDate_3];
+
+            GenericItemData* issuingAuthorityItem = [[GenericItemData alloc] initWithTitle: @"Issuing Authority"
+                                                                  value: issuingAuthority
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* licenseClassItem = [[GenericItemData alloc] initWithTitle: @"License Class"
+                                                                  value: licenseClass
+                                                                  type:GenericItemTypeGeneric];
+                
+            [itemFields addObject: nameItem];
+            [itemFields addObject: dateOfBirthItem];
+            [itemFields addObject: licenseNumberItem];
+            [itemFields addObject: issuingCountryItem];
+            [itemFields addObject: issuingStateItem];
+            [itemFields addObject: issueDateItem];
+            [itemFields addObject: expirationDateItem];
+            [itemFields addObject: issuingAuthorityItem];
+            [itemFields addObject: licenseClassItem];
+
             img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
+            
+            OPENSSL_cleanse(c_firstName.data(), c_firstName.size());
+            c_firstName.clear();
+            OPENSSL_cleanse(c_middleName.data(), c_middleName.size());
+            c_middleName.clear();
+            OPENSSL_cleanse(c_lastName.data(), c_lastName.size());
+            c_lastName.clear();
+            OPENSSL_cleanse(c_dateOfBirth.data(), c_dateOfBirth.size());
+            c_dateOfBirth.clear();
+            OPENSSL_cleanse(c_licenseNumber.data(), c_licenseNumber.size());
+            c_licenseNumber.clear();
+            OPENSSL_cleanse(c_issuingCountry.data(), c_issuingCountry.size());
+            c_issuingCountry.clear();
+            OPENSSL_cleanse(c_issuingState.data(), c_issuingState.size());
+            c_issuingState.clear();
+            OPENSSL_cleanse(c_issueDate.data(), c_issueDate.size());
+            c_issueDate.clear();
+            OPENSSL_cleanse(c_expirationDate.data(), c_expirationDate.size());
+            c_expirationDate.clear();
+            OPENSSL_cleanse(c_issuingAuthority.data(), c_issuingAuthority.size());
+            c_issuingAuthority.clear();
+            OPENSSL_cleanse(c_licenseClass.data(), c_licenseClass.size());
+            c_licenseClass.clear();
         } else if (c_type == ClientWarden::CipherType::Passport) {
             /*
              * TODO: Implement Passport
              */
+            std::string c_surname = "";
+            std::string c_givenName = "";
+            std::string c_dateOfBirth = "";
+            std::string c_sex = "";
+            std::string c_birthPlace = "";
+            std::string c_nationality = "";
+            std::string c_issuingCountry = "";
+            std::string c_passportNumber = "";
+            std::string c_passportType = "";
+            std::string c_nationalIdentificationNumber = "";
+            std::string c_issuingAuthority = "";
+            std::string c_issueDate = "";
+            std::string c_expirationDate = "";
+
+            v_inst.GetItem<ClientWarden::PassportItem>(c_uuid)
+                 ->GetSurname(c_surname)
+                 ->GetGivenName(c_givenName)
+                 ->GetDateOfBirth(c_dateOfBirth)
+                 ->GetSex(c_sex)
+                 ->GetBirthPlace(c_birthPlace)
+                 ->GetNationality(c_nationality)
+                 ->GetIssuingCountry(c_issuingCountry)
+                 ->GetPassportNumber(c_passportNumber)
+                 ->GetPassportType(c_passportType)
+                 ->GetNationalIdentificationNumber(c_nationalIdentificationNumber)
+                 ->GetIssuingAuthority(c_issuingAuthority)
+                 ->GetIssueDate(c_issueDate)
+                 ->GetExpirationDate(c_expirationDate)
+                 ->Close();
+
+            NSString* surname = [NSString stringWithUTF8String: c_surname.c_str()];
+            NSString* givenName = [NSString stringWithUTF8String: c_givenName.c_str()];
+            NSString* dateOfBirth = [NSString stringWithUTF8String: c_dateOfBirth.c_str()];
+            NSString* sex = [NSString stringWithUTF8String: c_sex.c_str()];
+            NSString* birthPlace = [NSString stringWithUTF8String: c_birthPlace.c_str()];
+            NSString* nationality = [NSString stringWithUTF8String: c_nationality.c_str()];
+            NSString* issuingCountry = [NSString stringWithUTF8String: c_issuingCountry.c_str()];
+            NSString* passportNumber = [NSString stringWithUTF8String: c_passportNumber.c_str()];
+            NSString* passportType = [NSString stringWithUTF8String: c_passportType.c_str()];
+            NSString* nationalIdentificationNumber = [NSString stringWithUTF8String: c_nationalIdentificationNumber.c_str()];
+            NSString* issuingAuthority = [NSString stringWithUTF8String: c_issuingAuthority.c_str()];
+            NSString* issueDate = [NSString stringWithUTF8String: c_issueDate.c_str()];
+            NSString* expirationDate = [NSString stringWithUTF8String: c_expirationDate.c_str()];
+
+            GenericItemData* nameItem = [[GenericItemData alloc] initWithTitle: @"Name"
+                                                                  value: givenName
+                                                                  value_1: surname];
+
+            GenericItemData* dateOfBirthItem = [[GenericItemData alloc] initWithTitle: @"Date Of Birth"
+                                                                  value: dateOfBirth
+                                                                  type:GenericItemTypeDate_3];
+
+            GenericItemData* sexItem = [[GenericItemData alloc] initWithTitle: @"Sex"
+                                                                  value: sex
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* birthPlaceItem = [[GenericItemData alloc] initWithTitle: @"Birth Place"
+                                                                  value: birthPlace
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* nationalityItem = [[GenericItemData alloc] initWithTitle: @"Nationality"
+                                                                  value: nationality
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* issuingCountryItem = [[GenericItemData alloc] initWithTitle: @"Issuing Country"
+                                                                  value: issuingCountry
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* passportNumberItem = [[GenericItemData alloc] initWithTitle: @"Passport Number"
+                                                                  value: passportNumber
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* passportTypeItem = [[GenericItemData alloc] initWithTitle: @"Passport Type"
+                                                                  value: passportType
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* nationalIdentificationNumberItem = [[GenericItemData alloc] initWithTitle: @"National Identification Number"
+                                                                  value: nationalIdentificationNumber
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* issuingAuthorityItem = [[GenericItemData alloc] initWithTitle: @"Issuing Authority"
+                                                                  value: issuingAuthority
+                                                                  type:GenericItemTypeGeneric];
+
+            GenericItemData* issueDateItem = [[GenericItemData alloc] initWithTitle: @"Issue Date"
+                                                                  value: issueDate
+                                                                  type:GenericItemTypeDate_3];
+
+            GenericItemData* expirationDateItem = [[GenericItemData alloc] initWithTitle: @"Expiration Date"
+                                                                  value: expirationDate
+                                                                  type:GenericItemTypeDate_3];
+                
+            [itemFields addObject: nameItem];
+            [itemFields addObject: dateOfBirthItem];
+            [itemFields addObject: sexItem];
+            [itemFields addObject: birthPlaceItem];
+            [itemFields addObject: nationalityItem];
+            [itemFields addObject: issuingCountryItem];
+            [itemFields addObject: passportNumberItem];
+            [itemFields addObject: passportTypeItem];
+            [itemFields addObject: nationalIdentificationNumberItem];
+            [itemFields addObject: issuingAuthorityItem];
+            [itemFields addObject: issueDateItem];
+            [itemFields addObject: expirationDateItem];
+
             img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
+            
+            OPENSSL_cleanse(c_surname.data(), c_surname.size());
+            c_surname.clear();
+            OPENSSL_cleanse(c_givenName.data(), c_givenName.size());
+            c_givenName.clear();
+            OPENSSL_cleanse(c_dateOfBirth.data(), c_dateOfBirth.size());
+            c_dateOfBirth.clear();
+            OPENSSL_cleanse(c_sex.data(), c_sex.size());
+            c_sex.clear();
+            OPENSSL_cleanse(c_birthPlace.data(), c_birthPlace.size());
+            c_birthPlace.clear();
+            OPENSSL_cleanse(c_nationality.data(), c_nationality.size());
+            c_nationality.clear();
+            OPENSSL_cleanse(c_issuingCountry.data(), c_issuingCountry.size());
+            c_issuingCountry.clear();
+            OPENSSL_cleanse(c_passportNumber.data(), c_passportNumber.size());
+            c_passportNumber.clear();
+            OPENSSL_cleanse(c_passportType.data(), c_passportType.size());
+            c_passportType.clear();
+            OPENSSL_cleanse(c_nationalIdentificationNumber.data(), c_nationalIdentificationNumber.size());
+            c_nationalIdentificationNumber.clear();
+            OPENSSL_cleanse(c_issuingAuthority.data(), c_issuingAuthority.size());
+            c_issuingAuthority.clear();
+            OPENSSL_cleanse(c_issueDate.data(), c_issueDate.size());
+            c_issueDate.clear();
+            OPENSSL_cleanse(c_expirationDate.data(), c_expirationDate.size());
+            c_expirationDate.clear();
         }
 
         [SidePanel.instance viewItemWithName:name uuid:uuid type:type icon:img repromptItem:reprompt folderUUID:folderUUID favorite:favorite 
@@ -1582,17 +1923,236 @@ static bool sidebar(NSUUID* uuid) {
                 OPENSSL_cleanse((void*)c_pubKey.data(), c_pubKey.size());
                 c_pubKey.clear();
             } else if (type == ItemTypeBankAccount) {
-                /*
-                 * TODO: Implement Bank Account
-                 */
+                std::string c_bankName = "";
+                std::string c_nameOnAccount = "";
+                std::string c_accountType = "";
+                std::string c_accountNumber = "";
+                std::string c_routingNumber = "";
+                std::string c_branchNumber = "";
+                std::string c_pin = "";
+                std::string c_swiftCode = "";
+                std::string c_iban = "";
+                std::string c_bankContactPhone = "";
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Bank Name") {
+                        c_bankName = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Name On Account") {
+                        c_nameOnAccount = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Account Type") {
+                        c_accountType = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Account Number") {
+                        c_accountNumber = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Routing Number") {
+                        c_routingNumber = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Branch Number") {
+                        c_branchNumber = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Pin") {
+                        c_pin = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Swift Code") {
+                        c_swiftCode = itemField.value.UTF8String;
+                    } else if (itemField.title == @"IBAN") {
+                        c_iban = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Bank Contact Phone") {
+                        c_bankContactPhone = itemField.value.UTF8String;
+                    }
+                }
+
+                v_inst.GetItem<ClientWarden::BankAccountItem>(c_uuid)
+                     ->SetBankName(c_bankName)
+                     ->SetNameOnAccount(c_nameOnAccount)
+                     ->SetAccountType(c_accountType)
+                     ->SetAccountNumber(c_accountNumber)
+                     ->SetRoutingNumber(c_routingNumber)
+                     ->SetBranchNumber(c_branchNumber)
+                     ->SetPin(c_pin)
+                     ->SetSwiftCode(c_swiftCode)
+                     ->SetIBAN(c_iban)
+                     ->SetBankContactPhone(c_bankContactPhone)
+                     ->Commit();
+
+                OPENSSL_cleanse(c_bankName.data(), c_bankName.size());
+                c_bankName.clear();
+                OPENSSL_cleanse(c_nameOnAccount.data(), c_nameOnAccount.size());
+                c_nameOnAccount.clear();
+                OPENSSL_cleanse(c_accountType.data(), c_accountType.size());
+                c_accountType.clear();
+                OPENSSL_cleanse(c_accountNumber.data(), c_accountNumber.size());
+                c_accountNumber.clear();
+                OPENSSL_cleanse(c_routingNumber.data(), c_routingNumber.size());
+                c_routingNumber.clear();
+                OPENSSL_cleanse(c_branchNumber.data(), c_branchNumber.size());
+                c_branchNumber.clear();
+                OPENSSL_cleanse(c_pin.data(), c_pin.size());
+                c_pin.clear();
+                OPENSSL_cleanse(c_swiftCode.data(), c_swiftCode.size());
+                c_swiftCode.clear();
+                OPENSSL_cleanse(c_iban.data(), c_iban.size());
+                c_iban.clear();
+                OPENSSL_cleanse(c_bankContactPhone.data(), c_bankContactPhone.size());
+                c_bankContactPhone.clear();
             } else if (type == ItemTypeDriversLicense) {
-                /*
-                 * TODO: Implement Drivers License
-                 */
+                std::string c_firstName = "";
+                std::string c_middleName = "";
+                std::string c_lastName = "";
+                std::string c_dateOfBirth = "";
+                std::string c_licenseNumber = "";
+                std::string c_issuingCountry = "";
+                std::string c_issuingState = "";
+                std::string c_issueDate = "";
+                std::string c_expirationDate = "";
+                std::string c_issuingAuthority = "";
+                std::string c_licenseClass = "";
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Name") {
+                        c_firstName = itemField.value.UTF8String;
+                        c_middleName = itemField.value_1.UTF8String;
+                        c_lastName = itemField.value_2.UTF8String;
+                    } else if (itemField.title == @"Date of Birth") {
+                        c_dateOfBirth = itemField.value.UTF8String;
+                    } else if (itemField.title == @"License Number") {
+                        c_licenseNumber = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issuing Country") {
+                        c_issuingCountry = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issuing State") {
+                        c_issuingState = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issuing Date") {
+                        c_issueDate = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Expiration Date") {
+                        c_expirationDate = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issuing Authority") {
+                        c_issuingAuthority = itemField.value.UTF8String;
+                    } else if (itemField.title == @"License Class") {
+                        c_licenseClass = itemField.value.UTF8String;
+                    }
+                }
+
+                v_inst.GetItem<ClientWarden::DriversLicenseItem>(c_uuid)
+                     ->SetFirstName(c_firstName)
+                     ->SetMiddleName(c_middleName)
+                     ->SetLastName(c_lastName)
+                     ->SetDateOfBirth(c_dateOfBirth)
+                     ->SetLicenseNumber(c_licenseNumber)
+                     ->SetIssuingCountry(c_issuingCountry)
+                     ->SetIssuingState(c_issuingState)
+                     ->SetIssueDate(c_issueDate)
+                     ->SetExpirationDate(c_expirationDate)
+                     ->SetIssuingAuthority(c_issuingAuthority)
+                     ->SetLicenseClass(c_licenseClass)
+                     ->Commit();
+
+                OPENSSL_cleanse(c_firstName.data(), c_firstName.size());
+                c_firstName.clear();
+                OPENSSL_cleanse(c_middleName.data(), c_middleName.size());
+                c_middleName.clear();
+                OPENSSL_cleanse(c_lastName.data(), c_lastName.size());
+                c_lastName.clear();
+                OPENSSL_cleanse(c_dateOfBirth.data(), c_dateOfBirth.size());
+                c_dateOfBirth.clear();
+                OPENSSL_cleanse(c_licenseNumber.data(), c_licenseNumber.size());
+                c_licenseNumber.clear();
+                OPENSSL_cleanse(c_issuingCountry.data(), c_issuingCountry.size());
+                c_issuingCountry.clear();
+                OPENSSL_cleanse(c_issuingState.data(), c_issuingState.size());
+                c_issuingState.clear();
+                OPENSSL_cleanse(c_issueDate.data(), c_issueDate.size());
+                c_issueDate.clear();
+                OPENSSL_cleanse(c_expirationDate.data(), c_expirationDate.size());
+                c_expirationDate.clear();
+                OPENSSL_cleanse(c_issuingAuthority.data(), c_issuingAuthority.size());
+                c_issuingAuthority.clear();
+                OPENSSL_cleanse(c_licenseClass.data(), c_licenseClass.size());
+                c_licenseClass.clear();
             } else if (type == ItemTypePassport) {
                 /*
                  * TODO: Implement Passport
                  */
+                std::string c_surname = "";
+                std::string c_givenName = "";
+                std::string c_dateOfBirth = "";
+                std::string c_sex = "";
+                std::string c_birthPlace = "";
+                std::string c_nationality = "";
+                std::string c_issuingCountry = "";
+                std::string c_passportNumber = "";
+                std::string c_passportType = "";
+                std::string c_nationalIdentificationNumber = "";
+                std::string c_issuingAuthority = "";
+                std::string c_issueDate = "";
+                std::string c_expirationDate = "";
+
+                for (GenericItemData* itemField in itemFields) {
+                    if (itemField.title == @"Name") {
+                        c_givenName = itemField.value.UTF8String;
+                        c_surname = itemField.value_1.UTF8String;
+                    } else if (itemField.title == @"Date of Birth") {
+                        c_dateOfBirth = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Sex") {
+                        c_sex = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Birth Place") {
+                        c_birthPlace = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Nationality") {
+                        c_nationality = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issuing Country") {
+                        c_issuingCountry = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Passport Number") {
+                        c_passportNumber = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Passport Type") {
+                        c_passportType = itemField.value.UTF8String;
+                    } else if (itemField.title == @"National Identification Number") {
+                        c_nationalIdentificationNumber = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issuing Authority") {
+                        c_issuingAuthority = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Issue Date") {
+                        c_issueDate = itemField.value.UTF8String;
+                    } else if (itemField.title == @"Expiration Date") {
+                        c_expirationDate = itemField.value.UTF8String;
+                    }
+                }
+
+                v_inst.GetItem<ClientWarden::PassportItem>(c_uuid)
+                     ->SetSurname(c_surname)
+                     ->SetGivenName(c_givenName)
+                     ->SetDateOfBirth(c_dateOfBirth)
+                     ->SetSex(c_sex)
+                     ->SetBirthPlace(c_birthPlace)
+                     ->SetNationality(c_nationality)
+                     ->SetIssuingCountry(c_issuingCountry)
+                     ->SetPassportNumber(c_passportNumber)
+                     ->SetPassportType(c_passportType)
+                     ->SetNationalIdentificationNumber(c_nationalIdentificationNumber)
+                     ->SetIssuingAuthority(c_issuingAuthority)
+                     ->SetIssueDate(c_issueDate)
+                     ->SetExpirationDate(c_expirationDate)
+                     ->Commit();
+
+                OPENSSL_cleanse(c_surname.data(), c_surname.size());
+                c_surname.clear();
+                OPENSSL_cleanse(c_givenName.data(), c_givenName.size());
+                c_givenName.clear();
+                OPENSSL_cleanse(c_dateOfBirth.data(), c_dateOfBirth.size());
+                c_dateOfBirth.clear();
+                OPENSSL_cleanse(c_sex.data(), c_sex.size());
+                c_sex.clear();
+                OPENSSL_cleanse(c_birthPlace.data(), c_birthPlace.size());
+                c_birthPlace.clear();
+                OPENSSL_cleanse(c_nationality.data(), c_nationality.size());
+                c_nationality.clear();
+                OPENSSL_cleanse(c_issuingCountry.data(), c_issuingCountry.size());
+                c_issuingCountry.clear();
+                OPENSSL_cleanse(c_passportNumber.data(), c_passportNumber.size());
+                c_passportNumber.clear();
+                OPENSSL_cleanse(c_passportType.data(), c_passportType.size());
+                c_passportType.clear();
+                OPENSSL_cleanse(c_nationalIdentificationNumber.data(), c_nationalIdentificationNumber.size());
+                c_nationalIdentificationNumber.clear();
+                OPENSSL_cleanse(c_issuingAuthority.data(), c_issuingAuthority.size());
+                c_issuingAuthority.clear();
+                OPENSSL_cleanse(c_issueDate.data(), c_issueDate.size());
+                c_issueDate.clear();
+                OPENSSL_cleanse(c_expirationDate.data(), c_expirationDate.size());
+                c_expirationDate.clear();
             }
 
             return YES;

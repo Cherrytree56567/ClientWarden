@@ -10,6 +10,9 @@ enum NavItems: Hashable {
     case identity
     case note
     case sshkey
+    case bank_account
+    case drivers_license
+    case passport
     case folder(UUID)
 }
 
@@ -37,6 +40,9 @@ final class NavigationPanel: NSObject {
     @objc public var cb_identity: (() -> [ItemElement])?
     @objc public var cb_note: (() -> [ItemElement])?
     @objc public var cb_SSHKey: (() -> [ItemElement])?
+    @objc public var cb_BankAccount: (() -> [ItemElement])?
+    @objc public var cb_DriversLicense: (() -> [ItemElement])?
+    @objc public var cb_Passport: (() -> [ItemElement])?
     
     @objc public var cb_folder: ((UUID) -> [ItemElement])?
 
@@ -98,6 +104,12 @@ final class NavigationPanel: NSObject {
                 elements = cb_note?()
             case .sshkey:
                 elements = cb_SSHKey?()
+            case .bank_account:
+                elements = cb_BankAccount?()
+            case .drivers_license:
+                elements = cb_DriversLicense?()
+            case .passport:
+                elements = cb_Passport?()
             case .folder(let uuid):
                 elements = cb_folder?(uuid)
         }
@@ -255,6 +267,15 @@ struct NavigationPanelView: View {
                 
                 Label("SSH Key", systemImage: "key.viewfinder")
                     .tag(NavItems.sshkey)
+                
+                Label("Bank Account", systemImage: "dollarsign.circle")
+                    .tag(NavItems.bank_account)
+                
+                Label("Drivers License", systemImage: "licenseplate")
+                    .tag(NavItems.drivers_license)
+                
+                Label("Passport", systemImage: "list.bullet.rectangle.portrait")
+                    .tag(NavItems.passport)
             }
             
             Section("Folder") {

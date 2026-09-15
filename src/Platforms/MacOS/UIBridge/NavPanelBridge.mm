@@ -26,6 +26,9 @@
     [self cb_Identity];
     [self cb_Note];
     [self cb_SSHKey];
+    [self cb_BankAccount];
+    [self cb_DriversLicense];
+    [self cb_Passport];
     [self cb_Folder];
     [self getFolders];
     [self cb_CreateFolder];
@@ -89,6 +92,12 @@
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"pad.header"];
             } else if (cipher.first == ClientWarden::CipherType::SSHKey) {
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"key.viewfinder"];
+            } else if (cipher.first == ClientWarden::CipherType::BankAccount) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"dollarsign.circle"];
+            } else if (cipher.first == ClientWarden::CipherType::DriversLicense) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"licenseplate"];
+            } else if (cipher.first == ClientWarden::CipherType::Passport) {
+                img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"list.bullet.rectangle.portrait"];
             } else {
                 img = [[ClientwardenImage alloc] initWithType:ImageTypeSystemImage path:@"questionmark.app.dashed"];
             }
@@ -110,8 +119,17 @@
                 case ClientWarden::CipherType::SSHKey:
                     i_type = ItemTypeSSHKey;
                     break;
+                case ClientWarden::CipherType::BankAccount:
+                    i_type = ItemTypeBankAccount;
+                    break;
+                case ClientWarden::CipherType::DriversLicense:
+                    i_type = ItemTypeDriversLicense;
+                    break;
+                case ClientWarden::CipherType::Passport:
+                    i_type = ItemTypePassport;
+                    break;
                 default:
-                    i_type = ItemTypeLogin;
+                    i_type = ItemTypeNote;
                     break;
             }
 
@@ -359,6 +377,84 @@
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get SSH Key Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            NSMutableArray<ItemElement*>* items = [NSMutableArray array];
+            return items;
+        }
+    };
+}
+
++ (void)cb_BankAccount {
+    NavigationPanel.instance.cb_BankAccount = ^NSArray* _Nonnull {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                           ->FilterByUnbinned()
+                            .FilterByUnarchived()
+                            .FilterByType(ClientWarden::CipherType::BankAccount)
+                            .GetCiphers();
+
+            return [NavPanelBridge getItems:ciphers];
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get Bank Account Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            NSMutableArray<ItemElement*>* items = [NSMutableArray array];
+            return items;
+        }
+    };
+}
+
++ (void)cb_DriversLicense {
+    NavigationPanel.instance.cb_DriversLicense = ^NSArray* _Nonnull {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                           ->FilterByUnbinned()
+                            .FilterByUnarchived()
+                            .FilterByType(ClientWarden::CipherType::DriversLicense)
+                            .GetCiphers();
+
+            return [NavPanelBridge getItems:ciphers];
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get Driver's License Items"];
+                [[ToastStore instance] addToast:toast];
+            });
+
+            NSMutableArray<ItemElement*>* items = [NSMutableArray array];
+            return items;
+        }
+    };
+}
+
++ (void)cb_Passport {
+    NavigationPanel.instance.cb_Passport = ^NSArray* _Nonnull {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::vector<std::pair<ClientWarden::CipherType, std::string>> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                           ->FilterByUnbinned()
+                            .FilterByUnarchived()
+                            .FilterByType(ClientWarden::CipherType::Passport)
+                            .GetCiphers();
+
+            return [NavPanelBridge getItems:ciphers];
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Get Passport Items"];
                 [[ToastStore instance] addToast:toast];
             });
 

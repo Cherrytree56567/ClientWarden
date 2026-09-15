@@ -17,6 +17,8 @@ struct PreviewData {
                         SidePanel.instance.favorite = false
                         SidePanel.instance.itemFields = [
                             GenericItemData(title: "Name", value: "Mr", value_1: "John", value_2: "Jones", value_3: "Smith"),
+                            GenericItemData(title: "Name", value: "Mr", value_1: "John", value_2: "Jones"),
+                            GenericItemData(title: "Name", value: "Mr", value_1: "John"),
                             GenericItemData(title: "Email", value: "test@example.com", type: GenericItemType.generic),
                             GenericItemData(title: "Password", value: "pass123", type:GenericItemType.password),
                             GenericItemData(title: "Card Expiry", value: "12/2027", type: GenericItemType.date),
