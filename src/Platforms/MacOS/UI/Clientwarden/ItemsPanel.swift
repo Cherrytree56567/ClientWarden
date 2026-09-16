@@ -109,17 +109,19 @@ struct ItemsPanelView: View {
                             data.newItem(itemType: ItemType.SSHKey)
                             showNewItemCallout = false
                         }
-                        Button("Bank Account") {
-                            data.newItem(itemType: ItemType.BankAccount)
-                            showNewItemCallout = false
-                        }
-                        Button("Drivers License") {
-                            data.newItem(itemType: ItemType.DriversLicense)
-                            showNewItemCallout = false
-                        }
-                        Button("Passport") {
-                            data.newItem(itemType: ItemType.Passport)
-                            showNewItemCallout = false
+                        if (UIFeatures.instance.checkAbove26_8_1()) {
+                            Button("Bank Account") {
+                                data.newItem(itemType: ItemType.BankAccount)
+                                showNewItemCallout = false
+                            }
+                            Button("Drivers License") {
+                                data.newItem(itemType: ItemType.DriversLicense)
+                                showNewItemCallout = false
+                            }
+                            Button("Passport") {
+                                data.newItem(itemType: ItemType.Passport)
+                                showNewItemCallout = false
+                            }
                         }
                     } label: {
                         Label("Add Item", systemImage: "plus.circle")

@@ -62,6 +62,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.delegate = self
         }
     }
+    
+    func applicationWillTerminate(_ notification: Notification) -> NSApplication.TerminateReply {
+        if let window = NSApp.windows.first {
+            _ = window.delegate?.windowShouldClose?(window)
+        }
+
+        return .terminateNow
+    }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         if (sender.frame.width <= 1) {
@@ -212,6 +220,7 @@ struct ClientwardenApp: App {
                 #if NON_XCODE_BUILD
                     CWAppBridge.setupCallbacks()
                     ActivityMonitorBridge.setupCallbacks()
+                    UIFeaturesBridge.setupCallbacks()
                     SDKHandler.instance.observe()
                 #endif
                 data.getState()

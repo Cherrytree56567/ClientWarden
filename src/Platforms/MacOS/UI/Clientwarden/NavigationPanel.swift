@@ -268,14 +268,16 @@ struct NavigationPanelView: View {
                 Label("SSH Key", systemImage: "key.viewfinder")
                     .tag(NavItems.sshkey)
                 
-                Label("Bank Account", systemImage: "dollarsign.circle")
-                    .tag(NavItems.bank_account)
-                
-                Label("Drivers License", systemImage: "licenseplate")
-                    .tag(NavItems.drivers_license)
-                
-                Label("Passport", systemImage: "list.bullet.rectangle.portrait")
-                    .tag(NavItems.passport)
+                if (UIFeatures.instance.checkAbove26_8_1()) {
+                    Label("Bank Account", systemImage: "dollarsign.circle")
+                        .tag(NavItems.bank_account)
+                    
+                    Label("Drivers License", systemImage: "licenseplate")
+                        .tag(NavItems.drivers_license)
+                    
+                    Label("Passport", systemImage: "list.bullet.rectangle.portrait")
+                        .tag(NavItems.passport)
+                }
             }
             
             Section("Folder") {
@@ -381,14 +383,7 @@ struct NavigationPanelView: View {
         }
         .alert("Rename", isPresented: $showRenameAlert) {
             TextField("Folder Name", text: $folderName)
-                .textFieldStyle(.plain)
-                .padding(4)
-                .background(Color.gray.opacity(0.15))
-                .cornerRadius(8)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
-                }
+            
             Button("Cancel", role: .cancel) { }
             Button("Confirm") {
                 data.renameFolder(folderId: renameAlertId, str: folderName)

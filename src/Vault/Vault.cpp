@@ -11,7 +11,7 @@ namespace ClientWarden {
      * TODO: Add logger stuff, I think I already did this
      * idk tho.
     */
-    Vault::Vault() : profile(session.vaultData), crypto(session.encKey, session.macKey, session.internalKey), clipboard(session.settingsData) {
+    Vault::Vault() : profile(session.vaultData), crypto(session.encKey, session.macKey, session.internalKey), clipboard(session.settingsData), features(session.vaultData) {
         if (!logger) {
             spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
 
@@ -275,19 +275,6 @@ namespace ClientWarden {
             storage.write("settings.json", session.settingsData->dump(2));
             lock_sdset.unlock();
         }
-
-        features.determineVaultVersion(*session.vaultData);
-
-        /*
-         * TODO: Do Network Determination
-        */
-        
-        if (network.getConnectivity() == VaultConnectivity::Online) {
-            std::optional<std::string> res = network.getVersion();
-            if (res.has_value()) {
-                features.determineVaultVersion(res.value());
-            }
-        }
     }
 
     Vault::~Vault() {
@@ -388,6 +375,15 @@ namespace ClientWarden {
         session.autoLockThread.start();
 
         state = AuthState::Unlocked;
+
+        features.determineVaultVersion();
+
+        if (network.getConnectivity() == VaultConnectivity::Online) {
+            std::optional<std::string> res = network.getVersion();
+            if (res.has_value()) {
+                features.determineVaultVersion(res.value());
+            }
+        }
 
         return true;
     }
@@ -646,6 +642,16 @@ namespace ClientWarden {
         });
 
         state = AuthState::Unlocked;
+
+        features.determineVaultVersion();
+
+        if (network.getConnectivity() == VaultConnectivity::Online) {
+            std::optional<std::string> res = network.getVersion();
+            if (res.has_value()) {
+                features.determineVaultVersion(res.value());
+            }
+        }
+        
         return true;
     }
 

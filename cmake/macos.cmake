@@ -47,6 +47,7 @@ function(buildUI _target)
         src/Platforms/MacOS/UI/Clientwarden/SettingsView.swift
         src/Platforms/MacOS/UI/Clientwarden/AttachmentItem.swift
         src/Platforms/MacOS/UI/Clientwarden/Toast.swift
+        src/Platforms/MacOS/UI/Clientwarden/UIFeatures.swift
         ${CMAKE_BINARY_DIR}/generated/CMake.swift
     )
 
@@ -69,6 +70,7 @@ function(buildUI _target)
         src/Platforms/MacOS/UIBridge/UnlockBridge.mm
         src/Platforms/MacOS/UIBridge/NavPanelBridge.mm
         src/Platforms/MacOS/UIBridge/ItemsPanelBridge.mm
+        src/Platforms/MacOS/UIBridge/UIFeaturesBridge.mm
         src/Platforms/MacOS/UIBridge/SidePanelBridge.mm
         src/Platforms/MacOS/UIBridge/SettingsBridge.mm
         src/Platforms/MacOS/UIBridge/ActivityMonitorBridge.mm

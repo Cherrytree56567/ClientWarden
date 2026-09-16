@@ -10,9 +10,9 @@ namespace ClientWarden {
     */
     class VaultFeatures {
     public:
-        VaultFeatures();
+        VaultFeatures(std::shared_ptr<nlohmann::json> vaultData);
 
-        void determineVaultVersion(nlohmann::json vaultData);
+        void determineVaultVersion();
         void determineVaultVersion(std::string networkingData);
 
         bool checkAbove26_8_1();
@@ -29,8 +29,8 @@ namespace ClientWarden {
          * By Default, we should use the oldest version possible to prevent
          * compat issues
         */
-        bool _26_8_1 = false;
-        bool _26_6_0 = false;
+        std::string v_version;
         bool p_networkCheck = true;
+        std::shared_ptr<nlohmann::json> vaultData;
     };
 }

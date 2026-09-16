@@ -97,6 +97,8 @@ struct PreviewData {
                                 image: ClientwardenImage(type: ImageType.bundle, path: "ssh1")
                             ),
                         ])
+                        
+                        ItemsPanel.instance.selectedItems.append(ItemsPanel.instance.filteredElements[0].uuid)
                                             
                         NavigationPanel.instance.folders = [
                             Folder(uuid: UUID(), name: "New Fold"),

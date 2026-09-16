@@ -1,7 +1,7 @@
 #include "VaultFeatures.h"
 
 namespace ClientWarden {
-    VaultFeatures::VaultFeatures() {
+    VaultFeatures::VaultFeatures(std::shared_ptr<nlohmann::json> vaultData) : vaultData(vaultData) {
 
     }
 
@@ -35,8 +35,8 @@ namespace ClientWarden {
         return 0;
     }
 
-    void VaultFeatures::determineVaultVersion(nlohmann::json vaultData) {
-        if (!vaultData.contains("ciphers") || !vaultData["ciphers"].is_array() || vaultData["ciphers"].empty()) {
+    void VaultFeatures::determineVaultVersion() {
+        if (!vaultData || !vaultData->contains("ciphers") || !(*vaultData)["ciphers"].is_array() || (*vaultData)["ciphers"].empty()) {
             return;
         }
 
@@ -46,7 +46,7 @@ namespace ClientWarden {
         */
         bool u_data = true;
 
-        for (const auto& cipher : vaultData["ciphers"]) {
+        for (const auto& cipher : (*vaultData)["ciphers"]) {
             bool h_dataField = cipher.contains("data");
 
             if (!h_dataField) {
@@ -60,7 +60,7 @@ namespace ClientWarden {
         */
         bool u_26_8_1 = true;
 
-        for (const auto& cipher : vaultData["ciphers"]) {
+        for (const auto& cipher : (*vaultData)["ciphers"]) {
             bool h_bankAccountField = cipher.contains("bankAccount");
             bool h_driversLicenseField = cipher.contains("driversLicense");
             bool h_passportField = cipher.contains("passport");
@@ -70,12 +70,22 @@ namespace ClientWarden {
             }
         }
 
-        if (!_26_6_0) {
-            _26_6_0 = u_data;
-        }
-
-        if (!_26_8_1) {
-            _26_8_1 = u_26_8_1;
+        if (!vaultData->contains("version") || !(*vaultData)["version"].is_string() || (*vaultData)["version"] == "") {
+            if (u_26_8_1) {
+                (*vaultData)["version"] = "2026.8.1";
+                v_version = "2026.8.1";
+            } else if (u_data) {
+                (*vaultData)["version"] = "2026.6.0";
+                v_version = "2026.6.0";
+            }
+        } else {
+            if (u_26_8_1 && compareVersions((*vaultData)["version"], "2026.8.1") < 0) {
+                (*vaultData)["version"] = "2026.8.1";
+                v_version = "2026.8.1";
+            } else if (u_data && compareVersions((*vaultData)["version"], "2026.6.0") < 0) {
+                (*vaultData)["version"] = "2026.6.0";
+                v_version = "2026.6.0";
+            }
         }
     }
 
@@ -84,12 +94,9 @@ namespace ClientWarden {
             nlohmann::json data = nlohmann::json::parse(networkingData);
 
             if (data.contains("version") && data["version"].is_string()) {
-                if (compareVersions(data["version"], "2026.6.0") >= 0) {
-                    _26_6_0 = true;
-                }
-
-                if (compareVersions(data["version"], "2026.8.1") >= 0) {
-                    _26_8_1 = true;
+                if (compareVersions(data["version"], v_version) >= 0) {
+                    (*vaultData)["version"] = data["version"];
+                    v_version = data["version"];
                 }
 
                 p_networkCheck = false;
@@ -98,11 +105,17 @@ namespace ClientWarden {
     }
 
     bool VaultFeatures::checkAbove26_8_1() {
-        return _26_8_1;
+        if (compareVersions(v_version, "2026.8.1") >= 0) {
+            return true;
+        }
+        return false;
     }
 
     bool VaultFeatures::checkAbove26_6_0() {
-        return _26_6_0 || _26_6_0;
+        if (compareVersions(v_version, "2026.6.0") >= 0) {
+            return true;
+        }
+        return false;
     }
 
     bool VaultFeatures::pendingNetworkCheck() {
