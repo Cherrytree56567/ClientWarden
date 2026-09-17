@@ -44,6 +44,9 @@ namespace ClientWarden {
      * from the Vault Itself.
      * * So, what if I only pass the Vault Session,
      * Vault Crypto and Vault Network to it *
+     * 
+     * 17-09-26 - So I ended up passing the individual
+     * shared ptrs to each one
     */
     class Vault {
     public:
@@ -78,6 +81,10 @@ namespace ClientWarden {
         bool deleteVaultKeysKeychain();
         bool checkVaultKeysKeychain();
         bool getVaultKeysKeychain();
+
+        bool createPasskey(std::string relyingPartyIdentifier, std::string userName, std::string userHandle, std::string clientDataHash, 
+            std::string& credentialId, std::string& attestationObject);
+        bool getPasskey(std::string uuid, std::string& userHandle, std::string& signature, std::string& authenticatorData, std::string& credentialID);
 
         /*
          * Compares current Vault Key and New

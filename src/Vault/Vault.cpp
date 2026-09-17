@@ -1667,4 +1667,21 @@ namespace ClientWarden {
 
         return true;
     }
+
+    bool Vault::createPasskey(std::string relyingPartyIdentifier, std::string userName, 
+        std::string userHandle, std::string clientDataHash, std::string& credentialId, 
+        std::string& attestationObject) {
+        /*
+         * TODO: Implement createPasskey
+        */
+        return true;
+    }
+
+    bool Vault::getPasskey(std::string uuid, std::string& userHandle, std::string& signature, 
+        std::string& authenticatorData, std::string& credentialID) {
+        /*
+         * TODO: Implement getPasskey
+        */
+        return true;
+    }
 }

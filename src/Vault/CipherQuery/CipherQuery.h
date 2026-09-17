@@ -20,6 +20,7 @@ namespace ClientWarden {
         CipherQuery& FilterByCreationDate(std::time_t start, std::time_t end);
         CipherQuery& FilterByRevisionDate(std::time_t start, std::time_t end);
         CipherQuery& FilterByDeletionDate(std::time_t start, std::time_t end);
+        CipherQuery& FilterByPasskey();
         CipherQuery& FilterByBinned();
         CipherQuery& FilterByUnbinned();
         CipherQuery& FilterByArchived();

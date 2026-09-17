@@ -34,6 +34,20 @@ namespace ClientWarden {
         return result;
     }
 
+    std::string b64DecodeString(std::string data) {
+        Botan::secure_vector<uint8_t> b_res = b64Decode(data);
+
+        std::string res(b_res.begin(), b_res.end());
+
+        return res;
+    }
+
+    std::string b64EncodeString(std::string data) {
+        Botan::secure_vector<uint8_t> s_data(data.begin(), data.end());
+
+        return b64Encode(s_data);
+    }
+
     std::time_t BitwardenTime(std::string time) {
         std::tm tmStruct = {};
         double fractional = 0.0;

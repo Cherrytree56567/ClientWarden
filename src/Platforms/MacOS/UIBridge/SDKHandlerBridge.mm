@@ -21,6 +21,9 @@
     [self cb_getTitle];
     [self cb_getUsername];
     [self cb_getPassword];
+    [self cb_createPasskey];
+    [self cb_getPasskeys];
+    [self cb_getPasskeyInfo];
 }
 
 bool compareURLs(std::string url1, std::string url2) {
@@ -233,6 +236,160 @@ bool compareURLs(std::string url1, std::string url2) {
                  ->Close();
 
             return [NSString stringWithUTF8String: c_password.c_str()];
+        } catch (...) {
+            /*
+             * Put an error thing for the log here
+             * DO NOT USE THE SWIFT TOASTS FOR THIS
+             */
+
+            return @"";
+        }
+    };
+}
+
++ (void)cb_createPasskey {
+    SDKHandler.instance.cb_createPasskey = ^NSString* (NSString* info) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_info = info.UTF8String;
+
+            if (c_info == "") {
+                return @"";
+            }
+
+            std::vector<std::string> parts;
+
+            /*
+             * THis part is from claude, but the rest isnt
+             */
+            for (auto part : c_info | std::views::split(",")) {
+                parts.emplace_back(part.begin(), part.end());
+            }
+
+            if (parts.size() != 4) {
+                return @"";
+            }
+
+            std::string relyingPartyIdentifier = ClientWarden::b64DecodeString(parts[0]);
+            std::string userName = ClientWarden::b64DecodeString(parts[1]);
+            std::string userHandle = ClientWarden::b64DecodeString(parts[2]);
+            std::string clientDataHash = ClientWarden::b64DecodeString(parts[3]);
+
+            std::string credentialId = "";
+            std::string attestationObject = "";
+
+            bool res = v_inst.createPasskey(relyingPartyIdentifier, userName, userHandle, clientDataHash, credentialId, attestationObject);
+
+            if (!res) {
+                /*
+                 * Log an error here
+                 */
+                return @"";
+            }
+
+            std::string result = ClientWarden::b64EncodeString(credentialId) + "," + ClientWarden::b64EncodeString(attestationObject);
+
+            return [NSString stringWithUTF8String: result.c_str()];
+        } catch (...) {
+            /*
+             * Put an error thing for the log here
+             * DO NOT USE THE SWIFT TOASTS FOR THIS
+             */
+
+            return @"";
+        }
+    };
+}
+
++ (void)cb_getPasskeys {
+    SDKHandler.instance.cb_getPasskeys = ^NSString* (NSString* website) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_website = website.UTF8String;
+
+            std::vector<std::string> ciphers;
+            
+            ciphers = v_inst.GetCipherQuery()
+                           ->FilterByUnbinned()
+                            .FilterByUnarchived()
+                            .FilterByType(ClientWarden::CipherType::Login)
+                            .FilterByPasskey()
+                            .Get();
+            
+            std::vector<std::string> matchedCips;
+
+            for (auto& cipher : ciphers) {
+                if (cipher == "") {
+                    continue;
+                }
+                
+                std::vector<std::string> websites;
+
+                v_inst.GetItem<ClientWarden::LoginItem>(cipher)
+                     ->GetWebsites(websites)
+                     ->Close();
+                
+                bool webMatched = false;
+                for (auto& l_website : websites) {
+                    if (compareURLs(l_website, c_website)) {
+                        webMatched = true;
+                        break;
+                    }
+                }
+
+                if (webMatched) {
+                    matchedCips.push_back(cipher);
+                }
+
+                websites.clear();
+            }
+
+            std::string result = boost::algorithm::join(matchedCips, ",");
+
+            return [NSString stringWithUTF8String: result.c_str()];
+        } catch (...) {
+            /*
+             * Put an error thing for the log here
+             * DO NOT USE THE SWIFT TOASTS FOR THIS
+             */
+
+            return @"";
+        }
+    };
+}
+
++ (void)cb_getPasskeyInfo {
+    SDKHandler.instance.cb_getPasskeyInfo = ^NSString* (NSString* uuid) {
+        try {
+            ClientWarden::Vault& v_inst = ClientWarden::Vault::Instance();
+
+            std::string c_uuid = uuid.UTF8String;
+            std::transform(c_uuid.begin(), c_uuid.end(), c_uuid.begin(), ::tolower);
+
+            if (c_uuid == "") {
+                return @"";
+            }
+
+            std::string userHandle = "";
+            std::string signature = "";
+            std::string authenticatorData = "";
+            std::string credentialID = "";
+
+            bool res = v_inst.getPasskey(c_uuid, userHandle, signature, authenticatorData, credentialID);
+
+            if (!res) {
+                /*
+                 * Log an error here
+                 */
+                return @"";
+            }
+
+            std::string result = ClientWarden::b64EncodeString(userHandle) + "," + ClientWarden::b64EncodeString(signature) + ","
+                ClientWarden::b64EncodeString(authenticatorData) + "," + ClientWarden::b64EncodeString(credentialID);
+
+            return [NSString stringWithUTF8String: result.c_str()];
         } catch (...) {
             /*
              * Put an error thing for the log here

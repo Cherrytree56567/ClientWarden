@@ -88,6 +88,21 @@ namespace ClientWarden {
         return *this;
     }
 
+    CipherQuery& CipherQuery::FilterByPasskey() {
+        for (auto it = ciphers.begin(); it != ciphers.end();) {
+            bool notLogin = (*it).contains("type") && (*it)["type"].get<int>() != static_cast<int>(1);
+            bool notFido = !(*it).contains("fido2Credentials") || (*it)["fido2Credentials"].is_null();
+
+            if (notLogin || notFido) {
+                it = ciphers.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        return *this;
+    }
+
     CipherQuery& CipherQuery::FilterByBinned() {
         for (auto it = ciphers.begin(); it != ciphers.end();) {
             if (!(*it).contains("deletedDate")) {

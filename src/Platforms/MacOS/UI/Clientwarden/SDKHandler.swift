@@ -21,7 +21,7 @@ final class SDKHandler: NSObject {
          * GetTitle, GetUsername and GetPassword all require a UUID
          * which will then return the correct value
          */
-        private let requests = ["getLogins", "getTitle", "getUsername", "getPassword", "getState"]
+        private let requests = ["getLogins", "getTitle", "getUsername", "getPassword", "getState", "createPasskey", "getPasskeys", "getPasskeyInfo"]
         
         /*
          * Callbacks
@@ -30,6 +30,9 @@ final class SDKHandler: NSObject {
         @objc public var cb_getTitle: ((String) -> String)?
         @objc public var cb_getUsername: ((String) -> String)?
         @objc public var cb_getPassword: ((String) -> String)?
+        @objc public var cb_createPasskey: ((String) -> String)?
+        @objc public var cb_getPasskeys: ((String) -> String)?
+        @objc public var cb_getPasskeyInfo: ((String) -> String)?
         
         func observe() {
             #if NON_XCODE_BUILD
@@ -130,6 +133,18 @@ final class SDKHandler: NSObject {
                         responseValue = ClientwardenWindow.instance.p_state == .Vault ? "true" : "false"
                         break
                     
+                    case "createPasskey":
+                        responseValue = createPasskey(uuid: requestValue)
+                        break
+                        
+                    case "getPasskeys":
+                        responseValue = getPasskeys(uuid: requestValue)
+                        break
+                        
+                    case "getPasskeyInfo":
+                        responseValue = getPasskeyInfo(uuid: requestValue)
+                        break
+                    
                     default:
                         logger.error("Invalid Request: \(request)")
                         break
@@ -206,6 +221,33 @@ final class SDKHandler: NSObject {
                 return res
             } else {
                 logger.error("Failed to get Password")
+                return ""
+            }
+        }
+        
+        private func createPasskey(uuid: String) -> String {
+            if let res = cb_createPasskey?(uuid) {
+                return res
+            } else {
+                logger.error("Failed to create Passkey")
+                return ""
+            }
+        }
+        
+        private func getPasskeys(uuid: String) -> String {
+            if let res = cb_getPasskeys?(uuid) {
+                return res
+            } else {
+                logger.error("Failed to get Passkeys")
+                return ""
+            }
+        }
+        
+        private func getPasskeyInfo(uuid: String) -> String {
+            if let res = cb_getPasskeyInfo?(uuid) {
+                return res
+            } else {
+                logger.error("Failed to get Passkey Info")
                 return ""
             }
         }

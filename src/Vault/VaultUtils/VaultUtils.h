@@ -20,6 +20,8 @@
 namespace ClientWarden {
     std::string b64Encode(const Botan::secure_vector<uint8_t>& data); // Claude Func
     Botan::secure_vector<uint8_t> b64Decode(const std::string& data); // Claude Func
+    std::string b64EncodeString(std::string data);
+    std::string b64DecodeString(std::string data); 
     std::time_t BitwardenTime(std::string time);
     std::string getBitwardenTime();
     std::string uniqueGuid();
