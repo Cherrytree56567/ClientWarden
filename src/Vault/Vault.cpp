@@ -15,8 +15,10 @@ namespace ClientWarden {
         if (!logger) {
             spdlog::set_pattern("[%H:%M:%S] [%n] [%^---%L---%$] [thread %t] %v");
 
-            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(storage.path.string() + "/cw.log", true);
+            std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> console_sink = 
+                std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            std::shared_ptr<spdlog::sinks::basic_file_sink_mt> file_sink = 
+                std::make_shared<spdlog::sinks::basic_file_sink_mt>(storage.path.string() + "/cw.log", true);
 
             logger = std::make_shared<spdlog::logger>("ClientWarden::Vault", spdlog::sinks_init_list{console_sink, file_sink});
             logger->set_level(spdlog::level::trace);
@@ -24,6 +26,9 @@ namespace ClientWarden {
             spdlog::register_logger(logger);
         }
 
+        /*
+         * DOCS: Separate Threads into services
+        */
         session.wssThread.setCallback([this](const std::atomic<bool>& shouldThread) {
             keychain::Error e1;
             keychain::Error e2;
@@ -127,11 +132,18 @@ namespace ClientWarden {
 
         session.refreshThread.setCallback([this](const std::atomic<bool>& shouldThread) {
             while (shouldThread.load()) {
+                /*
+                 * Don't refresh if the device is offline
+                */
                 if (network.getConnectivity() == VaultConnectivity::Offline) {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     continue;
                 }
 
+                /*
+                 * Get the Next Refresh Time and Access String
+                 * DOCS: Access String should be stored in session
+                */
                 keychain::Error e1;
                 keychain::Error e2;
 
@@ -143,11 +155,10 @@ namespace ClientWarden {
                     return false;
                 }
 
-                std::tm tm = {};
-                std::istringstream ss(needsRefreshTime);
-                ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-                tm.tm_isdst = -1;
-                std::time_t expiry = std::mktime(&tm);
+                /*
+                 * Compare expiry vs current
+                */
+                std::time_t expiry = BitwardenTime(needsRefreshTime);
                 std::time_t now = std::time(nullptr);
 
                 if (now >= expiry || !network.checkAccessTokenValidity(accessString)) {
@@ -160,11 +171,19 @@ namespace ClientWarden {
 
                     std::optional<nlohmann::json> refreshBody = network.refreshToken(refreshTime);
 
+                    /*
+                     * If it fails, then wait to prevent rate limiting and then retry
+                    */
                     if (!refreshBody.has_value()) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(500));
                         continue;
                     }
 
+                    /*
+                     * Log out if the refresh Token is invalid, bc
+                     * if its invalid, that means that the refresh token has
+                     * been revoked
+                    */
                     if (refreshBody.value().contains("error") && refreshBody.value()["error"].is_string() && 
                         refreshBody.value()["error"] == "invalid_grant") {
                         std::thread([this]() {
@@ -173,6 +192,18 @@ namespace ClientWarden {
                         break;
                     }
 
+                    /*
+                     * Check if the AccessToken and Expires Data is valid
+                    */
+                    if (!refreshBody.value().contains("access_token") || !refreshBody.value()["access_token"].is_string() ||
+                        !refreshBody.value().contains("expires_in") || !refreshBody.value()["expires_in"].is_string()) {
+                        logger->info("Failed to get access token from network");
+                        return false;
+                    }
+
+                    /*
+                     * Set Access Token and Next Expires In
+                    */
                     keychain::setPassword(CWbundleID, "accessString", refreshBody.value()["access_token"], e1);
                     keychain::setPassword(CWbundleID, "expiresIn", refreshBody.value()["expires_in"], e2);
 
@@ -181,12 +212,8 @@ namespace ClientWarden {
                         return false;
                     }
 
-                    std::time_t now = std::time(nullptr) + refreshBody.value()["expires_in"].get<int>();
-                    std::tm* localTime = std::localtime(&now);
-
-                    std::ostringstream oss;
-                    oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-                    keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
+                    std::string nextRefreshTime = getBitwardenTime(refreshBody.value()["expires_in"].get<int>());
+                    keychain::setPassword(CWbundleID, "needsRefreshTime", nextRefreshTime, e1);
 
                     if (e1.type != keychain::ErrorType::NoError) {
                         logger->info("Failed to set keychain value");
@@ -201,12 +228,18 @@ namespace ClientWarden {
         session.connectivityThread.setCallback([this](const std::atomic<bool>& shouldThread) {
             while (shouldThread.load()) {
                 network.checkConnectivity();
+
+                /*
+                 * If the device isnt offline and the vault hasn't been versioned against the
+                 * network, then we should check.
+                */
                 if (network.getConnectivity() == VaultConnectivity::Online && features.pendingNetworkCheck()) {
                     std::optional<std::string> res = network.getVersion();
                     if (res.has_value()) {
                         features.determineVaultVersion(res.value());
                     }
                 }
+
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             return true;
@@ -215,18 +248,27 @@ namespace ClientWarden {
         session.autoLockThread.setCallback([this](const std::atomic<bool>& shouldThread) {
             while (shouldThread.load()) {
                 std::unique_lock<std::recursive_mutex> lock_chk(inactivityTimerMutex);
+
+                /*
+                 * Used to auto lock
+                */
                 if (state == AuthState::Unlocked && inactivityTimer.has_value()) {
                     time_t now = time(nullptr);
                     double elapsed = difftime(now, *inactivityTimer);
+
                     if (elapsed >= static_cast<double>(GetAutoLockDelay())) {
                         inactivityTimer = std::nullopt;
+
                         SetLockPage();
+
                         std::thread([this]() {
                             Lock();
                         }).detach();
                     }
                 }
+
                 lock_chk.unlock();
+
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
             return true;
@@ -264,6 +306,9 @@ namespace ClientWarden {
             network.initNetwork(vaultURL, mainURL, apiURL, iconURL);
         }
 
+        /*
+         * DOCS: Should be part of Vault Session
+        */
         if (storage.exists("settings.json")) {
             std::unique_lock<std::recursive_mutex> lock_sdset(session.vaultDataMutex);
             *session.settingsData = nlohmann::json::parse(storage.read("settings.json"));
@@ -286,18 +331,29 @@ namespace ClientWarden {
      * Vault, only the UIBridge must use it, 
      * bc there is a possibility for Vault
      * to be expanded to multiple instances
+     * 
+     * This is a hacky solution
+     * DOCS: Use VaultManager
     */
+    
+    Vault* Vault::inst = nullptr;
+
     Vault& Vault::Instance() {
-        static Vault inst;
-        return inst;
+        if (!inst) {
+            inst = new Vault();
+        }
+
+        return *inst;
     }
 
-    std::vector<std::string> Vault::getAutoFillCiphers(std::string url) {
-        std::vector<std::string> cipherIDs;
-
-        return cipherIDs;
+    void Vault::DestroyInstance() {
+        delete inst;
+        inst = nullptr;
     }
 
+    /*
+     * Store the URI's in Keychain for easy access
+    */
     void Vault::SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri) {
         keychain::Error e1;
         keychain::Error e2;
@@ -322,6 +378,17 @@ namespace ClientWarden {
     }
 
     bool Vault::pLogin(std::optional<nlohmann::json> token) {
+        if (!token.has_value() || !token.value().contains("access_token") || !token.value().contains("refresh_token") ||
+            !token.value().contains("expires_in") || !token.value()["access_token"].is_string() ||
+            !token.value()["refresh_token"].is_string() || !token.value()["expires_in"].is_number()) {
+            logger->info("Invalid token in pLogin");
+            return false;
+        }
+
+        /*
+         * First, we must set the accessString and refreshToken to the Keychain
+         * for security
+        */
         keychain::Error e1;
         keychain::Error e2;
         keychain::Error e3;
@@ -336,27 +403,26 @@ namespace ClientWarden {
             return false;
         }
 
-        std::time_t now = std::time(nullptr) + std::stoi(keychain::getPassword(CWbundleID, "expiresIn", e1));
-        std::tm* localTime = std::localtime(&now);
-
-        if (e1.type != keychain::ErrorType::NoError) {
-            logger->info("Failed to get KeyChain Value");
-            return false;
-        }
-
-        std::ostringstream oss;
-        oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-        keychain::setPassword(CWbundleID, "needsRefreshTime", oss.str(), e1);
+        std::string refreshTime = getBitwardenTime(token.value()["expires_in"].get<int>());
+        keychain::setPassword(CWbundleID, "needsRefreshTime", refreshTime, e1);
 
         if (e1.type != keychain::ErrorType::NoError) {
             logger->info("Failed to set KeyChain Value");
             return false;
         }
 
+        /*
+         * Run a FullSync
+         * - Replace vault.json with a fresh one 
+         *   from the server
+        */
         if (!Sync(true)) {
             return false;
         }
 
+        /*
+         * Get the Protected key to retrieve the Vault Enc and Mac Key
+        */
         std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
         std::string protectedKey = (*session.vaultData)["profile"]["key"];
         lock_vdget.unlock();
@@ -369,6 +435,9 @@ namespace ClientWarden {
         *session.encKey = std::move(encKey);
         *session.macKey = std::move(macKey);
 
+        /*
+         * DOCS: Should use a service.start() model
+        */
         session.wssThread.start();
         session.refreshThread.start();
         session.connectivityThread.start();
@@ -376,6 +445,9 @@ namespace ClientWarden {
 
         state = AuthState::Unlocked;
 
+        /*
+         * Get the Vault Version
+        */
         features.determineVaultVersion();
 
         if (network.getConnectivity() == VaultConnectivity::Online) {
@@ -414,6 +486,10 @@ namespace ClientWarden {
         keychain::setPassword(CWbundleID, "kdfParallelism", "0", e4);
         keychain::setPassword(CWbundleID, "salt", email, e5);
         keychain::setPassword(CWbundleID, "email", email, e6);
+
+        /*
+         * Set Argon2ID values if its Argon2ID
+        */
         if (preLogin.value()["kdf"].get<int>() == 1) {
             if (preLogin.value().contains("kdfMemory") && preLogin.value()["kdfMemory"].is_number() &&
                 preLogin.value().contains("kdfParallelism") && preLogin.value()["kdfParallelism"].is_number()) {
@@ -429,19 +505,23 @@ namespace ClientWarden {
             return false;
         }
 
-        std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
-        int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
-        int kdfMemory = std::stoi(keychain::getPassword(CWbundleID, "kdfMemory", e3));
-        int kdfParallelism = std::stoi(keychain::getPassword(CWbundleID, "kdfParallelism", e4));
-        int kdfType = std::stoi(keychain::getPassword(CWbundleID, "kdfType", e5));
+        /*
+         * Avoid Using Keychain as it is resource intensive
+         */
+        std::string salt = email;
+        int kdfIterations = preLogin.value()["kdfIterations"].get<int>();
+        int kdfType = preLogin.value()["kdf"].get<int>();
+        int kdfMemory = 0;
+        int kdfParallelism = 0;
 
-        if (e1.type != keychain::ErrorType::NoError || e2.type != keychain::ErrorType::NoError || 
-            e3.type != keychain::ErrorType::NoError || e4.type != keychain::ErrorType::NoError ||
-            e5.type != keychain::ErrorType::NoError) {
-            logger->info("Failed to get KeyChain Value");
-            return false;
+        if (preLogin.value()["kdf"].get<int>() == 1) {
+            kdfMemory = preLogin.value()["kdfMemory"].get<int>();
+            kdfParallelism = preLogin.value()["kdfParallelism"].get<int>();
         }
 
+        /*
+         * Get the Internal and Master Password Hash
+        */
         *session.internalKey = std::move(crypto.makeKey(password, salt, kdfType, kdfIterations, kdfMemory, kdfParallelism));
         session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
@@ -454,6 +534,10 @@ namespace ClientWarden {
         std::optional<nlohmann::json> token = network.getToken(email, session.masterPasswordHash);
         if (token.has_value()) {
             if (token.value().contains("error_description")) {
+                /*
+                 * Check for 2FA
+                 * DOCS: Use VaultAuthFlow to co-ordinate which 2FA can be used 
+                */
                 if (token.value()["error_description"] == "Two factor required." && token.value().contains("TwoFactorProviders") && 
                     !token.value()["TwoFactorProviders"].empty()) {
                     if (token.value()["TwoFactorProviders"][0] == "0") {
@@ -522,6 +606,9 @@ namespace ClientWarden {
         }
     }
 
+    /*
+     * Passkey Login
+    */
     bool Vault::Login(std::string id, std::string authData, std::string clientData, std::string signature) {
         std::optional<nlohmann::json> token;
 
@@ -569,11 +656,19 @@ namespace ClientWarden {
     }
 
     bool Vault::Lock() {
+        state = AuthState::Unlockable;
+
+        /*
+         * Stop all Services
+        */
         session.wssThread.stop();
         session.refreshThread.stop();
         session.connectivityThread.stop();
         session.autoLockThread.stop();
         
+        /*
+         * Clean Up Memory
+        */
         Botan::secure_scrub_memory(session.internalKey->data(), session.internalKey->size());
         OPENSSL_cleanse(session.masterPasswordHash.data(), session.masterPasswordHash.size());
         Botan::secure_scrub_memory(session.encKey->data(), session.encKey->size());
@@ -617,10 +712,16 @@ namespace ClientWarden {
     }
 
     bool Vault::pUnlock() {
+        /*
+         * Get Protected Key
+        */
         std::unique_lock<std::recursive_mutex> lock_vdget(session.vaultDataMutex);
         std::string protectedKey = (*session.vaultData)["profile"]["key"];
         lock_vdget.unlock();
 
+        /*
+         * Get Vault Enc and Mac Keys
+        */
         Botan::secure_vector<uint8_t> stretchedEncKey = crypto.hkdfStretch("enc");
         Botan::secure_vector<uint8_t> stretchedMacKey = crypto.hkdfStretch("mac");
 
@@ -632,17 +733,26 @@ namespace ClientWarden {
         *session.encKey = std::move(encKey);
         *session.macKey = std::move(macKey);
 
+        /*
+         * Start All Services
+        */
         session.wssThread.start();
         session.refreshThread.start();
         session.connectivityThread.start();
         session.autoLockThread.start();
 
+        /*
+         * Sync in the Background
+        */
         std::jthread t([&] {
             Sync();
         });
 
         state = AuthState::Unlocked;
 
+        /*
+         * Get Vault Version
+        */
         features.determineVaultVersion();
 
         if (network.getConnectivity() == VaultConnectivity::Online) {
@@ -667,6 +777,9 @@ namespace ClientWarden {
                 return true;
             }
 
+            /*
+             * Retrieve Sensitive Data
+            */
             std::string salt = keychain::getPassword(CWbundleID, "salt", e1);
             int kdfIterations = std::stoi(keychain::getPassword(CWbundleID, "kdfIterations", e2));
             int kdfMemory = std::stoi(keychain::getPassword(CWbundleID, "kdfMemory", e3));
@@ -680,6 +793,9 @@ namespace ClientWarden {
                 return false;
             }
 
+            /*
+             * Get the Internal and Master Password Hash
+            */
             *session.internalKey = std::move(crypto.makeKey(password, salt, kdfType, kdfIterations, kdfMemory, kdfParallelism));
             session.masterPasswordHash = crypto.hashedPassword(password, *session.internalKey);
 
@@ -697,6 +813,9 @@ namespace ClientWarden {
         }
     }
 
+    /*
+     * Unlock via Biometrics
+    */
     bool Vault::Unlock() {
         try {
             keychain::Error e1;

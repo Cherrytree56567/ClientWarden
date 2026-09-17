@@ -23,6 +23,7 @@ extern "C" void SetLockPage() {
 + (void)setupCallbacks {
     [self cb_getState];
     [self cb_lock];
+    [self cb_shutdown];
 }
 
 /*
@@ -63,6 +64,22 @@ extern "C" void SetLockPage() {
         } catch (...) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Lock Vault"];
+                [[ToastStore instance] addToast:toast];
+            });
+            return NO;
+        }
+    };
+}
+
++ (void)cb_shutdown {
+    ClientwardenWindow.instance.cb_shutdown = ^BOOL {
+        try {
+            ClientWarden::Vault::DestroyInstance();
+
+            return (BOOL)true;
+        } catch (...) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                Toast* toast = [[Toast alloc] initWithMessage:@"Failed to Shutdown Vault"];
                 [[ToastStore instance] addToast:toast];
             });
             return NO;

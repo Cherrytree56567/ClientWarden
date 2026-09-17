@@ -84,12 +84,15 @@ namespace ClientWarden {
         return t;
     }
 
-    std::string getBitwardenTime() {
+    /*
+     * Additional Time is in (s)
+    */
+    std::string getBitwardenTime(int additionalTime) {
         auto now = std::chrono::system_clock::now();
         auto now_seconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - now_seconds).count();
 
-        std::time_t t = std::chrono::system_clock::to_time_t(now_seconds);
+        std::time_t t = std::chrono::system_clock::to_time_t(now_seconds) + additionalTime;
         std::tm utc_tm = *gmtime(&t);
 
         std::ostringstream oss;

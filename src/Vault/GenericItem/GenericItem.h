@@ -86,6 +86,7 @@ namespace ClientWarden {
         void GetRepromptImpl(bool& val);
 
     protected:
+        void SyncItem();
         /*
          * Secret Data
         */

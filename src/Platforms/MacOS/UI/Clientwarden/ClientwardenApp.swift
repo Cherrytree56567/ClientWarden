@@ -63,12 +63,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
     
-    func applicationWillTerminate(_ notification: Notification) -> NSApplication.TerminateReply {
-        if let window = NSApp.windows.first {
-            _ = window.delegate?.windowShouldClose?(window)
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let window = NSApp.windows.first(where: { $0.title == "Clientwarden" }) else {
+            return .terminateNow
         }
 
-        return .terminateNow
+        window.close()
+        
+        if (ClientwardenWindow.instance.shutdown() == true) {
+            return .terminateNow
+        } else {
+            return .terminateCancel
+        }
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
@@ -129,12 +135,27 @@ final class ClientwardenWindow: NSObject {
     
     @objc public var cb_getState: (() -> WindowState)?
     @objc public var cb_lock: (() -> Bool)?
+    @objc public var cb_shutdown: (() -> Bool)?
     
     func getState() {
         if let res = cb_getState?() {
             state = res
         } else {
             ToastStore.instance.toasts.append(Toast(message: "No callback set for getState"))
+        }
+    }
+    
+    func shutdown() -> Bool {
+        if let res = cb_shutdown?() {
+            if (!res) {
+                ToastStore.instance.toasts.append(Toast(message: "Failed to Shutdown"))
+                return false
+            }
+            
+            return true
+        } else {
+            ToastStore.instance.toasts.append(Toast(message: "No callback set for getState"))
+            return false
         }
     }
     

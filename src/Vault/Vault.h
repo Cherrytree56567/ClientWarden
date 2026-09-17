@@ -54,7 +54,11 @@ namespace ClientWarden {
         ~Vault();
 
         static Vault& Instance();
+        static void DestroyInstance();
 
+        /*
+         * Core Vault - Lock and Unlock
+        */
         bool Login(std::string& email, std::string& password);
         bool Login(std::string code);
         bool Login(std::string id, std::string authData, std::string clientData, std::string signature);
@@ -64,27 +68,32 @@ namespace ClientWarden {
         bool Lock();
         bool Logout();
 
+        /*
+         * Biometric Support
+        */
         bool UnlockUsingKeys();
-
-        bool Sync(bool fullSync = false);
-
-        void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
-
-        bool checkReprompt(std::string password);
-
-        void SetScreenshotOption(bool value);
-        bool GetScreenshotOption();
-        void SetAutoLockDelay(int value);
-        int GetAutoLockDelay();
 
         bool saveVaultKeysKeychain();
         bool deleteVaultKeysKeychain();
         bool checkVaultKeysKeychain();
         bool getVaultKeysKeychain();
 
-        bool createPasskey(std::string relyingPartyIdentifier, std::string userName, std::string userHandle, std::string clientDataHash, 
-            std::string& credentialId, std::string& attestationObject);
-        bool getPasskey(std::string uuid, std::string& userHandle, std::string& signature, std::string& authenticatorData, std::string& credentialID);
+        /*
+         * Should be part of VaultSync
+        */
+        bool Sync(bool fullSync = false);
+
+        void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
+
+        bool checkReprompt(std::string password);
+
+        /*
+         * Should be part of VaultSettings
+        */
+        void SetScreenshotOption(bool value);
+        bool GetScreenshotOption();
+        void SetAutoLockDelay(int value);
+        int GetAutoLockDelay();
 
         /*
          * Compares current Vault Key and New
@@ -92,6 +101,8 @@ namespace ClientWarden {
          * 
          * If both vault keys don't match, then
          * logout.
+         * 
+         * Should be a part of VaultSession
         */
         bool checkVaultValidity();
 
@@ -113,13 +124,19 @@ namespace ClientWarden {
 
         /*
          * Auto Fill Stuff
+         *
+         * Should be in VaultAutoFill
         */
-        std::vector<std::string> getAutoFillCiphers(std::string url);
+        bool createPasskey(std::string relyingPartyIdentifier, std::string userName, std::string userHandle, std::string clientDataHash, 
+            std::string& credentialId, std::string& attestationObject);
+        bool getPasskey(std::string uuid, std::string& userHandle, std::string& signature, std::string& authenticatorData, std::string& credentialID);
 
         /*
          * Uses Vault Crypto and Vault Network.
          * Aims to put crypto and networking stuff in the
          * Vault.
+         * 
+         * Should be part of Vault Orchestrator
         */
         std::optional<nlohmann::json> NewItem(nlohmann::json encryptedData, bool performVaultOps = false, nlohmann::json vaultOpsData = nlohmann::json());
         bool UpdateItem(nlohmann::json encryptedData);
@@ -141,10 +158,14 @@ namespace ClientWarden {
         std::recursive_mutex inactivityTimerMutex;
         std::optional<time_t> inactivityTimer;
 
-        std::string passkeyChallenge;
-
+        /*
+         * Should be in Vault Settings protected by a func
+        */
         keychain::SecurityDetail bioDetail = keychain::SecurityDetail::Secure;
 
+        /*
+         * Should be private and only accessable by a func
+        */
         VaultSession session;
         VaultCrypto crypto;
         VaultNetwork network;
@@ -154,8 +175,18 @@ namespace ClientWarden {
         Storage storage;
         Clipboard clipboard;
 
+        /*
+         * DOCS: Should be private and only accessable by a func
+         *
+         * This is populated by the Login Passkey Funcs and then
+         * used by the UI Bridge
+        */
+        std::string passkeyChallenge;
+
     private:
         bool pLogin(std::optional<nlohmann::json> token);
         bool pUnlock();
+
+        static Vault* inst;
     };
 }

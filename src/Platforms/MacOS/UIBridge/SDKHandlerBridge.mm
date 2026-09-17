@@ -263,7 +263,7 @@ bool compareURLs(std::string url1, std::string url2) {
             /*
              * THis part is from claude, but the rest isnt
              */
-            for (auto part : c_info | std::views::split(",")) {
+            for (auto part : c_info | std::views::split(',')) {
                 parts.emplace_back(part.begin(), part.end());
             }
 
@@ -386,7 +386,7 @@ bool compareURLs(std::string url1, std::string url2) {
                 return @"";
             }
 
-            std::string result = ClientWarden::b64EncodeString(userHandle) + "," + ClientWarden::b64EncodeString(signature) + ","
+            std::string result = ClientWarden::b64EncodeString(userHandle) + "," + ClientWarden::b64EncodeString(signature) + "," +
                 ClientWarden::b64EncodeString(authenticatorData) + "," + ClientWarden::b64EncodeString(credentialID);
 
             return [NSString stringWithUTF8String: result.c_str()];

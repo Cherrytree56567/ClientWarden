@@ -47,6 +47,7 @@ final class ItemsPanel: NSObject {
                 elements.append(res)
                 query()
                 SidePanel.instance.viewItem(cb_uuid: res.uuid)
+                SidePanel.instance.saveSnapshot()
                 SidePanel.instance.editable = true
             }
         } else {

@@ -23,6 +23,6 @@ namespace ClientWarden {
     std::string b64EncodeString(std::string data);
     std::string b64DecodeString(std::string data); 
     std::time_t BitwardenTime(std::string time);
-    std::string getBitwardenTime();
+    std::string getBitwardenTime(int additionalTime = 0);
     std::string uniqueGuid();
 }
