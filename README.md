@@ -23,7 +23,7 @@
   <h3 align="center">ClientWarden</h3>
 
   <p align="center">
-    A Secure and Well Designed Alternative to the Desktop Bitwarden Client. Clientwarden uses WinUI for the Windows UI instead of Electron for efficiency and uses Botan for TOTP Codes, which will soon also be used for `secure_vector`'s and `secure_allocator`'s. Currently only Logins are clickable in the Clientwarden UI and only Username, Password's and Websites are able to be displayed.
+    ClientWarden is designed to be a *secure*, *visually appealing*, *well designed*, *lightweight* and *platform specific* alternative to the default Bitwarden Client which is based on Electron. Currently ClientWarden is only supported on MacOS with Linux and Android Support coming next.
     <br />
     <br />
     <a href="https://github.com/Cherrytree56567/ClientWarden/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
@@ -62,11 +62,11 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Cherrytree56567/ClientWarden)
 
-While the Bitwarden Web Client looks ok, the desktop Bitwarden Client doesn't look very good and uses lots of memory, mainly due to electron. There are different Password Managers like 1Pass which do use Electron, but have an appealing UI. My main inspiration is 1Password because it looks the best out of all the major (non Open Source) Password Managers (LastPass, Bitwarden and 1Pass). The main goal is to make an effecient, safe and appealing Password Manager based on Bitwarden.
+The official BitWarden Client is inefficient, resource intensive and uses electron and there aren't any currently maintained open-source BitWarden clients for desktop. Clientwarden is a native, platform-specific BitWarden client that aims to match the core BitWarden features while being well designed, visually appealing, lightweight and secure. Some functionality (like Passkey Login, Device Login, etc) is still being implemented.
 
 Anyways, here are some reasons to use Clientwarden:
-* Clientwarden uses WinUI to blend in with Windows and look as good as possible
-* Clientwarden uses Botan secure_vector's for storing passwords safely (still being impl'd)
+* Clientwarden uses SwiftUI to blend in with MacOS and look as good as possible
+* Clientwarden uses Botan secure_vector's for storing passwords safely
 * Clientwarden avoids using too much memory
 
 ### Built With
@@ -81,7 +81,7 @@ Anyways, here are some reasons to use Clientwarden:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-Here are some instructions on how to build Clientwarden, currently only on windows pc's.
+Here are some instructions on how to build Clientwarden, currently only on MacOS.
 
 ### Prerequisites
 
