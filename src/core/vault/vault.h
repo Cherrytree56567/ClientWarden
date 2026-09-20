@@ -51,6 +51,17 @@ namespace clientwarden {
     using SignupCredential = std::variant<PasswordCredential>;
     using UnlockCredential = std::variant<UnlockPasswordCredential, BiometricCredential>;
 
+    enum class AuthState {
+        Unknown,
+        LoggedOut,
+        Unlockable,
+        WaitingForTOTP,
+        WaitingForDeviceVerif,
+        WaitingForPasskey,
+        Unlocked,
+        Failed
+    };
+
     class Vault {
     public:
         Vault();
@@ -61,8 +72,33 @@ namespace clientwarden {
         bool lock();
         bool logout();
 
+        bool isBiometricUnlockActive();
+        bool setupBiometricUnlock();
+        bool removeBiometricUnlock();
+
+        bool checkReprompt(Botan::secure_vector<uint8_t> password);
+
+        template <typename Derived>
+        std::shared_ptr<Derived> GetItem(std::string uuid) {
+            return std::make_shared<Derived>(*this, uuid);
+        }
+
+        template <typename Derived>
+        std::shared_ptr<Derived> CreateItem() {
+            return std::make_shared<Derived>(*this);
+        }
+        
+        std::shared_ptr<GenericItem> GetItem(std::string uuid);
+        std::shared_ptr<Folder> GetFolder(std::string uuid);
+        std::shared_ptr<Folder> CreateFolder();
+        std::vector<std::string> GetFolders();
+        std::shared_ptr<CipherQuery> GetCipherQuery();
+
         bool setStorage(std::shared_ptr<Storage> storage);
+
+        AuthState getState();
     protected:
+        AuthState m_state;
         /*
          * TODO: Store Vault Stuff here like Crypto, Network, etc
         */

@@ -83,6 +83,9 @@ namespace ClientWarden {
         */
         bool Sync(bool fullSync = false);
 
+        /*
+         * Should be part of VaultNetwork
+        */
         void SetUris(std::string vaultUri, std::string mainUri, std::string apiUri, std::string iconUri, std::string wssUri);
 
         bool checkReprompt(std::string password);
