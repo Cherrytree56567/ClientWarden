@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${vcpkgRoot}/x64-windows/include",
-                "D:/vcpkg/installed/x64-windows/include/botan-3"
+                "D:/vcpkg/installed/x64-windows/include/botan-3",
+                "."
             ],
             "defines": [
                 "_DEBUG",
@@ -16,7 +17,7 @@
             "compilerPath": "cl.exe",
             "cStandard": "c17",
             "cppStandard": "c++20",
-            "intelliSenseMode": "windows-msvc-x64",
+            "intelliSenseMode": "macos-gcc-arm64",
             "compilerArgs": [
                 "/std:c++latest"
             ]

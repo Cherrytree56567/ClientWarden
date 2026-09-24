@@ -24,7 +24,7 @@ namespace clientwarden {
         bool vaultExists(boost::uuids::uuid uuid);
 
         std::optional<boost::uuids::uuid> login(Credential cred, AuthResult& o_result);
-        std::optional<boost::uuids::uuid> signup(Credential cred, AuthResult& o_result);
+        std::optional<boost::uuids::uuid> signup(SignupCredential cred, AuthResult& o_result);
         bool logout(boost::uuids::uuid uuid);
         bool lock(boost::uuids::uuid uuid);
 
@@ -33,12 +33,13 @@ namespace clientwarden {
     
     private:
         bool loadVaults();
-        /*
+        /**
          * @brief Holds a map of registered vaults
-         * @param boost::uuids::uuid Used to store the UUID of the Vault
+         * @param boost::uuids::uuid Used to store the UUID of the main Vault
          * @param std::shared_ptr<Vault> Used to store a pointer to the Vault class to allow
          *  derived classes.
         */
+        std::map<boost::uuids::uuid, std::shared_ptr<Vault>> m_pending_vaults_;
         std::map<boost::uuids::uuid, std::shared_ptr<Vault>> m_vaults_;
         boost::uuids::uuid m_main_vault_;
     };
