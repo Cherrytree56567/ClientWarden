@@ -92,21 +92,22 @@ namespace clientwarden {
     class Vault {
     public:
         Vault(boost::uuids::uuid uuid);
+        virtual ~Vault() = default;
 
-        AuthResult login(Credential cred);
-        AuthResult signup(SignupCredential cred);
-        AuthResult unlock(UnlockCredential cred);
-        bool lock();
-        bool logout();
+        virtual AuthResult login(Credential cred) = 0;
+        virtual AuthResult signup(SignupCredential cred) = 0;
+        virtual AuthResult unlock(UnlockCredential cred) = 0;
+        virtual bool lock() = 0;
+        virtual bool logout() = 0;
 
-        bool isBiometricUnlockActive();
-        bool setupBiometricUnlock();
-        bool removeBiometricUnlock();
+        virtual bool isBiometricUnlockActive() = 0;
+        virtual bool setupBiometricUnlock() = 0;
+        virtual bool removeBiometricUnlock() = 0;
 
-        bool checkReprompt(Botan::secure_vector<uint8_t> password);
+        virtual bool checkReprompt(Botan::secure_vector<uint8_t> password) = 0;
 
         template <typename Derived>
-        std::shared_ptr<Derived> getItem(boost::uuids::uuid uuid) {
+        std::shared_ptr<Derived> getDerivedItem(boost::uuids::uuid uuid) {
             return std::make_shared<Derived>(*this, uuid);
         }
 
@@ -115,30 +116,36 @@ namespace clientwarden {
             return std::make_shared<Derived>(*this);
         }
         
-        std::shared_ptr<GenericItem> getItem(boost::uuids::uuid uuid);
-        std::shared_ptr<Folder> getFolder(boost::uuids::uuid uuid);
-        std::shared_ptr<Folder> createFolder();
-        std::shared_ptr<CipherQuery> getCipherQuery();
+        virtual std::shared_ptr<GenericItem> getItem(boost::uuids::uuid uuid) = 0;
+        virtual std::shared_ptr<Folder> getFolder(boost::uuids::uuid uuid) = 0;
+        virtual std::shared_ptr<Folder> createFolder() = 0;
+        virtual std::shared_ptr<CipherQuery> getCipherQuery() = 0;
 
         AuthState getState();
+        std::shared_ptr<vault::Orchestrator> getOrchestrator();
+        std::shared_ptr<vault::Versioning> getVersioning();
+        std::shared_ptr<vault::Settings> getSettings();
+        std::shared_ptr<vault::AutoFill> getAutoFill();
+
+        virtual Vendor getVendor() = 0;
     protected:
         std::shared_ptr<Storage> getStorage();
 
         AuthState m_state;
-        /*
-         * TODO: Store Vault Stuff here like Crypto, Network, etc
-        */
         std::shared_ptr<vault::Crypto> m_crypto;
         std::shared_ptr<vault::Network> m_network;
         std::shared_ptr<vault::Settings> m_settings;
         std::shared_ptr<vault::Versioning> m_versioning;
         std::shared_ptr<vault::Runtime> m_runtime;
+        std::shared_ptr<vault::Orchestrator> m_orchestrator;
+        std::shared_ptr<vault::Sync> m_sync;
+        std::shared_ptr<vault::AutoFill> m_autofill;
 
     private:
         /**
          * @brief Each Vault has its own storage path which is passed by the VaultManager.
         */
         std::shared_ptr<Storage> m_storage_;
-        boost::uuids::uuid m_uuid;
+        boost::uuids::uuid m_uuid_;
     };
 }

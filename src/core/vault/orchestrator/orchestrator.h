@@ -9,6 +9,7 @@ namespace clientwarden::vault {
     public:
         Orchestrator(std::shared_ptr<Crypto> crypto, std::shared_ptr<Network> network,
             std::shared_ptr<Runtime> runtime);
+        virtual ~Orchestrator() = default;
         
         virtual bool sessionInvalidated() = 0;
 
@@ -41,6 +42,8 @@ namespace clientwarden::vault {
             const Botan::secure_vector<uint8_t>& url) = 0;
 
         virtual void retryOfflineItems() = 0;
+
+        virtual Vendor getVendor() = 0;
     protected:
         std::shared_ptr<Crypto> m_crypto;
         std::shared_ptr<Network> m_network;
