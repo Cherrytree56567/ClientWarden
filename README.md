@@ -23,7 +23,7 @@
   <h3 align="center">ClientWarden</h3>
 
   <p align="center">
-    ClientWarden is designed to be a *secure*, *visually appealing*, *well designed*, *lightweight* and *platform specific* alternative to the default Bitwarden Client which is based on Electron. Currently ClientWarden is only supported on MacOS with Linux and Android Support coming next.
+    ClientWarden is designed to be a <b>secure</b>, <b>visually appealing</b>, <b>well designed</b>, <b>lightweight</b> and <b>platform specific</b> alternative to the default Bitwarden Client which is based on Electron. Currently ClientWarden is only supported on MacOS with Linux and Android Support coming next.
     <br />
     <br />
     <a href="https://github.com/Cherrytree56567/ClientWarden/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
