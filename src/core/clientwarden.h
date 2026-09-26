@@ -1,5 +1,6 @@
 #pragma once
 #include <botan/secmem.h>
+#include <spdlog/spdlog.h>
 
 namespace clientwarden {
     enum class Vendor {
@@ -44,4 +45,10 @@ namespace clientwarden {
         Botan::secure_vector<uint8_t> internal_key;
         Botan::secure_vector<uint8_t> master_password_hash;
     };
+
+    const std::string app_id = APP_ID;
+
+    using ItemId = std::string;
+
+    inline std::shared_ptr<spdlog::logger> g_logger = nullptr;
 }

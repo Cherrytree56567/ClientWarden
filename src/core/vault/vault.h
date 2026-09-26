@@ -2,11 +2,16 @@
 #include <memory>
 #include <variant>
 #include <botan/secmem.h>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
+#include "sync/sync.h"
+#include "clientwarden.h"
 #include "crypto/crypto.h"
 #include "network/network.h"
-#include "network/versioning.h"
+#include "runtime/runtime.h"
+#include "storage/storage.h"
+#include "autofill/autofill.h"
+#include "settings/settings.h"
+#include "versioning/versioning.h"
+#include "orchestrator/orchestrator.h"
 
 namespace clientwarden {
     /**
@@ -78,6 +83,9 @@ namespace clientwarden {
      */
     using UnlockCredential = std::variant<UnlockPasswordCredential, BiometricCredential>;
 
+    /**
+     * @brief Holds the current state the Vault is in
+     */
     enum class AuthState {
         Unknown,
         LoggedOut,
@@ -89,36 +97,81 @@ namespace clientwarden {
         Failed
     };
 
+    /**
+     * @brief Represents the Success or 2FA challenge that login can pass back
+     */
+    using LoginResult = std::variant<AuthResult, vault::MultiFactorChallenge>;
+
     class Vault {
     public:
-        Vault(boost::uuids::uuid uuid);
+        Vault(ItemId uuid);
         virtual ~Vault() = default;
 
-        virtual AuthResult login(Credential cred) = 0;
+        /**
+         * @brief Authenticates with a Password, Code or Passkey creds and returns a 
+         *  MultiFactorChallenge if additional 2FA is required
+         */
+        virtual LoginResult login(Credential cred) = 0;
+        /**
+         * @brief Creates a new account using the provided creds and returns an AuthResult
+         */
         virtual AuthResult signup(SignupCredential cred) = 0;
+        /**
+         * @brief Unlocks the vault using a Password or Biometric auth
+         */
         virtual AuthResult unlock(UnlockCredential cred) = 0;
+        /**
+         * @brief Clears sensitive data from memory and closes all active threads
+         */
         virtual bool lock() = 0;
+        /**
+         * @brief Clears all sensitive data from memory, closes all active threads and deletes all
+         *  keychain and vault folder.
+         */
         virtual bool logout() = 0;
 
-        virtual bool isBiometricUnlockActive() = 0;
-        virtual bool setupBiometricUnlock() = 0;
-        virtual bool removeBiometricUnlock() = 0;
+        /**
+         * @brief Passes AuthKeys to Settings to setup Biometric Unlock
+         */
+        virtual bool setupBiometricUnlock(UnlockType type) = 0;
 
+        /**
+         * @brief Verifies Master Password for a reprompt check before revealing a
+         *  sensitive item.
+         */
         virtual bool checkReprompt(Botan::secure_vector<uint8_t> password) = 0;
 
+        /**
+         * @brief Retrieves an existing Item
+         */
         template <typename Derived>
-        std::shared_ptr<Derived> getDerivedItem(boost::uuids::uuid uuid) {
+        std::shared_ptr<Derived> getDerivedItem(ItemId uuid) {
             return std::make_shared<Derived>(*this, uuid);
         }
 
+        /**
+         * @brief Creates an Item of the provided type
+         */
         template <typename Derived>
         std::shared_ptr<Derived> createItem() {
             return std::make_shared<Derived>(*this);
         }
         
-        virtual std::shared_ptr<GenericItem> getItem(boost::uuids::uuid uuid) = 0;
-        virtual std::shared_ptr<Folder> getFolder(boost::uuids::uuid uuid) = 0;
+        /**
+         * @brief Retrieves a generic item by UUID
+         */
+        virtual std::shared_ptr<GenericItem> getItem(ItemId uuid) = 0;
+        /**
+         * @brief Retrieves a folder with the provided uuid
+         */
+        virtual std::shared_ptr<Folder> getFolder(ItemId uuid) = 0;
+        /**
+         * @brief Creates a folder
+         */
         virtual std::shared_ptr<Folder> createFolder() = 0;
+        /**
+         * @brief Retrieves a Cipher Query
+         */
         virtual std::shared_ptr<CipherQuery> getCipherQuery() = 0;
 
         AuthState getState();
@@ -146,6 +199,6 @@ namespace clientwarden {
          * @brief Each Vault has its own storage path which is passed by the VaultManager.
         */
         std::shared_ptr<Storage> m_storage_;
-        boost::uuids::uuid m_uuid_;
+        ItemId m_uuid_;
     };
 }

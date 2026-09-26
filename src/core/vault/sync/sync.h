@@ -1,4 +1,11 @@
 #pragma once
+#include <vector>
+#include <shared>
+#include <utility>
+#include <nlohmann/json.hpp>
+#include "../runtime/runtime.h"
+#include "../network/network.h"
+#include "clientwarden.h"
 
 namespace clientwarden::vault {
     enum class SyncState {
@@ -27,7 +34,7 @@ namespace clientwarden::vault {
 
     struct SyncRecord {
         SyncItem item_type;
-        boost::uuids::uuid uuid;
+        ItemId uuid;
         int64_t revision;
         SyncState state;
         nlohmann::json raw;
@@ -61,17 +68,21 @@ namespace clientwarden::vault {
     };
 
     struct PushActions {
-        std::vector<std::pair<boost::uuids::uuid, boost::uuids::uuid>> remap_id;
+        std::vector<std::pair<ItemId, ItemId>> remap_id;
         std::vector<SyncRecord> success;
         std::vector<SyncRecord> failed;
     };
 
     class Sync {
     public:
-        Sync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network);
+        Sync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
+            std::shared_ptr<Settings> settings);
         virtual ~Sync() = default;
 
         bool syncVault(bool fullSync = false);
+
+        virtual bool startSyncThread();
+        virtual bool stopSyncThread();
 
         virtual Vendor getVendor() = 0;
     protected:
@@ -83,8 +94,12 @@ namespace clientwarden::vault {
         
         virtual PushActions pushRemote(const SyncActions& actions) = 0;
         virtual bool pushLocal(const PushActions& actions) = 0;
+        
+        virtual SyncActions resolveConflicts(const SyncActions& actions) = 0;
 
         std::shared_ptr<Runtime> m_runtime;
         std::shared_ptr<Network> m_network;
+        std::shared_ptr<Settings> m_settings;
+        Thread m_sync_thread;
     };
 }

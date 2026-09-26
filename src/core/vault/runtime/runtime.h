@@ -1,6 +1,9 @@
 #pragma once
 #include <mutex>
+#include <botan/secmem.h>
+#include <nlohmann/json.hpp>
 #include "clientwarden.h"
+#include "../profiles/profile.h"
 
 namespace clientwarden::vault {
     class Runtime {
@@ -17,26 +20,26 @@ namespace clientwarden::vault {
         virtual nlohmann::json getVaultData() = 0;
         virtual nlohmann::json getItems() = 0;
 
-        virtual Botan::secure_vector<boost::uuids::uuid> getItemIds() = 0;
-        virtual nlohmann::json getItem(boost::uuids::uuid uuid) = 0;
-        virtual void updateItem(boost::uuids::uuid uuid, nlohmann::json item) = 0;
+        virtual Botan::secure_vector<ItemId> getItemIds() = 0;
+        virtual nlohmann::json getItem(ItemId uuid) = 0;
+        virtual void updateItem(ItemId uuid, nlohmann::json item) = 0;
         virtual void addItem(nlohmann::json item) = 0;
-        virtual void removeItem(boost::uuids::uuid uuid) = 0;
+        virtual void removeItem(ItemId uuid) = 0;
 
-        virtual Botan::secure_vector<boost::uuids::uuid> getFolders() = 0;
-        virtual nlohmann::json getFolder(boost::uuids::uuid uuid) = 0;
-        virtual void updateFolder(boost::uuids::uuid uuid, nlohmann::json item) = 0;
+        virtual Botan::secure_vector<ItemId> getFolders() = 0;
+        virtual nlohmann::json getFolder(ItemId uuid) = 0;
+        virtual void updateFolder(ItemId uuid, nlohmann::json item) = 0;
         virtual void addFolder(nlohmann::json item) = 0;
-        virtual void removeFolder(boost::uuids::uuid uuid) = 0;
+        virtual void removeFolder(ItemId uuid) = 0;
 
-        virtual void markOfflineDeletedItem(boost::uuids::uuid uuid, bool mark) = 0;
-        virtual void markOfflineDeletedFolder(boost::uuids::uuid uuid, bool mark) = 0;
+        virtual void markOfflineDeletedItem(ItemId uuid, bool mark) = 0;
+        virtual void markOfflineDeletedFolder(ItemId uuid, bool mark) = 0;
 
-        virtual bool isMarkedItem(boost::uuids::uuid uuid) = 0;
-        virtual bool isMarkedFolder(boost::uuids::uuid uuid) = 0;
+        virtual bool isMarkedItem(ItemId uuid) = 0;
+        virtual bool isMarkedFolder(ItemId uuid) = 0;
 
-        virtual Botan::secure_vector<boost::uuids::uuid> getMarkedItems() = 0;
-        virtual Botan::secure_vector<boost::uuids::uuid> getMarkedFolders() = 0;
+        virtual Botan::secure_vector<ItemId> getMarkedItems() = 0;
+        virtual Botan::secure_vector<ItemId> getMarkedFolders() = 0;
 
         virtual Profile getProfile() = 0;
         virtual nlohmann::json getVaultInfo() = 0;

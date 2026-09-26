@@ -1,8 +1,16 @@
 #pragma once
 #define CPPHTTPLIB_EXPECT_100_THRESHOLD 0
+#include <vector>
+#include <memory>
+#include <variant>
 #include <expected>
+#include <functional>
 #include <httplib.h>
+#include <botan/secmem.h>
 #include <nlohmann/json.hpp>
+#include "../settings/settings.h"
+#include "../profiles/profile.h"
+#include "clientwarden.h"
 
 namespace clientwarden::vault {
     /**
@@ -118,25 +126,25 @@ namespace clientwarden::vault {
             const Botan::secure_vector<uint8_t>& master_password_hash, const MultiFactorProof& proof) = 0;
 
         virtual std::expected<nlohmann::json, NetworkError> newItem(const nlohmann::json& data) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> updateItem(const boost::uuids::uuid& uuid, 
+        virtual std::expected<nlohmann::json, NetworkError> updateItem(const ItemId& uuid, 
             const nlohmann::json& data) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> deleteItem(const boost::uuids::uuid& uuid) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> softDeleteItem(const boost::uuids::uuid& uuid) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> restoreItem(const boost::uuids::uuid& uuid) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> archiveItem(const boost::uuids::uuid& uuid) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> unArchiveItem(const boost::uuids::uuid& uuid) = 0;
+        virtual std::expected<nlohmann::json, NetworkError> deleteItem(const ItemId& uuid) = 0;
+        virtual std::expected<nlohmann::json, NetworkError> softDeleteItem(const ItemId& uuid) = 0;
+        virtual std::expected<nlohmann::json, NetworkError> restoreItem(const ItemId& uuid) = 0;
+        virtual std::expected<nlohmann::json, NetworkError> archiveItem(const ItemId& uuid) = 0;
+        virtual std::expected<nlohmann::json, NetworkError> unArchiveItem(const ItemId& uuid) = 0;
 
         virtual std::expected<nlohmann::json, NetworkError> createFolder(const Botan::secure_vector<uint8_t>& name) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> renameFolder(const boost::uuids::uuid& uuid, 
+        virtual std::expected<nlohmann::json, NetworkError> renameFolder(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& name) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> deleteFolder(const boost::uuids::uuid& uuid) = 0;
+        virtual std::expected<nlohmann::json, NetworkError> deleteFolder(const ItemId& uuid) = 0;
         
-        virtual std::expected<nlohmann::json, NetworkError> addAttachment(const boost::uuids::uuid& uuid, 
+        virtual std::expected<nlohmann::json, NetworkError> addAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& name, const Botan::secure_vector<uint8_t>& contents,
             const Botan::secure_vector<uint8_t>& key, std::function<void(float)> on_progress = nullptr) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> removeAttachment(const boost::uuids::uuid& uuid, 
+        virtual std::expected<nlohmann::json, NetworkError> removeAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id) = 0;
-        virtual std::expected<nlohmann::json, NetworkError> downloadAttachment(const boost::uuids::uuid& uuid, 
+        virtual std::expected<nlohmann::json, NetworkError> downloadAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, 
             std::function<void(float)> on_progress = nullptr) = 0;
 
@@ -153,7 +161,8 @@ namespace clientwarden::vault {
         virtual void setSession(const AuthSession& session);
         virtual void eraseSession();
 
-        virtual NetworkError listen(std::function<void(NetworkEvent)> on_event, std::stop_token stop_token) = 0;
+        virtual NetworkError listen(std::function<void(NetworkEvent)> on_event) = 0;
+        virtual bool stopListening() = 0;
 
         virtual Vendor getVendor() = 0;
     protected:

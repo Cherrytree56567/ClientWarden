@@ -1,10 +1,13 @@
 #pragma once
+#include <memory>
+#include "clientwarden.h"
 #include "../network/network.h"
+#include "../runtime/runtime.h"
 
 namespace clientwarden::vault {
     class Versioning {
     public:
-        Versioning(std::shared_ptr<Network> network, std::shared_ptr<Session> session);
+        Versioning(std::shared_ptr<Network> network, std::shared_ptr<Runtime> runtime);
         virtual ~Versioning() = default;
 
         /**
@@ -27,6 +30,6 @@ namespace clientwarden::vault {
         virtual Vendor getVendor() = 0;
     protected:
         std::shared_ptr<Network> m_network;
-        std::shared_ptr<Session> m_session;
+        std::shared_ptr<Runtime> m_runtime;
     };
 }

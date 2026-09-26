@@ -1,6 +1,10 @@
 include(cmake/versioning.cmake)
 
 function(buildUI _target)
+    target_compile_definitions(${_target} PRIVATE
+        APP_ID="${APP_BUNDLE_ID}"
+    )
+
     configure_file(
         src/Platforms/MacOS/UI/Clientwarden/CMake.swift.in
         ${CMAKE_BINARY_DIR}/generated/CMake.swift

@@ -1,6 +1,10 @@
 #pragma once
 #include <map>
+#include <string>
+#include <expected>
+#include <keychain.h>
 #include <botan/secmem.h>
+#include "clientwarden.h"
 
 namespace clientwarden::vault {
     /**
@@ -45,7 +49,8 @@ namespace clientwarden::vault {
      */
     enum class SyncMethod {
         Classic,
-        WebSocket
+        WebSocket,
+        None
     };
 
     /**
@@ -53,13 +58,17 @@ namespace clientwarden::vault {
      * @param GenericError A generic error
      * @param NotFound Keychain key not found
      * @param Unavailable Keychain not available
+     * @param KeychainError Error with Keychain service
      * @param AccessDenied No Access to selected key in Keychain
+     * @param Unknown Unknown error
      */
     enum class SettingsError {
         GenericError,
         NotFound, 
         Unavailable,
-        AccessDenied
+        KeychainError,
+        AccessDenied,
+        Unknown
     };
 
     /**
@@ -82,7 +91,8 @@ namespace clientwarden::vault {
      */
     class Settings {
     public:
-        Settings(boost::uuids::uuid uuid);
+        Settings(ItemId uuid);
+        virtual ~Settings() = default;
 
         bool canScreenshot();
         void allowScreenshot(bool value);
@@ -104,13 +114,14 @@ namespace clientwarden::vault {
         void setSyncDelay(int sync_delay);
 
         UnlockType getUnlockType();
-        std::expected<BiometricKeys, SettingsError> getBiometricKeys();
+        std::expected<AuthKeys, SettingsError> getBiometricKeys();
         std::expected<void, SettingsError> removeBiometricUnlock();
-        std::expected<void, SettingsError> enableBiometricUnlock(UnlockType type, const BiometricKeys& keys);
+        std::expected<void, SettingsError> enableBiometricUnlock(UnlockType type, const AuthKeys& keys);
 
         std::expected<void, SettingsError> keychainSet(KeychainSecurity security, 
             const std::string& name, const Botan::secure_vector<uint8_t>& value);
         std::expected<Botan::secure_vector<uint8_t>, SettingsError> keychainGet(const std::string& name);
+        std::expected<void, SettingsError> keychainClear(const std::string& name);
 
     protected:
         /**
@@ -128,7 +139,7 @@ namespace clientwarden::vault {
         SyncMethod m_sync;
         int m_sync_delay;
         
-        boost::uuids::uuid m_uuid;
+        ItemId m_uuid;
     
     private:
         /**

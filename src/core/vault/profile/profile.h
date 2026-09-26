@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#include <vector>
+#include <botan/secmem.h>
+#include <nlohmann/json.hpp>
 
 namespace clientwarden::vault {
     enum class OrganisationRole {
@@ -10,7 +13,7 @@ namespace clientwarden::vault {
     };
 
     struct OrganisationMembership {
-        boost::uuids::uuid id;
+        ItemId id;
         Botan::secure_vector<uint8_t> name;
         OrganisationRole role;
         bool enabled;
