@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>
 #include "../settings/settings.h"
 #include "../profiles/profile.h"
+#include "thread/thread.h"
 #include "clientwarden.h"
 
 namespace clientwarden::vault {
@@ -125,45 +126,130 @@ namespace clientwarden::vault {
         virtual std::expected<TokenResult, NetworkError> getToken2FA(const Botan::secure_vector<uint8_t>& email, 
             const Botan::secure_vector<uint8_t>& master_password_hash, const MultiFactorProof& proof) = 0;
 
+        /**
+         * @brief Asks the server to create a new Item.
+         */
         virtual std::expected<nlohmann::json, NetworkError> newItem(const nlohmann::json& data) = 0;
+        /**
+         * @brief Asks the server to update the item with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> updateItem(const ItemId& uuid, 
             const nlohmann::json& data) = 0;
+        /**
+         * @brief Asks the server to delete the item with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> deleteItem(const ItemId& uuid) = 0;
+        /**
+         * @brief Asks the server to bin the item with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> softDeleteItem(const ItemId& uuid) = 0;
+        /**
+         * @brief Asks the server to restore the item with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> restoreItem(const ItemId& uuid) = 0;
+        /**
+         * @brief Asks the server to archive the item with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> archiveItem(const ItemId& uuid) = 0;
+        /**
+         * @brief Asks the server to unarchive the item with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> unArchiveItem(const ItemId& uuid) = 0;
 
+        /**
+         * @brief Asks the server to create a folder with the provided name.
+         */
         virtual std::expected<nlohmann::json, NetworkError> createFolder(const Botan::secure_vector<uint8_t>& name) = 0;
+        /**
+         * @brief Asks the server to rename the folder with the provided ItemId and name.
+         */
         virtual std::expected<nlohmann::json, NetworkError> renameFolder(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& name) = 0;
+        /**
+         * @brief Asks the server to delete the folder with the provided ItemId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> deleteFolder(const ItemId& uuid) = 0;
         
+        /**
+         * @brief Upload an attachment to the server and report progress via on_progress.
+         */
         virtual std::expected<nlohmann::json, NetworkError> addAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& name, const Botan::secure_vector<uint8_t>& contents,
             const Botan::secure_vector<uint8_t>& key, std::function<void(float)> on_progress = nullptr) = 0;
+        /**
+         * @brief Asks the server to remove the attachment with the provided ItemId and AttachmentId.
+         */
         virtual std::expected<nlohmann::json, NetworkError> removeAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id) = 0;
+        /**
+         * @brief Download the attachment using the provided itemId and store it in o_data.
+         */
         virtual std::expected<nlohmann::json, NetworkError> downloadAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, 
-            std::function<void(float)> on_progress = nullptr) = 0;
+            std::function<void(float)> on_progress = nullptr, 
+            const Botan::secure_vector<uint8_t>& o_data) = 0;
 
+        /**
+         * @brief Download the icon with the provided url from the server.
+         */
         virtual std::expected<Botan::secure_vector<uint8_t>, NetworkError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) = 0;
+        /**
+         * @brief Ask the server for the Vault Database.
+         */
         virtual std::expected<nlohmann::json, NetworkError> getVault() = 0;
+        /**
+         * @brief Ask the server for the Remote version.
+         */
         virtual std::expected<nlohmann::json, NetworkError> getVersion() = 0;
+        /**
+         * @brief Ask the server for the user's profile.
+         */
         virtual std::expected<Profile, NetworkError> getProfile() = 0;
 
+        /**
+         * @brief Determine if the machine is offline or not.
+         */
         virtual Connectivity getConnectivity() = 0;
+        /**
+         * @brief Determine if the accessToken is valid or not.
+         */
         virtual NetworkError checkAccessTokenValidity() = 0;
+        /**
+         * @brief Ask the server to refresh our expired token.
+         */
         virtual std::expected<nlohmann::json, NetworkError> refreshToken() = 0;
 
+        /**
+         * @brief Set the current AuthSession.
+         */
         virtual void setSession(const AuthSession& session);
+        /**
+         * @brief Clear the current AuthSession.
+         */
         virtual void eraseSession();
 
+        /**
+         * @brief Connect to the Websocket Server and notify on_event.
+         */
         virtual NetworkError listen(std::function<void(NetworkEvent)> on_event) = 0;
+        /**
+         * @brief Close the WebSocket Connection and the thread.
+         */
         virtual bool stopListening() = 0;
 
+        /**
+         * @brief Start the Token Refresh Thread.
+         */
+        virtual NetworkError startTokenRefreshThread() = 0;
+        /**
+         * @brief Stop the Token Refresh Thread.
+         */
+        virtual bool stopTokenRefreshThread() = 0;
+
+        /**
+         * @brief Return the Vendor.
+         */
         virtual Vendor getVendor() = 0;
     protected:
         std::shared_ptr<Settings> m_settings;
@@ -171,5 +257,6 @@ namespace clientwarden::vault {
         std::jthread m_listening_thread;
         std::function<void(NetworkEvent)> m_on_event;
         Connectivity m_connectivity;
+        Thread m_token_refresh;
     };
 }

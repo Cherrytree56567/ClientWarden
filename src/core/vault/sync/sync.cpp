@@ -6,7 +6,7 @@ namespace clientwarden::vault {
         
     }
 
-    bool Sync::syncVault(bool fullSync = false) {
+    bool Sync::syncVault() {
         std::vector<SyncRecord> local_records = fetchLocalRecords();
         std::vector<SyncRecord> remote_records = fetchRemoteRecords();
 

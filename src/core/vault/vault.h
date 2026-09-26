@@ -174,14 +174,35 @@ namespace clientwarden {
          */
         virtual std::shared_ptr<CipherQuery> getCipherQuery() = 0;
 
+        /**
+         * @brief Retrieves the Current Auth State of the Vault
+         */
         AuthState getState();
+        /**
+         * @brief Returns the Vault's Orchestrator
+         */
         std::shared_ptr<vault::Orchestrator> getOrchestrator();
+        /**
+         * @brief Returns the Vault's Versioning System
+         */
         std::shared_ptr<vault::Versioning> getVersioning();
+        /**
+         * @brief Returns the Vault's Settings
+         */
         std::shared_ptr<vault::Settings> getSettings();
+        /**
+         * @brief Returns the Vault's AutoFill
+         */
         std::shared_ptr<vault::AutoFill> getAutoFill();
 
+        /**
+         * @brief Returns the Vendor of the Vault
+         */
         virtual Vendor getVendor() = 0;
     protected:
+        /**
+         * @brief Returns the Vault's Private Storage
+         */
         std::shared_ptr<Storage> getStorage();
 
         AuthState m_state;

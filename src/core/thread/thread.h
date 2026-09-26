@@ -16,12 +16,21 @@ namespace clientwarden {
 
         ~Thread();
 
+        /**
+         * @brief Sets the Thread Function.
+         */
         template <typename Func>
         void setCallback(Func&& func) {
             m_func_ = std::forward<Func>(func);
         }
 
+        /**
+         * @brief Starts the Thread.
+         */
         void start();
+        /**
+         * @brief Stops the Thread.
+         */
         void stop();
     private:
         std::thread m_thread_;

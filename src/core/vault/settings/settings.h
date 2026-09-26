@@ -55,12 +55,12 @@ namespace clientwarden::vault {
 
     /**
      * @brief Used to specify the type of error when setting or getting a setting.
-     * @param GenericError A generic error
-     * @param NotFound Keychain key not found
-     * @param Unavailable Keychain not available
-     * @param KeychainError Error with Keychain service
-     * @param AccessDenied No Access to selected key in Keychain
-     * @param Unknown Unknown error
+     * @param GenericError A generic error.
+     * @param NotFound Keychain key not found.
+     * @param Unavailable Keychain not available.
+     * @param KeychainError Error with Keychain service.
+     * @param AccessDenied No Access to selected key in Keychain.
+     * @param Unknown Unknown error.
      */
     enum class SettingsError {
         GenericError,
@@ -72,11 +72,11 @@ namespace clientwarden::vault {
     };
 
     /**
-     * @brief Holds values to define Security Values for Keychain
-     * @param Biometric Value can only be accessable by the App via Biometric Auth
-     * @param Password Value can only be accessable by the App via Device Password Auth
-     * @param Sensitive Value can be accessable by the App with no Auth
-     * @param Secure Value can be accessable by the App with no Auth and is cached in memory
+     * @brief Holds values to define Security Values for Keychain.
+     * @param Biometric Value can only be accessable by the App via Biometric Auth.
+     * @param Password Value can only be accessable by the App via Device Password Auth.
+     * @param Sensitive Value can be accessable by the App with no Auth.
+     * @param Secure Value can be accessable by the App with no Auth and is cached in memory.
      */
     enum class KeychainSecurity {
         Biometric,
@@ -86,41 +86,105 @@ namespace clientwarden::vault {
     };
 
     /**
-     * @brief Used to store various settings
-     * @note Unlike other classes, Settings will not be derived
+     * @brief Used to store various settings.
+     * @note Unlike other classes, Settings will not be derived.
      */
     class Settings {
     public:
         Settings(ItemId uuid);
         virtual ~Settings() = default;
 
+        /**
+         * @brief Returns m_can_screenshot.
+         */
         bool canScreenshot();
+        /**
+         * @brief Sets the SECURE keychain allowScreenshot value.
+         */
         void allowScreenshot(bool value);
 
+        /**
+         * @brief Returns m_autolock_delay.
+         */
         int getAutoLockDelay();
+        /**
+         * @brief Returns m_autolock.
+         */
         AutoLockType getAutoLockType();
+        /**
+         * @brief Sets the SECURE keychain AutoLockType and Delay value.
+         */
         void setAutoLock(AutoLockType type, int delay);
 
+        /**
+         * @brief Returns m_clipboard_delay.
+         */
         int getClipboardDelay();
+        /**
+         * @brief Sets the SECURE keychain Clipboard Delay value.
+         */
         void setClipboardDelay(int delay);
 
+        /**
+         * @brief Returns m_theme.
+         */
         Theme getTheme();
+        /**
+         * @brief Sets the SECURE keychain Theme value.
+         */
         void setTheme(Theme theme);
 
+        /**
+         * @brief Returns m_sync
+         */
         SyncMethod getSyncMethod();
+        /**
+         * @brief Sets the SECURE keychain SyncMethod value.
+         */
         void setSyncMethod(SyncMethod method);
 
+        /**
+         * @brief Returns m_sync_delay.
+         */
         int getSyncDelay();
+        /**
+         * @brief Sets the SECURE keychain SyncDelay value.
+         */
         void setSyncDelay(int sync_delay);
 
+        /**
+         * @brief Returns m_bio_unlock.
+         */
         UnlockType getUnlockType();
+        /**
+         * @brief Uses keychainGet to retrieve the AuthKeys.
+         */
         std::expected<AuthKeys, SettingsError> getBiometricKeys();
+        /**
+         * @brief Uses keychainClear to remove the AuthKeys from Keychain.
+         */
         std::expected<void, SettingsError> removeBiometricUnlock();
+        /**
+         * @brief Sets the SECURE keychain UnlockType value and encodes the internal key and master
+         *  password hash into b64 concatenated with each other separated with a `,`.
+         */
         std::expected<void, SettingsError> enableBiometricUnlock(UnlockType type, const AuthKeys& keys);
 
+        /**
+         * @brief Sets the Keychain Value using setPassword and if KeychainSecurity is SECURE, then
+         *  cache it in m_keychain_cache_.
+         */
         std::expected<void, SettingsError> keychainSet(KeychainSecurity security, 
             const std::string& name, const Botan::secure_vector<uint8_t>& value);
+        /**
+         * @brief Gets the Keychain Value from cache if it exists in cache, or use getPassword to
+         *  get the keychain value.
+         */
         std::expected<Botan::secure_vector<uint8_t>, SettingsError> keychainGet(const std::string& name);
+        /**
+         * @brief Clears the Keychain value from cache and uses deletePassword to remove it from
+         *  keychain.
+         */
         std::expected<void, SettingsError> keychainClear(const std::string& name);
 
     protected:

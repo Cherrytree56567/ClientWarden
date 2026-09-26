@@ -85,7 +85,7 @@ namespace clientwarden {
         return std::unexpected(VaultManagerError::Unknown);
     }
 
-    std::expected<AuthResult, VaultManagerError> VaultManager::continueLogin(Credential cred, ItemId id) {
+    std::expected<LoginResult, VaultManagerError> VaultManager::continueLogin(Credential cred, ItemId id) {
         if (!m_pending_vaults_.contains(id)) {
             return std::unexpected(VaultManagerError::NotFound);
         }
@@ -97,6 +97,7 @@ namespace clientwarden {
         if (std::holds_alternative<AuthResult>(result)) {
             if (std::get<AuthResult>(result) == AuthResult::Success) {
                 m_vaults_[vault_id] = vault;
+                m_pending_vaults_.erase(id);
 
                 saveVault(vault.getVendor(), id);
                 
