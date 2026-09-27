@@ -1,10 +1,7 @@
 #include "vault.h"
 
 namespace clientwarden::vault {
-    Vault::Vault(ItemId uuid) : m_uuid(uuid), m_storage_(uuid), m_settings(uuid), 
-        m_network(m_settings), m_versioning(m_network, m_runtime), 
-        m_orchestrator(m_crypto, m_network, m_runtime), m_sync(m_runtime, m_network, m_settings),
-        m_versioning(m_network, m_runtime) {
+    Vault::Vault(ItemId uuid) : m_uuid(uuid), m_storage_(uuid), m_settings(uuid) {
         
     }
 

@@ -37,7 +37,7 @@ namespace clientwarden {
 
     class GenericItem {
     public:
-        GenericItem(Vault& vault, ItemId id, bool itemCreation);
+        GenericItem(Vault& vault, ItemId id, bool item_creation);
         virtual ~GenericItem();
 
         /**
@@ -158,7 +158,7 @@ namespace clientwarden {
         /**
          * @brief Creates or pushes the item to the Remote and Local.
          */
-        virtual std::expected<void, ItemError> commit() = 0;
+        virtual std::expected<void, ItemError> commitItem() = 0;
         /**
          * @brief Removes the item from Remote and Local.
          */
@@ -179,6 +179,11 @@ namespace clientwarden {
          * @brief Un-Archives the item to the Remote and Local.
          */
         virtual std::expected<void, ItemError> unArchiveItem() = 0;
+
+        /**
+         * @brief Returns the Vendor.
+         */
+        virtual Vendor getVendor() = 0;
     protected:
         /**
          * @brief Implementations of all the above funcs.

@@ -1,8 +1,8 @@
 #include "generic_item.h"
 
 namespace clientwarden {
-    GenericItem::GenericItem(Vault& vault, ItemId id, bool itemCreation) : m_id(id),
-        m_is_created(itemCreation), m_vault(vault) {
+    GenericItem::GenericItem(Vault& vault, ItemId id, bool item_creation) : m_id(id),
+        m_is_created(item_creation), m_vault(vault) {
         m_init = true;
     }
 

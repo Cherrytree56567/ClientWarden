@@ -146,7 +146,7 @@ namespace clientwarden {
          */
         template <typename Derived>
         std::shared_ptr<Derived> getDerivedItem(ItemId uuid) {
-            return std::make_shared<Derived>(*this, uuid);
+            return std::make_shared<Derived>(*this, uuid, false);
         }
 
         /**
@@ -154,7 +154,8 @@ namespace clientwarden {
          */
         template <typename Derived>
         std::shared_ptr<Derived> createItem() {
-            return std::make_shared<Derived>(*this);
+            ItemId new_id = utils::getUniqueId();
+            return std::make_shared<Derived>(*this, new_id, true);
         }
         
         /**
