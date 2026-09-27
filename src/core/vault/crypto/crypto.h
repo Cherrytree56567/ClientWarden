@@ -13,14 +13,6 @@ namespace clientwarden::vault {
     };
 
     /**
-     * @brief Used to hold the encryption and verification keys.
-    */
-    struct ItemKey {
-        Botan::secure_vector<uint8_t> encKey;
-        Botan::secure_vector<uint8_t> macKey;
-    };
-
-    /**
      * @brief Base Cryptography class for Vault.
      * 
      * Should be derived, as this is a base class.

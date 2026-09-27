@@ -97,6 +97,10 @@ namespace clientwarden::vault {
          * @brief Returns the vendor.
          */
         virtual Vendor getVendor() = 0;
+        /**
+         * @brief Returns the runtime.
+         */
+        std::shared_ptr<Runtime> getRuntime();
     protected:
         std::shared_ptr<Crypto> m_crypto;
         std::shared_ptr<Network> m_network;

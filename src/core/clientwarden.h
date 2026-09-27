@@ -46,6 +46,27 @@ namespace clientwarden {
         Botan::secure_vector<uint8_t> master_password_hash;
     };
 
+    enum ItemType {
+        Login,
+        Card,
+        Identity,
+        Note,
+        SSHKey
+    };
+
+    /**
+     * @brief Used to hold the encryption and verification keys.
+    */
+    struct ItemKey {
+        Botan::secure_vector<uint8_t> enc_key;
+        Botan::secure_vector<uint8_t> mac_key;
+
+        void clear() {
+            enc_key.clear();
+            mac_key.clear();
+        }
+    };
+
     const std::string app_id = APP_ID;
 
     using ItemId = std::string;

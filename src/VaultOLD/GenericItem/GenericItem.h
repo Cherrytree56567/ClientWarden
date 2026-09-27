@@ -16,8 +16,7 @@ namespace ClientWarden {
     
     class GenericItem {
     public:
-        GenericItem(Vault& vault, std::string uuid); // Existing Item
-        GenericItem(Vault& vault); // New Item (needs to be initialised by a derived class)
+        GenericItem(Vault& vault, std::string uuid, bool itemCreation);
         ~GenericItem();
 
         GenericItem* SetName(std::string& name);

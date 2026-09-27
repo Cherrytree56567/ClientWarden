@@ -1,6 +1,5 @@
 #pragma once
 #include "GenericItem/GenericItem.h"
-
 #include "VaultUtils/VaultUtils.h"
 
 namespace ClientWarden {
