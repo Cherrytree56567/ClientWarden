@@ -7,7 +7,7 @@ namespace clientwarden {
     }
 
     GenericItem::~GenericItem() {
-        m_item_keys.clear();
+        Botan::secure_scrub_memory(m_item_keys.data(), m_item_keys.size());
     }
 
     GenericItem* GenericItem::setName(const Botan::secure_vector<uint8_t>& name) {

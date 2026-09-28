@@ -1,4 +1,8 @@
 #pragma once
+#include <vector>
+#include <string>
+#include <expected>
+#include <functional>
 #include <botan/secmem.h>
 #include "clientwarden.h"
 

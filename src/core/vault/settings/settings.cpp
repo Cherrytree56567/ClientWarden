@@ -281,14 +281,14 @@ namespace clientwarden::vault {
         Botan::secure_vector<uint8_t> encoded_key(encoded_keys.begin(), encoded_iterator);
         Botan::secure_vector<uint8_t> encoded_hash(encoded_iterator + 1, encoded_keys.end());
 
-        encoded_keys.clear();
+        Botan::secure_scrub_memory(encoded_keys.data(), encoded_keys.size());
 
         AuthKeys keys;
         keys.internal_key = utils::b64Decode(encoded_key);
         keys.master_password_hash = utils::b64Decode(encoded_hash);
 
-        encoded_key.clear();
-        encoded_hash.clear();
+        Botan::secure_scrub_memory(encoded_key.data(), encoded_key.size());
+        Botan::secure_scrub_memory(encoded_hash.data(), encoded_hash.size());
 
         return keys;
     }
@@ -311,12 +311,12 @@ namespace clientwarden::vault {
         encoded_keys.push_back(',');
         encoded_keys.insert(encoded_keys.end(), encoded_hash.begin(), encoded_hash.end());
 
-        encoded_key.clear();
-        encoded_hash.clear();
+        Botan::secure_scrub_memory(encoded_key.data(), encoded_key.size());
+        Botan::secure_scrub_memory(encoded_hash.data(), encoded_hash.size());
         
         result = keychainSet(static_cast<KeychainSecurity>(std::to_underlying(type)), "bio_keys", encoded_keys);
 
-        encoded_keys.clear();
+        Botan::secure_scrub_memory(encoded_keys.data(), encoded_keys.size());
 
         return result;
     }
