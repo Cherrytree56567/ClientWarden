@@ -12,9 +12,9 @@ namespace clientwarden {
      *
      * Can be expanded to support more KDF Types
     */
-    enum class KDFType {
-        PBKDF2_SHA256,
-        Argon2ID
+    enum class KDFType : uint8_t {
+        PBKDF2_SHA256 = 0,
+        Argon2ID = 1
     };
 
     /**
@@ -72,7 +72,8 @@ namespace clientwarden {
         }
     };
 
-    const std::string app_id = APP_ID;
+    constexpr const std::string app_id = APP_ID;
+    constexpr const std::string app_type = APP_TYPE;
 
     using ItemId = std::string;
 

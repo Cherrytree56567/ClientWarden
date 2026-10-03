@@ -32,6 +32,8 @@ namespace clientwarden::vault {
         Invalid,
         ServerError,
         Unknown,
+        InvalidParams,
+        Uninitialised,
         Success
     };
 
@@ -108,6 +110,10 @@ namespace clientwarden::vault {
          * Settings and retrieve them later in the constructor.
          */
         virtual std::expected<void, NetworkError> setURLs(const std::vector<Botan::secure_vector<uint8_t>>& urls) = 0;
+        /**
+         * @brief Used to tell the UI the URLs that are needed.
+         */
+        virtual std::vector<std::string> requiredURLs() = 0;
 
         /**
          * @brief Gets Prelogin Info like KDF Params and checks if the email is valid.
@@ -258,5 +264,6 @@ namespace clientwarden::vault {
         std::function<void(NetworkEvent)> m_on_event;
         Connectivity m_connectivity;
         Thread m_token_refresh;
+        std::vector<Botan::secure_vector<uint8_t>> m_urls;
     };
 }

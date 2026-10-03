@@ -16,6 +16,8 @@ set(APP_BUNDLE_ID "com.ct5.clientwarden")
 set(CW_IDENTIFIER ${APP_BUNDLE_ID})
 set(CW_VERSION 1.0.0)
 
+set(BW_VERSION "2026.3.0")
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (APPLE)
@@ -106,7 +108,7 @@ else()
 endif()
 
 target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
-target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
+target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT APP_TYPE="${APP_TYPE}" APP_ID="${APP_BUNDLE_ID}" BW_VERSION="${BW_VERSION}")
 
 target_include_directories(clientwarden PRIVATE src/core src/core/vault src/Platforms/)
 
