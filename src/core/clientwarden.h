@@ -44,6 +44,11 @@ namespace clientwarden {
     struct AuthKeys {
         Botan::secure_vector<uint8_t> internal_key;
         Botan::secure_vector<uint8_t> master_password_hash;
+
+        void clear() {
+            internal_key.clear();
+            master_password_hash.clear();
+        }
     };
 
     enum ItemType {

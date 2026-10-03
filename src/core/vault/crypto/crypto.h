@@ -1,5 +1,8 @@
 #pragma once
 #include <memory>
+#include <expected>
+#include <ranges>
+#include <utility>
 #include <botan/secmem.h>
 #include <botan/pwdhash.h>
 #include "clientwarden.h"
@@ -19,6 +22,8 @@ namespace clientwarden::vault {
     enum class CryptoErrors {
         InvalidParams,
         InvalidFamily,
+        DecryptionError,
+        Unsupported,
         None,
         Success
     };
@@ -74,7 +79,7 @@ namespace clientwarden::vault {
          * @brief Stretches a key using HKDF using the provided info param.
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> hkdfStretch(
-            const Botan::secure_vector<uint8_t>& info, const Botan::secure_vector<uint8_t>& key) = 0;
+            const Botan::secure_vector<uint8_t>& info) = 0;
         /**
          * @brief Hashes the value against the provided Internal Key.
          */
@@ -94,7 +99,7 @@ namespace clientwarden::vault {
             const Botan::secure_vector<uint8_t>& protected_key, const ItemKey& key) = 0;
 
         /**
-         * @brief Generate an Item Key
+         * @brief Generate an Item Key.
          */
         virtual std::expected<ItemKey, CryptoErrors> generateKey() = 0;
 
@@ -106,11 +111,15 @@ namespace clientwarden::vault {
             ChecksumType type = ChecksumType::Uri) = 0;
         
         /**
-         * @brief Sets m_auth_keys and generate the ItemKey
+         * @brief Sets m_auth_keys.
          */
-        virtual CryptoErrors setKeys(const AuthKeys& keys) = 0;
+        virtual CryptoErrors setAuthKeys(const AuthKeys& keys) = 0;
         /**
-         * @brief Erases the Auth Keys from memory
+         * @brief Generates the ItemKey and sets m_keys.
+         */
+        virtual CryptoErrors setVaultKeys(Botan::secure_vector<uint8_t> protected_key) = 0;
+        /**
+         * @brief Erases the Auth Keys from memory.
          */
         virtual CryptoErrors eraseKeys() = 0;
 
@@ -119,9 +128,6 @@ namespace clientwarden::vault {
          */
         virtual Vendor getVendor() = 0;
     protected:
-        /**
-         * @brief setKeys will use the AuthKeys to generate the ItemKey
-         */
         AuthKeys m_auth_keys;
         ItemKey m_keys;
     };
