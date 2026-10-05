@@ -36,4 +36,8 @@ namespace clientwarden::utils {
      * @brief Converts a Botan Secure Vector String to an Int.
      */
     int getInteger(const Botan::secure_vector<uint8_t>& value);
+    /**
+     * @brief Converts a Botan Secure Vector String to a String.
+     */
+    std::string getString(const Botan::secure_vector<uint8_t>& value);
 }

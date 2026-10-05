@@ -48,7 +48,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<nlohmann::json, NetworkError> downloadAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, 
             std::function<void(float)> on_progress = nullptr, 
-            const Botan::secure_vector<uint8_t>& o_data) override;
+            Botan::secure_vector<uint8_t>& o_data) override;
 
         std::expected<Botan::secure_vector<uint8_t>, NetworkError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) override;
@@ -71,6 +71,10 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Vendor getVendor() override;
     private:
+        std::expected<TokenResult, NetworkError> getToken_(const Botan::secure_vector<uint8_t>& email, 
+            const Botan::secure_vector<uint8_t>& master_password_hash) override;
+        std::expected<void, NetworkError> getError_(const httplib::Result& res);
+        
         bool m_init_ = false;
         std::shared_ptr<httplib::Client> m_api_client_;
         std::shared_ptr<httplib::Client> m_vault_client_;

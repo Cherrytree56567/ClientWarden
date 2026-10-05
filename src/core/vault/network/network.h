@@ -34,6 +34,7 @@ namespace clientwarden::vault {
         Unknown,
         InvalidParams,
         Uninitialised,
+        SettingsError,
         Success
     };
 
@@ -58,9 +59,14 @@ namespace clientwarden::vault {
      */
     enum class MultiFactorAuth {
         TOTP,
-        DeviceVerification,
+        Email,
+        Duo,
+        YubiKey,
+        U2F,
+        RememberToken,
+        OrgDuo,
         Passkey,
-        Duo
+        RecoveryCode
     };
 
     /**
@@ -193,7 +199,7 @@ namespace clientwarden::vault {
         virtual std::expected<nlohmann::json, NetworkError> downloadAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, 
             std::function<void(float)> on_progress = nullptr, 
-            const Botan::secure_vector<uint8_t>& o_data) = 0;
+            Botan::secure_vector<uint8_t>& o_data) = 0;
 
         /**
          * @brief Download the icon with the provided url from the server.
