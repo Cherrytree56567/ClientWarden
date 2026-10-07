@@ -35,7 +35,7 @@ namespace clientwarden {
     struct AuthSession {
         Botan::secure_vector<uint8_t> access_token;
         Botan::secure_vector<uint8_t> refresh_token;
-        std::chrono::seconds expires_in;
+        std::time_t expires_at;
     };
 
     /**
@@ -72,8 +72,8 @@ namespace clientwarden {
         }
     };
 
-    constexpr const std::string app_id = APP_ID;
-    constexpr const std::string app_type = APP_TYPE;
+    inline const std::string app_id = APP_ID;
+    inline const std::string app_type = APP_TYPE;
 
     using ItemId = std::string;
 

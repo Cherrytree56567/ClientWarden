@@ -9,7 +9,7 @@
 #include "vault/network/network.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
-    class BitwardenNetwork {
+    class BitwardenNetwork : public Network {
     public:
         explicit BitwardenNetwork(std::shared_ptr<Settings> settings);
         ~BitwardenNetwork() override = default;
@@ -68,6 +68,9 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         NetworkError startTokenRefreshThread() override;
         bool stopTokenRefreshThread() override;
+
+        NetworkError startConnectivityThread() override;
+        bool stopConnectivityThread() override;
 
         Vendor getVendor() override;
     private:

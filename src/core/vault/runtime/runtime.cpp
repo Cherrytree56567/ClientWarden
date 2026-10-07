@@ -1,7 +1,7 @@
 #include "runtime.h"
 
 namespace clientwarden::vault {
-    Runtime::Runtime() {
+    Runtime::Runtime(Storage storage) : m_storage(storage) {
         
     }
 }

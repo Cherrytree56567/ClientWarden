@@ -29,6 +29,7 @@ namespace clientwarden::vault {
         OfflineNetwork,
         Unauthorised,
         RateLimited,
+        BadRequest,
         Invalid,
         ServerError,
         Unknown,
@@ -244,11 +245,16 @@ namespace clientwarden::vault {
         /**
          * @brief Connect to the Websocket Server and notify on_event.
          */
-        virtual NetworkError listen(std::function<void(NetworkEvent)> on_event) = 0;
+        virtual NetworkError listen() = 0;
         /**
          * @brief Close the WebSocket Connection and the thread.
          */
         virtual bool stopListening() = 0;
+
+        /**
+         * @brief Set m_on_event.
+         */
+        virtual void setEventHandler(std::function<void(NetworkEvent)> on_event);
 
         /**
          * @brief Start the Token Refresh Thread.
@@ -258,6 +264,14 @@ namespace clientwarden::vault {
          * @brief Stop the Token Refresh Thread.
          */
         virtual bool stopTokenRefreshThread() = 0;
+        /**
+         * @brief Start Connectivity Thread
+         */
+        virtual NetworkError startConnectivityThread() = 0;
+        /**
+         * @brief Stop Connectivity Thread
+         */
+        virtual bool stopConnectivityThread() = 0;
 
         /**
          * @brief Return the Vendor.
@@ -266,10 +280,11 @@ namespace clientwarden::vault {
     protected:
         std::shared_ptr<Settings> m_settings;
         AuthSession m_session;
-        std::jthread m_listening_thread;
+        Thread m_listening_thread;
         std::function<void(NetworkEvent)> m_on_event;
-        Connectivity m_connectivity;
+        std::atomic<Connectivity> m_connectivity{Connectivity::Online};
         Thread m_token_refresh;
+        Thread m_connectivity_thread;
         std::vector<Botan::secure_vector<uint8_t>> m_urls;
     };
 }

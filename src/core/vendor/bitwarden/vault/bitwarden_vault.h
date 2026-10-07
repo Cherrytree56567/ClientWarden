@@ -2,7 +2,7 @@
 #include "vault/vault.h"
 
 namespace clientwarden::vendor::bitwarden {
-    class BitWardenVault {
+    class BitWardenVault : public Vault {
     public:
         explicit BitWardenVault(ItemId uuid);
         ~BitWardenVault() override;

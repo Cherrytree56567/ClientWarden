@@ -15,11 +15,19 @@ namespace clientwarden::utils {
     /**
      * @brief Converts ISO 8601 time to std::time_t.
      */
-    std::time_t getTime(std::string time);
+    std::time_t s_getTime(std::string time);
     /**
      * @brief Converts the current time to std::string + additional time.
      */
-    std::string getCurrentTime(int additionalTime = 0);
+    std::string s_getCurrentTime(int additional_time = 0);
+    /**
+     * @brief Converts ISO 8601 time to std::time_t.
+     */
+    std::time_t getTime(Botan::secure_vector<uint8_t> time);
+    /**
+     * @brief Converts the current time to std::string + additional time.
+     */
+    Botan::secure_vector<uint8_t> getCurrentTime(int additional_time = 0);
     /**
      * @brief Generates a Unique Id.
      */
@@ -28,6 +36,10 @@ namespace clientwarden::utils {
      * @brief Converts a const char* to a Botan Secure Vector.
      */
     Botan::secure_vector<uint8_t> getSecureVector(const char* value);
+    /**
+     * @brief Converts a std::string to Botan Secure Vector.
+     */
+    Botan::secure_vector<uint8_t> getSecureVector(std::string value);
     /**
      * @brief Converts an integer to a string Botan Secure Vector.
      */

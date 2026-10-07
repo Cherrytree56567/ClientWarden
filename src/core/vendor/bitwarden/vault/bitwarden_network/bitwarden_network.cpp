@@ -213,6 +213,9 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(NetworkError::OfflineNetwork);
         }
 
+        std::string str_email(email.begin(), email.end());
+        std::string str_master_password_hash(master_password_hash.begin(), master_password_hash.end());
+
         httplib::Params data;
         data.emplace("grant_type", "password");
         data.emplace("username", str_email);
@@ -222,6 +225,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         data.emplace("deviceType", bitwarden_device_type);
         data.emplace("deviceIdentifier", utils::getUniqueId());
         data.emplace("deviceName", bitwarden_device_name);
+
+        Botan::secure_scrub_memory(str_email.data(), str_email.size());
+        Botan::secure_scrub_memory(str_master_password_hash.data(), str_master_password_hash.size());
 
         return getToken_(data);
     }
@@ -236,6 +242,8 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(NetworkError::OfflineNetwork);
         }
 
+        std::string str_email(email.begin(), email.end());
+        std::string str_master_password_hash(master_password_hash.begin(), master_password_hash.end());
         std::string code(proof.code.begin(), proof.code.end());
 
         httplib::Params data;
@@ -259,6 +267,10 @@ namespace clientwarden::vendor::bitwarden::vault {
             data.emplace("twoFactorProvider", std::to_string(static_cast<int>(toMultiFactorAuth(proof.method))));
             data.emplace("twoFactorRemember", proof.remember ? "1" : "0");
         }
+
+        Botan::secure_scrub_memory(code.data(), code.size());
+        Botan::secure_scrub_memory(str_email.data(), str_email.size());
+        Botan::secure_scrub_memory(str_master_password_hash.data(), str_master_password_hash.size());
 
         return getToken_(data);
     }
@@ -284,7 +296,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Post("/api/ciphers", headers, data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Post("/api/ciphers", headers, data.dump(), "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -321,7 +333,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Put("/api/ciphers/" + uuid, headers, data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Put("/api/ciphers/" + uuid, headers, data.dump(), "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -357,7 +369,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Delete("/api/ciphers/" + uuid, headers);
+        httplib::Result res = m_vault_client_->Delete("/api/ciphers/" + uuid, headers);
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -393,7 +405,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Put("/api/ciphers/" + uuid + "/delete", headers, "", "application/json");
+        httplib::Result res = m_vault_client_->Put("/api/ciphers/" + uuid + "/delete", headers, "", "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -429,7 +441,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Put("/api/ciphers/" + uuid + "/restore", headers, "", "application/json");
+        httplib::Result res = m_vault_client_->Put("/api/ciphers/" + uuid + "/restore", headers, "", "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -469,7 +481,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         json_data["ids"] = nlohmann::json::array();
         json_data["ids"][0] = uuid;
 
-        httplib::Result res = m_vault_client->Post("/api/ciphers/archive", headers, json_data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Post("/api/ciphers/archive", headers, json_data.dump(), "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -509,7 +521,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         json_data["ids"] = nlohmann::json::array();
         json_data["ids"][0] = uuid;
 
-        httplib::Result res = m_vault_client->Post("/api/ciphers/unarchive", headers, json_data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Post("/api/ciphers/unarchive", headers, json_data.dump(), "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -548,7 +560,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json json_data;
         json_data["name"] = utils::getString(name);
 
-        httplib::Result res = m_vault_client->Post("/api/folders", headers, json_data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Post("/api/folders", headers, json_data.dump(), "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -588,7 +600,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json json_data;
         json_data["name"] = utils::getString(name);
 
-        httplib::Result res = m_vault_client->Put("/api/folders/" + uuid, headers, json_data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Put("/api/folders/" + uuid, headers, json_data.dump(), "application/json");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -624,7 +636,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Delete("/api/folders/" + uuid, headers);
+        httplib::Result res = m_vault_client_->Delete("/api/folders/" + uuid, headers);
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -674,7 +686,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(dec_key.data(), dec_key.size());
 
-        httplib::Result res = m_vault_client->Post("/api/ciphers/" + uuid + "/attachment/v2", headers, json_data.dump(), "application/json");
+        httplib::Result res = m_vault_client_->Post("/api/ciphers/" + uuid + "/attachment/v2", headers, json_data.dump(), "application/json");
 
         lock.unlock();
 
@@ -722,7 +734,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         lock.lock();
 
-        httplib::Result upload_res = m_vault_client->Post(upload_url, 
+        httplib::Result upload_res = m_vault_client_->Post(upload_url, 
             headers, items, [&on_progress](uint64_t current, uint64_t total) -> bool {
                 if (on_progress && total > 0) {
                     on_progress(static_cast<float>(current) / static_cast<float>(total));
@@ -763,7 +775,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Delete("/api/ciphers/" + uuid + "/attachment/" + utils::getString(attachment_id), headers);
+        httplib::Result res = m_vault_client_->Delete("/api/ciphers/" + uuid + "/attachment/" + utils::getString(attachment_id), headers);
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -802,7 +814,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Get("/api/ciphers/" + uuid + "/attachment/" + utils::getString(attachment_id), headers);
+        httplib::Result res = m_vault_client_->Get("/api/ciphers/" + uuid + "/attachment/" + utils::getString(attachment_id), headers);
 
         lock.unlock();
 
@@ -902,15 +914,15 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         std::string uri = utils::getString(url);
-        if (url.starts_with("https://")) {
-            uri = url.substr(8);
-        } else if (url.starts_with("http://")) {
-            uri = url.substr(7);
+        if (uri.starts_with("https://")) {
+            uri = uri.substr(8);
+        } else if (uri.starts_with("http://")) {
+            uri = uri.substr(7);
         }
 
         std::lock_guard<std::mutex> lock(m_icon_client_mutex_);
 
-        httplib::Result res = m_icon_client->Get("/" + uri + "/icon.png");
+        httplib::Result res = m_icon_client_->Get("/" + uri + "/icon.png");
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -942,7 +954,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Get("/api/sync", headers);
+        httplib::Result res = m_vault_client_->Get("/api/sync", headers);
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -978,7 +990,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Get("/api/sync", headers);
+        httplib::Result res = m_vault_client_->Get("/api/sync", headers);
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -1011,7 +1023,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Botan::secure_scrub_memory(access_token.data(), access_token.size());
 
-        httplib::Result res = m_vault_client->Get("/api/accounts/profile", headers);
+        httplib::Result res = m_vault_client_->Get("/api/accounts/profile", headers);
 
         std::expected<void, NetworkError> err = getError_(res);
 
@@ -1028,21 +1040,22 @@ namespace clientwarden::vendor::bitwarden::vault {
     
     Connectivity BitwardenNetwork::getConnectivity() {
         if (!m_init_) {
-            return std::unexpected(NetworkError::Uninitialised);
+            return NetworkError::Uninitialised;
         }
 
         std::lock_guard<std::mutex> lock(m_api_client_mutex_);
-        m_api_client->set_connection_timeout(1);
+        m_api_client_->set_connection_timeout(1);
 
-        httplib::Result res = m_api_client->Get("/alive");
+        httplib::Result res = m_api_client_->Get("/alive");
 
-        if (res && res->status == 200) {
-            m_connectivity = VaultConnectivity::Online;
-        } else {
-            m_connectivity = VaultConnectivity::Offline;
+        Connectivity current = (res && res->status == 200) ? VaultConnectivity::Online : VaultConnectivity::Offline;
+        Connectivity previous = m_connectivity.exchange(current);
+
+        if (previous != current) {
+            emit_(NetworkEventType::ConnectivityChanged);
         }
 
-        return m_connectivity;
+        return current;
     }
     
     NetworkError BitwardenNetwork::checkAccessTokenValidity() {
@@ -1054,14 +1067,18 @@ namespace clientwarden::vendor::bitwarden::vault {
             return NetworkError::OfflineNetwork;
         }
 
+        std::string access_token = getString(m_session.access_token);
+
         std::lock_guard<std::mutex> lock(m_api_client_mutex_);
-        m_api_client->set_connection_timeout(3);
+        m_api_client_->set_connection_timeout(3);
 
         httplib::Headers headers = {
-            {"Authorization", "Bearer " + accessString}
+            { "Authorization", "Bearer " + access_token },
         };
 
-        httplib::Result res = m_api_client->Get("/api/accounts/profile", headers);
+        Botan::secure_scrub_memory(access_token.data(), access_token.size());
+
+        httplib::Result res = m_api_client_->Get("/api/accounts/profile", headers);
 
         if (!err.has_value()) {
             return err.error();
@@ -1079,18 +1096,48 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(NetworkError::OfflineNetwork);
         }
 
-        std::lock_guard<std::mutex> lock(m_vault_client_mutex_);
+        std::string s_refresh_token = utils::getString(m_session.refresh_token);
+
+        std::unique_ptr<std::mutex> lock(m_vault_client_mutex_);
 
         httplib::Params data;
         data.emplace("grant_type", "refresh_token");
         data.emplace("deviceType", bitwarden_device_type);
-        data.emplace("refresh_token", refreshToken);
+        data.emplace("refresh_token", s_refresh_token);
 
-        httplib::Result res = m_vault_client->Post("/identity/connect/token", data);
+        Botan::secure_scrub_memory(s_refresh_token.data(), s_refresh_token.size());
+
+        httplib::Result res = m_vault_client_->Post("/identity/connect/token", data);
+
+        lock.unlock();
 
         std::expected<void, NetworkError> err = getError_(res);
 
         if (!err.has_value()) {
+            if (err.error() == NetworkError::BadRequest) {
+                if (!nlohmann::json::accept(res->body)) {
+                    return std::unexpected(NetworkError::Unknown);
+                }
+
+                nlohmann::json body = nlohmann::json::parse(res->body);
+
+                /**
+                 * @note We dont need to stop the refreshThread since this is mainly going to be called from
+                 *  the refreshThread anyway. The LogOut Handler should stop the threads.
+                 * @note We should also return success since its not really an error and more of an
+                 *  indicator that its expired and the caller doesnt need to know we logged out.
+                 */
+                if (body.contains("error") && body["error"].is_string() && 
+                    body["error"] == "invalid_grant") {
+                    if (m_on_event) {
+                        m_on_event(NetworkEvent::LogOut);
+                    }
+
+                    eraseSession();
+                    stopListening();
+                    return body;
+                }
+            }
             return std::unexpected(err.error());
         }
 
@@ -1098,23 +1145,247 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(NetworkError::Unknown);
         }
 
-        return nlohmann::json::parse(res->body);
+        nlohmann::json body = nlohmann::json::parse(res->body);
+
+        if (!body.contains("access_token") || !body["access_token"].is_string() ||
+            !body.contains("expires_in") || !body["expires_in"].is_number()) {
+            return std::unexpected(NetworkError::Unknown);
+        }
+
+        Botan::secure_vector<uint8_t> access_token = getSecureVector(body["access_token"]);
+        Botan::secure_vector<uint8_t> refresh_token = getSecureVector(body["refresh_token"]);
+        Botan::secure_vector<uint8_t> expires_at = utils::getBitwardenTime(body["expires_in"].get<int>());
+
+        std::expected<void, SettingsError> settings_err;
+        settings_err = m_settings->keychainSet(KeychainSecurity::Sensitive, "access_token", access_token);
+
+        if (!settings_err.has_value()) {
+            return std::unexpected(NetworkError::SettingsError);
+        }
+
+        settings_err = m_settings->keychainSet(KeychainSecurity::Sensitive, "refresh_token", refresh_token);
+
+        if (!settings_err.has_value()) {
+            return std::unexpected(NetworkError::SettingsError);
+        }
+
+        settings_err = m_settings->keychainSet(KeychainSecurity::Secure, "next_refresh_time", expires_at);
+
+        if (!settings_err.has_value()) {
+            return std::unexpected(NetworkError::SettingsError);
+        }
+
+        m_session.access_token = access_token;
+        m_session.refresh_token = refresh_token;
+        m_session.expires_at = utils::getTime(expires_at);
+
+        return body;
     }
     
     NetworkError BitwardenNetwork::listen(std::function<void(NetworkEvent)> on_event) {
-        
+        if (!m_init_ || m_urls.size() < 5) {
+            return NetworkError::Uninitialised;
+        }
+
+        m_listening_thread.setCallback([this](const std::atomic<bool>& should_thread) {
+            std::string access_token = getString(m_session.access_token);
+
+            httplib::Headers headers = {
+                { "Authorization", "Bearer " + access_token },
+            };
+
+            Botan::secure_scrub_memory(access_token.data(), access_token.size());
+
+            httplib::ws::WebSocketClient websocket_client(utils::getString(m_urls[4]) + "/hub", headers);
+
+            while (should_thread) {
+                if (!m_init_) {
+                    break;
+                }
+                    
+                if (m_connectivity == Connectivity::Offline) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    continue;
+                }
+
+                try {
+                    if (!websocket_client.connect()) {
+                        logger->error("Websocket failed");
+                        return false;
+                    }
+                } catch (...) {
+                    logger->error("Websocket failed");
+                    return false;
+                }
+
+                websocket_client.send("{\"protocol\":\"messagepack\",\"version\":1}\x1e");
+                websocket_client.set_websocket_ping_interval(0.1);
+
+                std::string msg;
+
+                std::jthread reader([&](std::stop_token stop) {
+                    while (should_thread && !stop.stop_requested()) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    }
+
+                    websocket_client.close(httplib::ws::CloseStatus::GoingAway, "shutting down");
+                });
+
+                while (websocket_client.read(msg)) {
+                    if (msg == "{}\x1e") {
+                        continue;
+                    }
+
+                    size_t header_len = 0;
+
+                    const uint8_t* raw = reinterpret_cast<const uint8_t*>(msg.data());
+                    for (size_t i = 0; i < msg.size() && i < 5; i++) {
+                        header_len++;
+                        if (!(raw[i] & 0x80)) {
+                            break;
+                        }
+                    }
+
+                    if (header_len == 0 || header_len >= msg.size()) {
+                        continue;
+                    }
+
+                    try {
+                        msgpack::object_handle obj_handle = msgpack::unpack(
+                            msg.data() + header_len,
+                            msg.size() - header_len
+                        );
+
+                        msgpack::object obj = obj_handle.get();
+
+                        if (obj.type != msgpack::type::ARRAY || obj.via.array.size < 5) {
+                            continue;
+                        }
+                        
+                        msgpack::object_array& arr = obj.via.array;
+
+                        if (arr.ptr[0].type != msgpack::type::POSITIVE_INTEGER || 
+                            arr.ptr[0].as<uint64_t>() != 1 ||
+                            arr.ptr[4].type != msgpack::type::ARRAY) {
+                            continue;
+                        }
+
+                        msgpack::object_array& args = arr.ptr[4].via.array;
+                        if (args.size < 1 || args.ptr[0].type != msgpack::type::MAP) {
+                            continue;
+                        }
+
+                        msgpack::object_map& notification = args.ptr[0].via.map;
+
+                        int notify_type = -1;
+                        std::string cipher_id;
+
+                        for (uint32_t i = 0; i < notification.size; i++) {
+                            std::string key = notification.ptr[i].key.as<std::string>();
+
+                            if (key == "Type") {
+                                notify_type = notification.ptr[i].val.as<int>();
+                            } else if (key == "Payload") {
+                                msgpack::object_map& payload = notification.ptr[i].val.via.map;
+                                for (uint32_t j = 0; j < payload.size; j++) {
+                                    std::string pkey = payload.ptr[j].key.as<std::string>();
+                                    if (pkey == "Id" && payload.ptr[j].val.type == msgpack::type::STR) {
+                                        cipher_id = payload.ptr[j].val.as<std::string>();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (notify_type < 0 || notify_type > static_cast<int>(NotificationType::PremiumStatusChanged)) {
+                            continue;
+                        }
+
+                        if (m_on_event) {
+                            m_on_event(static_cast<NotificationType>(notify_type));
+                        }
+                    } catch (...) {
+                        continue;
+                    }
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+            return true;
+        });
     }
     
     bool BitwardenNetwork::stopListening() {
+        m_listening_thread.stop();
         
+        return true;
     }
     
     NetworkError BitwardenNetwork::startTokenRefreshThread() {
-        
+        if (!m_init_) {
+            return NetworkError::Uninitialised;
+        }
+
+        m_token_refresh.setCallback([this](const std::atomic<bool>& should_thread) {
+            while (should_thread.load()) {
+                if (!m_init_) {
+                    break;
+                }
+                
+                if (m_connectivity == Connectivity::Offline) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    continue;
+                }
+
+                std::time_t now = std::time(nullptr);
+
+                if (now >= m_session.expires_at || checkAccessTokenValidity() != NetworkError::Success) {
+                    if (!refreshToken().has_value()) {
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        continue;
+                    }
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            }
+            return true;
+        });
+
+        return NetworkError::Success;
     }
     
     bool BitwardenNetwork::stopTokenRefreshThread() {
-        
+        m_token_refresh.stop();
+
+        return true;
+    }
+
+    NetworkError BitwardenNetwork::startConnectivityThread() {
+        if (!m_init_) {
+            return NetworkError::Uninitialised;
+        }
+
+        m_connectivity_thread.setCallback([this](const std::atomic<bool>& should_thread) {
+            while (should_thread.load()) {
+                if (!m_init_) {
+                    break;
+                }
+                
+                getConnectivity();
+
+                int wait_ms = (state == Connectivity::Online) ? 5000 : 1000;
+
+                for (int waited = 0; waited < wait_ms && should_thread.load(); waited += 100) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+            }
+            return true;
+        });
+
+        return NetworkError::Success;
+    }
+
+    bool BitwardenNetwork::stopConnectivityThread() {
+        m_connectivity_thread.stop();
+
+        return true;
     }
     
     Vendor BitwardenNetwork::getVendor() {
@@ -1130,15 +1401,12 @@ namespace clientwarden::vendor::bitwarden::vault {
             { "bitwarden-client-name", bitwarden_device_type },
             { "bitwarden-client-version", bitwarden_version },
         });
-
-        std::string str_email(email.begin(), email.end());
-        std::string str_master_password_hash(master_password_hash.begin(), master_password_hash.end());
         
         httplib::Result res = m_vault_client_->Post("/identity/connect/token", data);
 
         std::expected<void, NetworkError> err = getError_(res);
 
-        if (!err.has_value()) {
+        if (!err.has_value() && err.error() != NetworkError::BadRequest) {
             return std::unexpected(err.error());
         }
 
@@ -1165,7 +1433,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 /**
-                 * @note help from claude.
+                 * @note help from claude. Converts from String to Enum
                  */
                 std::string str_item = item.get<std::string>();
                 int value{};
@@ -1205,8 +1473,11 @@ namespace clientwarden::vendor::bitwarden::vault {
             Botan::secure_vector<uint8_t>(access_token.begin(), access_token.end());
         auth_result.session.refresh_token = 
             Botan::secure_vector<uint8_t>(refresh_token.begin(), refresh_token.end());
-        auth_result.session.expires_in = body["expires_in"].get<int>();
+        auth_result.session.expires_at = utils::getTime(utils::getBitwardenTime(body["expires_in"].get<int>()));
         auth_result.raw = body;
+
+        Botan::secure_scrub_memory(access_token.data(), access_token.size());
+        Botan::secure_scrub_memory(refresh_token.data(), refresh_token.size());
 
         return auth_result;
     }
@@ -1216,8 +1487,9 @@ namespace clientwarden::vendor::bitwarden::vault {
             logger->error("request failed");
             return std::unexpected(NetworkError::Unknown);
         }
-        if (res->status == 401) {
-            logger->error("failed: unauthorised");
+        if (res->status == 400) {
+            return std::unexpected(NetworkError::BadRequest);
+        } else if (res->status == 401) {
             return std::unexpected(NetworkError::Unauthorised);
         } else if (res->status == 429) {
             logger->error("failed: rate limited");

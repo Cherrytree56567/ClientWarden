@@ -18,7 +18,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         CoseEncrypt0 = 7,
     };
 
-    class BitwardenCrypto {
+    class BitwardenCrypto : public Crypto {
     public:
         BitwardenCrypto();
         ~BitwardenCrypto() override = default;
