@@ -9,6 +9,7 @@ namespace clientwarden::vault {
     enum class RuntimeError {
         VaultNotFound,
         InvalidVault,
+        ExistingItem,
         NotFound,
         Uninitialised,
         Success
