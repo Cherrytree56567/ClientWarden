@@ -12,12 +12,13 @@ namespace clientwarden::vault {
         ExistingItem,
         NotFound,
         Uninitialised,
+        StorageFailure,
         Success
     };
 
     class Runtime {
     public:
-        Runtime(Storage storage);
+        Runtime(std::shared_ptr<Storage> storage);
         virtual ~Runtime() = default;
 
         /**
@@ -82,6 +83,10 @@ namespace clientwarden::vault {
          */
         virtual RuntimeError markOfflineDeletedItem(ItemId uuid, bool mark) = 0;
         /**
+         * @brief Flags or Unflags an item as created while offline
+         */
+        virtual RuntimeError markOfflineCreatedItem(ItemId uuid, bool mark) = 0;
+        /**
          * @brief Flags or Unflags a Folder as deleted while offline.
          */
         virtual RuntimeError markOfflineDeletedFolder(ItemId uuid, bool mark) = 0;
@@ -129,6 +134,6 @@ namespace clientwarden::vault {
     protected:
         std::recursive_mutex m_mutex;
         nlohmann::json m_vault_data;
-        Storage m_storage;
+        std::shared_ptr<Storage> m_storage;
     };
 }

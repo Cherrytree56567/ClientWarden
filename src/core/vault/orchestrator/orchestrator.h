@@ -8,6 +8,14 @@
 #include "../runtime/runtime.h"
 
 namespace clientwarden::vault {
+    enum class OrchestratorError {
+        NetworkError,
+        CryptoError,
+        RuntimeError,
+        InvalidParams,
+        Success
+    };
+
     class Orchestrator {
     public:
         Orchestrator(std::shared_ptr<Crypto> crypto, std::shared_ptr<Network> network,
@@ -23,35 +31,35 @@ namespace clientwarden::vault {
         /**
          * @brief NewItem pushes the new item to the server and then pushes it to the vault.
          */
-        virtual std::expected<ItemId, NetworkError> newItem(nlohmann::json data) = 0;
+        virtual std::expected<ItemId, OrchestratorError> newItem(nlohmann::json data) = 0;
         /**
          * @brief UpdateItem pushes the item to the server and then to the vault.
          */
-        virtual NetworkError updateItem(nlohmann::json data) = 0;
+        virtual OrchestratorError updateItem(nlohmann::json data) = 0;
         /**
          * @brief Asks the server to delete the item and remove it from the vault.
          */
-        virtual NetworkError deleteItem(ItemId uuid) = 0;
+        virtual OrchestratorError deleteItem(ItemId uuid) = 0;
         /**
          * @brief Asks the server to bin the item and bin it in the Vault.
          */
-        virtual NetworkError softDeleteItem(ItemId uuid) = 0;
+        virtual OrchestratorError softDeleteItem(ItemId uuid) = 0;
         /**
          * @brief Asks the server to restore the item and remove the item from the bin in the Vault.
          */
-        virtual NetworkError restoreItem(ItemId uuid) = 0;
+        virtual OrchestratorError restoreItem(ItemId uuid) = 0;
         /**
          * @brief Asks the server to archive the item and archive it in the Vault.
          */
-        virtual NetworkError archiveItem(ItemId uuid) = 0;
+        virtual OrchestratorError archiveItem(ItemId uuid) = 0;
         /**
          * @brief Asks the server to unarchive the item and unarchive it in the Vault.
          */
-        virtual NetworkError unArchiveItem(ItemId uuid) = 0;
+        virtual OrchestratorError unArchiveItem(ItemId uuid) = 0;
         /**
          * @brief Upload the attachment to the server and use on_progress to indicate progress.
          */
-        virtual std::expected<Botan::secure_vector<uint8_t>, NetworkError> addAttachment(
+        virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> addAttachment(
             ItemId uuid, 
             const Botan::secure_vector<uint8_t>& file_contents, 
             const Botan::secure_vector<uint8_t>& file_name, 
@@ -59,39 +67,39 @@ namespace clientwarden::vault {
         /**
          * @brief Ask the server to remove the attachment and remove it from the Vault.
          */
-        virtual NetworkError removeAttachment(ItemId uuid, 
+        virtual OrchestratorError removeAttachment(ItemId uuid, 
             const Botan::secure_vector<uint8_t> attachment_id) = 0;
         /**
          * @brief Download the attachment from the server and indicate progress via on_progress.
          */
-        virtual NetworkError downloadAttachment(ItemId uuid, 
+        virtual OrchestratorError downloadAttachment(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, std::filesystem::path save_path,
             const ItemKey& key, std::function<void(float)> on_progress = nullptr) = 0;
         /**
          * @brief Ask the server to create a folder and add it to the Vault.
          */
-        virtual std::expected<nlohmann::json, NetworkError> createFolder(
+        virtual std::expected<nlohmann::json, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
         /**
          * @brief Ask the server to rename the folder and rename it in the Vault.
          */
-        virtual NetworkError renameFolder(ItemId uuid, 
+        virtual OrchestratorError renameFolder(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
         /**
          * @brief Ask the server to delete the folder and remove it from the Vault and all items
          *  inside the folder.
          */
-        virtual NetworkError deleteFolder(ItemId uuid) = 0;
+        virtual OrchestratorError deleteFolder(ItemId uuid) = 0;
         /**
          * @brief Ask the server for the icon and return a botan vector of the item.
          */
-        virtual std::expected<Botan::secure_vector<uint8_t>, NetworkError> downloadIcon(
+        virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) = 0;
 
         /**
          * @brief Retries pushing items that were created or modified offline.
          */
-        virtual void retryOfflineItems() = 0;
+        virtual OrchestratorError retryOfflineItems() = 0;
 
         /**
          * @brief Returns the vendor.

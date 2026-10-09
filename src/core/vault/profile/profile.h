@@ -8,11 +8,12 @@ namespace clientwarden::vault {
     /**
      * @brief Represents a User's role in an Organisation
      */
-    enum class OrganisationRole {
-        Owner, 
-        Admin,
-        User,
-        Custom
+    enum class OrganisationRole : uint8_t {
+        Owner = 0,
+        Admin = 1,
+        User = 2,
+        Manager = 3
+        Custom = 4,
     };
 
     /**
@@ -31,6 +32,7 @@ namespace clientwarden::vault {
 
     /**
      * @brief Represents the User's Profile
+     * Raw should contains vault into as well.
      */
     struct Profile {
         Botan::secure_vector<uint8_t> email;

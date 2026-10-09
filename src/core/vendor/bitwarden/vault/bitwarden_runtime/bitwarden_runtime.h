@@ -4,7 +4,7 @@
 namespace clientwarden::vendor::bitwarden::vault {
     class BitwardenRuntime : public Runtime {
     public:
-        explicit BitwardenRuntime(Storage storage);
+        explicit BitwardenRuntime(std::shared_ptr<Storage> storage);
         ~BitwardenRuntime() override = default;
 
         RuntimeError loadVault() override;
@@ -25,6 +25,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         RuntimeError removeFolder(ItemId uuid) override;
 
         RuntimeError markOfflineDeletedItem(ItemId uuid, bool mark) override;
+        RuntimeError markOfflineCreatedItem(ItemId uuid, bool mark) override;
         RuntimeError markOfflineDeletedFolder(ItemId uuid, bool mark) override;
 
         std::expected<bool, RuntimeError> isMarkedItem(ItemId uuid) override;
@@ -41,6 +42,6 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Vendor getVendor() override;
     private:
-        nlohmann::json m_vault_data_;
+        bool m_init = false;
     };
 }

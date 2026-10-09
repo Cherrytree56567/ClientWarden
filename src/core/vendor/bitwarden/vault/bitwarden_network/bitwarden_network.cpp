@@ -1035,7 +1035,48 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(NetworkError::Unknown);
         }
 
-        return nlohmann::json::parse(res->body);
+        nlohmann::json& profile = nlohmann::json::parse(res->body);
+
+        if (!profile.contains("email") || !profile["email"].is_string() ||
+            !profile.contains("name") || !profile["name"].is_string() ||
+            !profile.contains("premium") || !profile["premium"].is_bool() ||
+            !profile.contains("organizations") ||
+            !profile.contains("twoFactorEnabled") || !profile["twoFactorEnabled"].is_bool() ||
+            !profile.contains("securityStamp") || !profile["securityStamp"].is_string() ||
+            !profile.contains("creationDate") || !profile["creationDate"].is_string() ||
+            !profile.contains("avatarColor") || !profile["avatarColor"].is_string()) {
+            return std::unexpected(RuntimeError::InvalidVault);
+        }
+
+        Profile result;
+        result.email = utils::getSecureVector(profile["email"]);
+        result.name = utils::getSecureVector(profile["name"]);
+        result.premium = profile["premium"];
+        result.multi_factor_enabled = profile["twoFactorEnabled"];
+        result.security_stamp = utils::getSecureVector(profile["securityStamp"]);
+        result.creation_date = utils::s_getTime(profile["creationDate"]);
+        result.avatar_color = profile["avatarColor"];
+
+        if (profile["organizations"].is_array()) {
+            for (nlohmann::json org : profile["organizations"]) {
+                if (!org.contains("id") || !org["id"].is_string() ||
+                    !org.contains("name") || !org["name"].is_string() ||
+                    !org.contains("type") || !org["type"].is_number() ||
+                    !org.contains("enabled") || !org["enabled"].is_bool()) {
+                    continue;
+                }
+
+                OrganisationMembership membership;
+                membership.id = org["id"];
+                membership.name = utils::getSecureVector(org["name"]);
+                membership.role = static_cast<OrganisationRole>(org["type"]);
+                membership.enabled = org["enabled"];
+
+                result.organisations.push_back(membership);
+            }
+        }
+
+        return result;
     }
     
     Connectivity BitwardenNetwork::getConnectivity() {
