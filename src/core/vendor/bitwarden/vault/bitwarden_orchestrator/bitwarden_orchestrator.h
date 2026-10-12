@@ -5,7 +5,8 @@ namespace clientwarden::vendor::bitwarden::vault {
     class BitwardenOrchestrator : public Orchestrator {
     public:
         explicit BitwardenOrchestrator(std::shared_ptr<Crypto> crypto, 
-            std::shared_ptr<Network> network, std::shared_ptr<Runtime> runtime);
+            std::shared_ptr<Network> network, std::shared_ptr<Runtime> runtime,
+            std::shared_ptr<Storage> storage);
         ~BitwardenOrchestrator() override = default;
         
         std::expected<bool, OrchestratorError> sessionInvalidated() override;
@@ -19,7 +20,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         OrchestratorError unArchiveItem(ItemId uuid) override;
         std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> addAttachment(
             ItemId uuid, 
-            const Botan::secure_vector<uint8_t>& file_contents, 
+            Botan::secure_vector<uint8_t>& file_contents, 
             const Botan::secure_vector<uint8_t>& file_name, 
             std::function<void(float)> on_progress = nullptr) override;
         OrchestratorError removeAttachment(ItemId uuid, 
@@ -38,5 +39,16 @@ namespace clientwarden::vendor::bitwarden::vault {
         OrchestratorError retryOfflineItems() override;
 
         Vendor getVendor() override;
+    private:
+        /**
+         * @brief To verify if the item was created online, we can first get the remote vault,
+         *  and then search for the item with the appropriate name and key. If the key is null
+         *  then we must compare the item fields directly.
+         * @todo move to sync
+         */
+        bool verifyOnlineCreation_(nlohmann::json cipher);
+
+        ItemId m_profile_id_;
+        bool m_profile_id_set_ = false;
     };
 }

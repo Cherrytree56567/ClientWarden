@@ -6,11 +6,11 @@ namespace clientwarden::vendor::bitwarden::vault {
     }
 
     RuntimeError BitwardenRuntime::loadVault() {
-        if (!m_storage.exists("vault.json")) {
+        if (!m_storage->exists("vault.json")) {
             return RuntimeError::VaultNotFound;
         }
 
-        std::string vault_data = utils::getString(m_storage.read("vault.json"));
+        std::string vault_data = utils::getString(m_storage->read("vault.json"));
 
         if (!nlohmann::json::accept(vault_data)) {
             return RuntimeError::InvalidVault;
@@ -29,6 +29,8 @@ namespace clientwarden::vendor::bitwarden::vault {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
         }
+
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         return m_vault_data;
     }
@@ -96,6 +98,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         return std::unexpected(RuntimeError::NotFound);
     }
     
+    /**
+     * @note If the item is being updated offline, an update item record should be marked first.
+     */
     RuntimeError BitwardenRuntime::updateItem(ItemId uuid, nlohmann::json item) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
@@ -114,18 +119,14 @@ namespace clientwarden::vendor::bitwarden::vault {
                 continue;
             }
 
-            /**
-             * @brief update item + update revision date
-             */
             if (cipher["id"] == uuid) {
                 cipher = std::move(item);
-                cipher["revisionDate"] = utils::getCurrentTime();
 
                 if (!cipher.contains("id") || !cipher["id"].is_string()) {
                     cipher["id"] = uuid;
                 }
 
-                if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -163,7 +164,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         m_vault_data["ciphers"].push_back(item);
         
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
             return RuntimeError::StorageFailure;
         }
 
@@ -199,7 +200,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         ciphers_iterator->erase(iterator);
         
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
             return RuntimeError::StorageFailure;
         }
 
@@ -255,6 +256,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         return std::unexpected(RuntimeError::NotFound);
     }
 
+    /**
+     * @note If the folder is being updated offline, an update folder record should be marked first.
+     */
     RuntimeError BitwardenRuntime::updateFolder(ItemId uuid, nlohmann::json folder_item) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
@@ -273,14 +277,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                 continue;
             }
 
-            /**
-             * @brief update item + update refresh date
-             */
             if (folder["id"] == uuid) {
                 folder = std::move(folder_item);
-                folder["revisionDate"] = utils::getCurrentTime();
                 
-                if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -318,7 +318,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         m_vault_data["folders"].push_back(folder_item);
         
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
             return RuntimeError::StorageFailure;
         }
 
@@ -354,174 +354,463 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         folders_iterator->erase(iterator);
         
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
             return RuntimeError::StorageFailure;
         }
 
         return RuntimeError::Success;
     }
 
-    RuntimeError BitwardenRuntime::markOfflineDeletedItem(ItemId uuid, bool mark) {
+    /**
+     * @note If the attachment is being updated offline, an update attachment record should be marked first.
+     */
+    RuntimeError BitwardenRuntime::addAttachment(ItemId uuid, nlohmann::json attachment) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
         }
         
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         
-        if (!m_vault_data.contains("offlineDeleted") || !m_vault_data["offlineDeleted"].is_array()) {
-            m_vault_data["offlineDeleted"] = nlohmann::json::array();
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return RuntimeError::InvalidVault;
         }
 
-        nlohmann::json& offline_items = m_vault_data["offlineDeleted"];
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
 
-        if (mark && std::find(offline_items.begin(), 
-                                offline_items.end(), uuid) == offline_items.end()) {
-            offline_items.push_back(uuid);
-        } else if (!mark) {
-            nlohmann::json::iterator item_iterator = std::remove_if(
-                offline_items.begin(), offline_items.end(),
-                [&uuid](const nlohmann::json& element) -> bool {
-                    return element.is_string() && element.get_ref<const std::string&>() == uuid;
-                });
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    cipher["attachments"] = nlohmann::json::array();
+                }
 
-            offline_items.erase(item_iterator, offline_items.end());
+                cipher["attachments"].push_back(attachment);
+
+                if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                    cipher["id"] = uuid;
+                }
+
+                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                    return RuntimeError::StorageFailure;
+                }
+
+                return RuntimeError::Success;
+            }
         }
-        
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
-            return RuntimeError::StorageFailure;
-        }
 
-        return RuntimeError::Success;
+        return RuntimeError::NotFound;
     }
 
-    RuntimeError BitwardenRuntime::markOfflineCreatedItem(ItemId uuid, bool mark) {
+
+    /**
+     * @note If the attachment is being updated offline, an update item record should be marked first.
+     */
+    RuntimeError BitwardenRuntime::updateAttachment(ItemId uuid, ItemId attachment_id, nlohmann::json attachment) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
         }
         
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         
-        if (!m_vault_data.contains("offlineItems") || !m_vault_data["offlineItems"].is_array()) {
-            m_vault_data["offlineItems"] = nlohmann::json::array();
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return RuntimeError::InvalidVault;
         }
 
-        nlohmann::json& offline_items = m_vault_data["offlineItems"];
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
 
-        if (mark && std::find(offline_items.begin(), 
-                                offline_items.end(), uuid) == offline_items.end()) {
-            offline_items.push_back(uuid);
-        } else if (!mark) {
-            nlohmann::json::iterator item_iterator = std::remove_if(
-                offline_items.begin(), offline_items.end(),
-                [&uuid](const nlohmann::json& element) -> bool {
-                    return element.is_string() && element.get_ref<const std::string&>() == uuid;
-                });
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    cipher["attachments"] = nlohmann::json::array();
+                }
 
-            offline_items.erase(item_iterator, offline_items.end());
+                bool replaced = false;
+
+                for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
+                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
+                        !cipher_attachment["id"].is_string()) {
+                        continue;
+                    }
+
+                    if (cipher_attachment["id"] == attachment_id) {
+                        cipher_attachment = attachment;
+                        replaced = true;
+                        break;
+                    }
+                }
+
+                if (!replaced) {
+                    return RuntimeError::NotFound;
+                }
+
+                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                    return RuntimeError::StorageFailure;
+                }
+
+                return RuntimeError::Success;
+            }
         }
-        
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
-            return RuntimeError::StorageFailure;
-        }
 
-        return RuntimeError::Success;
+        return RuntimeError::NotFound;
     }
 
-    RuntimeError BitwardenRuntime::markOfflineDeletedFolder(ItemId uuid, bool mark) {
+    /**
+     * @note If the attachment is being removed offline, an update item record should be marked first.
+     */
+    RuntimeError BitwardenRuntime::removeAttachment(ItemId uuid, ItemId attachment_id) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
         }
         
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         
-        if (!m_vault_data.contains("offlineFolders") || !m_vault_data["offlineFolders"].is_array()) {
-            m_vault_data["offlineFolders"] = nlohmann::json::array();
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return RuntimeError::InvalidVault;
         }
 
-        nlohmann::json& offline_folders = m_vault_data["offlineFolders"];
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
 
-        if (mark && std::find(offline_folders.begin(), 
-                                offline_folders.end(), uuid) == offline_folders.end()) {
-            offline_folders.push_back(uuid);
-        } else if (!mark) {
-            nlohmann::json::iterator item_iterator = std::remove_if(
-                offline_folders.begin(), offline_folders.end(),
-                [&uuid](const nlohmann::json& element) -> bool {
-                    return element.is_string() && element.get_ref<const std::string&>() == uuid;
-                });
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    cipher["attachments"] = nlohmann::json::array();
+                }
 
-            offline_folders.erase(item_iterator, offline_folders.end());
+                nlohmann::json& attachments = cipher["attachments"];
+                bool removed = false;
+
+                for (size_t i = 0; i < attachments.size(); ++i) {
+                    if (!attachments[i].is_object() || !attachments[i].contains("id") || 
+                        !attachments[i]["id"].is_string()) {
+                        continue;
+                    }
+
+                    if (attachments[i]["id"] == attachment_id) {
+                        attachments.erase(i);
+                        removed = true;
+                        break;
+                    }
+                }
+
+                if (!removed) {
+                    return RuntimeError::NotFound;
+                }
+
+                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                    return RuntimeError::StorageFailure;
+                }
+
+                return RuntimeError::Success;
+            }
         }
-        
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
-            return RuntimeError::StorageFailure;
-        }
 
-        return RuntimeError::Success;
+        return RuntimeError::NotFound;
     }
 
-    std::expected<bool, RuntimeError> BitwardenRuntime::isMarkedItem(ItemId uuid) {
+    std::expected<nlohmann::json, RuntimeError> BitwardenRuntime::getAttachment(ItemId uuid, ItemId attachment_id) {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
         }
         
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         
-        if (!m_vault_data.contains("offlineItems") || !m_vault_data["offlineItems"].is_array()) {
-            m_vault_data["offlineItems"] = nlohmann::json::array();
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return std::unexpected(RuntimeError::InvalidVault);
+        }
+
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
+
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    return std::unexpected(RuntimeError::NotFound);
+                }
+
+                bool replaced = false;
+
+                for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
+                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
+                        !cipher_attachment["id"].is_string()) {
+                        continue;
+                    }
+
+                    if (cipher_attachment["id"] == attachment_id) {
+                        return cipher_attachment;
+                    }
+                }
+
+                return std::unexpected(RuntimeError::NotFound);
+            }
+        }
+
+        return std::unexpected(RuntimeError::NotFound);
+    }
+
+    RuntimeError BitwardenRuntime::record(PendingChange change) {
+        if (!m_init) {
+            return RuntimeError::Uninitialised;
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        if (!m_vault_data.contains("pending") || !m_vault_data["pending"].is_object()) {
+            m_vault_data["pending"] = nlohmann::json::object();
+        }
+
+        if (!m_vault_data["pending"].contains("created") || 
+            !m_vault_data["pending"]["created"].is_object()) {
+            m_vault_data["pending"]["created"] = nlohmann::json::object();
+        }
+
+        if (!m_vault_data["pending"].contains("createdPartial") || 
+            !m_vault_data["pending"]["createdPartial"].is_object()) {
+            m_vault_data["pending"]["createdPartial"] = nlohmann::json::object();
+        }
+
+        if (!m_vault_data["pending"].contains("updated") || 
+            !m_vault_data["pending"]["updated"].is_object()) {
+            m_vault_data["pending"]["updated"] = nlohmann::json::object();
+        }
+
+        if (!m_vault_data["pending"].contains("deleted") || 
+            !m_vault_data["pending"]["deleted"].is_object()) {
+            m_vault_data["pending"]["deleted"] = nlohmann::json::object();
+        }
+        
+        nlohmann::json record_json;
+        record_json["revisionDate"] = change.revisionDate;
+        record_json["itemType"] = getString(change.entity.type);
+        record_json["id"] = change.entity.id;
+
+        ItemId entity_id = change.entity.id;
+
+        if (change.entity.type == EntityType::Attachment) {
+            record_json["parentId"] = change.entity.parent_id;
+            entity_id = change.entity.id + "/" + change.entity.parent_id;
+        }
+
+        nlohmann::json& created = m_vault_data["pending"]["created"];
+        nlohmann::json& created_partial = m_vault_data["pending"]["createdPartial"];
+        nlohmann::json& updated = m_vault_data["pending"]["updated"];
+        nlohmann::json& deleted = m_vault_data["pending"]["deleted"];
+
+        switch (change.type) {
+            case ChangeType::Created:
+                if (created.contains(entity_id) || created_partial.contains(entity_id) || 
+                    updated.contains(entity_id) || deleted.contains(entity_id)) {
+                    return RuntimeError::ExistingItem;
+                }
+                created[entity_id] = record_json;
+                break;
+            case ChangeType::CreatedPartial:
+                if (created_partial.contains(entity_id)) {
+                    return RuntimeError::Success;
+                }
+                if (updated.contains(entity_id) || deleted.contains(entity_id)) {
+                    return RuntimeError::ExistingItem;
+                }
+                created.erase(entity_id);
+                created_partial[entity_id] = record_json;
+                break;
+            case ChangeType::Updated:
+                if (created.contains(entity_id) || created_partial.contains(entity_id)) {
+                    return RuntimeError::Success;
+                }
+                if (deleted.contains(entity_id)) {
+                    return RuntimeError::NotFound;
+                }
+
+                if (updated.contains(entity_id)) {
+                    updated[entity_id]["revisionDate"] = change.revisionDate;
+                } else {
+                    record_json["base"] = change.base;
+                    updated[entity_id] = record_json;
+                }
+                break;
+            case ChangeType::Deleted:
+                if (deleted.contains(entity_id)) {
+                    return RuntimeError::Success;
+                }
+                if (created.contains(entity_id)) {
+                    created.erase(entity_id);
+                    break;
+                }
+
+                created_partial.erase(entity_id);
+                updated.erase(entity_id);
+                deleted[entity_id] = record_json;
+                break;
+        }
+
+        if (change.type == ChangeType::Deleted && change.entity.type == EntityType::Item) {
+            nlohmann::json& pending = m_vault_data["pending"];
+            
+            for (std::string name : {"created", "createdPartial", "updated", "deleted"}) {
+                nlohmann::json::iterator bucket = pending.find(name);
+                if (bucket == pending.end() || !bucket->is_object()) {
+                    continue;
+                }
+
+                std::vector<ItemId> removal_ids;
+
+                for (nlohmann::json::iterator iterator = bucket->begin(); iterator != bucket->end(); ++iterator) {
+                    if (iterator.value().value("itemType", "") == "attachment" &&
+                        iterator.value().value("parentId", "") == item_id) {
+                        removal_ids.push_back(iterator.key());
+                    }
+                }
+
+                for (ItemId key : removal_ids) {
+                    bucket->erase(key);
+                }
+            }
+        }
+
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+            return RuntimeError::StorageFailure;
+        }
+
+        return RuntimeError::Success;
+    }
+
+    RuntimeError BitwardenRuntime::removeRecord(Entity entity) {
+        if (!m_init) {
+            return RuntimeError::Uninitialised;
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        if (!m_vault_data.contains("pending") || !m_vault_data["pending"].is_object()) {
+            return RuntimeError::NotFound;
+        }
+
+        ItemId entity_id = entity.id;
+        if (entity.type == EntityType::Attachment) {
+            entity_id = entity.id + "/" + entity.parent_id;
+        }
+
+        bool found = false;
+
+        nlohmann::json& pending = m_vault_data["pending"];
+        
+        for (std::string name : {"created", "createdPartial", "updated", "deleted"}) {
+            nlohmann::json::iterator bucket = pending.find(name);
+            if (bucket == pending.end() || !bucket->is_object()) {
+                continue;
+            }
+
+            if (bucket->erase(entity_id) > 0) {
+                found = true;
+            }
+        }
+
+        if (!found) {
+            return RuntimeError::NotFound;
+        }
+
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+            return RuntimeError::StorageFailure;
+        }
+
+        return RuntimeError::Success;
+    }
+
+    std::expected<PendingChange, RuntimeError> BitwardenRuntime::getRecord(Entity entity) {
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        if (!m_vault_data.contains("pending") || !m_vault_data["pending"].is_object()) {
+            return std::unexpected(RuntimeError::NotFound);
+        }
+
+        ItemId entity_id = entity.id;
+        if (entity.type == EntityType::Attachment) {
+            entity_id = entity.id + "/" + entity.parent_id;
+        }
+
+        nlohmann::json& pending = m_vault_data["pending"];
+        
+        for (std::string name : {"created", "createdPartial", "updated", "deleted"}) {
+            for (auto& [item_id, value] : pending[name].items()) {
+                if (item_id != entity_id) {
+                    continue;
+                }
+
+                if (!value.contains("revisionDate") || !value["revisionDate"].is_string() ||
+                    !value.contains("id") || !value["id"].is_string() ||
+                    !value.contains("itemType") || !value["itemType"].is_string()) {
+                    return std::unexpected(RuntimeError::InvalidVault);
+                }
+
+                PendingChange change;
+                change.revisionDate = value["revisionDate"];
+                change.entity.id = value["id"];
+                change.entity.type = getEntityType(value.value("itemType", ""));
+                change.type = getChangeType(name);
+
+                if (change.entity.type == EntityType::Attachment && 
+                    value.contains("parentId") && value["parentId"].is_string()) {
+                    change.entity.parent_id = value["parentId"];
+                }
+
+                if (name == "updated") {
+                    if (!value.contains("base") || !value["base"].is_object()) {
+                        return std::unexpected(RuntimeError::InvalidVault);
+                    }
+                    change.base = value["base"];
+                }
+
+                return change;
+            }
+        }
+
+        return std::unexpected(RuntimeError::NotFound);
+    }
+
+    std::expected<bool, RuntimeError> BitwardenRuntime::recordExists(Entity entity) {
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+        
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        if (!m_vault_data.contains("pending") || !m_vault_data["pending"].is_object()) {
             return false;
         }
 
-        nlohmann::json& offline_items = m_vault_data["offlineItems"];
-
-        return std::find(offline_items.begin(), offline_items.end(), uuid) != offline_items.end();
-    }
-
-    std::expected<bool, RuntimeError> BitwardenRuntime::isMarkedFolder(ItemId uuid) {
-        if (!m_init) {
-            return std::unexpected(RuntimeError::Uninitialised);
-        }
-        
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        
-        if (!m_vault_data.contains("offlineFolders") || !m_vault_data["offlineFolders"].is_array()) {
-            m_vault_data["offlineFolders"] = nlohmann::json::array();
-            return false;
+        ItemId entity_id = entity.id;
+        if (entity.type == EntityType::Attachment) {
+            entity_id = entity.id + "/" + entity.parent_id;
         }
 
-        nlohmann::json& offline_folders = m_vault_data["offlineFolders"];
-
-        return std::find(offline_folders.begin(), offline_folders.end(), uuid) != offline_folders.end();
-    }
-
-    std::expected<std::vector<ItemId>, RuntimeError> BitwardenRuntime::getMarkedItems() {
-        if (!m_init) {
-            return std::unexpected(RuntimeError::Uninitialised);
-        }
+        nlohmann::json& pending = m_vault_data["pending"];
         
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        
-        if (!m_vault_data.contains("offlineItems") || !m_vault_data["offlineItems"].is_array()) {
-            m_vault_data["offlineItems"] = nlohmann::json::array();
-            return {};
+        for (std::string name : {"created", "createdPartial", "updated", "deleted"}) {
+            nlohmann::json::const_iterator bucket = pending.find(name);
+            if (bucket != pending.cend() && bucket->is_object() && bucket->contains(entity_id)) {
+                return true;
+            }
         }
 
-        return m_vault_data["offlineItems"].get<std::vector<ItemId>>();
-    }
-
-    std::expected<std::vector<ItemId>, RuntimeError> BitwardenRuntime::getMarkedFolders() {
-        if (!m_init) {
-            return std::unexpected(RuntimeError::Uninitialised);
-        }
-        
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        
-        if (!m_vault_data.contains("offlineFolders") || !m_vault_data["offlineFolders"].is_array()) {
-            m_vault_data["offlineFolders"] = nlohmann::json::array();
-            return {};
-        }
-
-        return m_vault_data["offlineFolders"].get<std::vector<ItemId>>();
+        return false;
     }
 
     std::expected<Profile, RuntimeError> BitwardenRuntime::getProfile() {
@@ -539,6 +828,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         if (!profile.contains("email") || !profile["email"].is_string() ||
             !profile.contains("name") || !profile["name"].is_string() ||
+            !profile.contains("id") || !profile["id"].is_string() ||
             !profile.contains("premium") || !profile["premium"].is_bool() ||
             !profile.contains("organizations") ||
             !profile.contains("twoFactorEnabled") || !profile["twoFactorEnabled"].is_bool() ||
@@ -551,6 +841,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         Profile result;
         result.email = utils::getSecureVector(profile["email"]);
         result.name = utils::getSecureVector(profile["name"]);
+        result.id = profile["id"];
         result.premium = profile["premium"];
         result.multi_factor_enabled = profile["twoFactorEnabled"];
         result.security_stamp = utils::getSecureVector(profile["securityStamp"]);
@@ -616,7 +907,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         m_vault_data["version"] = utils::getString(version);
         
-        if (!m_storage.write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
             return RuntimeError::StorageFailure;
         }
 

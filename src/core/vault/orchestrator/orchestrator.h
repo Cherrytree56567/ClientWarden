@@ -9,9 +9,16 @@
 
 namespace clientwarden::vault {
     enum class OrchestratorError {
+        InvalidSession,
+        NoPerms,
         NetworkError,
         CryptoError,
         RuntimeError,
+        PremiumRequired,
+        ItemNotFound,
+        AttachmentTooLarge,
+        QuotaExceeded,
+        NotFound,
         InvalidParams,
         Success
     };
@@ -58,10 +65,10 @@ namespace clientwarden::vault {
         virtual OrchestratorError unArchiveItem(ItemId uuid) = 0;
         /**
          * @brief Upload the attachment to the server and use on_progress to indicate progress.
+         * @note file_contents will be overridden and encrypted
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> addAttachment(
-            ItemId uuid, 
-            const Botan::secure_vector<uint8_t>& file_contents, 
+            ItemId uuid, Botan::secure_vector<uint8_t>& file_contents, 
             const Botan::secure_vector<uint8_t>& file_name, 
             std::function<void(float)> on_progress = nullptr) = 0;
         /**

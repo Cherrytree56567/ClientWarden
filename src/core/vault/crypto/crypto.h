@@ -63,6 +63,16 @@ namespace clientwarden::vault {
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decrypt(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key) = 0;
+        /**
+         * @brief Encrypts the Value using the crypto Key.
+         */
+        virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> encrypt(
+            const Botan::secure_vector<uint8_t>& value) = 0;
+        /**
+         * @brief Decrypts the Value using the crypto Key.
+         */
+        virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decrypt(
+            const Botan::secure_vector<uint8_t>& value) = 0;
 
         /**
          * @brief Encrypts the Value using the provided Key as a Binary.
@@ -74,6 +84,16 @@ namespace clientwarden::vault {
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decryptBinary(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key) = 0;
+        /**
+         * @brief Encrypt the value using the provided Key as Binary in place.
+         */
+        virtual CryptoErrors encryptBinaryInPlace(Botan::secure_vector<uint8_t>& value, 
+            const ItemKey& key);
+        /**
+         * @brief Decrypts the value using the provided key as binary in place.
+         */
+        virtual CryptoErrors decryptBinaryInPlace(Botan::secure_vector<uint8_t>& value,
+            const ItemKey& key);
 
         /**
          * @brief Stretches a key using HKDF using the provided info param.

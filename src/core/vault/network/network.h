@@ -27,9 +27,12 @@ namespace clientwarden::vault {
      */
     enum class NetworkError {
         OfflineNetwork,
+        Indeterminate,
         Unauthorised,
         RateLimited,
         BadRequest,
+        Forbidden,
+        NotFound,
         Invalid,
         ServerError,
         Unknown,

@@ -97,7 +97,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         switch (enc_type) {
             case EncryptionType::AesCbc256_HmacSha256_B64: {
                 std::expected<void, CryptoErrors> result = 
-                    encryptAesCbc256_HmacSha256_B64(value, key, init_vector, enc_value, mac);
+                    encryptAesCbc256_HmacSha256_B64_(value, key, init_vector, enc_value, mac);
                 
                 if (!result) {
                     return std::unexpected(result.error());
@@ -155,7 +155,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             switch (enc_type) {
                 case EncryptionType::AesCbc256_HmacSha256_B64:
-                    return decryptAesCbc256_HmacSha256_B64(init_vector, enc_value, mac, key);
+                    return decryptAesCbc256_HmacSha256_B64_(init_vector, enc_value, mac, key);
                 
                 default:
                     return std::unexpected(CryptoErrors::Unsupported);
@@ -165,6 +165,16 @@ namespace clientwarden::vendor::bitwarden::vault {
         } catch(...) {
             return std::unexpected(CryptoErrors::DecryptionError);
         }
+    }
+    
+    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::encrypt(
+        const Botan::secure_vector<uint8_t>& value) {
+        return encrypt(value, m_keys);
+    }
+    
+    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::decrypt(
+        const Botan::secure_vector<uint8_t>& value) {
+        return decrypt(value, m_keys);
     }
 
     std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::encryptBinary(
@@ -178,7 +188,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         switch (enc_type) {
             case EncryptionType::AesCbc256_HmacSha256_B64: {
                 std::expected<void, CryptoErrors> result = 
-                    encryptAesCbc256_HmacSha256_B64(value, key, init_vector, enc_value, mac);
+                    encryptAesCbc256_HmacSha256_B64_(value, key, init_vector, enc_value, mac);
                 
                 if (!result) {
                     return std::unexpected(result.error());
@@ -221,7 +231,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             switch (enc_type) {
                 case EncryptionType::AesCbc256_HmacSha256_B64:
-                    return decryptAesCbc256_HmacSha256_B64(init_vector, enc_value, mac, key);
+                    return decryptAesCbc256_HmacSha256_B64_(init_vector, enc_value, mac, key);
                 
                 default:
                     return std::unexpected(CryptoErrors::Unsupported);
@@ -231,6 +241,55 @@ namespace clientwarden::vendor::bitwarden::vault {
         } catch(...) {
             return std::unexpected(CryptoErrors::DecryptionError);
         }
+    }
+
+    CryptoErrors BitwardenCrypto::encryptBinaryInPlace(Botan::secure_vector<uint8_t>& value, 
+        const ItemKey& key) {
+        EncryptionType enc_type = EncryptionType::AesCbc256_HmacSha256_B64;
+
+        switch (enc_type) {
+            case EncryptionType::AesCbc256_HmacSha256_B64: {
+                std::expected<void, CryptoErrors> result = 
+                    encryptBinaryInPlaceAesCbc256_HmacSha256_B64_(value, key);
+                
+                if (!result) {
+                    return result.error();
+                }
+                break;
+            }
+                
+            default:
+                return CryptoErrors::Unsupported;
+        }
+
+        return CryptoErrors::Success;
+    }
+
+    CryptoErrors BitwardenCrypto::decryptBinaryInPlace(Botan::secure_vector<uint8_t>& value, 
+        const ItemKey& key) {
+        EncryptionType enc_type = EncryptionType::AesCbc256_HmacSha256_B64;
+
+        switch (enc_type) {
+            case EncryptionType::AesCbc256_HmacSha256_B64: {
+                std::expected<void, CryptoErrors> result = 
+                    decryptBinaryInPlaceAesCbc256_HmacSha256_B64_(value, key);
+                
+                if (!result) {
+                    return result.error();
+                }
+                break;
+            }
+                
+            default:
+                return CryptoErrors::Unsupported;
+        }
+
+        return CryptoErrors::Success;
+    }
+
+    CryptoErrors BitwardenCrypto::decryptBinaryInPlace(Botan::secure_vector<uint8_t>& value,
+        const ItemKey& key) {
+        
     }
 
     std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::hkdfStretch(const Botan::secure_vector<uint8_t>& info) {
@@ -409,7 +468,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         return result;
     }
 
-    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::decryptAesCbc256_HmacSha256_B64(
+    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::decryptAesCbc256_HmacSha256_B64_(
         const Botan::secure_vector<uint8_t>& init_vector, 
         const Botan::secure_vector<uint8_t>& enc_value, 
         const Botan::secure_vector<uint8_t>& mac, const ItemKey& key) {
@@ -475,7 +534,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         return dec_value;
     }
 
-    std::expected<void, CryptoErrors> BitwardenCrypto::encryptAesCbc256_HmacSha256_B64(
+    std::expected<void, CryptoErrors> BitwardenCrypto::encryptAesCbc256_HmacSha256_B64_(
         const Botan::secure_vector<uint8_t>& value, const ItemKey& key,
         Botan::secure_vector<uint8_t>& init_vector, Botan::secure_vector<uint8_t>& enc_value, 
         Botan::secure_vector<uint8_t>& mac) {
@@ -505,6 +564,140 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
         hmac->set_key(key.mac_key.data(), key.mac_key.size());
         mac = hmac->process(ivct);
+
+        return {};
+    }
+
+    std::expected<void, CryptoErrors> BitwardenCrypto::encryptBinaryInPlaceAesCbc256_HmacSha256_B64_(
+        Botan::secure_vector<uint8_t>& value, const ItemKey& key) {
+        Botan::AutoSeeded_RNG rng;
+
+        /**
+         * @brief We should make this a constexpr for optimisation.
+         */
+        constexpr size_t init_vector_size = 16;
+        constexpr size_t mac_size = 32;
+        constexpr size_t header_size = 1 + init_vector_size + mac_size;
+
+        /**
+         * @brief Create cipher and hmac families.
+         */
+        std::unique_ptr<Botan::Cipher_Mode> cipher =
+            Botan::Cipher_Mode::create("AES-256/CBC/PKCS7", Botan::Cipher_Dir::Encryption);
+        if (!cipher) {
+            return std::unexpected(CryptoErrors::InvalidFamily);
+        }
+
+        std::unique_ptr<Botan::MessageAuthenticationCode> hmac =
+            Botan::MessageAuthenticationCode::create("HMAC(SHA-256)");
+        if (!hmac) {
+            return std::unexpected(CryptoErrors::InvalidFamily);
+        }
+
+        /**
+         * @brief Provide enc and mac keys to the cipher and hmac families.
+         */
+        cipher->set_key(key.enc_key.data(), key.enc_key.size());
+        hmac->set_key(key.mac_key.data(), key.mac_key.size());
+
+        /**
+         * @brief Make space for the final encrypted binary value and shift the decrypted value by
+         *  1 so that we can prepend the enc type.
+         */
+        value.reserve(header_size + value.size() + 16);
+        value.insert(value.begin(), header_size, 0);
+
+        value[0] = std::to_underlying(EncryptionType::AesCbc256_HmacSha256_B64);
+
+        /**
+         * @brief Add the Init Vector.
+         */
+        rng.randomize(value.data() + 1, init_vector_size);
+
+        /**
+         * @brief Encrypt in place.
+         */
+        try {
+            cipher->start(value.data() + 1, init_vector_size);
+            cipher->finish(value, header_size);
+        } catch (...) {
+            Botan::secure_scrub_memory(value.data(), value.size());
+            return std::unexpected(CryptoErrors::EncryptionError);
+        }
+
+        /**
+         * @brief Add the Mac.
+         */
+        hmac->update(value.data() + 1, init_vector_size);
+        hmac->update(value.data() + header_size, value.size() - header_size);
+        hmac->final(value.data() + 1 + init_vector_size);
+
+        return {};
+    }
+
+    std::expected<void, CryptoErrors> BitwardenCrypto::decryptBinaryInPlaceAesCbc256_HmacSha256_B64_(
+        Botan::secure_vector<uint8_t>& value, const ItemKey& key) {
+        /**
+         * @brief We should make this a constexpr for optimisation.
+         */
+        constexpr size_t init_vector_size = 16;
+        constexpr size_t mac_size = 32;
+        constexpr size_t block_size = 16;
+        constexpr size_t header_size = 1 + init_vector_size + mac_size;
+
+        if (value.size() < header_size + block_size ||
+            (value.size() - header_size) % block_size != 0) {
+            return std::unexpected(CryptoErrors::InvalidParams);
+        }
+
+        if (value[0] != std::to_underlying(EncryptionType::AesCbc256_HmacSha256_B64)) {
+            return std::unexpected(CryptoErrors::Unsupported);
+        }
+
+        /**
+         * @brief Create the families.
+         */
+        std::unique_ptr<Botan::MessageAuthenticationCode> hmac =
+            Botan::MessageAuthenticationCode::create("HMAC(SHA-256)");
+        
+        if (!hmac) {
+            return std::unexpected(CryptoErrors::InvalidFamily);
+        }
+
+        if (!hmac->valid_keylength(key.mac_key.size())) {
+            return std::unexpected(CryptoErrors::InvalidParams);
+        }
+
+        std::unique_ptr<Botan::Cipher_Mode> cipher_mode = 
+            Botan::Cipher_Mode::create("AES-256/CBC/PKCS7", Botan::Cipher_Dir::Decryption);
+
+        if (!cipher_mode) {
+            return std::unexpected(CryptoErrors::InvalidFamily);
+        }
+
+        if (!cipher_mode->valid_keylength(key.enc_key.size()) || 
+            !cipher_mode->valid_nonce_length(init_vector_size)) {
+            return std::unexpected(CryptoErrors::InvalidParams);
+        }
+
+        hmac->set_key(key.mac_key);
+        hmac->update(value.data() + 1, init_vector_size);
+        hmac->update(value.data() + header_size, value.size() - header_size);
+
+        if (!hmac->verify_mac(value.data() + 1 + init_vector_size, mac_size)) {
+            return std::unexpected(CryptoErrors::DecryptionError);
+        }
+
+        try {
+            cipher_mode->set_key(key.enc_key);
+            cipher_mode->start(value.data() + 1, init_vector_size);
+            cipher_mode->finish(value, header_size);
+        } catch (...) {
+            Botan::secure_scrub_memory(value.data(), value.size());
+            return std::unexpected(CryptoErrors::DecryptionError);
+        }
+
+        value.erase(value.begin(), value.begin() + header_size);
 
         return {};
     }

@@ -24,15 +24,15 @@ namespace clientwarden::vendor::bitwarden::vault {
         RuntimeError addFolder(nlohmann::json folder) override;
         RuntimeError removeFolder(ItemId uuid) override;
 
-        RuntimeError markOfflineDeletedItem(ItemId uuid, bool mark) override;
-        RuntimeError markOfflineCreatedItem(ItemId uuid, bool mark) override;
-        RuntimeError markOfflineDeletedFolder(ItemId uuid, bool mark) override;
+        RuntimeError addAttachment(ItemId uuid, nlohmann::json attachment) override;
+        RuntimeError updateAttachment(ItemId uuid, ItemId attachment_id, nlohmann::json attachment) override;
+        RuntimeError removeAttachment(ItemId uuid, ItemId attachment_id) override;
+        std::expected<nlohmann::json, RuntimeError> getAttachment(ItemId uuid, ItemId attachment_id) override;
 
-        std::expected<bool, RuntimeError> isMarkedItem(ItemId uuid) override;
-        std::expected<bool, RuntimeError> isMarkedFolder(ItemId uuid) override;
-
-        std::expected<std::vector<ItemId>, RuntimeError> getMarkedItems() override;
-        std::expected<std::vector<ItemId>, RuntimeError> getMarkedFolders() override;
+        RuntimeError record(PendingChange change) override;
+        RuntimeError removeRecord(Entity entity) override;
+        std::expected<PendingChange, RuntimeError> getRecord(Entity entity) override;
+        std::expected<bool, RuntimeError> recordExists(Entity entity) override;
 
         std::expected<Profile, RuntimeError> getProfile() override;
         std::expected<nlohmann::json, RuntimeError> getVaultInfo() override;

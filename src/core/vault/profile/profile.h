@@ -37,6 +37,7 @@ namespace clientwarden::vault {
     struct Profile {
         Botan::secure_vector<uint8_t> email;
         Botan::secure_vector<uint8_t> name;
+        ItemId id;
         bool premium;
         std::vector<OrganisationMembership> organisations;
         bool multi_factor_enabled;

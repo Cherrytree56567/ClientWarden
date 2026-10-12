@@ -16,6 +16,88 @@ namespace clientwarden::vault {
         Success
     };
 
+    enum class EntityType {
+        Item,
+        Folder,
+        Attachment,
+        Unknown
+    };
+
+    enum class ChangeType {
+        Created,
+        CreatedPartial,
+        Updated,
+        Deleted,
+        Unknown
+    };
+
+    constexpr std::string_view getString(EntityType type) {
+        switch (type) {
+            case EntityType::Item:
+                return "item";
+            case EntityType::Folder:
+                return "folder";
+            case EntityType::Attachment:
+                return "attachment";
+            default:
+                return "unknown";
+        }
+    }
+
+    constexpr EntityType getEntityType(std::string_view type) {
+        if (type == "item") {
+            return EntityType::Item;
+        } else if (type == "folder") {
+            return EntityType::Folder;
+        } else if (type == "attachment") {
+            return EntityType::Attachment;
+        } else {
+            return EntityType::Unknown;
+        }
+    }
+
+    constexpr std::string_view getString(ChangeType type) {
+        if (type == ChangeType::Created) {
+            return "created";
+        } else if (type == ChangeType::CreatedPartial) {
+            return "createdPartial";
+        } else if (type == ChangeType::Updated) {
+            return "updated";
+        } else if (type == ChangeType::Deleted) {
+            return "deleted";
+        } else {
+            return "unknown";
+        }
+    }
+
+    constexpr ChangeType getChangeType(std::string_view type) {
+        switch (type) {
+            case "created":
+                return ChangeType::Created;
+            case "createdPartial":
+                return ChangeType::CreatedPartial;
+            case "updated":
+                return ChangeType::Updated;
+            case "deleted":
+                return ChangeType::Deleted;
+            default:
+                return ChangeType::Unknown;
+        }
+    }
+
+    struct Entity {
+        EntityType type = EntityType::Unknown;
+        ItemId id;
+        ItemId parent_id = "";
+    };
+
+    struct PendingChange {
+        Entity entity;
+        ChangeType type = ChangeType::Unknown;
+        nlohmann::json base;
+        std::string revisionDate;
+    };
+
     class Runtime {
     public:
         Runtime(std::shared_ptr<Storage> storage);
@@ -79,35 +161,39 @@ namespace clientwarden::vault {
         virtual RuntimeError removeFolder(ItemId uuid) = 0;
 
         /**
-         * @brief Flags or Unflags an Item as deleted while offline.
+         * @brief Add attachment json to the matching ItemId from the local Vault.
          */
-        virtual RuntimeError markOfflineDeletedItem(ItemId uuid, bool mark) = 0;
+        virtual RuntimeError addAttachment(ItemId uuid, nlohmann::json attachment) = 0;
         /**
-         * @brief Flags or Unflags an item as created while offline
+         * @brief Update attachment json to the matching ItemId from the local Vault.
          */
-        virtual RuntimeError markOfflineCreatedItem(ItemId uuid, bool mark) = 0;
+        virtual RuntimeError updateAttachment(ItemId uuid, ItemId attachment_id, nlohmann::json attachment) = 0;
         /**
-         * @brief Flags or Unflags a Folder as deleted while offline.
+         * @brief Remove attachment json to the matching ItemId from the local Vault.
          */
-        virtual RuntimeError markOfflineDeletedFolder(ItemId uuid, bool mark) = 0;
+        virtual RuntimeError removeAttachment(ItemId uuid, ItemId attachment_id) = 0;
+        /**
+         * @brief Returns the attachment with a matching ItemId as raw JSON.
+         */
+        virtual std::expected<nlohmann::json, RuntimeError> getAttachment(ItemId uuid, ItemId attachment_id) = 0;
 
         /**
-         * @brief Returns the flag of an Item with a matching ItemId.
+         * @brief Records an offline action. Requires a body and last modified date if it is an
+         *  Updated change.
          */
-        virtual std::expected<bool, RuntimeError> isMarkedItem(ItemId uuid) = 0;
+        virtual RuntimeError record(PendingChange change) = 0;
         /**
-         * @brief Returns the flag of a Folder with a matching ItemId.
+         * @brief Removes a record with the matching entity.
          */
-        virtual std::expected<bool, RuntimeError> isMarkedFolder(ItemId uuid) = 0;
-
+        virtual RuntimeError removeRecord(Entity entity) = 0;
         /**
-         * @brief Returns an array of Items which are marked as Deleted Offline.
+         * @brief Returns an offline action that matches the entity provided.
          */
-        virtual std::expected<std::vector<ItemId>, RuntimeError> getMarkedItems() = 0;
+        virtual std::expected<PendingChange, RuntimeError> getRecord(Entity entity) = 0;
         /**
-         * @brief Returns an array of Folders which are marked as Deleted Offline.
+         * @brief Returns a bool if the record with the matching entity exists.
          */
-        virtual std::expected<std::vector<ItemId>, RuntimeError> getMarkedFolders() = 0;
+        virtual std::expected<bool, RuntimeError> recordExists(Entity entity) = 0;
 
         /**
          * @brief Returns the profile contained in the local Vault.

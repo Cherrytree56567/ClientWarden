@@ -39,11 +39,19 @@ namespace clientwarden::vendor::bitwarden::vault {
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key) override;
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decrypt(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key) override;
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> encrypt(
+            const Botan::secure_vector<uint8_t>& value) override;
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decrypt(
+            const Botan::secure_vector<uint8_t>& value) override;
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> encryptBinary(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key) override;
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decryptBinary(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key) override;
+        CryptoErrors encryptBinaryInPlace(Botan::secure_vector<uint8_t>& value, 
+            const ItemKey& key) override;
+        CryptoErrors decryptBinaryInPlace(Botan::secure_vector<uint8_t>& value,
+            const ItemKey& key) override;
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> hkdfStretch(
             const Botan::secure_vector<uint8_t>& info) override;
@@ -72,13 +80,17 @@ namespace clientwarden::vendor::bitwarden::vault {
             const Botan::secure_vector<uint8_t>& init_vector, 
             const Botan::secure_vector<uint8_t>& value, 
             const Botan::secure_vector<uint8_t>& mac);
-        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decryptAesCbc256_HmacSha256_B64(
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> decryptAesCbc256_HmacSha256_B64_(
             const Botan::secure_vector<uint8_t>& init_vector, 
             const Botan::secure_vector<uint8_t>& enc_value, 
             const Botan::secure_vector<uint8_t>& mac, const ItemKey& key);
-        std::expected<void, CryptoErrors> encryptAesCbc256_HmacSha256_B64(
+        std::expected<void, CryptoErrors> decryptBinaryInPlaceAesCbc256_HmacSha256_B64_(
+            Botan::secure_vector<uint8_t>& value, const ItemKey& key);
+        std::expected<void, CryptoErrors> encryptAesCbc256_HmacSha256_B64_(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key,
             Botan::secure_vector<uint8_t>& init_vector, Botan::secure_vector<uint8_t>& enc_value, 
             Botan::secure_vector<uint8_t>& mac);
+        std::expected<void, CryptoErrors> encryptBinaryInPlaceAesCbc256_HmacSha256_B64_(
+            Botan::secure_vector<uint8_t>& value, const ItemKey& key);
     };
 }

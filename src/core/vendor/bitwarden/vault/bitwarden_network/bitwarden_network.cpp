@@ -1039,6 +1039,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         if (!profile.contains("email") || !profile["email"].is_string() ||
             !profile.contains("name") || !profile["name"].is_string() ||
+            !profile.contains("id") || !profile["id"].is_string() ||
             !profile.contains("premium") || !profile["premium"].is_bool() ||
             !profile.contains("organizations") ||
             !profile.contains("twoFactorEnabled") || !profile["twoFactorEnabled"].is_bool() ||
@@ -1051,6 +1052,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         Profile result;
         result.email = utils::getSecureVector(profile["email"]);
         result.name = utils::getSecureVector(profile["name"]);
+        result.id = profile["id"];
         result.premium = profile["premium"];
         result.multi_factor_enabled = profile["twoFactorEnabled"];
         result.security_stamp = utils::getSecureVector(profile["securityStamp"]);
@@ -1525,13 +1527,31 @@ namespace clientwarden::vendor::bitwarden::vault {
 
     std::expected<void, NetworkError> BitwardenNetwork::getError_(const httplib::Result& res) {
         if (!res) {
-            logger->error("request failed");
-            return std::unexpected(NetworkError::Unknown);
+            switch (res.error()) {
+                case httplib::Error::Connection:
+                case httplib::Error::ConnectionTimeout:
+                case httplib::Error::ProxyConnection:
+                case httplib::Error::SSLConnection:
+                case httplib::Error::SSLLoadingCerts:
+                case httplib::Error::SSLServerVerification:
+                case httplib::Error::BindIPAddress:
+                    return std::unexpected(NetworkError::Unreachable);
+
+                default:
+                    return std::unexpected(NetworkError::Indeterminate);
+            }
         }
-        if (res->status == 400) {
+        
+        if (status >= 200 && status < 300) {
+            return {};
+        } else if (res->status == 400 || res->status == 413 || res->status == 422) {
             return std::unexpected(NetworkError::BadRequest);
         } else if (res->status == 401) {
             return std::unexpected(NetworkError::Unauthorised);
+        } else if (res->status == 403) {
+            return std::unexpected(NetworkError::Forbidden);
+        } else if (res->status == 404) {
+            return std::unexpected(NetworkError::NotFound);
         } else if (res->status == 429) {
             logger->error("failed: rate limited");
             return std::unexpected(NetworkError::RateLimited);
