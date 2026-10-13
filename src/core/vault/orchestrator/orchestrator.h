@@ -17,6 +17,7 @@ namespace clientwarden::vault {
         PremiumRequired,
         ItemNotFound,
         AttachmentTooLarge,
+        StorageFailure,
         QuotaExceeded,
         NotFound,
         InvalidParams,

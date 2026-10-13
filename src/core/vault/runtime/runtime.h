@@ -95,7 +95,7 @@ namespace clientwarden::vault {
         Entity entity;
         ChangeType type = ChangeType::Unknown;
         nlohmann::json base;
-        std::string revisionDate;
+        std::string revision_date;
     };
 
     class Runtime {

@@ -20,6 +20,10 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         m_vault_data = nlohmann::json::parse(vault_data);
 
+        if (!m_vault_data.is_object()) {
+            return RuntimeError::InvalidVault;
+        }
+
         m_init = true;
 
         return RuntimeError::Success;
@@ -68,7 +72,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             }
 
             std::string c_id = cipher["id"];
-            ids.push_back(utils::getSecureVector(c_id));
+            ids.push_back(c_id);
         }
 
         return ids;
@@ -226,7 +230,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             }
 
             std::string c_id = folder["id"];
-            ids.push_back(getSecureVector(c_id));
+            ids.push_back(c_id);
         }
 
         return ids;
@@ -428,7 +432,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             if (cipher["id"] == uuid) {
                 if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
-                    cipher["attachments"] = nlohmann::json::array();
+                    return RuntimeError::NotFound;
                 }
 
                 bool replaced = false;
@@ -484,7 +488,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             if (cipher["id"] == uuid) {
                 if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
-                    cipher["attachments"] = nlohmann::json::array();
+                    return RuntimeError::NotFound;
                 }
 
                 nlohmann::json& attachments = cipher["attachments"];
@@ -593,7 +597,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
         
         nlohmann::json record_json;
-        record_json["revisionDate"] = change.revisionDate;
+        record_json["revisionDate"] = change.revision_date;
         record_json["itemType"] = getString(change.entity.type);
         record_json["id"] = change.entity.id;
 
@@ -636,7 +640,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 if (updated.contains(entity_id)) {
-                    updated[entity_id]["revisionDate"] = change.revisionDate;
+                    updated[entity_id]["revisionDate"] = change.revision_date;
                 } else {
                     record_json["base"] = change.base;
                     updated[entity_id] = record_json;
@@ -670,7 +674,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                 for (nlohmann::json::iterator iterator = bucket->begin(); iterator != bucket->end(); ++iterator) {
                     if (iterator.value().value("itemType", "") == "attachment" &&
-                        iterator.value().value("parentId", "") == item_id) {
+                        iterator.value().value("parentId", "") == change.entity.id) {
                         removal_ids.push_back(iterator.key());
                     }
                 }
@@ -761,7 +765,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 PendingChange change;
-                change.revisionDate = value["revisionDate"];
+                change.revision_date = value["revisionDate"];
                 change.entity.id = value["id"];
                 change.entity.type = getEntityType(value.value("itemType", ""));
                 change.type = getChangeType(name);

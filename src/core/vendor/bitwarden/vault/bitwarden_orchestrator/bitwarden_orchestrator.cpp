@@ -32,6 +32,8 @@ namespace clientwarden::vendor::bitwarden::vault {
      *  if it fails, mark it as created offline. We can then add it to the runtime.
      * @note We dont need to worry if the network fails and if its on the remote or not, bc
      *  we can always compare it at sync time.
+     * @note If an item failed to create online, then mark it as partially created, or created
+     *  offline before pushing it to the vault.
      */
     std::expected<ItemId, OrchestratorError> BitwardenOrchestrator::newItem(nlohmann::json data) {
         if (!data.is_object()) {
@@ -65,14 +67,32 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(OrchestratorError::InvalidParams);
         }
 
-        RuntimeError runtime_item = m_runtime->addItem(result_data);
-        if (runtime_item != RuntimeError::Success) {
-            return std::unexpected(OrchestratorError::RuntimeError);
-        } else if (created_offline) {
-            RuntimeError err = m_runtime->markOfflineCreatedItem(result_data["id"], true);
+        if (created_offline) {
+            PendingChange change;
+            change.entity.type = EntityType::Item;
+            change.entity.id = result_data["id"];
+
+            switch (network_item.error()) {
+                case NetworkError::Unreachable:
+                case NetworkError::Unauthorised:
+                case NetworkError::Forbidden:
+                case NetworkError::RateLimited:
+                    change.type = ChangeType::Created;
+                case NetworkError::BadRequest:
+                    return std::unexpected(OrchestratorError::InvalidParams);
+                default:
+                    change.type = ChangeType::CreatedPartial;
+            }
+
+            RuntimeError err = m_runtime->record(change);
             if (err != RuntimeError::Success) {
                 return std::unexpected(OrchestratorError::RuntimeError);
             }
+        }
+
+        RuntimeError runtime_item = m_runtime->addItem(result_data);
+        if (runtime_item != RuntimeError::Success) {
+            return std::unexpected(OrchestratorError::RuntimeError);
         }
 
         return result_data["id"];
@@ -84,6 +104,8 @@ namespace clientwarden::vendor::bitwarden::vault {
      *  then we must create it on the remote and if its successful, unmark it. If the item needs to
      *  be updated, then add an encryptedFor value with the original provided id value. Then we can
      *  add it to the runtime (local vault) and then mark it offline if needed.
+     * @note If updating fails, we should record an offline update item before pushing it to the
+     *  vault.
      */
     OrchestratorError BitwardenOrchestrator::updateItem(nlohmann::json data) {
         if (!data.is_object()) {
@@ -107,7 +129,14 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         std::expected<nlohmann::json, NetworkError> network_item;
 
-        if (m_runtime->isMarkedCreatedItem(data["id"].get<std::string>())) {
+        Entity entity;
+        entity.type = EntityType::Item;
+        entity.id = data["id"];
+
+        std::expected<bool, RuntimeError> is_created_offline = 
+            m_runtime->recordExists(entity);
+
+        if (is_created_offline.has_value() && is_created_offline.value())) {
             network_item = m_network->newItem(network_data);
         } else {
             network_data["encryptedFor"] = m_profile_id_;
@@ -115,17 +144,33 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         nlohmann::json result_data = data;
+        bool updated_offline = true;
 
         if (network_item.has_value()) {
+            updated_offline = false;
             result_data = network_item.value();
 
-            if (m_runtime->isMarkedCreatedItem(data["id"].get<std::string>())) {
-                m_runtime->markOfflineCreatedItem(data["id"], false);
+            if (is_created_offline.has_value() && is_created_offline.value())) {
+                m_runtime->removeRecord(entity);
             }
         }
 
         if (!result_data.contains("id") || !result_data["id"].is_string()) {
             return OrchestratorError::InvalidParams;
+        }
+
+        if (updated_offline) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Updated;
+            change.base = data;
+            change.revision_date = utils::s_getCurrentTime();
+
+            RuntimeError err = m_runtime->record(change);
+
+            if (err != RuntimeError::Success && err != RuntimeError::ExistingItem) {
+                return OrchestratorError::RuntimeError;
+            }
         }
 
         RuntimeError runtime_item = m_runtime->updateItem(data["id"], result_data);
@@ -142,8 +187,16 @@ namespace clientwarden::vendor::bitwarden::vault {
      *  it locally.
      */
     OrchestratorError BitwardenOrchestrator::deleteItem(ItemId uuid) {
-        if (m_runtime->isMarkedCreatedItem(uuid)) {
-            m_runtime->markOfflineCreatedItem(uuid, false);
+        Entity entity;
+        entity.type = EntityType::Item;
+        entity.id = data["id"];
+
+        std::expected<bool, RuntimeError> is_created_offline = 
+            m_runtime->recordExists(entity);
+        
+        if (is_created_offline.has_value() && is_created_offline.value())) {
+            m_runtime->removeRecord(entity);
+            return OrchestratorError::Success;
         }
 
         std::expected<nlohmann::json, NetworkError> network_delete = m_network->deleteItem(uuid);
@@ -154,7 +207,11 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         if (!network_delete.has_value()) {
-            m_runtime->markOfflineDeletedItem(uuid, true);
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Deleted;
+
+            m_runtime->record(change);
         }
 
         return OrchestratorError::Success;
@@ -178,7 +235,6 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json item = item_res.value();
 
         item["deletedDate"] = utils::s_getCurrentTime();
-        item["revisionDate"] = utils::s_getCurrentTime();
 
         std::expected<nlohmann::json, NetworkError> soft_delete_res = m_network->softDeleteItem(uuid);
 
@@ -203,7 +259,6 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json item = item_res.value();
 
         item["deletedDate"] = nullptr;
-        item["revisionDate"] = utils::s_getCurrentTime();
 
         std::expected<nlohmann::json, NetworkError> restore_res = m_network->restoreItem(uuid);
 
@@ -228,7 +283,6 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json item = item_res.value();
 
         item["archivedDate"] = utils::s_getCurrentTime();
-        item["revisionDate"] = utils::s_getCurrentTime();
 
         std::expected<nlohmann::json, NetworkError> archive_res = m_network->archiveItem(uuid);
 
@@ -253,7 +307,6 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json item = item_res.value();
 
         item["archivedDate"] = nullptr;
-        item["revisionDate"] = utils::s_getCurrentTime();
 
         std::expected<nlohmann::json, NetworkError> archive_res = m_network->unArchiveItem(uuid);
 
@@ -266,6 +319,10 @@ namespace clientwarden::vendor::bitwarden::vault {
         return OrchestratorError::Success;
     }
     
+    /**
+     * @note If an attachment is created offline, or was partially created online, we always check 
+     *  if it exists online and replace it.
+     */
     std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> BitwardenOrchestrator::addAttachment(
         ItemId uuid, Botan::secure_vector<uint8_t>& file_contents, 
         const Botan::secure_vector<uint8_t>& file_name, 
@@ -347,7 +404,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         /**
          * @note If it is created offline, then the (encrypted) file_contents should be saved as
          *  the (encrypted) file_name + .enc in the attachments folder and be queued to sync.
-         */        
+         */
         if (!network_attachment.has_value()) {
             if (network_attachment.error() == NetworkError::Forbidden) {
                 return std::unexpected(OrchestratorError::PremiumRequired);
@@ -363,28 +420,29 @@ namespace clientwarden::vendor::bitwarden::vault {
                 attachment_json["url"] = "attachments/" + attachment_json["id"];
                 attachment_json["createdOffline"] = true;
 
+                PendingChange change;
+                change.entity.type = EntityType::Attachment;
+                change.entity.id = attachment_json["id"];
+                change.entity.parent_id = uuid;
+                change.type = ChangeType::Created;
+
+                RuntimeError mark_err = m_runtime->record(change);
+
+                if (mark_err != RuntimeError::Success && mark_err != RuntimeError::ExistingItem) {
+                    return std::unexpected(OrchestratorError::RuntimeError);
+                }
+
                 RuntimeError attachment_err = m_runtime->addAttachment(uuid, attachment_json);
 
-                if (!item_json_err.has_value()) {
+                if (attachment_err != RuntimeError::Success && attachment_err != RuntimeError::ExistingItem) {
                     return std::unexpected(OrchestratorError::RuntimeError);
                 }
 
-                nlohmann::json item_json = item_json_err.value();
-                if (!item_json.contains("attachments") || !item_json["attachments"].is_array()) {
-                    item_json["attachments"] = nlohmann::json::array();
+                if (!m_storage->write("attachments/" + attachment_json["id"], file_contents) {
+                    return OrchestratorError::StorageFailure;
                 }
 
-                item_json["attachments"].push_back(attachment_json);
-
-                m_storage->write("attachments/" + attachment_json["id"], file_contents);
-
-                RuntimeError runtime_attachment = m_runtime->updateItem(uuid, item_json);
-
-                if (runtime_attachment != RuntimeError::Success) {
-                    return std::unexpected(OrchestratorError::RuntimeError);
-                }
-
-                return attachment_json["id"];
+                return utils::getSecureVector(attachment_json["id"]);
             }
         } else {
             if (!network_attachment.value().contains("cipherResponse") || 
@@ -406,7 +464,72 @@ namespace clientwarden::vendor::bitwarden::vault {
     
     OrchestratorError BitwardenOrchestrator::removeAttachment(ItemId uuid, 
         const Botan::secure_vector<uint8_t> attachment_id) {
+        ItemId id = utils::getString(attachment_id);
+
+        Entity entity;
+        entity.type = EntityType::Attachment;
+        entity.id = id;
+        entity.parent_id = uuid;
+
+        if (!m_runtime->getAttachment(uuid, id).has_value()) {
+            return OrchestratorError::NotFound;
+        }
+
+        std::expected<bool, RuntimeError> is_local = m_runtime->recordExists(entity);
+
+        if (is_local.has_value() && is_local.value()) {
+            RuntimeError err = m_runtime->removeRecord(entity);
+
+            if (err != RuntimeError::Success) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            return OrchestratorError::Success;
+        }
+
+        std::expected<nlohmann::json, NetworkError> net_err = 
+            m_network->removeAttachment(uuid, attachment_id);
         
+        bool deleted_offline = false;
+        
+        if (!net_err.has_value()) {
+            switch (net_err.error()) {
+                case NetworkError::NotFound:
+                    break;
+                case NetworkError::BadRequest:
+                    return OrchestratorError::InvalidParams;
+                default:
+                    deleted_offline = true;
+            }
+        }
+
+        if (deleted_offline || (is_local.has_value() && is_local.value())) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Deleted;
+
+            RuntimeError err = m_runtime->record(change);
+
+            if (err != RuntimeError::Success) {
+                return OrchestratorError::RuntimeError;
+            }
+        } else {
+            RuntimeError err = m_runtime->removeRecord(entity);
+
+            if (err != RuntimeError::Success) {
+                return OrchestratorError::RuntimeError;
+            }
+        }
+
+        RuntimeError run_err = m_runtime->removeAttachment(uuid, attachment_id);
+
+        if (err != RuntimeError::Success && err != RuntimeError::NotFound) {
+            return OrchestratorError::RuntimeError;
+        }
+
+        m_storage->remove("attachments/" + id;);
+
+        return OrchestratorError::Success
     }
     
     OrchestratorError BitwardenOrchestrator::downloadAttachment(ItemId uuid, 

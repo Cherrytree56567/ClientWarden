@@ -42,6 +42,6 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Vendor getVendor() override;
     private:
-        bool m_init = false;
+        std::atomic<bool> m_init = false;
     };
 }
