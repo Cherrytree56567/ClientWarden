@@ -477,16 +477,6 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         std::expected<bool, RuntimeError> is_local = m_runtime->recordExists(entity);
 
-        if (is_local.has_value() && is_local.value()) {
-            RuntimeError err = m_runtime->removeRecord(entity);
-
-            if (err != RuntimeError::Success) {
-                return OrchestratorError::RuntimeError;
-            }
-
-            return OrchestratorError::Success;
-        }
-
         std::expected<nlohmann::json, NetworkError> net_err = 
             m_network->removeAttachment(uuid, attachment_id);
         
@@ -510,13 +500,13 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             RuntimeError err = m_runtime->record(change);
 
-            if (err != RuntimeError::Success) {
+            if (err != RuntimeError::Success && err != RuntimeError::NotFound) {
                 return OrchestratorError::RuntimeError;
             }
         } else {
             RuntimeError err = m_runtime->removeRecord(entity);
 
-            if (err != RuntimeError::Success) {
+            if (err != RuntimeError::Success && err != RuntimeError::NotFound) {
                 return OrchestratorError::RuntimeError;
             }
         }
@@ -527,15 +517,29 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::RuntimeError;
         }
 
-        m_storage->remove("attachments/" + id;);
+        m_storage->remove("attachments/" + id);
 
-        return OrchestratorError::Success
+        return OrchestratorError::Success;
     }
     
     OrchestratorError BitwardenOrchestrator::downloadAttachment(ItemId uuid, 
         const Botan::secure_vector<uint8_t>& attachment_id, std::filesystem::path save_path,
         const ItemKey& key, std::function<void(float)> on_progress) {
-        
+        Entity entity;
+        entity.id = utils::getString(attachment_id);
+        entity.parent_id = uuid;
+
+        std::expected<bool, RuntimeError> is_local = m_runtime->recordExists(entity);
+
+        if (is_local.has_value() && is_local.value()) {
+            /**
+             * @todo Copy to save path
+             */
+        }
+
+        /**
+         * @todo Get from network, if fails return Failed
+         */
     }
     
     std::expected<nlohmann::json, OrchestratorError> BitwardenOrchestrator::createFolder(
