@@ -27,7 +27,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             const Botan::secure_vector<uint8_t> attachment_id) override;
         OrchestratorError downloadAttachment(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, std::filesystem::path save_path,
-            const ItemKey& key, std::function<void(float)> on_progress = nullptr) override;
+            std::function<void(float)> on_progress = nullptr) override;
         std::expected<nlohmann::json, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) override;
         OrchestratorError renameFolder(ItemId uuid, 

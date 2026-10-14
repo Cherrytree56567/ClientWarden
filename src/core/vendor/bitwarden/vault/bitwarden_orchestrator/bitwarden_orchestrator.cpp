@@ -462,6 +462,11 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
     }
     
+    /**
+     * @brief To remove the attachment, we must first check if the attachment was created offline,
+     *  if it was, remove it and return Success. If it was created online, then ask network and
+     *  runtime to remove them from the remote and local vaults.
+     */
     OrchestratorError BitwardenOrchestrator::removeAttachment(ItemId uuid, 
         const Botan::secure_vector<uint8_t> attachment_id) {
         ItemId id = utils::getString(attachment_id);
@@ -522,24 +527,76 @@ namespace clientwarden::vendor::bitwarden::vault {
         return OrchestratorError::Success;
     }
     
+    /**
+     * @brief To download an attachment, (if offline) we can copy the attachment from the local
+     *  pending attachments folder and copy it. If the attachment was pushed online, then we can
+     *  use m_network to download it and save it to the filepath.
+     */
     OrchestratorError BitwardenOrchestrator::downloadAttachment(ItemId uuid, 
         const Botan::secure_vector<uint8_t>& attachment_id, std::filesystem::path save_path,
-        const ItemKey& key, std::function<void(float)> on_progress) {
+        std::function<void(float)> on_progress) {
         Entity entity;
         entity.id = utils::getString(attachment_id);
         entity.parent_id = uuid;
 
         std::expected<bool, RuntimeError> is_local = m_runtime->recordExists(entity);
 
+        Botan::secure_vector<uint8_t> attachment_data;
+        nlohmann::json attachment_json;
+
         if (is_local.has_value() && is_local.value()) {
-            /**
-             * @todo Copy to save path
-             */
+            std::expected<nlohmann::json, RuntimeError> attachment_err = 
+                m_runtime->getAttachment(uuid, attachment_id);
+            
+            if (!attachment_err.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            attacment_json = attachment_err.value();
+
+            if (!attachment_json.contains("url") || !attachment_json["url"].is_string() ||
+                !attachment_json.contains("createdOffline") || !attachment_json["createdOffline"].is_bool() ||
+                !attachment_json["createdOffline"]) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            std::expected<Botan::secure_vector<uint8_t>, StorageError> attachment_storage_err = 
+                m_storage->read("attachments/" + entity.id);
+            
+            if (!attachment_storage_err.has_value()) {
+                return OrchestratorError::StorageFailure;
+            }
+            
+            attachment_data = std::move(attachment_storage_err.value());
+        } else {
+            std::expected<nlohmann::json, NetworkError> attachment_err = 
+                m_network->downloadAttachment(uuid, attachment_id, on_progress, attachment_data);
+            
+            if (!attachment_err.has_value()) {
+                return OrchestratorError::NetworkError;
+            }
+
+            attachment_json = attachment_err.value();
+        }
+                attachment_json["fileName"] = utils::getString(enc_file_name);
+                attachment_json["id"] = utils::getUniqueId();
+                attachment_json["key"] = utils::getString(str_attachment_key);
+                attachment_json["url"] = "attachments/" + attachment_json["id"];
+                attachment_json["createdOffline"] = true;
+        
+        if (!attachment_json.contains("fileName") || !attachment_json["fileName"].is_string() ||
+            !attachment_json.contains("key") || !attachment_json["key"].is_string()) {
+            
+        }
+        Botan::secure_vector file_name = attachment_json[]
+
+        if (!m_storage.write(save_path, attachment_data)) {
+            return OrchestratorError::StorageError;
         }
 
-        /**
-         * @todo Get from network, if fails return Failed
-         */
+        Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+
+        return OrchestratorError::Success;
     }
     
     std::expected<nlohmann::json, OrchestratorError> BitwardenOrchestrator::createFolder(

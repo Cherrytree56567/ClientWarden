@@ -82,7 +82,7 @@ namespace clientwarden::vault {
          */
         virtual OrchestratorError downloadAttachment(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, std::filesystem::path save_path,
-            const ItemKey& key, std::function<void(float)> on_progress = nullptr) = 0;
+            std::function<void(float)> on_progress = nullptr) = 0;
         /**
          * @brief Ask the server to create a folder and add it to the Vault.
          */
