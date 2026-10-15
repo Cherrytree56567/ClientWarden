@@ -817,6 +817,68 @@ namespace clientwarden::vendor::bitwarden::vault {
         return false;
     }
 
+    std::expected<std::vector<PendingChange>, RuntimeError> BitwardenRuntime::getAllRecords(
+        ChangeType type) {
+        
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+        std::vector<PendingChange> result;
+        
+        if (!m_vault_data.contains("pending") || !m_vault_data["pending"].is_object()) {
+            return result;
+        }
+
+        ItemId entity_id = entity.id;
+        if (entity.type == EntityType::Attachment) {
+            entity_id = entity.id + "/" + entity.parent_id;
+        }
+
+        nlohmann::json& pending = m_vault_data["pending"];
+
+        std::vector<std::string> names;
+        if (type == ChangeType::Unknown) {
+            names = {"created", "createdPartial", "updated", "deleted"}
+        } else {
+            names.push_back(getString(type));
+        }
+        
+        for (std::string name : names) {
+            for (auto& [item_id, value] : pending[name].items()) {
+                if (!value.contains("revisionDate") || !value["revisionDate"].is_string() ||
+                    !value.contains("id") || !value["id"].is_string() ||
+                    !value.contains("itemType") || !value["itemType"].is_string()) {
+                    continue;
+                }
+
+                PendingChange change;
+                change.revision_date = value["revisionDate"];
+                change.entity.id = value["id"];
+                change.entity.type = getEntityType(value.value("itemType", ""));
+                change.type = getChangeType(name);
+
+                if (change.entity.type == EntityType::Attachment && 
+                    value.contains("parentId") && value["parentId"].is_string()) {
+                    change.entity.parent_id = value["parentId"];
+                }
+
+                if (name == "updated") {
+                    if (!value.contains("base") || !value["base"].is_object()) {
+                        continue;
+                    }
+                    change.base = value["base"];
+                }
+
+                result.push_back(change);
+            }
+        }
+
+        return result;
+    }
+
     std::expected<Profile, RuntimeError> BitwardenRuntime::getProfile() {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);

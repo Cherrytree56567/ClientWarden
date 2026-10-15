@@ -201,17 +201,27 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         std::expected<nlohmann::json, NetworkError> network_delete = m_network->deleteItem(uuid);
 
-        RuntimeError runtime_delete = m_runtime->removeItem(uuid);
-        if (runtime_delete != RuntimeError::Success) {
-            return OrchestratorError::RuntimeError;
-        }
-
         if (!network_delete.has_value()) {
             PendingChange change;
             change.entity = entity;
             change.type = ChangeType::Deleted;
+            change.revision_date = utils::s_getCurrentTime();
+
+            std::expected<nlohmann::json, RuntimeError> item_json = 
+                m_runtime->getItem(uuid);
+            
+            if (!item_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            change.base = item_json.value();
 
             m_runtime->record(change);
+        }
+
+        RuntimeError runtime_delete = m_runtime->removeItem(uuid);
+        if (runtime_delete != RuntimeError::Success) {
+            return OrchestratorError::RuntimeError;
         }
 
         return OrchestratorError::Success;
@@ -424,6 +434,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                 change.entity.type = EntityType::Attachment;
                 change.entity.id = attachment_json["id"];
                 change.entity.parent_id = uuid;
+                change.revision_date = utils::s_getCurrentTime();
+                change.base = attachment_json;
                 change.type = ChangeType::Created;
 
                 RuntimeError mark_err = m_runtime->record(change);
@@ -499,9 +511,18 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         if (deleted_offline || (is_local.has_value() && is_local.value())) {
+            std::expected<nlohmann::json, RuntimeError> attachment_json = 
+                m_runtime->getAttachment(uuid, attachment_id);
+            
+            if (!attachment_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
             PendingChange change;
             change.entity = entity;
             change.type = ChangeType::Deleted;
+            change.revision_date = utils::s_getCurrentTime();
+            change.base = attachment_json.value();
 
             RuntimeError err = m_runtime->record(change);
 
@@ -539,8 +560,31 @@ namespace clientwarden::vendor::bitwarden::vault {
         entity.id = utils::getString(attachment_id);
         entity.parent_id = uuid;
 
+        /**
+         * @brief Get the item key.
+         */
         std::expected<bool, RuntimeError> is_local = m_runtime->recordExists(entity);
 
+        std::expected<nlohmann::json, RuntimeError> item = m_runtime->getItem(uuid);
+
+        if (!item.has_value() || !item.value().contains("key") || 
+            !item.value()["key"].is_string()) {
+            return OrchestratorError::RuntimeError;
+        }
+
+        Botan::secure_vector<uint8_t> botan_item_key = utils::getSecureVector(item.value()["key"]);
+
+        std::expected<ItemKey, CryptoErrors> item_key = m_crypto->resolveItemKey(botan_item_key);
+
+        Botan::secure_scrub_memory(botan_item_key.data(), botan_item_key.size());
+
+        if (!item_key.has_value()) {
+            return OrchestratorError::CryptoError;
+        }
+
+        /**
+         * @brief Get the Attachment Data and Attachment JSON.
+         */
         Botan::secure_vector<uint8_t> attachment_data;
         nlohmann::json attachment_json;
 
@@ -549,21 +593,24 @@ namespace clientwarden::vendor::bitwarden::vault {
                 m_runtime->getAttachment(uuid, attachment_id);
             
             if (!attachment_err.has_value()) {
+                item_key.value().clear();
                 return OrchestratorError::RuntimeError;
             }
 
-            attacment_json = attachment_err.value();
+            attachment_json = attachment_err.value();
 
             if (!attachment_json.contains("url") || !attachment_json["url"].is_string() ||
                 !attachment_json.contains("createdOffline") || !attachment_json["createdOffline"].is_bool() ||
-                !attachment_json["createdOffline"]) {
+                !(attachment_json["createdOffline"].get<bool>())) {
+                item_key.value().clear();
                 return OrchestratorError::RuntimeError;
             }
 
             std::expected<Botan::secure_vector<uint8_t>, StorageError> attachment_storage_err = 
-                m_storage->read("attachments/" + entity.id);
+                m_storage->read("attachments/" + entity.id, on_progress, .9);
             
             if (!attachment_storage_err.has_value()) {
+                item_key.value().clear();
                 return OrchestratorError::StorageFailure;
             }
             
@@ -573,53 +620,251 @@ namespace clientwarden::vendor::bitwarden::vault {
                 m_network->downloadAttachment(uuid, attachment_id, on_progress, attachment_data);
             
             if (!attachment_err.has_value()) {
+                item_key.value().clear();
                 return OrchestratorError::NetworkError;
             }
 
             attachment_json = attachment_err.value();
         }
-                attachment_json["fileName"] = utils::getString(enc_file_name);
-                attachment_json["id"] = utils::getUniqueId();
-                attachment_json["key"] = utils::getString(str_attachment_key);
-                attachment_json["url"] = "attachments/" + attachment_json["id"];
-                attachment_json["createdOffline"] = true;
         
+        /**
+         * @brief Decrypt the File Name, Key and File Contents.
+         */
         if (!attachment_json.contains("fileName") || !attachment_json["fileName"].is_string() ||
             !attachment_json.contains("key") || !attachment_json["key"].is_string()) {
-            
+            Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+            item_key.value().clear();
+            return OrchestratorError::RuntimeError;
         }
-        Botan::secure_vector file_name = attachment_json[]
 
-        if (!m_storage.write(save_path, attachment_data)) {
-            return OrchestratorError::StorageError;
+        Botan::secure_vector<uint8_t> file_name = utils::getSecureVector(attachment_json["fileName"]);
+        Botan::secure_vector<uint8_t> key = utils::getSecureVector(attachment_json["key"]);
+
+        std::expected<ItemKey, CryptoErrors> attachment_key = m_crypto->resolveItemKey(key, item_key.value());
+
+        item_key.value().clear();
+        
+        Botan::secure_scrub_memory(key.data(), key.size());
+        Botan::secure_scrub_memory(botan_item_key.data(), botan_item_key.size());
+
+        if (!attachment_key.has_value()) {
+            Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+            return OrchestratorError::CryptoError;
         }
+
+        on_progress(.92f);
+
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> dec_file_name = 
+            m_crypto->decrypt(file_name, attachment_key.value());
+        
+        on_progress(.94f);
+
+        if (!dec_file_name.has_value()) {
+            Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+            attachment_key.value().clear();
+            return OrchestratorError::CryptoError;
+        }
+
+        file_name = std::move(dec_file_name.value());
+
+        CryptoErrors contents_err = m_crypto->decryptBinaryInPlace(attachment_data, attachment_key.value());
+
+        attachment_key.value().clear();
+
+        on_progress(.96f);
+
+        if (contents_err != CryptoErrors::Success) {
+            Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+            Botan::secure_scrub_memory(file_name.data(), file_name.size());
+            
+            return OrchestratorError::CryptoError;
+        }
+
+        if (!m_storage->write(save_path / utils::getString(file_name), attachment_data)) {
+            Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+            Botan::secure_scrub_memory(file_name.data(), file_name.size());
+
+            return OrchestratorError::StorageFailure;
+        }
+
+        on_progress(1.0f);
 
         Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
+        Botan::secure_scrub_memory(file_name.data(), file_name.size());
 
         return OrchestratorError::Success;
     }
     
-    std::expected<nlohmann::json, OrchestratorError> BitwardenOrchestrator::createFolder(
+    std::expected<ItemId, OrchestratorError> BitwardenOrchestrator::createFolder(
         const Botan::secure_vector<uint8_t>& folder_name) {
+        std::expected<nlohmann::json, NetworkError> network_err = 
+            m_network->createFolder(folder_name);
         
+        bool created_offline = true;
+        nlohmann::json result;
+
+        if (network_err.has_value()) {
+            created_offline = false;
+            result = network_err.value();
+        } else {
+            result["id"] = utils::getUniqueId();
+            result["name"] = utils::getString(folder_name);
+            result["object"] = "folder";
+            result["revisionDate"] = utils::s_getCurrentTime();
+        }
+
+        if (created_offline) {
+            PendingChange change;
+            change.entity.type = EntityType::Folder;
+            change.entity.id = result["id"];
+
+            switch (network_item.error()) {
+                case NetworkError::Unreachable:
+                case NetworkError::Unauthorised:
+                case NetworkError::Forbidden:
+                case NetworkError::RateLimited:
+                    change.type = ChangeType::Created;
+                case NetworkError::BadRequest:
+                    return std::unexpected(OrchestratorError::InvalidParams);
+                default:
+                    change.type = ChangeType::CreatedPartial;
+            }
+
+            RuntimeError err = m_runtime->record(change);
+            if (err != RuntimeError::Success) {
+                return std::unexpected(OrchestratorError::RuntimeError);
+            }
+        }
+
+        RuntimeError runtime_folder = m_runtime->addFolder(result);
+        if (runtime_folder != RuntimeError::Success) {
+            return std::unexpected(OrchestratorError::RuntimeError);
+        }
+
+        return result["id"];
     }
     
     OrchestratorError BitwardenOrchestrator::renameFolder(ItemId uuid, 
         const Botan::secure_vector<uint8_t>& folder_name) {
+        Entity entity;
+        entity.type = EntityType::Folder;
+        entity.id = utils::getString(folder_name);
+
+        std::expected<bool, RuntimeError> is_local = m_runtime->recordExists(entity);
+
+        nlohmann::json result;
+
+        std::expected<nlohmann::json, RuntimeError> folder_err = 
+            m_runtime->getFolder(uuid);
         
+        if (!folder_err.has_value()) {
+            return OrchestratorError::RuntimeError;
+        } else {
+            result = folder_err.value();
+        }
+
+        if (!is_local.has_value() || !is_local.value()) {
+            std::expected<nlohmann::json, NetworkError> folder_res = 
+                m_network->renameFolder(uuid, folder_name);
+            
+            if (!folder_res.has_value()) {
+                /**
+                 * @note PendingChange requires the old base.
+                 */
+                PendingChange change;
+                change.type = ChangeType::Updated;
+                change.base = result;
+                change.revision_date = utils::s_getCurrentTime();
+
+                result["name"] = utils::getString(folder_name);
+
+                RuntimeError record_err = m_runtime->record(change);
+                if (record_err != RuntimeError::Success) {
+                    return OrchestratorError::RuntimeError;
+                }
+            } else {
+                result = folder_res.value();
+            }
+        }
+
+        RuntimeError runtime_folder = m_runtime->updateFolder(uuid, result);
+
+        if (runtime_folder != RuntimeError::Success) {
+            return OrchestratorError::RuntimeError;
+        }
+
+        return OrchestratorError::Success;
     }
     
     OrchestratorError BitwardenOrchestrator::deleteFolder(ItemId uuid) {
+        Entity entity;
+        entity.type = EntityType::Folder;
+        entity.id = uuid;
+
+        std::expected<bool, RuntimeError> is_created_offline = 
+            m_runtime->recordExists(entity);
         
+        if (is_created_offline.has_value() && is_created_offline.value())) {
+            m_runtime->removeRecord(entity);
+            return OrchestratorError::Success;
+        }
+
+        std::expected<nlohmann::json, NetworkError> network_delete = m_network->deleteFolder(uuid);
+
+        if (!network_delete.has_value()) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Deleted;
+            change.revision_date = utils::s_getCurrentTime();
+
+            std::expected<nlohmann::json, RuntimeError> item_json = 
+                m_runtime->getFolder(uuid);
+            
+            if (!item_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            change.base = item_json.value();
+
+            m_runtime->record(change);
+        }
+
+        RuntimeError runtime_delete = m_runtime->removeFolder(uuid);
+        if (runtime_delete != RuntimeError::Success) {
+            return OrchestratorError::RuntimeError;
+        }
+
+        return OrchestratorError::Success;
     }
     
-    std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> BitwardenOrchestrator::downloadIcon(
+    std::expected<std::string, OrchestratorError> BitwardenOrchestrator::downloadIcon(
         const Botan::secure_vector<uint8_t>& url) {
-        
-    }
-    
-    OrchestratorError BitwardenOrchestrator::retryOfflineItems() {
-        
+        std::string b64_url = utils::getString(utils::b64Encode(urlVec));
+
+        if (m_network->getConnectivity() == Connectivity::Offline &&
+            !m_storage->exists(b64_url + ".png")) {
+            return OrchestratorError::NetworkError;
+        }
+
+        if (m_storage->exists(b64_url + ".failed")) {
+            return OrchestratorError::NetworkError;
+        }
+
+        if (!m_storage->exists(b64_url + ".png")) {
+            std::expected<Botan::secure_vector<uint8_t>, NetworkError> result = 
+                m_network->downloadIcon(url);
+
+            if (!result.has_value()) {
+                if (!m_storage->write(b64_url + ".failed", std::vector<uint8_t>{})) {
+                    return OrchestratorError::StorageFailure;
+                }
+                return OrchestratorError::NetworkError;
+            }
+
+            storage.write(b64_url + ".png", result.value());
+        }
+
+        return (m_storage->getPath() / std::filesystem::path(b64_url + ".png")).string();
     }
     
     Vendor BitwardenOrchestrator::getVendor() {

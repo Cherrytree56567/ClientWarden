@@ -1,0 +1,2 @@
+# BitWarden Vendor Architecture - Part 4
+I forgot to devlog today, so consider this 8h and 30mins and add 30mins to the next devlog. I finally finished Orchestrator which took waaaay too much time (almost 5 days) and I had to fix my plan a bit as well because of the roadblocks. Finishing off the rest of it was pretty easy and starting on the Sync class was much easier due to the massive amount of time it took for me to think of a solution to the syncing issue in the midst of the Orchestrator issues. Ill be posting a Sync finished devlog soon, probably tmrw, so stay tuned!

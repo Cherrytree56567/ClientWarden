@@ -21,6 +21,7 @@ namespace clientwarden::vault {
         QuotaExceeded,
         NotFound,
         InvalidParams,
+        Unknown,
         Success
     };
 
@@ -86,7 +87,7 @@ namespace clientwarden::vault {
         /**
          * @brief Ask the server to create a folder and add it to the Vault.
          */
-        virtual std::expected<nlohmann::json, OrchestratorError> createFolder(
+        virtual std::expected<ItemId, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
         /**
          * @brief Ask the server to rename the folder and rename it in the Vault.
@@ -103,11 +104,6 @@ namespace clientwarden::vault {
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) = 0;
-
-        /**
-         * @brief Retries pushing items that were created or modified offline.
-         */
-        virtual OrchestratorError retryOfflineItems() = 0;
 
         /**
          * @brief Returns the vendor.

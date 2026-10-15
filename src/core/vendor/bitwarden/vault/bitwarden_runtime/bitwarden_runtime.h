@@ -33,6 +33,8 @@ namespace clientwarden::vendor::bitwarden::vault {
         RuntimeError removeRecord(Entity entity) override;
         std::expected<PendingChange, RuntimeError> getRecord(Entity entity) override;
         std::expected<bool, RuntimeError> recordExists(Entity entity) override;
+        std::expected<std::vector<PendingChange>, RuntimeError> getAllRecords(
+            ChangeType type = ChangeType::Unknown) override;
 
         std::expected<Profile, RuntimeError> getProfile() override;
         std::expected<nlohmann::json, RuntimeError> getVaultInfo() override;
