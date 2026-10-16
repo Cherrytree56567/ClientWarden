@@ -22,5 +22,22 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<PushActions, SyncError> pushRemote(const SyncActions& actions) override;
         std::expected<bool, SyncError> pushLocal(const PushActions& actions) override;
         std::expected<SyncActions, SyncError> resolveConflicts(const SyncActions& actions) override;
+    private:
+        /**
+         * @brief Merges 2 nlohmann::json objects/values.
+         * @param value_1 Provides the first value to compare.
+         * @param value_2 Provides the second value to compare.
+         * @param on_conflict States weather (true) a wins or (false) b wins.
+         */
+        nlohmann::json mergeValues_(nlohmann::json value_1, nlohmann::json value_2, bool on_conflict);
+        /**
+         * @brief Merges 2 nlohmann::json objects/values with a base
+         * @param base Provides the base to compare off
+         * @param value_1 Provides the first value to compare.
+         * @param value_2 Provides the second value to compare.
+         * @param on_conflict States weather (true) a wins or (false) b wins.
+         */
+        nlohmann::json mergeValues_(nlohmann::json base, nlohmann::json value_1, nlohmann::json value_2, 
+            bool on_conflict);
     };
 }

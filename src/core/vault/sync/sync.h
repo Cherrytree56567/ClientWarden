@@ -25,7 +25,9 @@ namespace clientwarden::vault {
      */
     enum class SyncItem {
         Item,
-        Folder
+        Folder,
+        Attachment,
+        Unknown
     };
 
     /**
