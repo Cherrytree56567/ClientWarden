@@ -565,6 +565,47 @@ namespace clientwarden::vendor::bitwarden::vault {
         return std::unexpected(RuntimeError::NotFound);
     }
 
+    std::expected<std::vector<ItemId>, RuntimeError> BitwardenRuntime::getAttachmentIds(ItemId uuid) {
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+
+        std::vector<ItemId> result;
+        
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return std::unexpected(RuntimeError::InvalidVault);
+        }
+
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
+
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    return result;
+                }
+
+                for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
+                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
+                        !cipher_attachment["id"].is_string()) {
+                        continue;
+                    }
+
+                    result.push_back(cipher_attachment["id"]);
+                }
+
+                return result;
+            }
+        }
+
+        return std::unexpected(RuntimeError::NotFound);
+    }
+
     RuntimeError BitwardenRuntime::record(PendingChange change) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
@@ -619,6 +660,9 @@ namespace clientwarden::vendor::bitwarden::vault {
                     updated.contains(entity_id) || deleted.contains(entity_id)) {
                     return RuntimeError::ExistingItem;
                 }
+                if (change.entity.type == EntityType::Attachment) {
+                    record_json["base"] = change.base;
+                }
                 created[entity_id] = record_json;
                 break;
             case ChangeType::CreatedPartial:
@@ -657,6 +701,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                 created_partial.erase(entity_id);
                 updated.erase(entity_id);
+                record_json["base"] = change.base;
                 deleted[entity_id] = record_json;
                 break;
         }
@@ -780,6 +825,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                         return std::unexpected(RuntimeError::InvalidVault);
                     }
                     change.base = value["base"];
+                } else if (value.contains("base") && value["base"].is_object()) {
+                    change.base = value["base"];
                 }
 
                 return change;
@@ -832,18 +879,13 @@ namespace clientwarden::vendor::bitwarden::vault {
             return result;
         }
 
-        ItemId entity_id = entity.id;
-        if (entity.type == EntityType::Attachment) {
-            entity_id = entity.id + "/" + entity.parent_id;
-        }
-
         nlohmann::json& pending = m_vault_data["pending"];
 
         std::vector<std::string> names;
         if (type == ChangeType::Unknown) {
-            names = {"created", "createdPartial", "updated", "deleted"}
+            names = {"created", "createdPartial", "updated", "deleted"};
         } else {
-            names.push_back(getString(type));
+            names.push_back(std::string(getString(type)));
         }
         
         for (std::string name : names) {
@@ -869,6 +911,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     if (!value.contains("base") || !value["base"].is_object()) {
                         continue;
                     }
+                    change.base = value["base"];
+                } else if (value.contains("base") && value["base"].is_object()) {
                     change.base = value["base"];
                 }
 

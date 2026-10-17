@@ -55,6 +55,7 @@ namespace clientwarden::vault {
     struct SyncRecord {
         SyncItem item_type;
         ItemId uuid;
+        ItemId parent_id;
         std::time_t revision;
         SyncState state;
         nlohmann::json raw;

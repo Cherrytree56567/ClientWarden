@@ -180,6 +180,10 @@ namespace clientwarden::vault {
          * @brief Returns the attachment with a matching ItemId as raw JSON.
          */
         virtual std::expected<nlohmann::json, RuntimeError> getAttachment(ItemId uuid, ItemId attachment_id) = 0;
+        /**
+         * @brief Returns a vector of Attachment Ids.
+         */
+        virtual std::expected<std::vector<ItemId>, RuntimeError> getAttachmentIds(ItemId uuid) = 0;
 
         /**
          * @brief Records an offline action. Requires a body and last modified date if it is an

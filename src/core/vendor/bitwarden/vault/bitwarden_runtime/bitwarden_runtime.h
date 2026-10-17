@@ -28,6 +28,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         RuntimeError updateAttachment(ItemId uuid, ItemId attachment_id, nlohmann::json attachment) override;
         RuntimeError removeAttachment(ItemId uuid, ItemId attachment_id) override;
         std::expected<nlohmann::json, RuntimeError> getAttachment(ItemId uuid, ItemId attachment_id) override;
+        std::expected<std::vector<ItemId>, RuntimeError> getAttachmentIds(ItemId uuid) override;
 
         RuntimeError record(PendingChange change) override;
         RuntimeError removeRecord(Entity entity) override;

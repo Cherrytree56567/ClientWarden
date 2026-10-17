@@ -23,7 +23,13 @@ namespace clientwarden::vendor::bitwarden::vault {
     }
 
     /**
-     * @todo Add Attachments in this too
+     * @brief First, we can get a vector of item and folder ids to loop through. Then, we need to
+     *  get the item/folder json and create an entity to check if the record exists. Then we can
+     *  create a create a SyncRecord. If its updated locally, then we need to get the revision
+     *  date from the record. After all that, we can then get a list of all the records, and if the
+     *  change type is deleted, we check if the record already exists. If not, then we create our
+     *  sync record. If its not deleted and is an attachment which is created, then we make an
+     *  attachment created record.
      */
     std::expected<std::vector<SyncRecord>, SyncError> BitwardenSync::fetchLocalRecords() {
         std::vector<SyncRecord> result;
@@ -106,7 +112,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         std::expected<std::vector<PendingChange>, RuntimeError> all_records = 
-            m_runtime->getAllRecords(C);
+            m_runtime->getAllRecords();
         
         if (!all_records.has_value()) {
             /**
@@ -135,23 +141,34 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 SyncRecord record;
-                record.item_type = SyncItem::Item;
+                if (change.entity.type == EntityType::Item) {
+                    record.item_type = SyncItem::Item;
+                } else if (change.entity.type == EntityType::Folder) {
+                    record.item_type = SyncItem::Folder;
+                } else if (change.entity.type == EntityType::Attachment) {
+                    record.item_type = SyncItem::Attachment;
+                    record.parent_id = change.entity.parent_id;
+                }
                 record.uuid = change.entity.id;
                 record.revision = utils::s_getTime(change.revision_date);
                 record.state = SyncState::PendingDelete;
                 record.raw = change.base;
 
                 result.push_back(record);
-            } else if (change.entity.type == EntityType::Attachment) {
+            } else if (change.entity.type == EntityType::Attachment &&
+                       change.type == ChangeType::Created) {
                 /**
                  * @note Attachment Updates don't contain a base or revision_date, so attachment
-                 *  updates must be handled via an item update.
+                 *  updates must be handled via an item update. We don't need to worry abt
+                 *  attachment updates or clean attachments since if an attachment is created or
+                 *  deleted or modified online, then it will be marked as an item update.
                  */
                 SyncRecord record;
-                record.item_type = SyncItem::Attachmnet;
+                record.item_type = SyncItem::Attachment;
                 record.uuid = change.entity.id;
+                record.parent_id = change.entity.parent_id;
                 record.revision = utils::s_getTime(change.revision_date);
-                record.state = SyncState::PendingDelete;
+                record.state = SyncState::CreatedOffline;
                 record.raw = change.base;
 
                 result.push_back(record);
@@ -161,13 +178,19 @@ namespace clientwarden::vendor::bitwarden::vault {
         return result;
     }
     
+    /**
+     * @brief To get remote records, we must loop through all the ciphers and folders and create a
+     *  sync record for each of them.
+     */
     std::expected<std::vector<SyncRecord>, SyncError> BitwardenSync::fetchRemoteRecords() {
         std::expected<nlohmann::json, NetworkError> remote_vault = 
             m_network->getVault();
         
         if (!remote_vault.has_value() || !remote_vault.value().is_object() || 
             !remote_vault.value().contains("ciphers") || 
-            !remote_vault.value()["ciphers"].is_array()) {
+            !remote_vault.value()["ciphers"].is_array() ||
+            !remote_vault.value().contains("folders") || 
+            !remote_vault.value()["folders"].is_array()) {
             return std::unexpected(SyncError::NetworkError);
         }
 
@@ -185,6 +208,22 @@ namespace clientwarden::vendor::bitwarden::vault {
             record.revision = utils::s_getTime(cipher["revisionDate"]);
             record.state = SyncState::Clean;
             record.raw = cipher;
+
+            result.push_back(record);
+        }
+
+        for (const nlohmann::json& folder : remote_vault.value()["folders"]) {
+            if (!folder.contains("id") || !folder["id"].is_string() ||
+                !folder.contains("revisionDate") || !folder["revisionDate"].is_string()) {
+                continue;
+            }
+
+            SyncRecord record;
+            record.item_type = SyncItem::Folder;
+            record.uuid = folder["id"];
+            record.revision = utils::s_getTime(folder["revisionDate"]);
+            record.state = SyncState::Clean;
+            record.raw = folder;
 
             result.push_back(record);
         }
@@ -209,7 +248,13 @@ namespace clientwarden::vendor::bitwarden::vault {
          *  the remote ones.
          */
         for (SyncRecord record : local) {
-            if (record.state == SyncState::CreatedOffline) {
+            if (record.item_type == SyncItem::Attachment &&
+                record.state == SyncState::CreatedOffline) {
+                actions.push_create.push_back(record);
+            } else if (record.item_type == SyncItem::Attachment &&
+                record.state == SyncState::PendingDelete) {
+                actions.push_delete.push_back(record);
+            } else if (record.state == SyncState::CreatedOffline) {
                 actions.push_create.push_back(record);
             } else if (record.state == SyncState::CreatedOfflinePartially) {
                 bool created_remote = false;
@@ -221,7 +266,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                     if (record.raw["key"].is_string() && remote_record.raw["key"].is_string()) {
                         if (record.raw["key"] == remote_record.raw["key"]) {
-                            partial_ids.push_back(remote_record.entity.id);
+                            partial_ids.push_back(remote_record.uuid);
                             created_remote = true;
                             break;
                         }
@@ -237,7 +282,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                         if (record.raw["name"] == remote_record.raw["name"] &&
                             record.raw["notes"] == remote_record.raw["notes"] &&
                             record.raw["type"] == remote_record.raw["type"]) {
-                            partial_ids.push_back(remote_record.entity.id);
+                            partial_ids.push_back(remote_record.uuid);
                             created_remote = true;
                             break;
                         }
@@ -255,7 +300,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                  */
                 if (std::find_if(remote.begin(), remote.end(),
                         [&record](const SyncRecord &r) { 
-                            return r.entity.id == record.entity.id; 
+                            return (r.uuid == record.uuid) && (r.item_type == record.item_type); 
                         }) == remote.end()) {
                     SyncConflict conflict;
                     conflict.type = ConflictType::RemoteDelete_LocalUpdate;
@@ -269,7 +314,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 actions.push_delete.push_back(record);
             } else if (std::find_if(remote.begin(), remote.end(),
                         [&record](const SyncRecord &r) { 
-                            return r.entity.id == record.entity.id; 
+                            return (r.uuid == record.uuid) && (r.item_type == record.item_type); 
                         }) == remote.end()) {
                 actions.pull_delete.push_back(record);
             } else {
@@ -280,31 +325,32 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::vector<SyncRecord> confirmed_create;
 
         for (SyncRecord record : remote) {
-            if (std::find(partial_ids.begin(), partial_ids.end(), record.entity.id) 
+            if (std::find(partial_ids.begin(), partial_ids.end(), record.uuid) 
                 != partial_ids.end()) {
                 continue;
             }
             
             if (std::find_if(local.begin(), local.end(),
                         [&record](const SyncRecord& rec) { 
-                            return rec.entity.id == record.entity.id; 
+                            return (rec.uuid == record.uuid) && (rec.item_type == record.item_type); 
                         }) == local.end() &&
                 std::find_if(actions.push_delete.begin(), actions.push_delete.end(),
                         [&record](const SyncRecord& rec) { 
-                            return rec.entity.id == record.entity.id; 
+                            return (rec.uuid == record.uuid) && (rec.item_type == record.item_type); 
                         }) == actions.push_delete.end()) {
                 actions.pull_create.push_back(record);
             } else {
                 for (SyncRecord local_record : local) {
-                    if (local_record.entity.id != record.entity.id) {
+                    if ((local_record.uuid != record.uuid) || 
+                        (local_record.item_type != record.item_type)) {
                         continue;
                     }
                     
-                    std::time_t remote_time = utils::s_getTime(record.revision_date);
+                    std::time_t remote_time = record.revision;
                     std::time_t local_time = 0;
 
                     if (local_record.state == SyncState::Clean) {
-                        local_time = utils::s_getTime(local_record.revision_date);
+                        local_time = local_record.revision;
                     } else {
                         if (local_record.raw.contains("revisionDate") &&
                             local_record.raw["revisionDate"].is_string()) {
@@ -327,7 +373,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                         actions.conflicts.push_back(conflict);
 
                         std::erase_if(actions.push_update, [&record](const SyncRecord &rec) {
-                            return rec.entity.id == record.entity.id;
+                            return (rec.uuid == record.uuid) && (rec.item_type == record.item_type);
                         });
                     } else if ((remote_time > local_time) && local_record.state == SyncState::PendingDelete) {
                         SyncConflict conflict;
@@ -338,7 +384,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                         actions.conflicts.push_back(conflict);
                         
                         std::erase_if(actions.push_delete, [&record](const SyncRecord &rec) {
-                            return rec.entity.id == record.entity.id;
+                            return (rec.uuid == record.uuid) && (rec.item_type == record.item_type);
                         });
                     }
 
@@ -358,9 +404,6 @@ namespace clientwarden::vendor::bitwarden::vault {
         
     }
     
-    /**
-     * @todo This should also work for attachments
-     */
     std::expected<SyncActions, SyncError> BitwardenSync::resolveConflicts(const SyncActions& actions) {
         SyncActions result = actions;
 
@@ -369,7 +412,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 result.push_delete.push_back(conflict.local);
                 return true;
             } else if (conflict.type == ConflictType::RemoteDelete_LocalUpdate) {
-                result.pull_delete.push_back(conflict.remote);
+                result.pull_delete.push_back(conflict.local);
                 return true;
             } else if (conflict.type == ConflictType::BothEdited) {
                 /**
@@ -404,13 +447,23 @@ namespace clientwarden::vendor::bitwarden::vault {
                 if (!base_record.has_value()) {
                     return false;
                 }
-
+                
                 if (remote_revision > local_revision) {
                     resolved_json = mergeValues_(conflict.local.raw, 
                         conflict.remote.value().raw, false);
                 } else {
                     resolved_json = mergeValues_(base_record.value().base, conflict.local.raw, 
                         conflict.remote.value().raw, true);
+                }
+
+                if (conflict.remote.value().raw.contains("attachments")) {
+                    resolved_json["attachments"] = conflict.remote.value().raw["attachments"];
+                } else {
+                    /**
+                     * @note We can safely erase this because it wont touch the vault and we have a
+                     *  record that handles the offline creation and deletion of attachments anyway
+                     */
+                    resolved_json.erase("attachments");
                 }
 
                 SyncRecord record = conflict.local;
