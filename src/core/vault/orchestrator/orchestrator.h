@@ -28,7 +28,7 @@ namespace clientwarden::vault {
     class Orchestrator {
     public:
         Orchestrator(std::shared_ptr<Crypto> crypto, std::shared_ptr<Network> network,
-            std::shared_ptr<Runtime> runtime);
+            std::shared_ptr<Runtime> runtime, std::shared_ptr<Storage> storage);
         virtual ~Orchestrator() = default;
         
         /**
@@ -102,7 +102,7 @@ namespace clientwarden::vault {
         /**
          * @brief Ask the server for the icon and return a botan vector of the item.
          */
-        virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> downloadIcon(
+        virtual std::expected<std::string, OrchestratorError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) = 0;
 
         /**
@@ -117,5 +117,6 @@ namespace clientwarden::vault {
         std::shared_ptr<Crypto> m_crypto;
         std::shared_ptr<Network> m_network;
         std::shared_ptr<Runtime> m_runtime;
+        std::shared_ptr<Storage> m_storage;
     };
 }

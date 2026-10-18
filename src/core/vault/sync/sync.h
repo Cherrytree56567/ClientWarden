@@ -53,7 +53,7 @@ namespace clientwarden::vault {
      * @brief Represents the Items info and state which is used to diff local and remote changes.
      */
     struct SyncRecord {
-        SyncItem item_type;
+        SyncItem item_type = SyncItem::Unknown;
         ItemId uuid;
         ItemId parent_id;
         std::time_t revision;

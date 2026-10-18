@@ -148,7 +148,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                 } else if (change.entity.type == EntityType::Attachment) {
                     record.item_type = SyncItem::Attachment;
                     record.parent_id = change.entity.parent_id;
+                } else {
+                    continue;
                 }
+
                 record.uuid = change.entity.id;
                 record.revision = utils::s_getTime(change.revision_date);
                 record.state = SyncState::PendingDelete;
@@ -398,6 +401,7 @@ namespace clientwarden::vendor::bitwarden::vault {
     
     std::expected<PushActions, SyncError> BitwardenSync::pushRemote(const SyncActions& actions) {
         PushActions result;
+        result.actions = actions;
 
         for (SyncRecord record : actions.push_create) {
             if (!record.raw.contains("id") || !record.raw["id"].is_string()) {
@@ -429,10 +433,10 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                 res = m_network->createFolder(utils::getSecureVector(push_create_json["name"]));
             } else if (record.item_type == SyncItem::Attachment) {
-                if (!push_create_json.contains("name") || 
-                    !push_create_json["name"].is_string() ||
-                    !push_create_json.contains("url") || 
-                    !push_create_json["url"].is_string() ||
+                if (!push_create_json.contains("fileName") || 
+                    !push_create_json["fileName"].is_string() ||
+                    !record.raw.contains("url") || 
+                    !record.raw["url"].is_string() ||
                     !push_create_json.contains("key") || 
                     !push_create_json["key"].is_string()) {
                     result.failed.push_back(record);
@@ -448,8 +452,11 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 res = m_network->addAttachment(record.parent_id, 
-                    utils::getSecureVector(push_create_json["name"]), attachment_err.value(),
+                    utils::getSecureVector(push_create_json["fileName"]), attachment_err.value(),
                     utils::getSecureVector(push_create_json["key"]), [](float) {});
+            } else {
+                result.failed.push_back(record);
+                continue;
             }
 
             if (!res.has_value()) {
@@ -512,6 +519,9 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 res = m_network->renameFolder(record.uuid, utils::getSecureVector(push_create_json["name"]));
+            } else {
+                result.failed.push_back(record);
+                continue;
             }
 
             if (res.has_value()) {
@@ -523,10 +533,151 @@ namespace clientwarden::vendor::bitwarden::vault {
                 result.failed.push_back(record);
             }
         }
+
+        for (SyncRecord record : actions.push_delete) {
+            std::expected<nlohmann::json, NetworkError> res;
+                
+            if (record.item_type == SyncItem::Item) {
+                res = m_network->deleteItem(record.uuid);
+            } else if (record.item_type == SyncItem::Folder) {
+                res = m_network->deleteFolder(record.uuid);
+            } else if (record.item_type == SyncItem::Attachment) {
+                res = m_network->removeAttachment(record.parent_id, 
+                    utils::getSecureVector(record.uuid));
+            } else {
+                result.failed.push_back(record);
+                continue;
+            }
+
+            if (!res.has_value() && res.error() != NetworkError::NotFound) {
+                result.failed.push_back(record);
+            } else {
+                result.success.push_back(record);
+            }
+        }
+
+        return result;
     }
     
-    std::expected<bool, SyncError> BitwardenSync::pushLocal(const PushActions& actions) {
-        
+    std::expected<bool, SyncError> BitwardenSync::pushLocal(const PushActions& push_actions) {
+        PushActions actions = push_actions;
+
+        for (SyncRecord record : push_actions.success) {
+            Entity entity;
+            
+            if (record.item_type == SyncItem::Item) {
+                entity.type = EntityType::Item;
+            } else if (record.item_type == SyncItem::Folder) {
+                entity.type = EntityType::Folder;
+            } else if (record.item_type == SyncItem::Attachment) {
+                entity.type = EntityType::Attachment;
+            } else {
+                continue;
+            }
+
+            entity.id = record.uuid;
+            entity.parent_id = record.parent_id;
+
+            RuntimeError err = m_runtime->removeRecord(entity);
+
+            if (err != RuntimeError::NotFound && err != RuntimeError::Success) {
+                continue;
+            }
+        }
+
+        for (SyncRecord record : push_actions.partial) {
+            PendingChange change;
+            
+            if (record.item_type == SyncItem::Item) {
+                change.entity.type = EntityType::Item;
+            } else if (record.item_type == SyncItem::Folder) {
+                change.entity.type = EntityType::Folder;
+            } else if (record.item_type == SyncItem::Attachment) {
+                change.entity.type = EntityType::Attachment;
+                change.base = record.raw;
+            } else {
+                continue;
+            }
+
+            change.entity.id = record.uuid;
+            change.entity.parent_id = record.parent_id;
+            change.type = ChangeType::CreatedPartial;
+
+            if (record.raw.contains("revisionDate") && record.raw["revisionDate"].is_string()) {
+                change.revision_date = record.raw["revisionDate"];
+            }
+
+            RuntimeError err = m_runtime->record(change);
+
+            if (err != RuntimeError::Success) {
+                continue;
+            }
+        }
+
+        for (SyncRecord record : actions.actions.pull_create) {
+            RuntimeError res;
+                
+            if (record.item_type == SyncItem::Item) {
+                res = m_runtime->addItem(record.raw);
+            } else if (record.item_type == SyncItem::Folder) {
+                res = m_runtime->addFolder(record.raw);
+            } else if (record.item_type == SyncItem::Attachment) {
+                res = m_runtime->addAttachment(record.parent_id, record.raw);
+            } else {
+                actions.failed.push_back(record);
+                continue;
+            }
+
+            if (res != RuntimeError::Success) {
+                actions.failed.push_back(record);
+            } else {
+                actions.success.push_back(record);
+            }
+        }
+
+        for (SyncRecord record : actions.actions.pull_update) {
+            RuntimeError res;
+                
+            if (record.item_type == SyncItem::Item) {
+                res = m_runtime->updateItem(record.uuid, record.raw);
+            } else if (record.item_type == SyncItem::Folder) {
+                res = m_runtime->updateFolder(record.uuid, record.raw);
+            } else if (record.item_type == SyncItem::Attachment) {
+                res = m_runtime->updateAttachment(record.parent_id, record.uuid, record.raw);
+            } else {
+                actions.failed.push_back(record);
+                continue;
+            }
+
+            if (res != RuntimeError::Success) {
+                actions.failed.push_back(record);
+            } else {
+                actions.success.push_back(record);
+            }
+        }
+
+        for (SyncRecord record : actions.actions.pull_delete) {
+            RuntimeError res;
+                
+            if (record.item_type == SyncItem::Item) {
+                res = m_runtime->removeItem(record.uuid);
+            } else if (record.item_type == SyncItem::Folder) {
+                res = m_runtime->removeFolder(record.uuid);
+            } else if (record.item_type == SyncItem::Attachment) {
+                res = m_runtime->removeAttachment(record.parent_id, record.uuid);
+            } else {
+                actions.failed.push_back(record);
+                continue;
+            }
+
+            if (res != RuntimeError::Success && res != RuntimeError::NotFound) {
+                actions.failed.push_back(record);
+            } else {
+                actions.success.push_back(record);
+            }
+        }
+
+        return true;
     }
     
     std::expected<SyncActions, SyncError> BitwardenSync::resolveConflicts(const SyncActions& actions) {
@@ -573,13 +724,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     return false;
                 }
                 
-                if (remote_revision > local_revision) {
-                    resolved_json = mergeValues_(conflict.local.raw, 
-                        conflict.remote.value().raw, false);
-                } else {
-                    resolved_json = mergeValues_(base_record.value().base, conflict.local.raw, 
-                        conflict.remote.value().raw, true);
-                }
+                resolved_json = mergeValues_(base_record.value().base, conflict.local.raw, 
+                    conflict.remote.value().raw, !(remote_revision > local_revision));
 
                 if (conflict.remote.value().raw.contains("attachments")) {
                     resolved_json["attachments"] = conflict.remote.value().raw["attachments"];

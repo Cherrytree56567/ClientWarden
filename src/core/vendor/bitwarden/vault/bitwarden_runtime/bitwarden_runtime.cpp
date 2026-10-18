@@ -391,6 +391,13 @@ namespace clientwarden::vendor::bitwarden::vault {
                     cipher["attachments"] = nlohmann::json::array();
                 }
 
+                for (const nlohmann::json& existing : cipher["attachments"]) {
+                    if (existing.is_object() && existing.contains("id") && existing["id"].is_string() &&
+                        existing["id"] == attachment["id"]) {
+                        return RuntimeError::ExistingItem;
+                    }
+                }
+
                 cipher["attachments"].push_back(attachment);
 
                 if (!cipher.contains("id") || !cipher["id"].is_string()) {
