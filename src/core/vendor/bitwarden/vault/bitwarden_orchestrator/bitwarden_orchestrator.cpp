@@ -424,10 +424,13 @@ namespace clientwarden::vendor::bitwarden::vault {
                 return std::unexpected(OrchestratorError::AttachmentTooLarge);
             } else {
                 nlohmann::json attachment_json;
+                attachment_json["adminRequest"] = false;
                 attachment_json["fileName"] = utils::getString(enc_file_name);
+                attachment_json["fileSize"] = file_contents.size();
                 attachment_json["id"] = utils::getUniqueId();
                 attachment_json["key"] = utils::getString(str_attachment_key);
                 attachment_json["url"] = "attachments/" + attachment_json["id"];
+                attachment_json["revisionDate"] = utils::getBitwardenTime();
                 attachment_json["createdOffline"] = true;
 
                 PendingChange change;

@@ -397,7 +397,132 @@ namespace clientwarden::vendor::bitwarden::vault {
     }
     
     std::expected<PushActions, SyncError> BitwardenSync::pushRemote(const SyncActions& actions) {
-        
+        PushActions result;
+
+        for (SyncRecord record : actions.push_create) {
+            if (!record.raw.contains("id") || !record.raw["id"].is_string()) {
+                result.failed.push_back(record);
+                continue;
+            }
+
+            nlohmann::json push_create_json = record.raw;
+
+            if (record.item_type == SyncItem::Attachment) {
+                push_create_json["lastKnownRevisionDate"] = push_create_json["revisionDate"];
+                push_create_json.erase("url");
+                push_create_json.erase("revisionDate");
+                push_create_json.erase("createdOffline");
+            }
+
+            push_create_json.erase("id");
+
+            std::expected<nlohmann::json, NetworkError> res;
+                
+            if (record.item_type == SyncItem::Item) {
+                res = m_network->newItem(push_create_json);
+            } else if (record.item_type == SyncItem::Folder) {
+                if (!push_create_json.contains("name") || 
+                    !push_create_json["name"].is_string()) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                res = m_network->createFolder(utils::getSecureVector(push_create_json["name"]));
+            } else if (record.item_type == SyncItem::Attachment) {
+                if (!push_create_json.contains("name") || 
+                    !push_create_json["name"].is_string() ||
+                    !push_create_json.contains("url") || 
+                    !push_create_json["url"].is_string() ||
+                    !push_create_json.contains("key") || 
+                    !push_create_json["key"].is_string()) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                std::expected<Botan::secure_vector<uint8_t>, StorageError> attachment_err =
+                    m_storage->read(record.raw["url"], [](float) {});
+                
+                if (!attachment_err.has_value()) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                res = m_network->addAttachment(record.parent_id, 
+                    utils::getSecureVector(push_create_json["name"]), attachment_err.value(),
+                    utils::getSecureVector(push_create_json["key"]), [](float) {});
+            }
+
+            if (!res.has_value()) {
+                switch (res.error()) {
+                    case NetworkError::Unreachable:
+                    case NetworkError::Unauthorised:
+                    case NetworkError::Forbidden:
+                    case NetworkError::RateLimited:
+                        result.failed.push_back(record);
+                        break;
+                    default:
+                        result.partial.push_back(record);
+                        break;
+                }
+            } else {
+                if ((record.item_type != SyncItem::Attachment) && 
+                    (!res.value().contains("id") || !res.value()["id"].is_string())) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                if ((record.item_type == SyncItem::Attachment) && 
+                    (!res.value().contains("attachmentId") || !res.value()["attachmentId"].is_string())) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                SyncRecord success_record = record;
+                success_record.raw = res.value();
+
+                result.success.push_back(success_record);
+                result.remap_id.push_back(std::make_pair(record.uuid, 
+                    (record.item_type != SyncItem::Attachment) ? 
+                        res.value()["id"] : res.value()["attachmentId"]));
+            }
+        }
+
+        for (SyncRecord record : actions.push_update) {
+            /**
+             * @note Attachments should not have a push_update, instead, they should be updated via
+             *  the item update.
+             */
+            if (record.item_type == SyncItem::Attachment) {
+                continue;
+            }
+
+            nlohmann::json push_create_json = record.raw;
+
+            push_create_json.erase("id");
+
+            std::expected<nlohmann::json, NetworkError> res;
+                
+            if (record.item_type == SyncItem::Item) {
+                res = m_network->updateItem(record.uuid, push_create_json);
+            } else if (record.item_type == SyncItem::Folder) {
+                if (!push_create_json.contains("name") || 
+                    !push_create_json["name"].is_string()) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                res = m_network->renameFolder(record.uuid, utils::getSecureVector(push_create_json["name"]));
+            }
+
+            if (res.has_value()) {
+                SyncRecord success_record = record;
+                success_record.raw = res.value();
+
+                result.success.push_back(success_record);
+            } else {
+                result.failed.push_back(record);
+            }
+        }
     }
     
     std::expected<bool, SyncError> BitwardenSync::pushLocal(const PushActions& actions) {

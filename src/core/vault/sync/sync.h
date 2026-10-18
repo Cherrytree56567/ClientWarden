@@ -93,11 +93,19 @@ namespace clientwarden::vault {
 
     /**
      * @brief Holds the results of the Remote Push to determine which records to retry later.
+     * @param remap_id States the ids (old, new) for the created items to remap.
+     * @param actions Stores the actions passed to the pushRemote to allow for pull actions.
+     * @param success Stores a list of all the successful SyncRecord.
+     * @param failed Stores a list of all the failed SyncRecord.
+     * @param partial Stores a list of all the partially sent SyncRecords for local push to
+     *  mark.
      */
     struct PushActions {
         std::vector<std::pair<ItemId, ItemId>> remap_id;
+        SyncActions actions;
         std::vector<SyncRecord> success;
         std::vector<SyncRecord> failed;
+        std::vector<SyncRecord> partial;
     };
 
     enum SyncError {
