@@ -420,6 +420,10 @@ namespace clientwarden::vendor::bitwarden::vault {
         if (!m_init) {
             return RuntimeError::Uninitialised;
         }
+
+        if (!attachment.contains("id") || !attachment["id"].is_string()) {
+            return RuntimeError::InvalidParams;
+        }
         
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         
@@ -494,17 +498,17 @@ namespace clientwarden::vendor::bitwarden::vault {
                 bool replaced = false;
 
                 for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
-                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("attachmentId") || 
-                        !cipher_attachment["attachmentId"].is_string()) {
+                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
+                        !cipher_attachment["id"].is_string()) {
                         continue;
                     }
 
-                    if (cipher_attachment["attachmentId"] == attachment_id) {
+                    if (cipher_attachment["id"] == attachment_id) {
                         cipher_attachment = attachment;
 
-                        if (!cipher_attachment.contains("attachmentId") || 
-                            !cipher_attachment["attachmentId"].is_string()) {
-                            cipher_attachment["attachmentId"] = attachment_id;
+                        if (!cipher_attachment.contains("id") || 
+                            !cipher_attachment["id"].is_string()) {
+                            cipher_attachment["id"] = attachment_id;
                         }
                         replaced = true;
                         break;
@@ -529,6 +533,7 @@ namespace clientwarden::vendor::bitwarden::vault {
     /**
      * @brief Find the attacment with the uuid and attachment_id and remove it.
      * @note If the attachment is being removed offline, an update item record should be marked first.
+     * @note While Attachments are stored with an `id`, network expects an `attachmentId`.
      */
     RuntimeError BitwardenRuntime::removeAttachment(ItemId uuid, ItemId attachment_id) {
         if (!m_init) {
@@ -557,12 +562,12 @@ namespace clientwarden::vendor::bitwarden::vault {
                 bool removed = false;
 
                 for (size_t i = 0; i < attachments.size(); ++i) {
-                    if (!attachments[i].is_object() || !attachments[i].contains("attachmentId") || 
-                        !attachments[i]["attachmentId"].is_string()) {
+                    if (!attachments[i].is_object() || !attachments[i].contains("id") || 
+                        !attachments[i]["id"].is_string()) {
                         continue;
                     }
 
-                    if (attachments[i]["attachmentId"] == attachment_id) {
+                    if (attachments[i]["id"] == attachment_id) {
                         attachments.erase(i);
                         removed = true;
                         break;
@@ -611,8 +616,6 @@ namespace clientwarden::vendor::bitwarden::vault {
                     return std::unexpected(RuntimeError::NotFound);
                 }
 
-                bool replaced = false;
-
                 for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
                     if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
                         !cipher_attachment["id"].is_string()) {
@@ -625,47 +628,6 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 return std::unexpected(RuntimeError::NotFound);
-            }
-        }
-
-        return std::unexpected(RuntimeError::NotFound);
-    }
-
-    std::expected<std::vector<ItemId>, RuntimeError> BitwardenRuntime::getAttachmentIds(ItemId uuid) {
-        if (!m_init) {
-            return std::unexpected(RuntimeError::Uninitialised);
-        }
-
-        std::vector<ItemId> result;
-        
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        
-        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
-
-        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
-            return std::unexpected(RuntimeError::InvalidVault);
-        }
-
-        for (nlohmann::json& cipher : *ciphers_iterator) {
-            if (!cipher.contains("id") || !cipher["id"].is_string()) {
-                continue;
-            }
-
-            if (cipher["id"] == uuid) {
-                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
-                    return result;
-                }
-
-                for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
-                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
-                        !cipher_attachment["id"].is_string()) {
-                        continue;
-                    }
-
-                    result.push_back(cipher_attachment["id"]);
-                }
-
-                return result;
             }
         }
 
@@ -759,112 +721,66 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json& updated = m_vault_data["pending"]["updated"];
         nlohmann::json& deleted = m_vault_data["pending"]["deleted"];
 
+        ItemId entity_id = change.entity.id;
+
+        if (change.entity.type == EntityType::Attachment) {
+            if (change.entity.parent_id.empty()) {
+                return RuntimeError::InvalidParams;
+            }
+
+            entity_id = change.entity.id + "/" + change.entity.parent_id;
+        }
+
         /**
-         * @todo Check if record already exists.
          * @note No items should exist in the same bucket.
          * @note Created allows no exising records, CreatedPartial only allows a Created existing
-         *  record, Updated allows no existing records, Deleted only allows a Created,
-         *  Created Partial and Updated existing records.
+         *  record, Updated allows no existing records except for updated, Deleted only allows a 
+         *  Created, Created Partial and Updated existing records.
          */
 
-        std::vector<nlohmann::json&> buckets_to_check;
-        if (change.type == ChangeType::)
+        std::vector<std::reference_wrapper<const nlohmann::json>> buckets_to_check;
+        if (change.type == ChangeType::Created) {
+            buckets_to_check = { created, created_partial, updated, deleted };
+        } else if (change.type == ChangeType::CreatedPartial) {
+            buckets_to_check = { created_partial, updated, deleted };
+        } else if (change.type == ChangeType::Updated) {
+            buckets_to_check = { created, created_partial, deleted };
+        } else if (change.type == ChangeType::Deleted) {
+            buckets_to_check = { deleted };
+        }
 
-        for (nlohmann::json& name : { created, created_partial, updated, deleted }) {
-            for (nlohmann::json bucket : name.items()) {
-                if (bucket["id"] == change.entity.id) {
-                    switch (change.type) {
-                        case ChangeType::Created:
-                            if (created.contains(entity_id) || created_partial.contains(entity_id) || 
-                                updated.contains(entity_id) || deleted.contains(entity_id)) {
-                                return RuntimeError::ExistingItem;
-                            }
-                            created[entity_id] = record_json;
-                            break;
-                        case ChangeType::CreatedPartial:
-                            if (created_partial.contains(entity_id)) {
-                                return RuntimeError::Success;
-                            }
-                            if (updated.contains(entity_id) || deleted.contains(entity_id)) {
-                                return RuntimeError::ExistingItem;
-                            }
-                            created.erase(entity_id);
-                            created_partial[entity_id] = record_json;
-                            break;
-                        case ChangeType::Updated:
-                            if (created.contains(entity_id) || created_partial.contains(entity_id)) {
-                                return RuntimeError::Success;
-                            }
-                            if (deleted.contains(entity_id)) {
-                                return RuntimeError::NotFound;
-                            }
-
-                            if (updated.contains(entity_id)) {
-                                updated[entity_id]["revisionDate"] = change.revision_date;
-                            } else {
-                                record_json["base"] = change.base;
-                                updated[entity_id] = record_json;
-                            }
-                            break;
-                        case ChangeType::Deleted:
-                            if (deleted.contains(entity_id)) {
-                                return RuntimeError::Success;
-                            }
-                            if (created.contains(entity_id)) {
-                                created.erase(entity_id);
-                                break;
-                            }
-
-                            created_partial.erase(entity_id);
-                            updated.erase(entity_id);
-                            deleted[entity_id] = record_json;
-                            break;
-                    }
-                }
+        for (const nlohmann::json& bucket : buckets_to_check) {
+            if (bucket.contains(entity_id)) {
+                return RuntimeError::ExistingItem;
             }
         }
         
+        /**
+         * @note We dont need to store the id and parentId since thats in the entityId, but its
+         *  good practice and makes things easier.
+         */
         nlohmann::json record_json;
         record_json["revisionDate"] = change.revision_date;
         record_json["itemType"] = getString(change.entity.type);
         record_json["id"] = change.entity.id;
 
-        ItemId entity_id = change.entity.id;
-
         if (change.entity.type == EntityType::Attachment) {
             record_json["parentId"] = change.entity.parent_id;
-            entity_id = change.entity.id + "/" + change.entity.parent_id;
         }
 
         switch (change.type) {
             case ChangeType::Created:
-                if (created.contains(entity_id) || created_partial.contains(entity_id) || 
-                    updated.contains(entity_id) || deleted.contains(entity_id)) {
-                    return RuntimeError::ExistingItem;
-                }
                 if (change.entity.type == EntityType::Attachment) {
                     record_json["base"] = change.base;
                 }
+                
                 created[entity_id] = record_json;
                 break;
             case ChangeType::CreatedPartial:
-                if (created_partial.contains(entity_id)) {
-                    return RuntimeError::Success;
-                }
-                if (updated.contains(entity_id) || deleted.contains(entity_id)) {
-                    return RuntimeError::ExistingItem;
-                }
                 created.erase(entity_id);
                 created_partial[entity_id] = record_json;
                 break;
             case ChangeType::Updated:
-                if (created.contains(entity_id) || created_partial.contains(entity_id)) {
-                    return RuntimeError::Success;
-                }
-                if (deleted.contains(entity_id)) {
-                    return RuntimeError::NotFound;
-                }
-
                 if (updated.contains(entity_id)) {
                     updated[entity_id]["revisionDate"] = change.revision_date;
                 } else {
@@ -873,9 +789,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
                 break;
             case ChangeType::Deleted:
-                if (deleted.contains(entity_id)) {
-                    return RuntimeError::Success;
-                }
+                /**
+                 * @brief If it was created locally, then we can safely remove it from the record
+                 *  storage.
+                 */
                 if (created.contains(entity_id)) {
                     created.erase(entity_id);
                     break;
@@ -886,8 +803,15 @@ namespace clientwarden::vendor::bitwarden::vault {
                 record_json["base"] = change.base;
                 deleted[entity_id] = record_json;
                 break;
+            default:
+                return RuntimeError::InvalidParams;
         }
 
+        /**
+         * @brief If an item is being deleted, then delete all the attachment records.
+         * @note When an item is deleted online, all the attachments get removed as well, so you
+         *  dont have to manually delete the attachments.
+         */
         if (change.type == ChangeType::Deleted && change.entity.type == EntityType::Item) {
             nlohmann::json& pending = m_vault_data["pending"];
             
@@ -900,8 +824,15 @@ namespace clientwarden::vendor::bitwarden::vault {
                 std::vector<ItemId> removal_ids;
 
                 for (nlohmann::json::iterator iterator = bucket->begin(); iterator != bucket->end(); ++iterator) {
-                    if (iterator.value().value("itemType", "") == "attachment" &&
-                        iterator.value().value("parentId", "") == change.entity.id) {
+                    if (!iterator.value().is_object() || !iterator.value().contains("itemType") ||
+                        !iterator.value()["itemType"].is_string() || 
+                        !iterator.value().contains("parentId") || 
+                        !iterator.value()["parentId"].is_string()) {
+                        continue;
+                    }
+
+                    if (iterator.value()["itemType"] == "attachment" &&
+                        iterator.value()["parentId"] == change.entity.id) {
                         removal_ids.push_back(iterator.key());
                     }
                 }
@@ -919,6 +850,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         return RuntimeError::Success;
     }
 
+    /**
+     * @brief To remove the record, we need to loop through all the buckets and erase them.
+     */
     RuntimeError BitwardenRuntime::removeRecord(Entity entity) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
@@ -961,6 +895,10 @@ namespace clientwarden::vendor::bitwarden::vault {
         return RuntimeError::Success;
     }
 
+    /**
+     * @brief To find the record, we need to get the entityId and loop through all the bucks and
+     *  find the matching record with the entity_id.
+     */
     std::expected<PendingChange, RuntimeError> BitwardenRuntime::getRecord(Entity entity) {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
@@ -977,7 +915,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             entity_id = entity.id + "/" + entity.parent_id;
         }
 
-        nlohmann::json& pending = m_vault_data["pending"];
+        nlohmann::json pending = m_vault_data["pending"];
         
         for (std::string name : {"created", "createdPartial", "updated", "deleted"}) {
             for (auto& [item_id, value] : pending[name].items()) {
@@ -1002,13 +940,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                     change.entity.parent_id = value["parentId"];
                 }
 
-                if (name == "updated") {
-                    if (!value.contains("base") || !value["base"].is_object()) {
-                        return std::unexpected(RuntimeError::InvalidVault);
-                    }
+                if (value.contains("base") && value["base"].is_object()) {
                     change.base = value["base"];
-                } else if (value.contains("base") && value["base"].is_object()) {
-                    change.base = value["base"];
+                } else if (name == "updated") {
+                    return std::unexpected(RuntimeError::InvalidVault);
                 }
 
                 return change;
@@ -1018,6 +953,10 @@ namespace clientwarden::vendor::bitwarden::vault {
         return std::unexpected(RuntimeError::NotFound);
     }
 
+    /**
+     * @brief To check if a record exists, we can loop through all the buckets and find one with 
+     *  the matching entity id.
+     */
     std::expected<bool, RuntimeError> BitwardenRuntime::recordExists(Entity entity) {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
@@ -1046,6 +985,10 @@ namespace clientwarden::vendor::bitwarden::vault {
         return false;
     }
 
+    /**
+     * @brief If its unknown, add all buckets to the names vector and then loop through all the
+     *  records and create the Pending Change and add them to the vector.
+     */
     std::expected<std::vector<PendingChange>, RuntimeError> BitwardenRuntime::getAllRecords(
         ChangeType type) {
         
@@ -1061,7 +1004,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             return result;
         }
 
-        nlohmann::json& pending = m_vault_data["pending"];
+        nlohmann::json pending = m_vault_data["pending"];
 
         std::vector<std::string> names;
         if (type == ChangeType::Unknown) {
@@ -1089,13 +1032,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                     change.entity.parent_id = value["parentId"];
                 }
 
-                if (name == "updated") {
-                    if (!value.contains("base") || !value["base"].is_object()) {
-                        continue;
-                    }
+                if (value.contains("base") && value["base"].is_object()) {
                     change.base = value["base"];
-                } else if (value.contains("base") && value["base"].is_object()) {
-                    change.base = value["base"];
+                } else if (name == "updated") {
+                    continue;
                 }
 
                 result.push_back(change);
@@ -1105,6 +1045,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         return result;
     }
 
+    /**
+     * @brief Check if the vault profile is valid, then build the profile using the json vault.
+     */
     std::expected<Profile, RuntimeError> BitwardenRuntime::getProfile() {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
@@ -1139,6 +1082,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         result.security_stamp = utils::getSecureVector(profile["securityStamp"]);
         result.creation_date = utils::s_getTime(profile["creationDate"]);
         result.avatar_color = profile["avatarColor"];
+        result.raw = profile;
 
         if (profile["organizations"].is_array()) {
             for (nlohmann::json org : profile["organizations"]) {
@@ -1162,6 +1106,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         return result;
     }
 
+    /**
+     * @brief Check if `userDecryption` is valid and then return.
+     */
     std::expected<nlohmann::json, RuntimeError> BitwardenRuntime::getVaultInfo() {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
@@ -1175,7 +1122,10 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         return m_vault_data["userDecryption"];
     }
-        
+    
+    /**
+     * @brief Check if a version key exists, and then return it.
+     */
     std::expected<Botan::secure_vector<uint8_t>, RuntimeError> BitwardenRuntime::getVersion() {
         if (!m_init) {
             return std::unexpected(RuntimeError::Uninitialised);
@@ -1190,6 +1140,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         return utils::getSecureVector(m_vault_data["version"]);
     }
     
+    /**
+     * @brief Store a version key.
+     */
     RuntimeError BitwardenRuntime::storeVersion(Botan::secure_vector<uint8_t> version) {
         if (!m_init) {
             return RuntimeError::Uninitialised;
