@@ -13,6 +13,7 @@ namespace clientwarden::vault {
         NotFound,
         Uninitialised,
         StorageFailure,
+        InvalidParams,
         Success
     };
 
