@@ -11,9 +11,12 @@ namespace clientwarden::vendor::bitwarden::vault {
     /**
      * @brief To check if a session has been invalidated, we can compare the remote
      *  security stamp and the runtime security stamp.
-     * @todo Handle Network errors where the network is unauth'd,
      */
     std::expected<bool, OrchestratorError> BitwardenOrchestrator::sessionInvalidated() {
+        if (m_network->getConnectivity() != Connectivity::Online) {
+            return std::unexpected(OrchestratorError::NetworkError);
+        }
+
         std::expected<Profile, NetworkError> network_profile = m_network->getProfile();
         if (!network_profile.has_value()) {
             return std::unexpected(OrchestratorError::NetworkError);
@@ -24,7 +27,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(OrchestratorError::RuntimeError);
         }
         
-        return runtime_profile.security_stamp != network_profile.security_stamp;
+        return runtime_profile.value().security_stamp != network_profile.value().security_stamp;
     }
     
     /**
@@ -104,18 +107,14 @@ namespace clientwarden::vendor::bitwarden::vault {
     /**
      * @brief To update the item, we first need to make a network_data version, since the bw server
      *  requires an encryptedFor value when updating. If the item was marked as created offline,
-     *  then we must create it on the remote and if its successful, unmark it. If the item needs to
+     *  then we must update it on local and leave it to sync to figure out. If the item needs to
      *  be updated, then add an encryptedFor value with the original provided id value. Then we can
      *  add it to the runtime (local vault) and then mark it offline if needed.
      * @note If updating fails, we should record an offline update item before pushing it to the
      *  vault.
      */
     OrchestratorError BitwardenOrchestrator::updateItem(nlohmann::json data) {
-        if (!data.is_object()) {
-            return OrchestratorError::InvalidParams;
-        }
-
-        if (!data.contains("id") || !data["id"].is_string()) {
+        if (!data.is_object() || !data.contains("id") || !data["id"].is_string()) {
             return OrchestratorError::InvalidParams;
         }
 
@@ -141,11 +140,36 @@ namespace clientwarden::vendor::bitwarden::vault {
         entity.type = EntityType::Item;
         entity.id = data["id"];
 
-        std::expected<bool, RuntimeError> is_created_offline = 
-            m_runtime->recordExists(entity);
+        std::expected<PendingChange, RuntimeError> local_record = 
+            m_runtime->getRecord(entity);
+        
+        /**
+         * @brief Fail if it errors with anything other than not found (eg: invalid vault).
+         */
+        if (!local_record.has_value() && local_record.error() != RuntimeError::NotFound) {
+            return OrchestratorError::RuntimeError;
+        }
 
-        if (is_created_offline.has_value() && is_created_offline.value()) {
-            network_item = m_network->newItem(network_data);
+        /**
+         * @brief If it is created/partially offline, then we just push it to the vault and allow
+         *  sync to handle it. If it was deleted, then update shouldnt be called (bc if it was 
+         *  deleted in the record, it wont exist in the vault anyway). Otherwise, we can just 
+         *  update the item like normal.
+         * @note We shouldnt create the item, bc that should be handled by sync.
+         */
+        if (local_record.has_value() && 
+            (local_record.value().type == ChangeType::CreatedPartial ||
+            local_record.value().type == ChangeType::Created)) {
+            RuntimeError runtime_item = m_runtime->updateItem(data["id"], data);
+
+            if (runtime_item != RuntimeError::Success) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            return OrchestratorError::Success;
+        } else if (local_record.has_value() && 
+            local_record.value().type == ChangeType::Deleted) {
+            return OrchestratorError::NotFound;
         } else {
             network_data["encryptedFor"] = m_profile_id_;
             network_item = m_network->updateItem(data["id"], network_data);
@@ -154,11 +178,24 @@ namespace clientwarden::vendor::bitwarden::vault {
         nlohmann::json result_data = data;
         bool updated_offline = true;
 
-        if (network_item.has_value()) {
+        /**
+         * @brief Retry the network call with a refreshed token if it was unauthorised.
+         */
+        if (!network_item.has_value() && network_item.error() == NetworkError::Unauthorised &&
+            m_network->refreshToken().has_value()) {
+            network_item = m_network->updateItem(data["id"], network_data);
+        }
+
+        /**
+         * @note If the server returns BadRequest, that means that the params are incorrect.
+         */
+        if (!network_item.has_value() && network_item.error() == NetworkError::BadRequest) {
+            return OrchestratorError::InvalidParams;
+        } else if (network_item.has_value()) {
             updated_offline = false;
             result_data = network_item.value();
 
-            if (is_created_offline.has_value() && is_created_offline.value()) {
+            if (local_record.has_value()) {
                 m_runtime->removeRecord(entity);
             }
         }
@@ -167,6 +204,11 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::InvalidParams;
         }
 
+        bool update_recorded = false;
+
+        /**
+         * @brief If its updated offline, we must create a record for updated offline.
+         */
         if (updated_offline) {
             PendingChange change;
             change.entity = entity;
@@ -176,13 +218,18 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             RuntimeError err = m_runtime->record(change);
 
+            update_recorded = (err == RuntimeError::Success) && !local_record.has_value();
+
             if (err != RuntimeError::Success && err != RuntimeError::ExistingItem) {
                 return OrchestratorError::RuntimeError;
             }
         }
-
+        
         RuntimeError runtime_item = m_runtime->updateItem(data["id"], result_data);
         if (runtime_item != RuntimeError::Success) {
+            if (update_recorded) {
+                m_runtime->removeRecord(entity);
+            }
             return OrchestratorError::RuntimeError;
         }
 
