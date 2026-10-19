@@ -21,13 +21,14 @@ namespace clientwarden::vault {
         QuotaExceeded,
         NotFound,
         InvalidParams,
+        Unknown,
         Success
     };
 
     class Orchestrator {
     public:
         Orchestrator(std::shared_ptr<Crypto> crypto, std::shared_ptr<Network> network,
-            std::shared_ptr<Runtime> runtime);
+            std::shared_ptr<Runtime> runtime, std::shared_ptr<Storage> storage);
         virtual ~Orchestrator() = default;
         
         /**
@@ -86,7 +87,7 @@ namespace clientwarden::vault {
         /**
          * @brief Ask the server to create a folder and add it to the Vault.
          */
-        virtual std::expected<nlohmann::json, OrchestratorError> createFolder(
+        virtual std::expected<ItemId, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
         /**
          * @brief Ask the server to rename the folder and rename it in the Vault.
@@ -101,13 +102,8 @@ namespace clientwarden::vault {
         /**
          * @brief Ask the server for the icon and return a botan vector of the item.
          */
-        virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> downloadIcon(
+        virtual std::expected<std::string, OrchestratorError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) = 0;
-
-        /**
-         * @brief Retries pushing items that were created or modified offline.
-         */
-        virtual OrchestratorError retryOfflineItems() = 0;
 
         /**
          * @brief Returns the vendor.
@@ -121,5 +117,6 @@ namespace clientwarden::vault {
         std::shared_ptr<Crypto> m_crypto;
         std::shared_ptr<Network> m_network;
         std::shared_ptr<Runtime> m_runtime;
+        std::shared_ptr<Storage> m_storage;
     };
 }

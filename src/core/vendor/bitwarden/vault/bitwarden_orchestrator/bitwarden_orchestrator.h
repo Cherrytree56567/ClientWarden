@@ -28,15 +28,13 @@ namespace clientwarden::vendor::bitwarden::vault {
         OrchestratorError downloadAttachment(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, std::filesystem::path save_path,
             std::function<void(float)> on_progress = nullptr) override;
-        std::expected<nlohmann::json, OrchestratorError> createFolder(
+        std::expected<ItemId, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) override;
         OrchestratorError renameFolder(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& folder_name) override;
         OrchestratorError deleteFolder(ItemId uuid) override;
-        std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> downloadIcon(
+        std::expected<std::string, OrchestratorError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) override;
-
-        OrchestratorError retryOfflineItems() override;
 
         Vendor getVendor() override;
     private:

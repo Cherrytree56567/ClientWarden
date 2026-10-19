@@ -92,6 +92,10 @@ namespace clientwarden::vault {
         ItemId parent_id = "";
     };
 
+    /**
+     * @note If a ChangeType is Updated or Deleted or if the EntityType is attachment, PendingChange
+     *  requires a base and revision_date.
+     */
     struct PendingChange {
         Entity entity;
         ChangeType type = ChangeType::Unknown;
@@ -177,6 +181,10 @@ namespace clientwarden::vault {
          * @brief Returns the attachment with a matching ItemId as raw JSON.
          */
         virtual std::expected<nlohmann::json, RuntimeError> getAttachment(ItemId uuid, ItemId attachment_id) = 0;
+        /**
+         * @brief Returns a vector of Attachment Ids.
+         */
+        virtual std::expected<std::vector<ItemId>, RuntimeError> getAttachmentIds(ItemId uuid) = 0;
 
         /**
          * @brief Records an offline action. Requires a body and last modified date if it is an
@@ -195,6 +203,11 @@ namespace clientwarden::vault {
          * @brief Returns a bool if the record with the matching entity exists.
          */
         virtual std::expected<bool, RuntimeError> recordExists(Entity entity) = 0;
+        /**
+         * @brief Get all records.
+         */
+        virtual std::expected<std::vector<PendingChange>, RuntimeError> getAllRecords(
+            ChangeType type = ChangeType::Unknown) = 0;
 
         /**
          * @brief Returns the profile contained in the local Vault.

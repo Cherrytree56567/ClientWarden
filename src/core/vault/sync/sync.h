@@ -15,6 +15,7 @@ namespace clientwarden::vault {
     enum class SyncState {
         Modified,
         CreatedOffline,
+        CreatedOfflinePartially,
         PendingDelete,
         Clean
     };
@@ -24,7 +25,9 @@ namespace clientwarden::vault {
      */
     enum class SyncItem {
         Item,
-        Folder
+        Folder,
+        Attachment,
+        Unknown
     };
 
     /**
@@ -50,9 +53,10 @@ namespace clientwarden::vault {
      * @brief Represents the Items info and state which is used to diff local and remote changes.
      */
     struct SyncRecord {
-        SyncItem item_type;
+        SyncItem item_type = SyncItem::Unknown;
         ItemId uuid;
-        int64_t revision;
+        ItemId parent_id;
+        std::time_t revision;
         SyncState state;
         nlohmann::json raw;
     };
@@ -89,11 +93,26 @@ namespace clientwarden::vault {
 
     /**
      * @brief Holds the results of the Remote Push to determine which records to retry later.
+     * @param remap_id States the ids (old, new) for the created items to remap.
+     * @param actions Stores the actions passed to the pushRemote to allow for pull actions.
+     * @param success Stores a list of all the successful SyncRecord.
+     * @param failed Stores a list of all the failed SyncRecord.
+     * @param partial Stores a list of all the partially sent SyncRecords for local push to
+     *  mark.
      */
     struct PushActions {
         std::vector<std::pair<ItemId, ItemId>> remap_id;
+        SyncActions actions;
         std::vector<SyncRecord> success;
         std::vector<SyncRecord> failed;
+        std::vector<SyncRecord> partial;
+    };
+
+    enum SyncError {
+        RuntimeError,
+        NetworkError,
+        Unknown,
+        Success
     };
 
     class Sync {
@@ -106,11 +125,11 @@ namespace clientwarden::vault {
          * @brief Fetches Local and Remote Records and plans and resolves conflits. It then pushes
          *  the resulting changes to Server and to the Local JSON.
          */
-        bool syncVault();
+        std::expected<bool, SyncError> syncVault();
         /**
          * @brief Replaces the local Vault file with remote vault JSON.
          */
-        virtual bool fullSync() = 0;
+        virtual std::expected<bool, SyncError> fullSync() = 0;
 
         /**
          * @brief Starts the SyncThread.
@@ -118,11 +137,11 @@ namespace clientwarden::vault {
          * If the SyncMethod is WebSocket, it will use the NetworkThread, otherwise
          * it will manually sync every 5mins.
          */
-        virtual bool startSyncThread() = 0;
+        virtual std::expected<bool, SyncError> startSyncThread() = 0;
         /**
          * @brief Stops the SyncThread.
          */
-        virtual bool stopSyncThread() = 0;
+        virtual std::expected<bool, SyncError> stopSyncThread() = 0;
 
         /**
          * @brief Gets the Vendor.
@@ -132,31 +151,31 @@ namespace clientwarden::vault {
         /**
          * @brief Fetches local records and returns an array of SyncRecords.
          */
-        virtual std::vector<SyncRecord> fetchLocalRecords() = 0;
+        virtual std::expected<std::vector<SyncRecord>, SyncError> fetchLocalRecords() = 0;
         /**
          * @brief Fetches remote records and returns an array of SyncRecords.
          */
-        virtual std::vector<SyncRecord> fetchRemoteRecords() = 0;
+        virtual std::expected<std::vector<SyncRecord>, SyncError> fetchRemoteRecords() = 0;
         
         /**
          * @brief Plans the appropriate Actions for local and remote records.
          */
-        virtual SyncActions planActions(const std::vector<SyncRecord>& local, 
+        virtual std::expected<SyncActions, SyncError> planActions(const std::vector<SyncRecord>& local, 
             const std::vector<SyncRecord>& remote) = 0;
         
         /**
          * @brief Pushes the SyncActions determined by planActions to remote.
          */
-        virtual PushActions pushRemote(const SyncActions& actions) = 0;
+        virtual std::expected<PushActions, SyncError> pushRemote(const SyncActions& actions) = 0;
         /**
          * @brief Updates the local db with the Push Actions returned by pushRemote.
          */
-        virtual bool pushLocal(const PushActions& actions) = 0;
+        virtual std::expected<bool, SyncError> pushLocal(const PushActions& actions) = 0;
         
         /**
          * @brief Determines how to resolve conflicts between the local and remote versions.
          */
-        virtual SyncActions resolveConflicts(const SyncActions& actions) = 0;
+        virtual std::expected<SyncActions, SyncError> resolveConflicts(const SyncActions& actions) = 0;
 
         std::shared_ptr<Runtime> m_runtime;
         std::shared_ptr<Network> m_network;

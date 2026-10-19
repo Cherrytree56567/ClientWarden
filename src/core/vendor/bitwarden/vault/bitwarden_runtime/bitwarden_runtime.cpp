@@ -439,6 +439,13 @@ namespace clientwarden::vendor::bitwarden::vault {
                     cipher["attachments"] = nlohmann::json::array();
                 }
 
+                for (const nlohmann::json& existing : cipher["attachments"]) {
+                    if (existing.is_object() && existing.contains("id") && existing["id"].is_string() &&
+                        existing["id"] == attachment["id"]) {
+                        return RuntimeError::ExistingItem;
+                    }
+                }
+
                 cipher["attachments"].push_back(attachment);
 
                 if (!cipher.contains("id") || !cipher["id"].is_string()) {
@@ -624,6 +631,88 @@ namespace clientwarden::vendor::bitwarden::vault {
         return std::unexpected(RuntimeError::NotFound);
     }
 
+    std::expected<std::vector<ItemId>, RuntimeError> BitwardenRuntime::getAttachmentIds(ItemId uuid) {
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+
+        std::vector<ItemId> result;
+        
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return std::unexpected(RuntimeError::InvalidVault);
+        }
+
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
+
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    return result;
+                }
+
+                for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
+                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
+                        !cipher_attachment["id"].is_string()) {
+                        continue;
+                    }
+
+                    result.push_back(cipher_attachment["id"]);
+                }
+
+                return result;
+            }
+        }
+
+        return std::unexpected(RuntimeError::NotFound);
+    }
+
+    std::expected<std::vector<ItemId>, RuntimeError> BitwardenRuntime::getAttachmentIds(ItemId uuid) {
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+
+        std::vector<ItemId> result;
+        
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        
+        nlohmann::json::iterator ciphers_iterator = m_vault_data.find("ciphers");
+
+        if (ciphers_iterator == m_vault_data.end() || !ciphers_iterator->is_array()) {
+            return std::unexpected(RuntimeError::InvalidVault);
+        }
+
+        for (nlohmann::json& cipher : *ciphers_iterator) {
+            if (!cipher.contains("id") || !cipher["id"].is_string()) {
+                continue;
+            }
+
+            if (cipher["id"] == uuid) {
+                if (!cipher.contains("attachments") || !cipher["attachments"].is_array()) {
+                    return result;
+                }
+
+                for (nlohmann::json& cipher_attachment : cipher["attachments"]) {
+                    if (!cipher_attachment.is_object() || !cipher_attachment.contains("id") || 
+                        !cipher_attachment["id"].is_string()) {
+                        continue;
+                    }
+
+                    result.push_back(cipher_attachment["id"]);
+                }
+
+                return result;
+            }
+        }
+
+        return std::unexpected(RuntimeError::NotFound);
+    }
+
     /**
      * @brief First, create pending.created, pending.createdPartial, pending.updated, etc. Then, 
      *  create a record_json that contains the revision date, itemtype and id. If the attachment is
@@ -753,6 +842,9 @@ namespace clientwarden::vendor::bitwarden::vault {
                     updated.contains(entity_id) || deleted.contains(entity_id)) {
                     return RuntimeError::ExistingItem;
                 }
+                if (change.entity.type == EntityType::Attachment) {
+                    record_json["base"] = change.base;
+                }
                 created[entity_id] = record_json;
                 break;
             case ChangeType::CreatedPartial:
@@ -791,6 +883,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                 created_partial.erase(entity_id);
                 updated.erase(entity_id);
+                record_json["base"] = change.base;
                 deleted[entity_id] = record_json;
                 break;
         }
@@ -914,6 +1007,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                         return std::unexpected(RuntimeError::InvalidVault);
                     }
                     change.base = value["base"];
+                } else if (value.contains("base") && value["base"].is_object()) {
+                    change.base = value["base"];
                 }
 
                 return change;
@@ -949,6 +1044,65 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         return false;
+    }
+
+    std::expected<std::vector<PendingChange>, RuntimeError> BitwardenRuntime::getAllRecords(
+        ChangeType type) {
+        
+        if (!m_init) {
+            return std::unexpected(RuntimeError::Uninitialised);
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+        std::vector<PendingChange> result;
+        
+        if (!m_vault_data.contains("pending") || !m_vault_data["pending"].is_object()) {
+            return result;
+        }
+
+        nlohmann::json& pending = m_vault_data["pending"];
+
+        std::vector<std::string> names;
+        if (type == ChangeType::Unknown) {
+            names = {"created", "createdPartial", "updated", "deleted"};
+        } else {
+            names.push_back(std::string(getString(type)));
+        }
+        
+        for (std::string name : names) {
+            for (auto& [item_id, value] : pending[name].items()) {
+                if (!value.contains("revisionDate") || !value["revisionDate"].is_string() ||
+                    !value.contains("id") || !value["id"].is_string() ||
+                    !value.contains("itemType") || !value["itemType"].is_string()) {
+                    continue;
+                }
+
+                PendingChange change;
+                change.revision_date = value["revisionDate"];
+                change.entity.id = value["id"];
+                change.entity.type = getEntityType(value.value("itemType", ""));
+                change.type = getChangeType(name);
+
+                if (change.entity.type == EntityType::Attachment && 
+                    value.contains("parentId") && value["parentId"].is_string()) {
+                    change.entity.parent_id = value["parentId"];
+                }
+
+                if (name == "updated") {
+                    if (!value.contains("base") || !value["base"].is_object()) {
+                        continue;
+                    }
+                    change.base = value["base"];
+                } else if (value.contains("base") && value["base"].is_object()) {
+                    change.base = value["base"];
+                }
+
+                result.push_back(change);
+            }
+        }
+
+        return result;
     }
 
     std::expected<Profile, RuntimeError> BitwardenRuntime::getProfile() {
