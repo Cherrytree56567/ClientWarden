@@ -68,6 +68,7 @@ namespace clientwarden::vault {
         /**
          * @brief Upload the attachment to the server and use on_progress to indicate progress.
          * @note file_contents will be overridden and encrypted
+         * @note Requires a NON encrypted file name and contents.
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> addAttachment(
             ItemId uuid, Botan::secure_vector<uint8_t>& file_contents, 
@@ -86,11 +87,13 @@ namespace clientwarden::vault {
             std::function<void(float)> on_progress = nullptr) = 0;
         /**
          * @brief Ask the server to create a folder and add it to the Vault.
+         * @note Requires a NON encrypted folder name.
          */
         virtual std::expected<ItemId, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
         /**
          * @brief Ask the server to rename the folder and rename it in the Vault.
+         * @note Requires a NON encrypted folder name.
          */
         virtual OrchestratorError renameFolder(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& folder_name) = 0;

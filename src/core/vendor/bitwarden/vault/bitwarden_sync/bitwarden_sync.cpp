@@ -34,6 +34,9 @@ namespace clientwarden::vendor::bitwarden::vault {
     std::expected<std::vector<SyncRecord>, SyncError> BitwardenSync::fetchLocalRecords() {
         std::vector<SyncRecord> result;
 
+        /**
+         * @brief First, we must get all the item and folder ids.
+         */
         std::expected<std::vector<ItemId>, RuntimeError> item_ids = 
             m_runtime->getItemIds();
         
@@ -48,6 +51,9 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(SyncError::RuntimeError);
         }
 
+        /**
+         * @brief Then we can loop through all the types and ids.
+         */
         for (EntityType type : { EntityType::Item, EntityType::Folder }) {
             const std::vector<ItemId>& ids = (type == EntityType::Item) ? item_ids.value()
                                                                         : folder_ids.value();
@@ -91,19 +97,19 @@ namespace clientwarden::vendor::bitwarden::vault {
                     std::expected<PendingChange, RuntimeError> pending_record =
                         m_runtime->getRecord(entity);
                     
-                    if (!pending_record.has_value()) {
+                    if (pending_record.has_value()) {
+                        if (pending_record.value().type == ChangeType::Updated) {
+                            record.revision = utils::s_getTime(pending_record.value().revision_date);
+                            record.state = SyncState::Modified;
+                        } else if (pending_record.value().type == ChangeType::Created) {
+                            record.state = SyncState::CreatedOffline;
+                        } else if (pending_record.value().type == ChangeType::CreatedPartial) {
+                            record.state = SyncState::CreatedOfflinePartially;
+                        } else if (pending_record.value().type == ChangeType::Deleted) {
+                            record.state = SyncState::PendingDelete;
+                        }
+                    } else if (pending_record.error() == RuntimeError::Uninitialised) {
                         return std::unexpected(SyncError::RuntimeError);
-                    }
-
-                    if (pending_record.value().type == ChangeType::Updated) {
-                        record.revision = utils::s_getTime(pending_record.value().revision_date);
-                        record.state = SyncState::Modified;
-                    } else if (pending_record.value().type == ChangeType::Created) {
-                        record.state = SyncState::CreatedOffline;
-                    } else if (pending_record.value().type == ChangeType::CreatedPartial) {
-                        record.state = SyncState::CreatedOfflinePartially;
-                    } else if (pending_record.value().type == ChangeType::Deleted) {
-                        record.state = SyncState::PendingDelete;
                     }
                 }
 
@@ -159,7 +165,8 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                 result.push_back(record);
             } else if (change.entity.type == EntityType::Attachment &&
-                       change.type == ChangeType::Created) {
+                       (change.type == ChangeType::Created ||
+                        change.type == ChangeType::CreatedPartial)) {
                 /**
                  * @note Attachment Updates don't contain a base or revision_date, so attachment
                  *  updates must be handled via an item update. We don't need to worry abt
@@ -171,7 +178,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                 record.uuid = change.entity.id;
                 record.parent_id = change.entity.parent_id;
                 record.revision = utils::s_getTime(change.revision_date);
-                record.state = SyncState::CreatedOffline;
+                record.state = (change.type == ChangeType::Created) ? SyncState::CreatedOffline :
+                    SyncState::CreatedOfflinePartially;
                 record.raw = change.base;
 
                 result.push_back(record);
