@@ -237,19 +237,22 @@ namespace clientwarden::vendor::bitwarden::vault {
     }
     
     /**
-     * @brief First, we can immediately unmark the item as created offline. Then, we can remove the
-     *  item from the server and if it fails, mark it as deleted offline. After that, we can delete
-     *  it locally.
+     * @brief First, we need to check if it was created offline. If it was created offline, then
+     *  remove the record and the item from the runtime. If it was created offline partially, then
+     *  remove the record and attempt to remove it from the network and the runtime. If it wasnt
+     *  created offline, then just remove it from the network and runtime.
      */
     OrchestratorError BitwardenOrchestrator::deleteItem(ItemId uuid) {
         Entity entity;
         entity.type = EntityType::Item;
         entity.id = uuid;
 
-        std::expected<bool, RuntimeError> is_created_offline = 
-            m_runtime->recordExists(entity);
+        std::expected<PendingChange, RuntimeError> local_record = 
+            m_runtime->getRecord(entity);
         
-        if (is_created_offline.has_value() && is_created_offline.value()) {
+        bool created_partially = false;
+        
+        if (local_record.has_value() && local_record.value().type == ChangeType::Created) {
             m_runtime->removeRecord(entity);
 
             RuntimeError runtime_delete = m_runtime->removeItem(uuid);
@@ -258,11 +261,20 @@ namespace clientwarden::vendor::bitwarden::vault {
             }
             
             return OrchestratorError::Success;
+        } else if (local_record.has_value() && 
+            local_record.value().type == ChangeType::CreatedPartial) {
+            m_runtime->removeRecord(entity);
+            created_partially = true;
         }
 
         std::expected<nlohmann::json, NetworkError> network_delete = m_network->deleteItem(uuid);
 
-        if (!network_delete.has_value()) {
+        /**
+         * @brief If network_delete fails, then add record, unless it was created partially and the
+         *  error was not found.
+         */
+        if (!network_delete.has_value() && !(created_partially && 
+            network_delete.error() != NetworkError::NotFound)) {
             PendingChange change;
             change.entity = entity;
             change.type = ChangeType::Deleted;
@@ -289,13 +301,8 @@ namespace clientwarden::vendor::bitwarden::vault {
     }
     
     /**
-     * @brief To soft delete the item, we must first aquire the cipher from the vault. Then, we can
-     *  add the deletedDate to it and ask the server to softDelete it and then update the runtime
-     *  with the deletedDate item.
-     * @note If it was unsuccessful with the remote soft delete, then the sync should re-perform the
-     *  soft delete if it contains a deletion date and has a higher revision date.
-     * @note We dont need to check the result of the remote soft deletion because it will be re
-     *  performed anyway by the sync, if unsuccessful.
+     * @brief To soft delete the item, we must first aquire the cipher from the vault. Then we can
+     *  apply a deletion date to it, and push it to the server.
      */
     OrchestratorError BitwardenOrchestrator::softDeleteItem(ItemId uuid) {
         std::expected<nlohmann::json, RuntimeError> item_res = m_runtime->getItem(uuid);
@@ -303,11 +310,37 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::NotFound;
         }
 
+        Entity entity;
+        entity.type = EntityType::Item;
+        entity.id = uuid;
+
         nlohmann::json item = item_res.value();
 
         item["deletedDate"] = utils::s_getCurrentTime();
 
         std::expected<nlohmann::json, NetworkError> soft_delete_res = m_network->softDeleteItem(uuid);
+
+        /**
+         * @note Remember that change.base should store the original base while the local vault
+         *  contains the modified item (without a modified revision Date).
+         */
+        if (!soft_delete_res.has_value()) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Updated;
+            change.revision_date = utils::s_getCurrentTime();
+
+            std::expected<nlohmann::json, RuntimeError> item_json = 
+                m_runtime->getItem(uuid);
+            
+            if (!item_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            change.base = item_json.value();
+
+            m_runtime->record(change);
+        }
 
         RuntimeError res = m_runtime->updateItem(uuid, item);
 
@@ -327,11 +360,37 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::NotFound;
         }
 
+        Entity entity;
+        entity.type = EntityType::Item;
+        entity.id = uuid;
+
         nlohmann::json item = item_res.value();
 
         item["deletedDate"] = nullptr;
 
         std::expected<nlohmann::json, NetworkError> restore_res = m_network->restoreItem(uuid);
+
+        /**
+         * @note Remember that change.base should store the original base while the local vault
+         *  contains the modified item (without a modified revision Date).
+         */
+        if (!restore_res.has_value()) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Updated;
+            change.revision_date = utils::s_getCurrentTime();
+
+            std::expected<nlohmann::json, RuntimeError> item_json = 
+                m_runtime->getItem(uuid);
+            
+            if (!item_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            change.base = item_json.value();
+
+            m_runtime->record(change);
+        }
 
         RuntimeError res = m_runtime->updateItem(uuid, item);
 
@@ -351,11 +410,37 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::NotFound;
         }
 
+        Entity entity;
+        entity.type = EntityType::Item;
+        entity.id = uuid;
+
         nlohmann::json item = item_res.value();
 
         item["archivedDate"] = utils::s_getCurrentTime();
 
         std::expected<nlohmann::json, NetworkError> archive_res = m_network->archiveItem(uuid);
+
+        /**
+         * @note Remember that change.base should store the original base while the local vault
+         *  contains the modified item (without a modified revision Date).
+         */
+        if (!archive_res.has_value()) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Updated;
+            change.revision_date = utils::s_getCurrentTime();
+
+            std::expected<nlohmann::json, RuntimeError> item_json = 
+                m_runtime->getItem(uuid);
+            
+            if (!item_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            change.base = item_json.value();
+
+            m_runtime->record(change);
+        }
 
         RuntimeError res = m_runtime->updateItem(uuid, item);
 
@@ -375,11 +460,37 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::NotFound;
         }
 
+        Entity entity;
+        entity.type = EntityType::Item;
+        entity.id = uuid;
+
         nlohmann::json item = item_res.value();
 
         item["archivedDate"] = nullptr;
 
         std::expected<nlohmann::json, NetworkError> archive_res = m_network->unArchiveItem(uuid);
+
+        /**
+         * @note Remember that change.base should store the original base while the local vault
+         *  contains the modified item (without a modified revision Date).
+         */
+        if (!archive_res.has_value()) {
+            PendingChange change;
+            change.entity = entity;
+            change.type = ChangeType::Updated;
+            change.revision_date = utils::s_getCurrentTime();
+
+            std::expected<nlohmann::json, RuntimeError> item_json = 
+                m_runtime->getItem(uuid);
+            
+            if (!item_json.has_value()) {
+                return OrchestratorError::RuntimeError;
+            }
+
+            change.base = item_json.value();
+
+            m_runtime->record(change);
+        }
 
         RuntimeError res = m_runtime->updateItem(uuid, item);
 
@@ -415,35 +526,38 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<nlohmann::json, RuntimeError> item = m_runtime->getItem(uuid);
 
         if (!item.has_value()) {
+            attachment_key.clear();
+            Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
             return std::unexpected(OrchestratorError::RuntimeError);
         }
 
+        /**
+         * @brief Create the encrypted protected key.
+         */
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> str_att_key_err;
+
         if (item.value().contains("key") && !item.value()["key"].is_null()) {
             std::expected<ItemKey, CryptoErrors> item_key_err = 
-                m_crypto->resolveItemKey(utils::getSecureVector(item.value()["key"].get<std::string>()));
+                m_crypto->resolveItemKey(utils::getSecureVector(item.value()["key"]));
 
             if (!item_key_err.has_value()) {
+                attachment_key.clear();
+                Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
                 return std::unexpected(OrchestratorError::CryptoError);
             }
 
-            std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> str_att_key_err = 
-                m_crypto->encrypt(str_attachment_key, item_key_err.value());
-
-            if (!str_att_key_err.has_value()) {
-                return std::unexpected(OrchestratorError::CryptoError);
-            }
-
-            str_attachment_key = std::move(str_att_key_err.value());
+            str_att_key_err = m_crypto->encrypt(str_attachment_key, item_key_err.value());
         } else {
-            std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> str_att_key_err = 
-                m_crypto->encrypt(str_attachment_key);
-
-            if (!str_att_key_err.has_value()) {
-                return std::unexpected(OrchestratorError::CryptoError);
-            }
-
-            str_attachment_key = std::move(str_att_key_err.value());
+            str_att_key_err = m_crypto->encrypt(str_attachment_key);
         }
+
+        if (!str_att_key_err.has_value()) {
+            attachment_key.clear();
+            Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+            return std::unexpected(OrchestratorError::CryptoError);
+        }
+
+        str_attachment_key = std::move(str_att_key_err.value());
 
         /**
          * @brief Encrypt the File name
@@ -452,6 +566,8 @@ namespace clientwarden::vendor::bitwarden::vault {
             m_crypto->encrypt(file_name, attachment_key);
         
         if (!enc_res.has_value()) {
+            attachment_key.clear();
+            Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
             return std::unexpected(OrchestratorError::CryptoError);
         }
 
@@ -462,11 +578,13 @@ namespace clientwarden::vendor::bitwarden::vault {
          */
         CryptoErrors err = m_crypto->encryptBinaryInPlace(file_contents, attachment_key);
 
+        attachment_key.clear();
+
         if (err != CryptoErrors::Success) {
+            Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+            Botan::secure_scrub_memory(enc_file_name.data(), enc_file_name.size());
             return std::unexpected(OrchestratorError::CryptoError);
         }
-
-        attachment_key.clear();
 
         std::expected<nlohmann::json, NetworkError> network_attachment = 
             m_network->addAttachment(uuid, enc_file_name, file_contents, str_attachment_key,
@@ -474,14 +592,23 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         /**
          * @note If it is created offline, then the (encrypted) file_contents should be saved as
-         *  the (encrypted) file_name + .enc in the attachments folder and be queued to sync.
+         *  the attachment id in the attachments folder and be queued to sync.
          */
         if (!network_attachment.has_value()) {
             if (network_attachment.error() == NetworkError::Forbidden) {
+                Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+                Botan::secure_scrub_memory(enc_file_name.data(), enc_file_name.size());
+                Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                 return std::unexpected(OrchestratorError::PremiumRequired);
             } else if (network_attachment.error() == NetworkError::NotFound) {
+                Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+                Botan::secure_scrub_memory(enc_file_name.data(), enc_file_name.size());
+                Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                 return std::unexpected(OrchestratorError::NotFound);
             } else if (network_attachment.error() == NetworkError::BadRequest) {
+                Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+                Botan::secure_scrub_memory(enc_file_name.data(), enc_file_name.size());
+                Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                 return std::unexpected(OrchestratorError::AttachmentTooLarge);
             } else {
                 nlohmann::json attachment_json;
@@ -494,6 +621,9 @@ namespace clientwarden::vendor::bitwarden::vault {
                 attachment_json["revisionDate"] = utils::getBitwardenTime();
                 attachment_json["createdOffline"] = true;
 
+                Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+                Botan::secure_scrub_memory(enc_file_name.data(), enc_file_name.size());
+
                 PendingChange change;
                 change.entity.type = EntityType::Attachment;
                 change.entity.id = attachment_json["id"];
@@ -505,22 +635,31 @@ namespace clientwarden::vendor::bitwarden::vault {
                 RuntimeError mark_err = m_runtime->record(change);
 
                 if (mark_err != RuntimeError::Success && mark_err != RuntimeError::ExistingItem) {
+                    Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                     return std::unexpected(OrchestratorError::RuntimeError);
                 }
 
                 RuntimeError attachment_err = m_runtime->addAttachment(uuid, attachment_json);
 
                 if (attachment_err != RuntimeError::Success && attachment_err != RuntimeError::ExistingItem) {
+                    Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                     return std::unexpected(OrchestratorError::RuntimeError);
                 }
 
                 if (!m_storage->write("attachments/" + attachment_json["id"], file_contents)) {
+                    Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                     return std::unexpected(OrchestratorError::StorageFailure);
                 }
+                
+                Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
 
                 return utils::getSecureVector(attachment_json["id"]);
             }
         } else {
+            Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
+            Botan::secure_scrub_memory(enc_file_name.data(), enc_file_name.size());
+            Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
+            
             if (!network_attachment.value().contains("cipherResponse") || 
                 !network_attachment.value()["cipherResponse"].is_object() ||
                 !network_attachment.value().contains("attachmentId") ||
