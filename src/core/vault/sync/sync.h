@@ -135,9 +135,8 @@ namespace clientwarden::vault {
 
         /**
          * @brief Starts the SyncThread.
-         * 
-         * If the SyncMethod is WebSocket, it will use the NetworkThread, otherwise
-         * it will manually sync every 5mins.
+         * @note The Vault must use syncThread if Classic Sync is being used. This is because, if
+         *  we try to handle websocket sync as well, we need to handle logout.
          */
         virtual std::expected<bool, SyncError> startSyncThread() = 0;
         /**

@@ -39,5 +39,7 @@ namespace clientwarden::vendor::bitwarden::vault {
          */
         nlohmann::json mergeValues_(nlohmann::json base, nlohmann::json value_1, nlohmann::json value_2, 
             bool on_conflict);
+        
+        bool syncCallback(const std::atomic<bool>&);
     };
 }

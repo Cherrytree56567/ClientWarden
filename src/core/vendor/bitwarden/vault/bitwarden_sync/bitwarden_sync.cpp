@@ -3,19 +3,40 @@
 namespace clientwarden::vendor::bitwarden::vault {
     BitwardenSync::BitwardenSync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
         std::shared_ptr<Settings> settings) : Sync(runtime, network, settings) {
-        
+        m_sync_thread.setCallback([this](const std::atomic<bool>& should_thread) {
+            return syncCallback(should_thread);
+        });
     }
 
+    /**
+     * @brief First, we must get the vault from the network and manually save it to the vault.json.
+     * @note The caller of fullSync should also use loadVaultData in m_runtime.
+     */
     std::expected<bool, SyncError> BitwardenSync::fullSync() {
+        std::expected<nlohmann::json, NetworkError> vault_err = 
+            m_network->getVault();
         
+        if (!vault_err.has_value()) {
+            return std::unexpected(SyncError::NetworkError);
+        }
+
+        if (!m_storage->write("vault.json", vault_err.value().dump(4)).has_value()) {
+            return std::unexpected(RuntimeError::StorageFailure);
+        }
+
+        return true;
     }
     
     std::expected<bool, SyncError> BitwardenSync::startSyncThread() {
-        
+        m_sync_thread.start();
+
+        return true;
     }
     
     std::expected<bool, SyncError> BitwardenSync::stopSyncThread() {
+        m_sync_thread.stop();
         
+        return true;
     }
     
     Vendor BitwardenSync::getVendor() {
@@ -455,20 +476,33 @@ namespace clientwarden::vendor::bitwarden::vault {
         PushActions result;
         result.actions = actions;
 
-        for (SyncRecord record : actions.push_create) {
+        std::unordered_map<std::string, std::string> folder_ids;
+
+        /**
+         * @brief Sort the Folders first, to allow for remapping folder ids in items.
+         */
+        std::stable_sort(result.actions.push_create.begin(), result.actions.push_create.end(),
+            [](const SyncRecord& a, const SyncRecord& b) {
+                int rank_a =
+                    a.item_type == SyncItem::Folder ? 0 :
+                    a.item_type == SyncItem::Item ? 1 :
+                    a.item_type == SyncItem::Attachment ? 2 : 3;
+
+                int rank_b =
+                    b.item_type == SyncItem::Folder ? 0 :
+                    b.item_type == SyncItem::Item ? 1 :
+                    b.item_type == SyncItem::Attachment ? 2 : 3;
+
+                return rank_a < rank_b;
+            });
+
+        for (SyncRecord record : result.actions.push_create) {
             if (!record.raw.contains("id") || !record.raw["id"].is_string()) {
                 result.failed.push_back(record);
                 continue;
-            }
+            } 
 
             nlohmann::json push_create_json = record.raw;
-
-            if (record.item_type == SyncItem::Attachment) {
-                push_create_json["lastKnownRevisionDate"] = push_create_json["revisionDate"];
-                push_create_json.erase("url");
-                push_create_json.erase("revisionDate");
-                push_create_json.erase("createdOffline");
-            }
 
             push_create_json.erase("id");
 
@@ -506,6 +540,9 @@ namespace clientwarden::vendor::bitwarden::vault {
                 res = m_network->addAttachment(record.parent_id, 
                     utils::getSecureVector(push_create_json["fileName"]), attachment_err.value(),
                     utils::getSecureVector(push_create_json["key"]), [](float) {});
+                
+                Botan::secure_scrub_memory(attachment_err.value().data(), 
+                    attachment_err.value().size());
             } else {
                 result.failed.push_back(record);
                 continue;
@@ -517,6 +554,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     case NetworkError::Unauthorised:
                     case NetworkError::Forbidden:
                     case NetworkError::RateLimited:
+                    case NetworkError::NotFound:
+                    case NetworkError::BadRequest:
                         result.failed.push_back(record);
                         break;
                     default:
@@ -536,6 +575,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                     continue;
                 }
 
+                if (record.item_type == SyncItem::Folder) {
+                    folder_ids[record.uuid] = res.value()["id"];
+                }
+
                 SyncRecord success_record = record;
                 success_record.raw = res.value();
 
@@ -544,9 +587,29 @@ namespace clientwarden::vendor::bitwarden::vault {
                     (record.item_type != SyncItem::Attachment) ? 
                         res.value()["id"] : res.value()["attachmentId"]));
             }
+
+            if (record.item_type == SyncItem::Item) {
+                if (record.raw.contains("archivedDate") && 
+                    record.raw["archivedDate"].is_string()) {
+                    /**
+                     * @brief Archive Item.
+                     * @note We dont need to create a record, since orchestrator does it for us.
+                     */
+                    OrchestratorError archive_err = m_orchestrator->archiveItem(record.uuid);
+                }
+
+                if (record.raw.contains("deletedDate") && 
+                    record.raw["deletedDate"].is_string()) {
+                    /**
+                     * @brief Soft Delete Item.
+                     * @note We dont need to create a record, since orchestrator does it for us.
+                     */
+                    OrchestratorError soft_del_err = m_orchestrator->softDeleteItem(record.uuid);
+                }
+            }
         }
 
-        for (SyncRecord record : actions.push_update) {
+        for (SyncRecord record : result.actions.push_update) {
             /**
              * @note Attachments should not have a push_update, instead, they should be updated via
              *  the item update.
@@ -560,7 +623,39 @@ namespace clientwarden::vendor::bitwarden::vault {
             push_create_json.erase("id");
 
             std::expected<nlohmann::json, NetworkError> res;
-                
+
+            /**
+             * @brief Remove attachments that aren't already on the server, since  they will be
+             *  uploaded anyway later.
+             */
+            if (push_create_json.contains("attachments") && push_create_json["attachments"].is_array()) {
+                nlohmann::json used_attachments = nlohmann::json::array();
+
+                for (nlohmann::json attachment : push_create_json["attachments"]) {
+                    if (!(attachment.is_object() &&
+                        attachment.contains("createdOffline") &&
+                        attachment["createdOffline"].is_boolean() &&
+                        attachment["createdOffline"].get<bool>())) {
+                        used_attachments.push_back(attachment);
+                    }
+                }
+
+                payload["attachments"] = used_attachments;
+            }
+
+            /**
+             * @brief Use Server's folderid, and if it doesnt exist, fail.
+             * @note This requires folder's to be sorted first.
+             */
+            if (payload.contains("folderId") && payload["folderId"].is_string()) {
+                for (std::pair<const std::string, std::string> fold_id : folder_ids) {
+                    if (fold_id.first == payload["folderId"]) {
+                        payload["folderId"] = fold_id.second;
+                        break;
+                    }
+                }
+            }
+            
             if (record.item_type == SyncItem::Item) {
                 res = m_network->updateItem(record.uuid, push_create_json);
             } else if (record.item_type == SyncItem::Folder) {
@@ -584,9 +679,54 @@ namespace clientwarden::vendor::bitwarden::vault {
             } else {
                 result.failed.push_back(record);
             }
+
+            if (record.item_type == SyncItem::Item) {
+                Entity entity;
+                entity.type = EntityType::Item;
+                entity.id = record.uuid;
+
+                std::expected<PendingChange, RuntimeError> base_record = 
+                    m_runtime->getRecord(entity);
+                
+                if (!base_record.has_value()) {
+                    result.failed.push_back(record);
+                    continue;
+                } 
+
+                if (base_record.value().type != ChangeType::Updated) {
+                    result.failed.push_back(record);
+                    continue;
+                }
+
+                /**
+                 * @brief Check if it contained an archiveDate, and if it didn't and it contains one
+                 *  now, then archive it.
+                 */
+                if ((!base_record.value().base.contains("archivedDate") ||
+                    base_record.value().base["archivedDate"].is_null()) &&
+                    record.raw.contains("archivedDate") &&
+                    record.raw["archivedDate"].is_string()) {
+                    /**
+                     * @brief Archive Item.
+                     * @note We dont need to create a record, since orchestrator does it for us.
+                     */
+                    OrchestratorError archive_err = m_orchestrator->archiveItem(record.uuid);
+                }
+
+                if ((!base_record.value().base.contains("deletedDate") ||
+                    base_record.value().base["deletedDate"].is_null()) &&
+                    record.raw.contains("deletedDate") &&
+                    record.raw["deletedDate"].is_string()) {
+                    /**
+                     * @brief Soft Delete Item.
+                     * @note We dont need to create a record, since orchestrator does it for us.
+                     */
+                    OrchestratorError soft_del_err = m_orchestrator->softDeleteItem(record.uuid);
+                }
+            }
         }
 
-        for (SyncRecord record : actions.push_delete) {
+        for (SyncRecord record : result.actions.push_delete) {
             std::expected<nlohmann::json, NetworkError> res;
                 
             if (record.item_type == SyncItem::Item) {
@@ -927,5 +1067,22 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         return on_conflict ? value_1 : value_2;
+    }
+
+    bool BitwardenSync::syncCallback(const std::atomic<bool>& should_thread) {
+        int sync_delay = m_settings->getSyncDelay();
+
+        while (should_thread) {
+            syncVault();
+                
+            std::chrono::steady_clock::time_point deadline =
+                std::chrono::steady_clock::now() + std::chrono::seconds(sync_delay);
+
+            while (should_thread && std::chrono::steady_clock::now() < deadline) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        }
+
+        return true;
     }
 }
