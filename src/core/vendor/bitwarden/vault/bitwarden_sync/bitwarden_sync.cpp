@@ -242,6 +242,10 @@ namespace clientwarden::vendor::bitwarden::vault {
         return result;
     }
     
+    /**
+     * @brief Determines what actions to take as part of the sync (eg: determining if an item was
+     *  created online or failed, what items should be deleted, etc).
+     */
     std::expected<SyncActions, SyncError> BitwardenSync::planActions(const std::vector<SyncRecord>& local, 
         const std::vector<SyncRecord>& remote) {
         SyncActions actions;
@@ -250,52 +254,92 @@ namespace clientwarden::vendor::bitwarden::vault {
          * @note We should remove the record if it was created partially or
          *  created, etc after everything succeeds because we can always find it later.
          */
-        std::vector<SyncRecord> created_partially_online;
         std::vector<SyncRecord> clean_records;
         std::vector<ItemId> partial_ids;
 
         /**
+         * @brief First, we need to push all records created offline to push_create.
          * @note We must store the clean records as well, because we need to compare them against
          *  the remote ones.
          */
         for (SyncRecord record : local) {
-            if (record.item_type == SyncItem::Attachment &&
-                record.state == SyncState::CreatedOffline) {
-                actions.push_create.push_back(record);
-            } else if (record.item_type == SyncItem::Attachment &&
-                record.state == SyncState::PendingDelete) {
-                actions.push_delete.push_back(record);
-            } else if (record.state == SyncState::CreatedOffline) {
+            if (record.state == SyncState::CreatedOffline) {
                 actions.push_create.push_back(record);
             } else if (record.state == SyncState::CreatedOfflinePartially) {
                 bool created_remote = false;
 
+                /**
+                 * @brief Check if the record was created online.
+                 * @note We need to handle item, folder and attachment separately.
+                 * @note If it was created partially then we should remove the record in pushLocal.
+                 * @note Attachment doesnt use Created Partial
+                 * @note We need to check the key, name, notes and type or just the name for item,
+                 *  and check name for folder.
+                 */
                 for (SyncRecord remote_record : remote) {
-                    if (!remote_record.raw.contains("key") || !record.raw.contains("key")) {
+                    /**
+                     * @brief Ensure that the records have the same item types and aren't claimed
+                     *  by another record.
+                     */
+                    if (remote_record.item_type != record.item_type) {
                         continue;
                     }
 
-                    if (record.raw["key"].is_string() && remote_record.raw["key"].is_string()) {
-                        if (record.raw["key"] == remote_record.raw["key"]) {
-                            partial_ids.push_back(remote_record.uuid);
-                            created_remote = true;
-                            break;
+                    if (std::find(partial_ids.begin(), partial_ids.end(), remote_record.uuid)
+                        != partial_ids.end()) {
+                        continue;
+                    }
+                    
+                    /**
+                     * @brief Skips records that already exist on the remote and runtime.
+                     */
+                    if (std::find_if(local.begin(), local.end(), 
+                        [&remote_record](const SyncRecord& loc) {
+                            return loc.uuid == remote_record.uuid && loc.item_type == remote_record.item_type;
+                        }) != local.end()) {
+                        continue;
+                    }
+
+                    if (record.item_type == SyncItem::Item) {
+                        if (remote_record.raw.contains("key") && record.raw.contains("key") &&
+                            record.raw["key"].is_string() && remote_record.raw["key"].is_string()) {
+                            if (record.raw["key"] == remote_record.raw["key"]) {
+                                actions.pull_partial.push_back(std::make_pair(record, remote_record));
+                                partial_ids.push_back(remote_record.uuid);
+                                created_remote = true;
+                                break;
+                            }
+                        } else if ((!remote_record.raw.contains("key") || !remote_record.raw["key"].is_string()) &&
+                                (!record.raw.contains("key") || !record.raw["key"].is_string())) {
+                            if (!record.raw.contains("name") || !remote_record.raw.contains("name") ||
+                                !record.raw["name"].is_string() || !remote_record.raw["name"].is_string() ||
+                                !record.raw.contains("notes") || !remote_record.raw.contains("notes") ||
+                                !record.raw.contains("type") || !remote_record.raw.contains("type") ||
+                                !record.raw["type"].is_number() || !remote_record.raw["type"].is_number()) {
+                                continue;
+                            }
+
+                            if (record.raw["name"] == remote_record.raw["name"] &&
+                                record.raw["notes"] == remote_record.raw["notes"] &&
+                                record.raw["type"] == remote_record.raw["type"]) {
+                                actions.pull_partial.push_back(std::make_pair(record, remote_record));
+                                partial_ids.push_back(remote_record.uuid);
+                                created_remote = true;
+                                break;
+                            }
                         }
-                    } else if (!record.raw["key"].is_string() && !remote_record.raw["key"].is_string()) {
-                        if (!record.raw.contains("name") || !remote_record.raw.contains("name") ||
-                            !record.raw["name"].is_string() || !remote_record.raw["name"].is_string() ||
-                            !record.raw.contains("notes") || !remote_record.raw.contains("notes") ||
-                            !record.raw.contains("type") || !remote_record.raw.contains("type") ||
-                            !record.raw["type"].is_number() || !remote_record.raw["type"].is_number()) {
-                            continue;    
+                    } else if (record.item_type == SyncItem::Folder) {
+                        if (!remote_record.raw.contains("name") || !record.raw.contains("name")) {
+                            continue;
                         }
 
-                        if (record.raw["name"] == remote_record.raw["name"] &&
-                            record.raw["notes"] == remote_record.raw["notes"] &&
-                            record.raw["type"] == remote_record.raw["type"]) {
-                            partial_ids.push_back(remote_record.uuid);
-                            created_remote = true;
-                            break;
+                        if (record.raw["name"].is_string() && remote_record.raw["name"].is_string()) {
+                            if (record.raw["name"] == remote_record.raw["name"]) {
+                                actions.pull_partial.push_back(std::make_pair(record, remote_record));
+                                partial_ids.push_back(remote_record.uuid);
+                                created_remote = true;
+                                break;
+                            }
                         }
                     }
                 }

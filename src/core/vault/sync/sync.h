@@ -80,6 +80,7 @@ namespace clientwarden::vault {
      * @param pull_create Pulls newly created items from the server to local.
      * @param pull_update Replaces newer modified items from the server to local.
      * @param pull_delete Removes items locally that were deleted from the server.
+     * @param pull_partial (local_record, remote_record) Remap ids from local to online.
      */
     struct SyncActions {
         std::vector<SyncRecord> push_create;
@@ -88,6 +89,7 @@ namespace clientwarden::vault {
         std::vector<SyncRecord> pull_create;
         std::vector<SyncRecord> pull_update;
         std::vector<SyncRecord> pull_delete;
+        std::vector<std::pair<SyncRecord, SyncRecord>> pull_partial;
         std::vector<SyncConflict> conflicts;
     };
 
