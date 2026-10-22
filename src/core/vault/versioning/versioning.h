@@ -5,6 +5,15 @@
 #include "../runtime/runtime.h"
 
 namespace clientwarden::vault {
+    enum class VersioningError {
+        RuntimeError,
+        UnknownFeature,
+        InvalidParams,
+        Uninitialised,
+        Unknown,
+        Success
+    };
+
     class Versioning {
     public:
         Versioning(std::shared_ptr<Network> network, std::shared_ptr<Runtime> runtime);
@@ -15,14 +24,14 @@ namespace clientwarden::vault {
          * 
          * If the network check fails, return false and wait for the Vault to try again.
          */
-        virtual bool determineVersion() = 0;
+        virtual VersioningError determineVersion() = 0;
 
         /**
          * @brief hasFeature requires an int to allow multiple vendor types
          * 
          * An `enum class <VENDOR_NAME> : int` should be used.
          */
-        virtual bool hasFeature(int feature) = 0;
+        virtual std::expected<bool, VersioningError> hasFeature(int feature) = 0;
         
         /**
          * @brief Used to provide the class's vendor.
