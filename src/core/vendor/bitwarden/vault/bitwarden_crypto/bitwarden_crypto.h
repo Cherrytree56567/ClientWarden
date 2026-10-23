@@ -72,6 +72,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         CryptoErrors setKeys(const AuthKeys& keys) override;
         CryptoErrors setVaultKeys(Botan::secure_vector<uint8_t> protected_key) override;
+        std::expected<AuthKeys, CryptoErrors> getKeys() override;
         CryptoErrors eraseKeys() override;
 
         Vendor getVendor() override;

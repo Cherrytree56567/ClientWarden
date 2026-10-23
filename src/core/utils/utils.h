@@ -45,6 +45,10 @@ namespace clientwarden::utils {
      */
     Botan::secure_vector<uint8_t> getSecureVector(int value);
     /**
+     * @brief Converts the given time to Botan::secure_vector
+     */
+    Botan::secure_vector<uint8_t> getSecureVector(std::time_t time);
+    /**
      * @brief Converts a Botan Secure Vector String to an Int.
      */
     int getInteger(const Botan::secure_vector<uint8_t>& value);
@@ -52,4 +56,8 @@ namespace clientwarden::utils {
      * @brief Converts a Botan Secure Vector String to a String.
      */
     std::string getString(const Botan::secure_vector<uint8_t>& value);
+    /**
+     * @brief Converts the given time to Botan::secure_vector
+     */
+    std::string getString(std::time_t time);
 }

@@ -1224,6 +1224,14 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         return body;
     }
+
+    void BitwardenNetwork::setSession(const AuthSession& session) {
+        m_session = session;
+    }
+    
+    void BitwardenNetwork::eraseSession() {
+        m_session.clear();
+    }
     
     NetworkError BitwardenNetwork::listen(std::function<void(NetworkEvent)> on_event) {
         if (!m_init_ || m_urls.size() < 5) {

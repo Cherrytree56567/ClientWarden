@@ -110,7 +110,7 @@ namespace clientwarden::vault {
         std::vector<SyncRecord> partial;
     };
 
-    enum SyncError {
+    enum class SyncError {
         RuntimeError,
         NetworkError,
         Unknown,

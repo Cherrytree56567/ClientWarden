@@ -23,6 +23,11 @@ namespace clientwarden {
         Failed,
         InvalidCreds,
         NetworkError,
+        KeychainError,
+        SyncError,
+        RuntimeError,
+        CryptoError,
+        InvalidVault,
         Success,
         Unknown
     };
@@ -33,23 +38,6 @@ namespace clientwarden {
     struct PasswordCredential {
         Botan::secure_vector<uint8_t> m_email;
         Botan::secure_vector<uint8_t> m_password;
-    };
-
-    /**
-     * @brief Holds the values to authenticate via totp/device verification
-     */
-    struct CodeCredential {
-        Botan::secure_vector<uint8_t> m_code;
-    };
-
-    /**
-     * @brief Holds the values to authenticate via passkey
-     */
-    struct PasskeyCredential {
-        Botan::secure_vector<uint8_t> m_id;
-        Botan::secure_vector<uint8_t> m_auth_data;
-        Botan::secure_vector<uint8_t> m_client_data;
-        Botan::secure_vector<uint8_t> m_signature;
     };
 
     /**
@@ -71,7 +59,7 @@ namespace clientwarden {
     /**
      * @brief Reperesents cred types that are accepted by login()
      */
-    using Credential = std::variant<PasswordCredential, CodeCredential, PasskeyCredential>;
+    using Credential = std::variant<PasswordCredential, MultiFactorProof>;
 
     /**
      * @brief Reperesents cred types that are accepted by signup()

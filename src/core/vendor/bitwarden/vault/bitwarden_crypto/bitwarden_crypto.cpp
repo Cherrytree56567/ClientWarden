@@ -404,6 +404,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
     CryptoErrors BitwardenCrypto::setKeys(const AuthKeys& keys) {
         m_auth_keys = keys;
+        m_auth_keys_set = true;
 
         return CryptoErrors::Success;
     }
@@ -435,6 +436,14 @@ namespace clientwarden::vendor::bitwarden::vault {
         m_keys = result.value();
 
         return CryptoErrors::Success;
+    }
+
+    std::expected<AuthKeys, CryptoErrors> BitwardenCrypto::getKeys() {
+        if (!m_auth_keys_set) {
+            return std::unexpected(CryptoErrors::InvalidParams);
+        }
+
+        return m_keys;
     }
 
     CryptoErrors BitwardenCrypto::eraseKeys() {

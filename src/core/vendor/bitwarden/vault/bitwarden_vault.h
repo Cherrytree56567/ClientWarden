@@ -25,5 +25,6 @@ namespace clientwarden::vendor::bitwarden {
         Vendor getVendor() override;
     private:
         PasswordCredential m_password_cred_;
+        bool m_password_cred_set_ = false;
     };
 }

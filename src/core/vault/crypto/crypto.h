@@ -139,6 +139,10 @@ namespace clientwarden::vault {
          */
         virtual CryptoErrors setVaultKeys(Botan::secure_vector<uint8_t> protected_key) = 0;
         /**
+         * @brief Get the AuthKey
+         */
+        virtual std::expected<AuthKeys, CryptoErrors> getKeys() = 0;
+        /**
          * @brief Erases the Auth Keys from memory.
          */
         virtual CryptoErrors eraseKeys() = 0;
@@ -150,5 +154,6 @@ namespace clientwarden::vault {
     protected:
         AuthKeys m_auth_keys;
         ItemKey m_keys;
+        bool m_auth_keys_set = false;
     };
 }
