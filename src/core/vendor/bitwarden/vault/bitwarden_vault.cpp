@@ -28,8 +28,11 @@ namespace clientwarden::vendor::bitwarden {
                 return AuthResult::InvalidCreds;
             }
 
+            std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> hashed_password = 
+                m_crypto->hashedPassword()
+
             AuthKeys keys;
-            keys.internal_key = 
+            keys.internal_key = std::move(internal_key.value());
         }
     }
 
