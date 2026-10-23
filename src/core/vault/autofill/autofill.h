@@ -32,12 +32,14 @@ namespace clientwarden::vault {
         InvalidParams,
         InvalidItem,
         Unknown,
+        Unimplemented,
         Success
     };
 
     class AutoFill {
     public:
-        AutoFill(std::shared_ptr<Runtime> runtime, std::shared_ptr<Orchestrator> orchestrator);
+        AutoFill(std::shared_ptr<Runtime> runtime, std::shared_ptr<Orchestrator> orchestrator, 
+            std::shared_ptr<Crypto> crypto);
         virtual ~AutoFill() = default;
         
         /**
@@ -60,5 +62,6 @@ namespace clientwarden::vault {
     protected:
         std::shared_ptr<Runtime> m_runtime;
         std::shared_ptr<Orchestrator> m_orchestrator;
+        std::shared_ptr<Crypto> m_crypto;
     };
 }
