@@ -10,7 +10,27 @@ namespace clientwarden::vendor::bitwarden {
     }
 
     LoginResult BitWardenVault::login(Credential cred) {
-        
+        if (std::holds_alternative<PasswordCredential>(cred)) {
+            PasswordCredential credential = std::get<PasswordCredential>(cred);
+
+            std::expected<PreLoginResult, NetworkError> pre_login_res = 
+                m_network->preLogin(credential.m_email);
+            
+            if (!pre_login_res.has_value()) {
+                return AuthResult::InvalidCreds;
+            }
+
+            std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> internal_key = 
+                m_crypto->makeInternalKey(credential.m_password, credential.m_email,
+                pre_login_res.value().params);
+            
+            if (!internal_key.has_value()) {
+                return AuthResult::InvalidCreds;
+            }
+
+            AuthKeys keys;
+            keys.internal_key = 
+        }
     }
 
     AuthResult BitWardenVault::signup(SignupCredential cred) {

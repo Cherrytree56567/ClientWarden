@@ -23,5 +23,7 @@ namespace clientwarden::vendor::bitwarden {
         std::shared_ptr<CipherQuery> getCipherQuery() override;
 
         Vendor getVendor() override;
+    private:
+        PasswordCredential m_password_cred_;
     };
 }
