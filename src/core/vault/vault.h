@@ -79,9 +79,7 @@ namespace clientwarden {
         Unknown,
         LoggedOut,
         Unlockable,
-        WaitingForTOTP,
-        WaitingForDeviceVerif,
-        WaitingForPasskey,
+        WaitingFor2FA,
         Unlocked,
         Failed
     };
@@ -128,7 +126,8 @@ namespace clientwarden {
          * @brief Verifies Master Password for a reprompt check before revealing a
          *  sensitive item.
          */
-        virtual bool checkReprompt(Botan::secure_vector<uint8_t> password) = 0;
+        virtual std::unexpected<bool, AuthResult> checkReprompt(
+            Botan::secure_vector<uint8_t> password) = 0;
 
         /**
          * @brief Retrieves an existing Item

@@ -15,7 +15,8 @@ namespace clientwarden::vendor::bitwarden {
 
         bool setupBiometricUnlock(UnlockType type) override;
 
-        bool checkReprompt(Botan::secure_vector<uint8_t> password) override;
+        std::unexpected<bool, AuthResult> checkReprompt(
+            Botan::secure_vector<uint8_t> password) override;
         
         std::shared_ptr<GenericItem> getItem(ItemId uuid) override;
         std::shared_ptr<Folder> getFolder(ItemId uuid) override;
