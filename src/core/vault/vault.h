@@ -28,6 +28,7 @@ namespace clientwarden {
         RuntimeError,
         CryptoError,
         InvalidVault,
+        Unimplemented,
         Success,
         Unknown
     };

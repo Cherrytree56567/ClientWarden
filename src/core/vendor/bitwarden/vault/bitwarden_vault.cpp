@@ -22,6 +22,9 @@ namespace clientwarden::vendor::bitwarden {
                 return AuthResult::InvalidCreds;
             }
 
+            /**
+             * @note We don't need to store the KDF Params bc it should be in the vault.
+             */
             std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> internal_key = 
                 m_crypto->makeInternalKey(credential.m_password, credential.m_email,
                 pre_login_res.value().params);
@@ -147,11 +150,12 @@ namespace clientwarden::vendor::bitwarden {
 
             if (m_password_cred_set_) {
                 m_password_cred_.clear();
+                m_password_cred_set_ = false;
             }
 
             return AuthResult::Success;
         } else if (std::holds_alternative<MultiFactorChallenge>(token.value())) {
-            m_password_cred_ = credential;
+            m_password_cred_.email = credential.email;
             m_password_cred_set_ = true;
 
             return std::get<MultiFactorChallenge>(token.value());
@@ -161,11 +165,79 @@ namespace clientwarden::vendor::bitwarden {
     }
 
     AuthResult BitWardenVault::signup(SignupCredential cred) {
-        
+        return AuthResult::Unimplemented;
     }
 
     AuthResult BitWardenVault::unlock(UnlockCredential cred) {
-        
+        if (std::holds_alternative<UnlockPasswordCredential>(cred)) {
+            UnlockPasswordCredential credential = std::get<UnlockPasswordCredential>(cred);
+
+            /**
+             * @todo Load Vault
+             */
+            RuntimeError vault_err = m_runtime->loadVault();
+
+            if (vault_err != RuntimeError::Success) {
+                return AuthResult::InvalidVault;
+            }
+
+            /**
+             * @todo Get Vault KDF Info
+             */
+            std::expected<nlohmann::json, RuntimeError> vault_info_err = 
+                m_runtime->getVaultInfo();
+            
+            if (!vault_info.has_value()) {
+                return AuthResult::InvalidVault;
+            }
+
+            nlohmann::json vault_info = vault_info_err.value();
+
+            /**
+             * @note Huge Block!
+             */
+            if (!vault_info.contains("masterPasswordUnlock") ||
+                !vault_info["masterPasswordUnlock"].is_object() ||
+                !vault_info["masterPasswordUnlock"].contains("kdf") ||
+                !vault_info["masterPasswordUnlock"]["kdf"].is_object() ||
+                !vault_info["masterPasswordUnlock"]["kdf"].contains("iterations") ||
+                !vault_info["masterPasswordUnlock"]["kdf"]["iterations"].is_number_integer() ||
+                !vault_info["masterPasswordUnlock"]["kdf"].contains("kdfType") ||
+                !vault_info["masterPasswordUnlock"]["kdf"]["kdfType"].is_number_integer() ||
+                !vault_info["masterPasswordUnlock"].contains("salt") ||
+                !vault_info["masterPasswordUnlock"]["salt"].is_string()) {
+                return AuthResult::InvalidVault;
+            }
+
+            std::string salt = vault_info["masterPasswordUnlock"]["salt"];
+
+            KDFParams kdf_params;
+            kdf_params.type = static_cast<KDFType>(
+                vault_info["masterPasswordUnlock"]["kdf"]["kdfType"]);
+            kdf_params.iterations = vault_info["masterPasswordUnlock"]["kdf"]["iterations"];
+
+            if (kdf_params.type == KDFType::Argon2ID) {
+                /**
+                 * @todo TESTING - Check if memory is in KiB or MiB
+                 */
+                if (!vault_info["masterPasswordUnlock"]["kdf"].contains("memory") ||
+                    !vault_info["masterPasswordUnlock"]["kdf"]["memory"].is_number_integer() ||
+                    !vault_info["masterPasswordUnlock"]["kdf"].contains("parallelism") ||
+                    !vault_info["masterPasswordUnlock"]["kdf"]["parallelism"].is_number_integer()) {
+                    return AuthResult::InvalidVault;
+                }
+
+                kdf_params.memory = vault_info["masterPasswordUnlock"]["kdf"]["memory"];
+                kdf_params.parallelism = vault_info["masterPasswordUnlock"]["kdf"]["parallelism"];
+            }
+
+            /**
+             * @todo Get AuthSession
+             */
+            AuthSession session;
+
+            std::expected<Botan::secure_vector<uint8_t>, SettingsError> keychainGet(const std::string& name)
+        }
     }
 
     bool BitWardenVault::lock() {
