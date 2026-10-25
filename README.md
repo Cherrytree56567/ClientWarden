@@ -51,6 +51,7 @@
     </li> 
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#ai">AI Declaration</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -151,64 +152,39 @@ You might need to use the `-s compiler.cppstd=20` flag.
 ## Roadmap
 
 - [ ] V1.0.0
-  - [X] Clientwarden stays open in the background
-  - [X] Auto Lock Support
-  - [X] AutoFill Support
-    - [X] Check if CW App is open
-    - [X] Setup App Group
-    - [X] Ask CW App for AutoFill Unlock Window
-    - [X] Ask CW App for Ciphers with Domain/URL
-    - [X] Display Ciphers
-    - [X] Autofill Cipher
-    - [X] Add Autofill Unlock Screen
-  - [ ] Passkey AutoFill Support
-  - [X] Passkey Login Support (wouldn't be possible)
+  - [ ] Rewrite
+  - [ ] Code Review
+  - [ ] Better Icon
+  - [ ] Passkey Support
+- [ ] V1.1.0
+  - [ ] Send Support
+- [ ] V1.2.0
+  - [ ] Organisations Support
+- [ ] V1.3.0
+  - [ ] Full Account Management Support
+    - [ ] Username Support
+    - [ ] Password Support
+    - [ ] 2FA Settings Support
+    - [ ] KDF Settings Support
+- [ ] V1.4.0
+  - [ ] Signup Support
+- [ ] V1.5.0
+  - [ ] Offline Vault Support
+- [ ] V1.6.0
+  - [ ] Export Support
+  - [ ] Import Support
+- [ ] V1.7.0
+  - [ ] Passkey Login Support
+- [ ] V1.8.0
   - [ ] Device Login Support
-  - [X] Biometric Support
-  - [X] Check for missing websocket events (eg: if the Vault needed to be logged out but was closed)
-  - [ ] Make SDK
-  - [X] Store auth data in KeyChain (!important)
-  - [ ] Code Signing
-  - [X] Argon2ID
-  - [ ] Fix Light Mode
-  - [ ] Android UI
-    - [X] Nav Panel
-      - [X] General Tabs
-      - [X] Folders
-    - [X] Items Panel
-      - [X] Items
-    - [X] Top Bar
-      - [X] Search Input
-      - [X] New Item Button
-    - [X] Clean Up
-    - [X] Vault UI
-      - [X] Item Icon, Name, Fav, Item Type
-      - [X] Generic Item
-      - [X] Field Item
-      - [X] Attachment Item
-      - [X] Show Items
-    - [X] Main Window
-    - [X] Login UI
-      - [X] Username/Password UI
-      - [X] TOTP/Device Verify UI
-      - [X] Passkey UI
-    - [X] Unlock UI
-    - [X] Passkey UI
-    - [X] Settings UI
-    - [X] About UI
-    - [ ] Passkey Support
-    - [ ] Biometric Support
-  - [ ] Support Bank Account, Passport and Drivers License
-  - [ ] Support new version (remove data key in JSON)
-  - [ ] Add VaultWarden to VaultFeatures
-  - [ ] Use VaultFeatures in UI
+
 
 See the [open issues](https://github.com/Cherrytree56567/Clientwarden/issues) for a full list of proposed features (and known issues).
 
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**, however, heavily AI Generated Code is not allowed!
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 Don't forget to give the project a star! Thanks again!
@@ -224,6 +200,11 @@ Don't forget to give the project a star! Thanks again!
 <a href="https://github.com/Cherrytree56567/ClientWarden/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=Cherrytree56567/ClientWarden" alt="contrib.rocks image" />
 </a>
+
+## AI
+ClientWarden doesn't use any AI code or Vibecoded tools to automate development, except:
+ - Manual Code Reviews (VibeCoded Code Reviews aren't allowed)
+ - Small helper functions that DO NOT affect security or reliability
 
 <!-- LICENSE -->
 ## License
