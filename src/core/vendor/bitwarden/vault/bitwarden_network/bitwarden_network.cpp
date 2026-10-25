@@ -1386,9 +1386,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     continue;
                 }
 
-                std::time_t now = std::time(nullptr);
-
-                if (now >= m_session.expires_at || checkAccessTokenValidity() != NetworkError::Success) {
+                if (Timestamp::clock::now() >= m_session.expires_at || 
+                    checkAccessTokenValidity() != NetworkError::Success) {
                     if (!refreshToken().has_value()) {
                         std::this_thread::sleep_for(std::chrono::seconds(1));
                         continue;

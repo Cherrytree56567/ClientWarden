@@ -932,16 +932,9 @@ namespace clientwarden::vendor::bitwarden::vault {
      */
     std::expected<ItemId, OrchestratorError> BitwardenOrchestrator::createFolder(
         const Botan::secure_vector<uint8_t>& folder_name) {
-        
-        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> enc_folder_name = 
-            m_crypto->encrypt(folder_name);
-        
-        if (!enc_folder_name.has_value()) {
-            return std::unexpected(OrchestratorError::CryptoError);
-        }
 
         std::expected<nlohmann::json, NetworkError> network_err = 
-            m_network->createFolder(enc_folder_name.value());
+            m_network->createFolder(folder_name);
         
         nlohmann::json result;
 
@@ -953,7 +946,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             }
         } else {
             result["id"] = utils::getUniqueId();
-            result["name"] = utils::getString(enc_folder_name.value());
+            result["name"] = utils::getString(folder_name);
             result["object"] = "folder";
             result["revisionDate"] = utils::s_getCurrentTime();
             

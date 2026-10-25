@@ -422,8 +422,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                         continue;
                     }
                     
-                    std::time_t remote_time = record.revision;
-                    std::time_t local_time = 0;
+                    Timestamp remote_time = record.revision;
+                    Timestamp local_time{};
 
                     if (local_record.state == SyncState::Clean) {
                         local_time = local_record.revision;
@@ -900,8 +900,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     return false;
                 }
 
-                std::time_t local_revision = utils::s_getTime(conflict.local.raw["revisionDate"]);
-                std::time_t remote_revision = utils::s_getTime(conflict.remote.value().raw["revisionDate"]);
+                Timestamp local_revision = utils::s_getTime(conflict.local.raw["revisionDate"]);
+                Timestamp remote_revision = utils::s_getTime(conflict.remote.value().raw["revisionDate"]);
 
                 nlohmann::json resolved_json = nlohmann::json::object();
                 

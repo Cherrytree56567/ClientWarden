@@ -42,7 +42,7 @@ namespace clientwarden::vault {
         std::vector<OrganisationMembership> organisations;
         bool multi_factor_enabled;
         Botan::secure_vector<uint8_t> security_stamp;
-        std::time_t creation_date;
+        Timestamp creation_date;
         std::string avatar_color;
         nlohmann::json raw;
     };

@@ -13,17 +13,17 @@ namespace clientwarden::utils {
      */
     Botan::secure_vector<uint8_t> b64Decode(const Botan::secure_vector<uint8_t>& data);
     /**
-     * @brief Converts ISO 8601 time to std::time_t.
+     * @brief Converts ISO 8601 time to Timestamp
      */
-    std::time_t s_getTime(std::string time);
+    Timestamp s_getTime(std::string time);
     /**
      * @brief Converts the current time to std::string + additional time.
      */
     std::string s_getCurrentTime(int additional_time = 0);
     /**
-     * @brief Converts ISO 8601 time to std::time_t.
+     * @brief Converts ISO 8601 time to Timestamp
      */
-    std::time_t getTime(Botan::secure_vector<uint8_t> time);
+    Timestamp getTime(Botan::secure_vector<uint8_t> time);
     /**
      * @brief Converts the current time to std::string + additional time.
      */
@@ -47,7 +47,7 @@ namespace clientwarden::utils {
     /**
      * @brief Converts the given time to Botan::secure_vector
      */
-    Botan::secure_vector<uint8_t> getSecureVector(std::time_t time);
+    Botan::secure_vector<uint8_t> getSecureVector(Timestamp time);
     /**
      * @brief Converts a Botan Secure Vector String to an Int.
      */
@@ -59,5 +59,5 @@ namespace clientwarden::utils {
     /**
      * @brief Converts the given time to Botan::secure_vector
      */
-    std::string getString(std::time_t time);
+    std::string getString(Timestamp time);
 }

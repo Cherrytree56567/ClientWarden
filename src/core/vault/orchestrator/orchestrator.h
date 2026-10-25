@@ -87,13 +87,11 @@ namespace clientwarden::vault {
             std::function<void(float)> on_progress = nullptr) = 0;
         /**
          * @brief Ask the server to create a folder and add it to the Vault.
-         * @note Requires a NON encrypted folder name.
          */
         virtual std::expected<ItemId, OrchestratorError> createFolder(
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
         /**
          * @brief Ask the server to rename the folder and rename it in the Vault.
-         * @note Requires a NON encrypted folder name.
          */
         virtual OrchestratorError renameFolder(ItemId uuid, 
             const Botan::secure_vector<uint8_t>& folder_name) = 0;
@@ -116,6 +114,10 @@ namespace clientwarden::vault {
          * @brief Returns the runtime.
          */
         std::shared_ptr<Runtime> getRuntime();
+        /**
+         * @brief Returns the crypto.
+         */
+        std::shared_ptr<Crypto> getCrypto();
     protected:
         std::shared_ptr<Crypto> m_crypto;
         std::shared_ptr<Network> m_network;

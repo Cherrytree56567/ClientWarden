@@ -56,7 +56,7 @@ namespace clientwarden::vault {
         SyncItem item_type = SyncItem::Unknown;
         ItemId uuid;
         ItemId parent_id;
-        std::time_t revision;
+        Timestamp revision;
         SyncState state;
         nlohmann::json raw;
     };

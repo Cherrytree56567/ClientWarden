@@ -3,6 +3,9 @@
 #include <spdlog/spdlog.h>
 
 namespace clientwarden {
+    using ItemId = std::string;
+    using Timestamp = std::chrono::system_clock::time_point;
+    
     enum class Vendor {
         BitWarden
     };
@@ -35,7 +38,7 @@ namespace clientwarden {
     struct AuthSession {
         Botan::secure_vector<uint8_t> access_token;
         Botan::secure_vector<uint8_t> refresh_token;
-        std::time_t expires_at;
+        Timestamp expires_at;
     };
 
     /**
@@ -74,8 +77,6 @@ namespace clientwarden {
 
     inline const std::string app_id = APP_ID;
     inline const std::string app_type = APP_TYPE;
-
-    using ItemId = std::string;
 
     inline std::shared_ptr<spdlog::logger> g_logger = nullptr;
 }

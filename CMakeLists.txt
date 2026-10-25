@@ -27,6 +27,7 @@ endif()
 set(Botan_DIR "build/build/generators")
 
 include(FetchContent)
+include(cmake/wordlist.cmake)
 
 FetchContent_Declare(
     keychain
@@ -107,10 +108,16 @@ else()
     add_library(clientwarden SHARED ${FILES})
 endif()
 
+generate_wordlist(
+    ${CMAKE_CURRENT_SOURCE_DIR}/assets/wordlist.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/password_generator/word_list.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
+)
+
 target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
 target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT APP_TYPE="${APP_TYPE}" APP_ID="${APP_BUNDLE_ID}" BW_VERSION="${BW_VERSION}")
 
-target_include_directories(clientwarden PRIVATE src/core src/core/vault src/Platforms/)
+target_include_directories(clientwarden PRIVATE src/core src/core/vault src/Platforms/ ${CMAKE_CURRENT_BINARY_DIR}/generated/)
 
 if (ANDROID)
     target_compile_options(clientwarden PRIVATE -fexperimental-library)

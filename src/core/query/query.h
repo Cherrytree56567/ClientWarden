@@ -25,15 +25,15 @@ namespace clientwarden {
         /**
          * @brief Filters by Creation Date using the provided start and end.
          */
-        virtual Query& filterByCreationDate(std::time_t start, std::time_t end) = 0;
+        virtual Query& filterByCreationDate(Timestamp start, Timestamp end) = 0;
         /**
          * @brief Filters by Revision Date using the provided start and end.
          */
-        virtual Query& filterByRevisionDate(std::time_t start, std::time_t end) = 0;
+        virtual Query& filterByRevisionDate(Timestamp start, Timestamp end) = 0;
         /**
          * @brief Filters by Deletion Date using the provided start and end.
          */
-        virtual Query& filterByDeletionDate(std::time_t start, std::time_t end) = 0;
+        virtual Query& filterByDeletionDate(Timestamp start, Timestamp end) = 0;
         /**
          * @brief Filters by Items which have a passkey.
          */

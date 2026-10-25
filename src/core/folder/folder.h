@@ -8,6 +8,7 @@ namespace clientwarden {
      * @brief Represents the result of an operation.
      */
     enum FolderError {
+        OrchestratorError,
         Success,
         None
     };
@@ -49,7 +50,7 @@ namespace clientwarden {
     protected:
         ItemId m_id;
         bool m_is_created;
-        bool m_init;
+        bool m_init = false;
         Vault& m_vault;
     };
 }
