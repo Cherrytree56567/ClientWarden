@@ -2,157 +2,168 @@
 
 #import <Cocoa/Cocoa.h>
 
-Storage::Storage() {
-    spdlog::set_pattern("[%H:%M:%S] [ClientWarden::MacOS::Storage] [%^---%L---%$] [thread %t] %v");
+namespace clientwarden::platforms {
+    Storage::Storage() {
+        NSBundle* bundle = [NSBundle mainBundle];
 
-    /*
-     * https://stackoverflow.com/questions/8430777/programmatically-get-path-to-application-support-folder
-    */
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-    NSString *applicationSupportDirectory = [paths firstObject];
+        if ([bundle bundleIdentifier] != nil) {
+            NSString* appPath = [[NSBundle mainBundle] bundlePath];
+            std::string appDir([appPath UTF8String]);
+            path = std::filesystem::path(appDir);
+        } else {
+            NSString* appPath = [[NSBundle mainBundle] executablePath];
+            std::string appDir([appPath UTF8String]);
+            path = std::filesystem::path(appDir).parent_path();
+        }
 
-    std::string as_dir([applicationSupportDirectory UTF8String]);
-
-    path = std::filesystem::path(as_dir);
-    path.append("ClientWarden");
-
-    /*
-     * Create a Dir
-     * https://en.cppreference.com/w/cpp/filesystem/create_directory.html
-    */
-    try {
-        std::filesystem::create_directories(path);
-    } catch (...) {
-        spdlog::error("Failed to create cw path");
-    }
-}
-
-Storage::Storage(std::string) {
-    spdlog::set_pattern("[%H:%M:%S] [ClientWarden::MacOS::Storage] [%^---%L---%$] [thread %t] %v");
-
-    NSBundle* bundle = [NSBundle mainBundle];
-
-    if ([bundle bundleIdentifier] != nil) {
-        NSString* appPath = [[NSBundle mainBundle] bundlePath];
-        std::string appDir([appPath UTF8String]);
-        path = std::filesystem::path(appDir);
-    } else {
-        NSString* appPath = [[NSBundle mainBundle] executablePath];
-        std::string appDir([appPath UTF8String]);
-        path = std::filesystem::path(appDir).parent_path();
+        path.append("Contents");
+        path.append("Resources");
     }
 
-    path.append("Contents");
-    path.append("Resources");
-}
+    Storage::Storage(ItemId id) {
+        /*
+        * https://stackoverflow.com/questions/8430777/programmatically-get-path-to-application-support-folder
+        */
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+        NSString *applicationSupportDirectory = [paths firstObject];
 
-std::string Storage::read(std::filesystem::path file) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    if (!std::filesystem::exists(nFile)) {
-        spdlog::info("File not found: {}", nFile.string());
-        throw std::runtime_error("File not found");
+        std::string as_dir([applicationSupportDirectory UTF8String]);
+
+        path = std::filesystem::path(as_dir);
+        path.append("ClientWarden");
+        path.append(id);
+
+        /*
+        * Create a Dir
+        * https://en.cppreference.com/w/cpp/filesystem/create_directory.html
+        */
+        try {
+            std::filesystem::create_directories(path);
+        } catch (...) {
+            spdlog::error("Failed to create cw path");
+        }
     }
 
-    std::ifstream f(nFile, std::ios::in | std::ios::binary);
-    if (!f) {
-        spdlog::info("Failed to open file: {}", nFile.string());
-        throw std::runtime_error("Failed to open file");
+    Storage::Storage(std::filesystem::path path) {
+        m_path = path;
+
+        /*
+        * Create a Dir
+        * https://en.cppreference.com/w/cpp/filesystem/create_directory.html
+        */
+        try {
+            std::filesystem::create_directories(m_path);
+        } catch (...) {
+            
+        }
     }
 
-    return std::string(
-        (std::istreambuf_iterator<char>(f)),
-        std::istreambuf_iterator<char>()
-    );
-}
+    std::expected<std::string, StorageError> Storage::read(std::filesystem::path file) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        if (!std::filesystem::exists(nFile)) {
+            return std::unxpected(StorageError::NotFound);
+        }
 
-std::vector<uint8_t> Storage::readBinary(std::filesystem::path file) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    if (!std::filesystem::exists(nFile)) {
-        spdlog::info("File not found: {}", nFile.string());
-        throw std::runtime_error("File not found");
+        std::ifstream f(nFile, std::ios::in | std::ios::binary);
+        if (!f) {
+            return std::unxpected(StorageError::Unknown);
+        }
+
+        return std::string(
+            (std::istreambuf_iterator<char>(f)),
+            std::istreambuf_iterator<char>()
+        );
     }
 
-    auto size = std::filesystem::file_size(nFile);
+    std::vector<uint8_t> Storage::readBinary(std::filesystem::path file) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        if (!std::filesystem::exists(nFile)) {
+            spdlog::info("File not found: {}", nFile.string());
+            throw std::runtime_error("File not found");
+        }
 
-    std::ifstream f(nFile, std::ios::binary);
-    if (!f) {
-        spdlog::info("Failed to open file: {}", nFile.string());
-        throw std::runtime_error("Failed to open file");
+        auto size = std::filesystem::file_size(nFile);
+
+        std::ifstream f(nFile, std::ios::binary);
+        if (!f) {
+            spdlog::info("Failed to open file: {}", nFile.string());
+            throw std::runtime_error("Failed to open file");
+        }
+
+        std::vector<uint8_t> buffer(size);
+
+        f.read(reinterpret_cast<char*>(buffer.data()), size);
+
+        if (!f) {
+            spdlog::info("Failed to read file: {}", nFile.string());
+            throw std::runtime_error("Failed to read file");
+        }
+
+        return buffer;
     }
 
-    std::vector<uint8_t> buffer(size);
+    void Storage::write(std::filesystem::path file, std::string data) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        std::filesystem::create_directories(nFile.parent_path());
 
-    f.read(reinterpret_cast<char*>(buffer.data()), size);
+        std::ofstream f(nFile, std::ios::binary);
+        if (!f) {
+            spdlog::error("Failed to open file for writing: {}", nFile.string());
+            throw std::runtime_error("Failed to open file for writing");
+        }
 
-    if (!f) {
-        spdlog::info("Failed to read file: {}", nFile.string());
-        throw std::runtime_error("Failed to read file");
+        f.write(data.data(), data.size());
+
+        if (!f) {
+            spdlog::error("Failed to write file: {}", nFile.string());
+            throw std::runtime_error("Failed to write file");
+        }
     }
 
-    return buffer;
-}
+    void Storage::write(std::filesystem::path file, std::vector<uint8_t> data) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        std::filesystem::create_directories(nFile.parent_path());
 
-void Storage::write(std::filesystem::path file, std::string data) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    std::filesystem::create_directories(nFile.parent_path());
+        std::ofstream f(nFile, std::ios::binary);
+        if (!f) {
+            spdlog::info("Failed to open file for writing: {}", nFile.string());
+            throw std::runtime_error("Failed to open file for writing");
+        }
 
-    std::ofstream f(nFile, std::ios::binary);
-    if (!f) {
-        spdlog::error("Failed to open file for writing: {}", nFile.string());
-        throw std::runtime_error("Failed to open file for writing");
+        f.write(reinterpret_cast<const char*>(data.data()), data.size());
+
+        if (!f) {
+            spdlog::info("Failed to write file: {}", nFile.string());
+            throw std::runtime_error("Failed to write file");
+        }
     }
 
-    f.write(data.data(), data.size());
+    void Storage::remove(std::filesystem::path file) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        if (!std::filesystem::exists(nFile)) {
+            return;
+        }
 
-    if (!f) {
-        spdlog::error("Failed to write file: {}", nFile.string());
-        throw std::runtime_error("Failed to write file");
-    }
-}
-
-void Storage::write(std::filesystem::path file, std::vector<uint8_t> data) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    std::filesystem::create_directories(nFile.parent_path());
-
-    std::ofstream f(nFile, std::ios::binary);
-    if (!f) {
-        spdlog::info("Failed to open file for writing: {}", nFile.string());
-        throw std::runtime_error("Failed to open file for writing");
+        if (!std::filesystem::remove(nFile)) {
+            spdlog::info("Failed to remove file: {}", nFile.string());
+            throw std::runtime_error("Failed to remove file: " + nFile.string());
+        }
     }
 
-    f.write(reinterpret_cast<const char*>(data.data()), data.size());
+    void Storage::rename(std::filesystem::path file, std::string name) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        if (!std::filesystem::exists(nFile)) {
+            spdlog::info("File does not exist: {}", nFile.string());
+            throw std::runtime_error("File does not exist: " + nFile.string());
+        }
 
-    if (!f) {
-        spdlog::info("Failed to write file: {}", nFile.string());
-        throw std::runtime_error("Failed to write file");
-    }
-}
+        std::filesystem::path newPath = nFile.parent_path() / name;
 
-void Storage::remove(std::filesystem::path file) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    if (!std::filesystem::exists(nFile)) {
-        return;
+        std::filesystem::rename(nFile, newPath);
     }
 
-    if (!std::filesystem::remove(nFile)) {
-        spdlog::info("Failed to remove file: {}", nFile.string());
-        throw std::runtime_error("Failed to remove file: " + nFile.string());
+    bool Storage::exists(std::filesystem::path file) {
+        std::filesystem::path nFile = file.is_absolute() ? file : (m_path / file);
+        return std::filesystem::exists(nFile);
     }
-}
-
-void Storage::rename(std::filesystem::path file, std::string name) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    if (!std::filesystem::exists(nFile)) {
-        spdlog::info("File does not exist: {}", nFile.string());
-        throw std::runtime_error("File does not exist: " + nFile.string());
-    }
-
-    std::filesystem::path newPath = nFile.parent_path() / name;
-
-    std::filesystem::rename(nFile, newPath);
-}
-
-bool Storage::exists(std::filesystem::path file) {
-    std::filesystem::path nFile = file.is_absolute() ? file : (path / file);
-    return std::filesystem::exists(nFile);
 }

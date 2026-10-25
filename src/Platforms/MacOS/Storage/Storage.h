@@ -5,18 +5,27 @@
 #include <fstream>
 #include <filesystem>
 
-class Storage {
-public:
-    Storage();
-    Storage(std::string); // Local Path
-    
-    std::string read(std::filesystem::path file);
-    std::vector<uint8_t> readBinary(std::filesystem::path file);
-    void write(std::filesystem::path file, std::string data);
-    void write(std::filesystem::path file, std::vector<uint8_t> data);
-    void remove(std::filesystem::path file);
-    void rename(std::filesystem::path file, std::string name);
-    bool exists(std::filesystem::path file);
-public:
-    std::filesystem::path path;
-};
+namespace clientwarden::platforms {
+    enum class StorageError {
+        NotFound,
+        Unknown,
+        Success
+    };
+
+    class Storage {
+    public:
+        Storage(); // App/Bundle Dir
+        Storage(ItemId id); // App Support Dir
+        Storage(std::filesystem::path path); // Custom Path Dir
+        
+        std::expected<std::string, StorageError> read(std::filesystem::path file);
+        std::expected<std::vector<uint8_t>, StorageError> readBinary(std::filesystem::path file);
+        StorageError write(std::filesystem::path file, std::string data);
+        StorageError write(std::filesystem::path file, std::vector<uint8_t> data);
+        StorageError remove(std::filesystem::path file);
+        StorageError rename(std::filesystem::path file, std::string name);
+        std::expected<bool, StorageError> exists(std::filesystem::path file);
+    public:
+        std::filesystem::path m_path;
+    };
+}
