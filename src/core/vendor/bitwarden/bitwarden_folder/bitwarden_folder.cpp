@@ -42,6 +42,12 @@ namespace clientwarden::vendor::bitwarden {
         m_init = true;
     }
 
+    BitwardenFolder::~BitwardenFolder() {
+        m_object_.id = "";
+        m_object_.revision_date = std::chrono::system_clock::now();
+        Botan::secure_scrub_memory(m_object_.name.data(), m_object_.name.size());
+    }
+
     BitwardenFolder& BitwardenFolder::setName(const Botan::secure_vector<uint8_t>& name) {
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> name_err = 
             m_vault.getOrchestrator()->getCrypto()->encrypt(name);

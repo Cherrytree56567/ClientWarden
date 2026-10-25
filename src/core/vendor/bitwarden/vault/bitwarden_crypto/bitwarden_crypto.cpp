@@ -435,11 +435,21 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         m_keys = result.value();
 
+        m_item_keys_set = true;
+
         return CryptoErrors::Success;
     }
 
     std::expected<AuthKeys, CryptoErrors> BitwardenCrypto::getKeys() {
         if (!m_auth_keys_set) {
+            return std::unexpected(CryptoErrors::InvalidParams);
+        }
+
+        return m_auth_keys;
+    }
+
+    std::expected<ItemKey, CryptoErrors> BitwardenCrypto::getItemKeys() {
+        if (!m_item_keys_set) {
             return std::unexpected(CryptoErrors::InvalidParams);
         }
 

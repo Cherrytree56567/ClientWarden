@@ -143,6 +143,10 @@ namespace clientwarden::vault {
          */
         virtual std::expected<AuthKeys, CryptoErrors> getKeys() = 0;
         /**
+         * @brief Get the ItemKey
+         */
+        virtual std::expected<ItemKey, CryptoErrors> getItemKeys() = 0;
+        /**
          * @brief Erases the Auth Keys from memory.
          */
         virtual CryptoErrors eraseKeys() = 0;
@@ -155,5 +159,6 @@ namespace clientwarden::vault {
         AuthKeys m_auth_keys;
         ItemKey m_keys;
         bool m_auth_keys_set = false;
+        bool m_item_keys_set = false;
     };
 }

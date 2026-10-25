@@ -7,6 +7,8 @@ namespace clientwarden {
      * @brief Represents the result of an operation.
      */
     enum QueryError {
+        Uninitialised,
+        RuntimeError,
         Success,
         None
     };
@@ -81,7 +83,7 @@ namespace clientwarden {
          */
         virtual Vendor getVendor() = 0;
     protected:
-        bool m_init;
+        bool m_init = false;
         Vault& m_vault;
     };
 }

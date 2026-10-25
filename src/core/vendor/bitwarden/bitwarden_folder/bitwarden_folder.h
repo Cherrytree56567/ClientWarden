@@ -11,7 +11,7 @@ namespace clientwarden::vendor::bitwarden {
     class BitwardenFolder : public Folder {
     public:
         BitwardenFolder(Vault& vault, ItemId id, bool item_creation);
-        ~BitwardenFolder() override = default;
+        ~BitwardenFolder() override;
 
         BitwardenFolder& setName(const Botan::secure_vector<uint8_t>& name) override;
         BitwardenFolder& getName(Botan::secure_vector<uint8_t>& o_name) override;
