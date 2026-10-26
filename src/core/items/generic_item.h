@@ -33,6 +33,8 @@ namespace clientwarden {
      * @brief Represents the result of an operation.
      */
     enum ItemError {
+        OrchestratorError,
+        Uninitialised,
         Success,
         None
     };
@@ -232,7 +234,7 @@ namespace clientwarden {
 
         ItemId m_id;
         bool m_is_created;
-        bool m_init;
+        bool m_init = false;
         Vault& m_vault;
     };
 }
