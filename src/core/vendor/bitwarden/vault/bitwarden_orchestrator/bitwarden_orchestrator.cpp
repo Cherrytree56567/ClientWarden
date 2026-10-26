@@ -647,7 +647,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     return std::unexpected(OrchestratorError::RuntimeError);
                 }
 
-                if (!m_storage->write("attachments/" + attachment_json["id"], file_contents)) {
+                if (m_storage->write("attachments/" + attachment_json["id"], file_contents) 
+                    != StorageError::Success) {
                     Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
                     return std::unexpected(OrchestratorError::StorageFailure);
                 }
@@ -911,7 +912,8 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::CryptoError;
         }
 
-        if (!m_storage->write(save_path / utils::getString(file_name), attachment_data)) {
+        if (m_storage->write(save_path / utils::getString(file_name), attachment_data) 
+            != StorageError::Success) {
             Botan::secure_scrub_memory(attachment_data.data(), attachment_data.size());
             Botan::secure_scrub_memory(file_name.data(), file_name.size());
 
@@ -1139,27 +1141,30 @@ namespace clientwarden::vendor::bitwarden::vault {
         const Botan::secure_vector<uint8_t>& url) {
         std::string b64_url = utils::getString(utils::b64Encode(url));
 
+        std::expected<bool, StorageError> png_err = m_storage->exists(b64_url + ".png");
+        std::expected<bool, StorageError> failed_err = m_storage->exists(b64_url + ".failed");
+
         if (m_network->getConnectivity() == Connectivity::Offline &&
-            !m_storage->exists(b64_url + ".png")) {
+            (!png_err.has_value() || (png_err.has_value() && !png_err.value()))) {
             return std::unexpected(OrchestratorError::NetworkError);
         }
 
-        if (m_storage->exists(b64_url + ".failed")) {
+        if (failed_err.has_value() && failed_err.value()) {
             return std::unexpected(OrchestratorError::NetworkError);
         }
 
-        if (!m_storage->exists(b64_url + ".png")) {
+        if (!png_err.has_value() || (png_err.has_value() && !png_err.value())) {
             std::expected<Botan::secure_vector<uint8_t>, NetworkError> result = 
                 m_network->downloadIcon(url);
 
             if (!result.has_value()) {
-                if (!m_storage->write(b64_url + ".failed", std::vector<uint8_t>{})) {
+                if (m_storage->write(b64_url + ".failed", "") != StorageError::Success) {
                     return std::unexpected(OrchestratorError::StorageFailure);
                 }
                 return std::unexpected(OrchestratorError::NetworkError);
             }
 
-            if (!m_storage->write(b64_url + ".png", result.value())) {
+            if (m_storage->write(b64_url + ".png", result.value()) != StorageError::Success) {
                 return std::unexpected(OrchestratorError::StorageFailure);
             }
         }

@@ -11,19 +11,26 @@ namespace clientwarden::vendor::bitwarden::vault {
      * @note LoadVault must be run before calling any other funcs.
      */
     RuntimeError BitwardenRuntime::loadVault() {
-        if (!m_storage->exists("vault.json")) {
+        std::expected<bool, StorageError> exist_err = 
+            m_storage->exists("vault.json");
+        if (!exist_err.has_value() || !exist_err.value()) {
             return RuntimeError::VaultNotFound;
         }
 
-        std::string vault_data = utils::getString(m_storage->read("vault.json"));
+        std::expected<std::string, StorageError> vault_data_err = 
+            m_storage->read("vault.json");
+        
+        if (!vault_data_err.has_value()) {
+            return RuntimeError::StorageFailure;
+        }
 
-        if (!nlohmann::json::accept(vault_data)) {
+        if (!nlohmann::json::accept(vault_data_err.value())) {
             return RuntimeError::InvalidVault;
         }
 
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
-        m_vault_data = nlohmann::json::parse(vault_data);
+        m_vault_data = nlohmann::json::parse(vault_data_err.value());
 
         if (!m_vault_data.is_object()) {
             return RuntimeError::InvalidVault;
@@ -150,7 +157,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                     cipher["id"] = uuid;
                 }
 
-                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -192,7 +199,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         m_vault_data["ciphers"].push_back(item);
         
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 
@@ -231,7 +238,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         ciphers_iterator->erase(iterator);
         
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 
@@ -323,7 +330,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     folder["id"] = uuid;
                 }
                 
-                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (m_storage->write("vault.json", m_vault_data.dump(4)) 
+                    != StorageError::Success) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -365,7 +373,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         m_vault_data["folders"].push_back(folder_item);
         
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 
@@ -404,7 +412,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         folders_iterator->erase(iterator);
         
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 
@@ -456,7 +464,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     cipher["id"] = uuid;
                 }
 
-                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (m_storage->write("vault.json", m_vault_data.dump(4)) 
+                    != StorageError::Success) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -519,7 +528,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     return RuntimeError::NotFound;
                 }
 
-                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (m_storage->write("vault.json", m_vault_data.dump(4)) 
+                    != StorageError::Success) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -578,7 +588,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     return RuntimeError::NotFound;
                 }
 
-                if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+                if (m_storage->write("vault.json", m_vault_data.dump(4)) 
+                    != StorageError::Success) {
                     return RuntimeError::StorageFailure;
                 }
 
@@ -843,7 +854,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             }
         }
 
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 
@@ -888,7 +899,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             return RuntimeError::NotFound;
         }
 
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 
@@ -1152,7 +1163,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         m_vault_data["version"] = utils::getString(version);
         
-        if (!m_storage->write("vault.json", m_vault_data.dump(4)).has_value()) {
+        if (m_storage->write("vault.json", m_vault_data.dump(4)) != StorageError::Success) {
             return RuntimeError::StorageFailure;
         }
 

@@ -20,7 +20,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(SyncError::NetworkError);
         }
 
-        if (!m_storage->write("vault.json", vault_err.value().dump(4)).has_value()) {
+        if (m_storage->write("vault.json", vault_err.value().dump(4)) != StorageError::Success) {
             return std::unexpected(RuntimeError::StorageFailure);
         }
 
@@ -530,7 +530,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 std::expected<Botan::secure_vector<uint8_t>, StorageError> attachment_err =
-                    m_storage->read(record.raw["url"], [](float) {});
+                    m_storage->readBinary(record.raw["url"], [](float) {});
                 
                 if (!attachment_err.has_value()) {
                     result.failed.push_back(record);

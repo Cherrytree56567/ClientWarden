@@ -2,7 +2,9 @@
 
 namespace clientwarden::vendor::bitwarden {
     BitWardenVault::BitWardenVault(ItemId uuid) : Vault(uuid) {
-        if (m_storage->exists("vault.json")) {
+        std::expected<bool, StorageError> exist_err = 
+            m_storage->exists("vault.json");
+        if (exist_err.has_value() && exist_err.value()) {
             m_state = AuthState::Unlockable;
         } else {
             m_state = AuthState::LoggedOut;
@@ -10,7 +12,7 @@ namespace clientwarden::vendor::bitwarden {
     }
 
     BitWardenVault::~BitWardenVault() {
-        
+        lock();
     }
 
     LoginResult BitWardenVault::login(Credential cred) {

@@ -118,7 +118,7 @@ namespace clientwarden::platforms {
         return StorageError::Success;
     }
 
-    StorageError Storage::write(std::filesystem::path file, std::vector<uint8_t> data) {
+    StorageError Storage::write(std::filesystem::path file, Botan::secure_vector<uint8_t> data) {
         std::filesystem::path file_path = file.is_absolute() ? file : (m_path / file);
         std::filesystem::create_directories(file_path.parent_path());
 
@@ -165,5 +165,9 @@ namespace clientwarden::platforms {
     std::expected<bool, StorageError> Storage::exists(std::filesystem::path file) {
         std::filesystem::path file_path = file.is_absolute() ? file : (m_path / file);
         return std::filesystem::exists(file_path);
+    }
+
+    std::filesystem::path Storage::getPath() {
+        return m_path;
     }
 }
