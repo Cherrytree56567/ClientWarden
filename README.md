@@ -158,6 +158,8 @@ You might need to use the `-s compiler.cppstd=20` flag.
   - [ ] Passkey Support
 - [ ] V1.1.0
   - [ ] Send Support
+  - [ ] Passkey Duplicate Support
+  - [ ] Attachment Duplicate Support
 - [ ] V1.2.0
   - [ ] Organisations Support
 - [ ] V1.3.0
