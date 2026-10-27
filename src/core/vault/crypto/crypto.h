@@ -124,6 +124,12 @@ namespace clientwarden::vault {
         virtual std::expected<ItemKey, CryptoErrors> generateKey() = 0;
 
         /**
+         * @brief Build an unresolved itemKey.
+         */
+        virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> generateUnresolvedKey(
+            const ItemKey& key) = 0;
+
+        /**
          * @brief Generates a checksum of the value using the provided Keys.
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> checksum(

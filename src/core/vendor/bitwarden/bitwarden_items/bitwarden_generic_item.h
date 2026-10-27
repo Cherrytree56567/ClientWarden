@@ -7,7 +7,7 @@ namespace clientwarden::vendor::bitwarden {
         BitwardenGenericItem(Vault& vault, ItemId id, bool item_creation);
         ~BitwardenGenericItem() override;
 
-        std::expected<void, ItemError> commitItem() override;
+        std::expected<ItemId, ItemError> commitItem() override;
         std::expected<void, ItemError> deleteItem() override;
         std::expected<void, ItemError> binItem() override;
         std::expected<void, ItemError> unBinItem() override;
@@ -51,6 +51,9 @@ namespace clientwarden::vendor::bitwarden {
     protected:
         nlohmann::json m_data_;
         nlohmann::json m_field_data_;
-        bool m_enable_data_field_;
+        bool m_enable_data_field_ = true;
+        bool m_enable_bank_account_field_ = false;
+        bool m_enable_passport_field_ = false;
+        bool m_enable_drivers_license_field_ = false;
     };
 }

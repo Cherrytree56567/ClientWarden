@@ -66,6 +66,9 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         std::expected<ItemKey, CryptoErrors> generateKey() override;
 
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> generateUnresolvedKey(
+            const ItemKey& key) override;
+
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> checksum(
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key, 
             ChecksumType type = ChecksumType::Uri) override;

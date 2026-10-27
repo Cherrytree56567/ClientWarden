@@ -27,6 +27,30 @@ namespace clientwarden::vendor::bitwarden {
             m_enable_data_field_ = data_err.value();
         }
 
+        data_err = m_vault.getVersioning()->hasFeature(std::to_underlying(BitwardenFeature::BankAccount));
+        
+        if (!data_err.has_value()) {
+            m_enable_bank_account_field_ = false;
+        } else {
+            m_enable_bank_account_field_ = data_err.value();
+        }
+
+        data_err = m_vault.getVersioning()->hasFeature(std::to_underlying(BitwardenFeature::Passport));
+        
+        if (!data_err.has_value()) {
+            m_enable_passport_field_ = true;
+        } else {
+            m_enable_passport_field_ = data_err.value();
+        }
+
+        data_err = m_vault.getVersioning()->hasFeature(std::to_underlying(BitwardenFeature::DriversLicense));
+        
+        if (!data_err.has_value()) {
+            m_enable_drivers_license_field_ = true;
+        } else {
+            m_enable_drivers_license_field_ = data_err.value();
+        }
+
         if (m_data_.contains("data") && m_enable_data_field_) {
             if (m_data_["data"].is_string()) {
                 if (nlohmann::json::accept(m_data_["data"].get<std::string>())) {
@@ -81,7 +105,7 @@ namespace clientwarden::vendor::bitwarden {
         m_init = false;
     }
     
-    std::expected<void, ItemError> BitwardenGenericItem::commitItem() {
+    std::expected<ItemId, ItemError> BitwardenGenericItem::commitItem() {
         if (!m_init) {
             return std::unexpected(ItemError::Uninitialised);
         }
@@ -93,14 +117,25 @@ namespace clientwarden::vendor::bitwarden {
             m_data_["data"] = m_field_data_.dump();
         }
 
-        OrchestratorError action_err = 
-            m_vault.getOrchestrator()->updateItem(m_data_);
-        
-        if (!action_err.has_value()) {
-            return std::unexpected(ItemError::OrchestratorError);
+        if (!m_is_created) {
+            OrchestratorError action_err = 
+                m_vault.getOrchestrator()->updateItem(m_data_);
+            
+            if (action_err != OrchestratorError::Success) {
+                return std::unexpected(ItemError::OrchestratorError);
+            }
+        } else {
+            std::expected<ItemId, OrchestratorError> action_err = 
+                m_vault.getOrchestrator()->newItem(m_data_);
+            
+            if (!action_err.has_value()) {
+                return std::unexpected(ItemError::OrchestratorError);
+            }
+
+            return action_err.value();
         }
 
-        return {};
+        return m_id;
     }
     
     std::expected<void, ItemError> BitwardenGenericItem::deleteItem() {
@@ -114,7 +149,7 @@ namespace clientwarden::vendor::bitwarden {
         OrchestratorError action_err = 
             m_vault.getOrchestrator()->deleteItem(m_id);
         
-        if (!action_err.has_value()) {
+        if (action_err != OrchestratorError::Success) {
             return std::unexpected(ItemError::OrchestratorError);
         }
 
@@ -143,7 +178,8 @@ namespace clientwarden::vendor::bitwarden {
         OrchestratorError action_extra_err = 
             m_vault.getOrchestrator()->softDeleteItem(m_id);
         
-        if (!action_err.has_value() || !action_extra_err.has_value()) {
+        if (action_err != OrchestratorError::Success || 
+            action_extra_err != OrchestratorError::Success) {
             return std::unexpected(ItemError::OrchestratorError);
         }
 
@@ -168,7 +204,8 @@ namespace clientwarden::vendor::bitwarden {
         OrchestratorError action_extra_err = 
             m_vault.getOrchestrator()->restoreItem(m_id);
         
-        if (!action_err.has_value() || !action_extra_err.has_value()) {
+        if (action_err != OrchestratorError::Success || 
+            action_extra_err != OrchestratorError::Success) {
             return std::unexpected(ItemError::OrchestratorError);
         }
 
@@ -193,7 +230,8 @@ namespace clientwarden::vendor::bitwarden {
         OrchestratorError action_extra_err = 
             m_vault.getOrchestrator()->archiveItem(m_id);
         
-        if (!action_err.has_value() || !action_extra_err.has_value()) {
+        if (action_err != OrchestratorError::Success || 
+            action_extra_err != OrchestratorError::Success) {
             return std::unexpected(ItemError::OrchestratorError);
         }
 
@@ -218,7 +256,8 @@ namespace clientwarden::vendor::bitwarden {
         OrchestratorError action_extra_err = 
             m_vault.getOrchestrator()->unArchiveItem(m_id);
         
-        if (!action_err.has_value() || !action_extra_err.has_value()) {
+        if (action_err != OrchestratorError::Success || 
+            action_extra_err != OrchestratorError::Success) {
             return std::unexpected(ItemError::OrchestratorError);
         }
 
@@ -471,7 +510,7 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_data_.contains("folderId") || !m_data_["folderId"].is_string()) {
             return;
         }
-        
+
         o_group_ids.push_back(m_data_["folderId"]);
     }
     

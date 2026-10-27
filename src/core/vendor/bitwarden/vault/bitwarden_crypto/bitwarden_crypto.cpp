@@ -287,11 +287,6 @@ namespace clientwarden::vendor::bitwarden::vault {
         return CryptoErrors::Success;
     }
 
-    CryptoErrors BitwardenCrypto::decryptBinaryInPlace(Botan::secure_vector<uint8_t>& value,
-        const ItemKey& key) {
-        
-    }
-
     std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::hkdfStretch(const Botan::secure_vector<uint8_t>& info) {
         Botan::secure_vector<uint8_t> data(info.begin(), info.end());
         data.push_back(0x01);
@@ -383,6 +378,23 @@ namespace clientwarden::vendor::bitwarden::vault {
         key.mac_key = rng.random_vec(32);
 
         return key;
+    }
+
+    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::generateUnresolvedKey(
+        const ItemKey& key) {
+        Botan::secure_vector<uint8_t> unresolved_key(key.enc_key.begin(), key.enc_key.end());
+        unresolved_key.insert(unresolved_key.end(), key.mac_key.begin(), key.mac_key.end());
+
+        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> enc_err = 
+            encrypt(unresolved_key);
+        
+        Botan::zap(unresolved_key);
+        
+        if (!enc_err.has_value()) {
+            return std::unexpected(enc_err.error());
+        }
+
+        return std::move(enc_err.value());
     }
 
     std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::checksum(const Botan::secure_vector<uint8_t>& value, 

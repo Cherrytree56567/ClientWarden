@@ -164,7 +164,7 @@ namespace clientwarden {
         /**
          * @brief Creates or pushes the item to the Remote and Local.
          */
-        virtual std::expected<void, ItemError> commitItem() = 0;
+        virtual std::expected<ItemId, ItemError> commitItem() = 0;
         /**
          * @brief Removes the item from Remote and Local.
          */
