@@ -69,6 +69,7 @@ namespace clientwarden::vault {
          * @brief Upload the attachment to the server and use on_progress to indicate progress.
          * @note file_contents will be overridden and encrypted
          * @note Requires a NON encrypted file name and contents.
+         * @return Attachment Id
          */
         virtual std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> addAttachment(
             ItemId uuid, Botan::secure_vector<uint8_t>& file_contents, 

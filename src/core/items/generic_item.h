@@ -10,11 +10,11 @@ namespace clientwarden {
     /**
      * @brief The Custom Field Types in Bitwarden (can be expanded).
      */
-    enum class CustomFieldType {
-        Text,
-        Hidden,
-        Checkbox,
-        Linked
+    enum class CustomFieldType : int {
+        Text = 0,
+        Hidden = 1,
+        Checkbox = 2,
+        Linked = 3
     };
     
     /**
