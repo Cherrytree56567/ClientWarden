@@ -1,0 +1,186 @@
+#pragma once
+#include <vector>
+#include <shared>
+#include <utility>
+#include <nlohmann/json.hpp>
+#include "../runtime/runtime.h"
+#include "../network/network.h"
+#include "thread/thread.h"
+#include "clientwarden.h"
+
+namespace clientwarden::vault {
+    /**
+     * @brief Represents the Local Sync State compared to the Remote Sync State.
+     */
+    enum class SyncState {
+        Modified,
+        CreatedOffline,
+        CreatedOfflinePartially,
+        PendingDelete,
+        Clean
+    };
+
+    /**
+     * @brief States weather a SyncRecord is for a Folder or Item.
+     */
+    enum class SyncItem {
+        Item,
+        Folder,
+        Attachment,
+        Unknown
+    };
+
+    /**
+     * @brief States the Conflict type when compared to the Local and Remote versions.
+     */
+    enum class ConflictType {
+        BothEdited,
+        LocalDelete_RemoteUpdate,
+        RemoteDelete_LocalUpdate
+    };
+
+    /**
+     * @brief States the appropriate solution to the Conflict.
+     */
+    enum class ConflictSolution {
+        Local,
+        Remote,
+        Merged,
+        Unresolved
+    };
+
+    /**
+     * @brief Represents the Items info and state which is used to diff local and remote changes.
+     */
+    struct SyncRecord {
+        SyncItem item_type = SyncItem::Unknown;
+        ItemId uuid;
+        ItemId parent_id;
+        Timestamp revision;
+        SyncState state;
+        nlohmann::json raw;
+    };
+
+    /**
+     * @brief Represents the Conflict between a local and remote record.
+     */
+    struct SyncConflict {
+        ConflictType type;
+        ConflictSolution solution;
+        SyncRecord local;
+        std::optional<SyncRecord> remote;
+    };
+
+    /**
+     * @brief Sync Actions holds all the Sync Records on what actions to take to sync with the
+     *  server.
+     * @param push_create Pushes New Local Items to the server.
+     * @param push_update Updates Newer Local Items to the server.
+     * @param push_delete Removes items from the server that were deleted locally.
+     * @param pull_create Pulls newly created items from the server to local.
+     * @param pull_update Replaces newer modified items from the server to local.
+     * @param pull_delete Removes items locally that were deleted from the server.
+     * @param pull_partial (local_record, remote_record) Remap ids from local to online.
+     */
+    struct SyncActions {
+        std::vector<SyncRecord> push_create;
+        std::vector<SyncRecord> push_update;
+        std::vector<SyncRecord> push_delete;
+        std::vector<SyncRecord> pull_create;
+        std::vector<SyncRecord> pull_update;
+        std::vector<SyncRecord> pull_delete;
+        std::vector<std::pair<SyncRecord, SyncRecord>> pull_partial;
+        std::vector<SyncConflict> conflicts;
+    };
+
+    /**
+     * @brief Holds the results of the Remote Push to determine which records to retry later.
+     * @param remap_id States the ids (old, new) for the created items to remap.
+     * @param actions Stores the actions passed to the pushRemote to allow for pull actions.
+     * @param success Stores a list of all the successful SyncRecord.
+     * @param failed Stores a list of all the failed SyncRecord.
+     * @param partial Stores a list of all the partially sent SyncRecords for local push to
+     *  mark.
+     */
+    struct PushActions {
+        std::vector<std::pair<ItemId, ItemId>> remap_id;
+        SyncActions actions;
+        std::vector<SyncRecord> success;
+        std::vector<SyncRecord> failed;
+        std::vector<SyncRecord> partial;
+    };
+
+    enum class SyncError {
+        RuntimeError,
+        NetworkError,
+        Unknown,
+        Success
+    };
+
+    class Sync {
+    public:
+        Sync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
+            std::shared_ptr<Settings> settings);
+        virtual ~Sync() = default;
+
+        /**
+         * @brief Fetches Local and Remote Records and plans and resolves conflits. It then pushes
+         *  the resulting changes to Server and to the Local JSON.
+         */
+        std::expected<bool, SyncError> syncVault();
+        /**
+         * @brief Replaces the local Vault file with remote vault JSON.
+         */
+        virtual std::expected<bool, SyncError> fullSync() = 0;
+
+        /**
+         * @brief Starts the SyncThread.
+         * @note The Vault must use syncThread if Classic Sync is being used. This is because, if
+         *  we try to handle websocket sync as well, we need to handle logout.
+         */
+        virtual std::expected<bool, SyncError> startSyncThread() = 0;
+        /**
+         * @brief Stops the SyncThread.
+         */
+        virtual std::expected<bool, SyncError> stopSyncThread() = 0;
+
+        /**
+         * @brief Gets the Vendor.
+         */
+        virtual Vendor getVendor() = 0;
+    protected:
+        /**
+         * @brief Fetches local records and returns an array of SyncRecords.
+         */
+        virtual std::expected<std::vector<SyncRecord>, SyncError> fetchLocalRecords() = 0;
+        /**
+         * @brief Fetches remote records and returns an array of SyncRecords.
+         */
+        virtual std::expected<std::vector<SyncRecord>, SyncError> fetchRemoteRecords() = 0;
+        
+        /**
+         * @brief Plans the appropriate Actions for local and remote records.
+         */
+        virtual std::expected<SyncActions, SyncError> planActions(const std::vector<SyncRecord>& local, 
+            const std::vector<SyncRecord>& remote) = 0;
+        
+        /**
+         * @brief Pushes the SyncActions determined by planActions to remote.
+         */
+        virtual std::expected<PushActions, SyncError> pushRemote(const SyncActions& actions) = 0;
+        /**
+         * @brief Updates the local db with the Push Actions returned by pushRemote.
+         */
+        virtual std::expected<bool, SyncError> pushLocal(const PushActions& actions) = 0;
+        
+        /**
+         * @brief Determines how to resolve conflicts between the local and remote versions.
+         */
+        virtual std::expected<SyncActions, SyncError> resolveConflicts(const SyncActions& actions) = 0;
+
+        std::shared_ptr<Runtime> m_runtime;
+        std::shared_ptr<Network> m_network;
+        std::shared_ptr<Settings> m_settings;
+        Thread m_sync_thread;
+    };
+}
