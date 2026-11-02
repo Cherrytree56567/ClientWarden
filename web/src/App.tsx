@@ -71,7 +71,7 @@ function App() {
             <div className="flex flex-col items-center gap-6 px-6 pb-24">
               <h1 className="mx-auto max-w-2xl px-6 pb-32 text-center text-xl text-ctp-subtext1">
                 <p className="max-w-2xl text-balance text-center text-xl text-ctp-subtext1">
-                  A beautifully designed password manager that's designed around security and privacy.
+                  A beautifully designed password manager that focuses on security and privacy.
                 </p>
                 <br></br><br></br>
                 <div className="flex items-center justify-center gap-4">
