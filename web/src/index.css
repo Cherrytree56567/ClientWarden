@@ -10,5 +10,5 @@
 }
 
 html {
-  @apply bg-ctp-crust text-ctp-text font-sans;
+  @apply bg-ctp-crust text-ctp-text font-sans select-none;
 }
