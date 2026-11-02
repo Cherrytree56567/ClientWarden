@@ -26,6 +26,5 @@ vcpkg_installed
 **/.idea
 Cargo.lock
 src/Platforms/Linux/target
-package-lock.json
 node_modules
 dist
