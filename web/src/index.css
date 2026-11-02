@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@catppuccin/tailwindcss/mocha.css";
+@plugin "daisyui";
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/500.css";
+@import "@fontsource/roboto/700.css";
+
+@theme {
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  @apply bg-ctp-crust text-ctp-text font-sans;
+}
