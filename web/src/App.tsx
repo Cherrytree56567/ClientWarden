@@ -61,11 +61,11 @@ function App() {
                 strokeWidth={1.5}
                 speed={1}
                 bounce={0.4}
+                draggable={false}
                 selection
                 labels
                 color="#cdd6f4"
                 align="center"
-                draggable
                 sweep/>
             </div>
             <div className="flex flex-col items-center gap-6 px-6 pb-24">
