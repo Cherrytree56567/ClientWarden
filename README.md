@@ -226,6 +226,7 @@ Thanks to:
 * [Fluent Icons](https://fluenticons.co/outlined/)
 * [Readme Template](https://github.com/othneildrew/Best-README-Template)
 * @Dexrn - For helping me with base and derived classes in the Backend
+* Thanks to [Hack Club](https://HackClub.com) - [Stardance](https://stardance.hackclub.com/projects/136) for supporting highschool makers and hardware projects
 
 [contributors-shield]: https://img.shields.io/github/contributors/Cherrytree56567/ClientWarden.svg?style=for-the-badge
 [contributors-url]: https://github.com/Cherrytree56567/ClientWarden/graphs/contributors
