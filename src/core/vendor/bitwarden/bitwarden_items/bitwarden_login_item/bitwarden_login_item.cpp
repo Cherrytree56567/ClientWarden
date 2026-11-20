@@ -111,14 +111,14 @@ namespace clientwarden::vendor::bitwarden {
     BitwardenLoginItem* setUsername(Botan::secure_vector<uint8_t>& username) {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->encrypt(username, m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         std::string value = utils::getString(value_err.value());
@@ -133,14 +133,14 @@ namespace clientwarden::vendor::bitwarden {
     BitwardenLoginItem* setPassword(Botan::secure_vector<uint8_t>& password) {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->encrypt(password, m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         std::string value = utils::getString(value_err.value());
@@ -155,14 +155,14 @@ namespace clientwarden::vendor::bitwarden {
     BitwardenLoginItem* setTotp(Botan::secure_vector<uint8_t>& totp) {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->encrypt(totp, m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         std::string value = utils::getString(value_err.value());
@@ -177,14 +177,14 @@ namespace clientwarden::vendor::bitwarden {
     BitwardenLoginItem* addWebsite(Botan::secure_vector<uint8_t>& website) {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->encrypt(totp, m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         std::string value = utils::getString(value_err.value());
@@ -205,11 +205,11 @@ namespace clientwarden::vendor::bitwarden {
     BitwardenLoginItem* removeWebsite(Botan::secure_vector<uint8_t>& website) {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object()) {
-            return;
+            return this;
         }
 
         if (!m_data_["login"].contains("uris") || !m_data["login"]["uris"].is_array()) {
-            return;
+            return this;
         }
 
         if (m_enable_data_field_) {
@@ -236,7 +236,7 @@ namespace clientwarden::vendor::bitwarden {
             m_vault.getOrchesstrator()->getCrypto()->generateKey();
             
         if (!key_err.has_value()) {
-            return;
+            return this;
         }
 
         nlohmann::json new_data;
@@ -270,7 +270,7 @@ namespace clientwarden::vendor::bitwarden {
             m_vault.getOrchesstrator()->getCrypto()->generateUnresolvedKey(key_err.value());
             
         if (!unres_key_err.has_value()) {
-            return;
+            return this;
         }
 
         /**
@@ -280,7 +280,7 @@ namespace clientwarden::vendor::bitwarden {
             m_vault.getOrchesstrator()->getCrypto()->encrypt(old_name, m_item_keys);
             
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         new_name = std::move(value_err.value());
@@ -291,7 +291,7 @@ namespace clientwarden::vendor::bitwarden {
         value_err = m_vault.getOrchesstrator()->getCrypto()->encrypt(old_username, m_item_keys);
             
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         new_username = std::move(value_err.value());
@@ -302,7 +302,7 @@ namespace clientwarden::vendor::bitwarden {
         value_err = m_vault.getOrchesstrator()->getCrypto()->encrypt(old_password, m_item_keys);
             
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         new_password = std::move(value_err.value());
@@ -313,7 +313,7 @@ namespace clientwarden::vendor::bitwarden {
         value_err = m_vault.getOrchesstrator()->getCrypto()->encrypt(old_totp, m_item_keys);
             
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         new_totp = std::move(value_err.value());
@@ -324,7 +324,7 @@ namespace clientwarden::vendor::bitwarden {
         value_err = m_vault.getOrchesstrator()->getCrypto()->encrypt(old_notes, m_item_keys);
             
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         new_notes = std::move(value_err.value());
@@ -514,14 +514,14 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("username") ||
             !m_data_["login"]["username"].is_string()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->decrypt(m_data_["login"]["username"], m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         username = std::move(value_err.value());
@@ -531,14 +531,14 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("password") ||
             !m_data_["login"]["password"].is_string()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->decrypt(m_data_["login"]["password"], m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         password = std::move(value_err.value());
@@ -548,33 +548,110 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("totp") ||
             !m_data_["login"]["totp"].is_string()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->decrypt(m_data_["login"]["totp"], m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
+
+        Botan::secure_vector<uint8_t> raw_val = std::move(value_err.value());
+
+        Botan::secure_vector<uint8_t> secret;
+        std::string algo = "SHA-1";
+        int digits = 6;
+        int period = 30;
+
+        std::string_view raw(reinterpret_cast<const char*>(
+            raw_val.data()), raw_val.size());
         
-        /**
-         * @todo TOTP Stuff!
-         */
+        if (raw.starts_with("otpauth://")) {
+            /**
+             * @brief First, parse the URL, then get all the values and then use botan to generate a
+             *  totp code.
+             */
+            boost::urls::result<boost::urls::url_view> url_result = 
+                boost::urls::parse_uri({reinterpret_cast<const char*>(
+                    raw_val.data()), raw_val.size()});
+            if (!url_result) {
+                return this;
+            }
+
+            boost::urls::url_view parsed_url = url_result.value();
+
+            if (parsed_url.scheme() != "otpauth" || parsed_url.encoded_host() != "totp") {
+                return this;
+            }
+
+            for (boost::urls::param_pct_view param : parsed_url.encoded_params()) {
+                if (std::string_view(param.key) == "secret") {
+                    std::string_view val(param.value);
+                    secret.assign(val.begin(), val.end());
+                } else if (std::string_view(param.key) == "algorithm") {
+                    algo = std::string(std::string_view(param.value));
+                } else if (std::string_view(param.key) == "digits") {
+                    digits = utils::getInt(std::string(std::string_view(param.value)), 6);
+                } else if (std::string_view(param.key) == "period") {
+                    period = utils::getInt(std::string(std::string_view(param.value)), 30);
+                }
+            }
+
+            if (secret.empty()) {
+                return this;
+            }
+        } else {
+            secret = raw_val;
+        }
+
+        Botan::secure_vector<uint8_t> secure_secret = utils::b32Decode(secret);
+
+        Botan::secure_scrub_memory(raw_val.data(), raw_val.size());
+        Botan::secure_scrub_memory(secret.data(), secret.size());
+
+        if (algo == "sha256" || algo == "SHA256") {
+            algo = "SHA-256";
+        } else if (algo == "sha512" || algo == "SHA512") {
+            algo = "SHA-512";
+        } else {
+            algo = "SHA-1";
+        }
+
+        if (digits > 8 || digits < 6) {
+            digits = 6;
+        }
+
+        if (period < 1 || period > 3600) {
+            period = 30;
+        }
+
+        Botan::TOTP totp_code(secure_secret.data(), secure_secret.size(), algo, digits, period);
+
+        Botan::secure_scrub_memory(secure_secret.data(), secure_secret.size());
+
+        uint32_t code = totp_code.generate_totp(std::chrono::system_clock::now());
+
+        totp.code = utils::getSecureVector(code);
+        totp.remaining = utils::s_getTime(utils::s_getCurrentTime(period));
+        totp.period = period;
+
+        return this;
     }
     
     BitwardenLoginItem* getTotpSecret(Botan::secure_vector<uint8_t>& totp) {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("totp") ||
             !m_data_["login"]["totp"].is_string()) {
-            return;
+            return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
             m_vault.getOrchestrator()->getCrypto()->decrypt(m_data_["login"]["totp"], m_item_keys);
         
         if (!value_err.has_value()) {
-            return;
+            return this;
         }
 
         totp = std::move(value_err.value());
@@ -584,7 +661,7 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("uris") ||
             !m_data_["login"]["uris"].is_array()) {
-            return;
+            return this;
         }
 
         for (nlohmann::json uri : m_data_["login"]["uris"]) {
@@ -603,7 +680,7 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("passwordHistory") ||
             !m_data_["login"]["passwordHistory"].is_array()) {
-            return;
+            return this;
         }
 
         for (nlohmann::json history : m_data_["login"]["passwordHistory"]) {
@@ -631,7 +708,7 @@ namespace clientwarden::vendor::bitwarden {
         if (!m_init || !m_data_.contains("login") ||
             !m_data_["login"].is_object() || !m_data_["login"].contains("fido2Credentials") ||
             !m_data_["login"]["fido2Credentials"].is_array()) {
-            return;
+            return this;
         }
 
         for (nlohmann::json passkey : m_data_["login"]["fido2Credentials"]) {
@@ -645,5 +722,6 @@ namespace clientwarden::vendor::bitwarden {
     
     BitwardenLoginItem* getType(CipherType& val) {
         val = CipherType::Login;
+        return this;
     }
 }

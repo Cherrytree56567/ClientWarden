@@ -8,6 +8,12 @@ namespace clientwarden::vendor::bitwarden {
         Botan::secure_vector<uint8_t> password;
     };
 
+    struct TOTPCode {
+        Botan::secure_vector<uint8_t> code;
+        Timestamp expiry;
+        int period;
+    };
+
     class BitwardenLoginItem 
         : public GenericItemImpl<BitwardenGenericItem, BitwardenLoginItem> {
     public:
