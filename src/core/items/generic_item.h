@@ -32,7 +32,7 @@ namespace clientwarden {
     /**
      * @brief Represents the result of an operation.
      */
-    enum ItemError {
+    enum class ItemError {
         OrchestratorError,
         Uninitialised,
         Success,

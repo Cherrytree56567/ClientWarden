@@ -6,7 +6,7 @@ namespace clientwarden::vendor::bitwarden {
         if (!item_creation) {
             if (!m_data_.contains("login") || !m_data_["login"].is_object() ||
                 !m_data_.contains("type") || !m_data_["type"].is_number_integer() ||
-                m_data["type"] != 1) {
+                m_data["type"] != std::to_underlying(ItemType::Login)) {
                 m_init = false;
             } else {
                 m_init = true;
@@ -101,7 +101,7 @@ namespace clientwarden::vendor::bitwarden {
             m_data_["revisionDate"] = utils::s_getCurrentTime();
             m_data_["secureNote"] = nullptr;
             m_data_["sshKey"] = nullptr;
-            m_data_["type"] = 1;
+            m_data_["type"] = std::to_underlying(ItemType::Login);
             m_data_["viewPassword"] = true;
 
             m_init = true;
@@ -253,9 +253,9 @@ namespace clientwarden::vendor::bitwarden {
 
         getName(old_name);
         getUsername(old_username);
-        getPassword(old_username);
-        getTotpSecret(old_username);
-        getNotes(old_username);
+        getPassword(old_password);
+        getTotpSecret(old_totp);
+        getNotes(old_notes);
         getWebsites(old_websites);
         getPasswordHistory(old_password_history);
         getFields(old_fields);
@@ -369,7 +369,7 @@ namespace clientwarden::vendor::bitwarden {
         new_data["login"]["uris"] = nlohmann::json::array();
         new_data["login"]["username"] = utils::getString(new_username);
         new_data["name"] = std::move(name_err.value());
-        new_data["notes"] = nullptr;
+        new_data["notes"] = utils::getString(new_notes);
         new_data["object"] = "cipherDetails";
         new_data["organizationId"] = nullptr;
         new_data["organizationUseTotp"] = nullptr;
@@ -392,7 +392,7 @@ namespace clientwarden::vendor::bitwarden {
         new_data["revisionDate"] = utils::s_getCurrentTime();
         new_data["secureNote"] = nullptr;
         new_data["sshKey"] = nullptr;
-        new_data["type"] = 1;
+        new_data["type"] = std::to_underlying(ItemType::Login);
         new_data["viewPassword"] = m_data_["viewPassword"];
 
         /**
@@ -411,7 +411,7 @@ namespace clientwarden::vendor::bitwarden {
 
             new_data["login"]["uris"].push_back(std::move(value_err.value()));
 
-            Botan::zap(website);
+            Botan::secure_scrub_memory(website);
         }
 
         /**
@@ -439,7 +439,7 @@ namespace clientwarden::vendor::bitwarden {
 
             new_field_data["passwordHistory"].push_back(std::move(data_field_history));
 
-            Botan::zap(history.password);
+            Botan::secure_scrub_memory(history.password);
         }
 
         /**
@@ -488,15 +488,20 @@ namespace clientwarden::vendor::bitwarden {
 
             new_data["fields"].push_back(std::move(custom_data));
 
-            Botan::zap(field.name);
-            Botan::zap(field.value);
+            Botan::secure_scrub_memory(field.name);
+            Botan::secure_scrub_memory(field.value);
         }
 
-        Botan::zap(old_name);
-        Botan::zap(old_username);
-        Botan::zap(old_password);
-        Botan::zap(old_totp);
-        Botan::zap(old_notes);
+        Botan::secure_scrub_memory(old_name);
+        Botan::secure_scrub_memory(old_username);
+        Botan::secure_scrub_memory(old_password);
+        Botan::secure_scrub_memory(old_totp);
+        Botan::secure_scrub_memory(old_notes);
+        Botan::secure_scrub_memory(new_name);
+        Botan::secure_scrub_memory(new_username);
+        Botan::secure_scrub_memory(new_password);
+        Botan::secure_scrub_memory(new_totp);
+        Botan::secure_scrub_memory(new_notes);
         
         key_err.value().clear();
 
@@ -720,8 +725,8 @@ namespace clientwarden::vendor::bitwarden {
         }
     }
     
-    BitwardenLoginItem* getType(CipherType& val) {
-        val = CipherType::Login;
+    BitwardenLoginItem* getType(ItemType& val) {
+        val = ItemType::Login;
         return this;
     }
 }

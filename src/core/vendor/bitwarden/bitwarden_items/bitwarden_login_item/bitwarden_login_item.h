@@ -43,6 +43,6 @@ namespace clientwarden::vendor::bitwarden {
         BitwardenLoginItem* getPasskeyCurve(Timestamp& value);
         BitwardenLoginItem* getPasskeyCredId(Timestamp& value);
         BitwardenLoginItem* getPasskeyCounter(Timestamp& value);*/
-        BitwardenLoginItem* getType(CipherType& val);
+        BitwardenLoginItem* getType(ItemType& val);
     };
 }
