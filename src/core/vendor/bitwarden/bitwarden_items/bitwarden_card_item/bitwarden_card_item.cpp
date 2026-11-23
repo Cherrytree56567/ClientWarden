@@ -467,6 +467,8 @@ namespace clientwarden::vendor::bitwarden {
                 key_err.value());
             
             if (!value_err.has_value()) {
+                Botan::secure_scrub_memory(field.name.data(), field.name.size());
+                Botan::secure_scrub_memory(field.value.data(), field.value.size());
                 continue;
             }
 
@@ -482,6 +484,8 @@ namespace clientwarden::vendor::bitwarden {
                     key_err.value());
                 
                 if (!value_err.has_value()) {
+                    Botan::secure_scrub_memory(field.name.data(), field.name.size());
+                    Botan::secure_scrub_memory(field.value.data(), field.value.size());
                     continue;
                 }
 
