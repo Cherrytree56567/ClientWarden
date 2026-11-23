@@ -401,8 +401,6 @@ namespace clientwarden::vendor::bitwarden {
         new_data["organizationUseTotp"] = nullptr;
         new_data["passwordHistory"] = nlohmann::json::array();
         new_data["permissions"] = m_data_["permissions"];
-        new_data["permissions"]["delete"] = m_data_["permissions"]["delete"];
-        new_data["permissions"]["restore"] = m_data_["permissions"]["restore"];
         new_data["reprompt"] = m_data_["reprompt"];
 
         if (m_enable_bank_account_field_) {
@@ -481,8 +479,8 @@ namespace clientwarden::vendor::bitwarden {
             nlohmann::json custom_data;
             nlohmann::json custom_data_field;
 
-            custom_data["type"] = std::to_string(std::to_underlying(field.type));
-            custom_data_field["Type"] = std::to_string(std::to_underlying(field.type));
+            custom_data["type"] = std::to_underlying(field.type);
+            custom_data_field["Type"] = std::to_underlying(field.type);
 
             value_err = m_vault.getOrchestrator()->getCrypto()->encrypt(field.name, 
                 key_err.value());

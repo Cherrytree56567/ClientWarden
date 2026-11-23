@@ -288,7 +288,7 @@ namespace clientwarden::vendor::bitwarden {
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
-            m_vault.getOrchestrator()->getCrypto()->encrypt(country, m_item_keys);
+            m_vault.getOrchestrator()->getCrypto()->encrypt(email, m_item_keys);
         
         if (!value_err.has_value()) {
             return this;
@@ -355,7 +355,7 @@ namespace clientwarden::vendor::bitwarden {
         return this;
     }
     
-    BitwardenIdentityItem* BitwardenIdentityItem::setLicenseNumber(
+    BitwardenIdentityItem* BitwardenIdentityItem::setLicenceNumber(
         const Botan::secure_vector<uint8_t>& license_number) {
         if (!m_init || !m_data_.contains("identity") ||
             !m_data_["identity"].is_object()) {
@@ -688,18 +688,6 @@ namespace clientwarden::vendor::bitwarden {
         new_address_1 = std::move(value_err.value());
 
         /**
-         * @note Set the Address 1.
-         */
-        value_err = m_vault.getOrchestrator()->getCrypto()->encrypt(old_address_1, 
-            key_err.value());
-            
-        if (!value_err.has_value()) {
-            return this;
-        }
-
-        new_address_1 = std::move(value_err.value());
-
-        /**
          * @note Set the Address 2.
          */
         value_err = m_vault.getOrchestrator()->getCrypto()->encrypt(old_address_2, 
@@ -973,8 +961,6 @@ namespace clientwarden::vendor::bitwarden {
         new_data["organizationUseTotp"] = nullptr;
         new_data["passwordHistory"] = nlohmann::json::array();
         new_data["permissions"] = m_data_["permissions"];
-        new_data["permissions"]["delete"] = m_data_["permissions"]["delete"];
-        new_data["permissions"]["restore"] = m_data_["permissions"]["restore"];
         new_data["reprompt"] = m_data_["reprompt"];
 
         if (m_enable_bank_account_field_) {
@@ -1000,13 +986,15 @@ namespace clientwarden::vendor::bitwarden {
             nlohmann::json custom_data;
             nlohmann::json custom_data_field;
 
-            custom_data["type"] = std::to_string(std::to_underlying(field.type));
-            custom_data_field["Type"] = std::to_string(std::to_underlying(field.type));
+            custom_data["type"] = std::to_underlying(field.type);
+            custom_data_field["Type"] = std::to_underlying(field.type);
 
             value_err = m_vault.getOrchestrator()->getCrypto()->encrypt(field.name, 
                 key_err.value());
             
             if (!value_err.has_value()) {
+                Botan::secure_scrub_memory(field.name.data(), field.name.size());
+                Botan::secure_scrub_memory(field.value.data(), field.value.size());
                 continue;
             }
 
@@ -1022,6 +1010,8 @@ namespace clientwarden::vendor::bitwarden {
                     key_err.value());
                 
                 if (!value_err.has_value()) {
+                    Botan::secure_scrub_memory(field.name.data(), field.name.size());
+                    Botan::secure_scrub_memory(field.value.data(), field.value.size());
                     continue;
                 }
 
@@ -1210,21 +1200,21 @@ namespace clientwarden::vendor::bitwarden {
     BitwardenIdentityItem* BitwardenIdentityItem::getCountry(
         Botan::secure_vector<uint8_t>& country) {
         if (!m_init || !m_data_.contains("identity") ||
-            !m_data_["identity"].is_object() || !m_data_["identity"].contains("company") ||
-            !m_data_["identity"]["company"].is_string()) {
-            company.clear();
+            !m_data_["identity"].is_object() || !m_data_["identity"].contains("country") ||
+            !m_data_["identity"]["country"].is_string()) {
+            country.clear();
             return this;
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
-            m_vault.getOrchestrator()->getCrypto()->decrypt(m_data_["identity"]["company"], 
+            m_vault.getOrchestrator()->getCrypto()->decrypt(m_data_["identity"]["country"], 
                 m_item_keys);
         
         if (!value_err.has_value()) {
             return this;
         }
 
-        company = std::move(value_err.value());
+        country = std::move(value_err.value());
 
         return this;
     }
