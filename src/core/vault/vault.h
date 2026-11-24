@@ -1,19 +1,26 @@
 #pragma once
 #include <memory>
 #include <variant>
+#include <algorithm>
 #include <botan/secmem.h>
 #include "sync/sync.h"
+#include "query/query.h"
 #include "clientwarden.h"
+#include "folder/folder.h"
 #include "crypto/crypto.h"
 #include "network/network.h"
 #include "runtime/runtime.h"
 #include "storage/storage.h"
 #include "autofill/autofill.h"
 #include "settings/settings.h"
+#include "items/generic_item.h"
 #include "versioning/versioning.h"
 #include "orchestrator/orchestrator.h"
 
 namespace clientwarden {
+    using namespace ::clientwarden::vault;
+    using namespace ::clientwarden::platforms;
+
     /**
      * @brief AuthResult is used to pass the auth status to the caller
      *
@@ -22,10 +29,12 @@ namespace clientwarden {
     enum class AuthResult {
         Failed,
         InvalidCreds,
+        InvalidParams,
         NetworkError,
         KeychainError,
         SyncError,
         RuntimeError,
+        SettingsError,
         CryptoError,
         InvalidVault,
         Unimplemented,
@@ -60,7 +69,7 @@ namespace clientwarden {
     /**
      * @brief Reperesents cred types that are accepted by login()
      */
-    using Credential = std::variant<PasswordCredential, MultiFactorProof>;
+    using Credential = std::variant<PasswordCredential, vault::MultiFactorProof>;
 
     /**
      * @brief Reperesents cred types that are accepted by signup()
@@ -120,13 +129,13 @@ namespace clientwarden {
         /**
          * @brief Passes AuthKeys to Settings to setup Biometric Unlock
          */
-        virtual bool setupBiometricUnlock(UnlockType type) = 0;
+        virtual bool setupBiometricUnlock(vault::UnlockType type) = 0;
 
         /**
          * @brief Verifies Master Password for a reprompt check before revealing a
          *  sensitive item.
          */
-        virtual std::unexpected<bool, AuthResult> checkReprompt(
+        virtual std::expected<bool, AuthResult> checkReprompt(
             Botan::secure_vector<uint8_t> password) = 0;
 
         /**
@@ -161,7 +170,7 @@ namespace clientwarden {
         /**
          * @brief Retrieves a Cipher Query
          */
-        virtual std::shared_ptr<CipherQuery> getCipherQuery() = 0;
+        virtual std::shared_ptr<Query> getQuery() = 0;
 
         /**
          * @brief Retrieves the Current Auth State of the Vault

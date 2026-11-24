@@ -2,6 +2,8 @@
 #include "vault/autofill/autofill.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+    
     class BitwardenAutoFill : public AutoFill {
     public:
         explicit BitwardenAutoFill(std::shared_ptr<Runtime> runtime, 

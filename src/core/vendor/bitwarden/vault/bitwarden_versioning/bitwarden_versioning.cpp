@@ -10,7 +10,7 @@ namespace clientwarden::vendor::bitwarden::vault {
      * @brief Get the network version
      * @example version 2026.2.0
      */
-    bool BitwardenVersioning::determineVersion() {
+    VersioningError BitwardenVersioning::determineVersion() {
         m_init = false;
 
         std::expected<Botan::secure_vector<uint8_t>, NetworkError> net_version = 
@@ -21,21 +21,21 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         if (!net_version.has_value()) {
             if (!run_version.has_value()) {
-                return false;
+                return VersioningError::NoVersion;
             }
 
             std::optional<semver::version> run_ver = 
                 semver::from_string_noexcept(utils::getString(run_version.value()));
             
             if (!run_ver.has_value()) {
-                return false;
+                return VersioningError::InvalidVersion;
             }
 
             m_version_ = run_ver.value();
             
             m_init = true;
 
-            return true;
+            return VersioningError::Success;
         }
 
         /**
@@ -49,14 +49,14 @@ namespace clientwarden::vendor::bitwarden::vault {
             
             if (!net_ver.has_value()) {
                 if (!run_ver.has_value()) {
-                    return false;
+                    return VersioningError::InvalidVersion;
                 }
 
                 m_version_ = run_ver.value();
                 
                 m_init = true;
 
-                return true;
+                return VersioningError::Success;
             }
 
             if (!run_ver.has_value()) {
@@ -64,7 +64,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 
                 m_init = true;
 
-                return true;
+                return VersioningError::Success;
             }
 
             if (net_ver.value() > run_ver.value()) {
@@ -75,7 +75,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 if (run_err != RuntimeError::Success) {
                     m_init = true;
 
-                    return false;
+                    return VersioningError::RuntimeError;
                 }
             } else {
                 m_version_ = run_ver.value();
@@ -85,7 +85,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 semver::from_string_noexcept(utils::getString(net_version.value()));
             
             if (!net_ver.has_value()) {
-                return false;
+                return VersioningError::InvalidVersion;
             }
             
             m_version_ = net_ver.value();
@@ -93,7 +93,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         m_init = true;
 
-        return true;
+        return VersioningError::Success;
     }
 
     std::expected<bool, VersioningError> BitwardenVersioning::hasFeature(int num_feature) {

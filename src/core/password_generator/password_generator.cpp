@@ -17,7 +17,7 @@ namespace clientwarden {
             return *this;
         }
 
-        std::vector<std::string> chars = alphabets;
+        std::vector<std::string> chars(alphabets.begin(), alphabets.end());
 
         if (caps) {
             chars.insert(chars.end(), alphabetsCaps.begin(), alphabetsCaps.end());
@@ -35,11 +35,7 @@ namespace clientwarden {
         while (i < static_cast<size_t>(length)) {
             uint8_t value;
 
-            if (RAND_bytes(&value, 1) != 1) {
-                logger->error("RAND_bytes failed");
-                password.clear();
-                return *this;
-            }
+            Botan::system_rng().randomize(&value, 1)
 
             if (value >= 256 - (256 % chars.size())) {
                 continue;
@@ -63,11 +59,7 @@ namespace clientwarden {
             uint32_t value;
 
             while (true) {
-                if (RAND_bytes(reinterpret_cast<uint8_t*>(&value), sizeof(value)) != 1) {
-                    logger->error("RAND_bytes failed");
-                    password.clear();
-                    return *this;
-                }
+                m_rng_.randomize(reinterpret_cast<uint8_t*>(&value), sizeof(value));
 
                 if (value < UINT32_MAX - (UINT32_MAX % static_cast<uint32_t>(word_list.size()))) {
                     break;
@@ -99,11 +91,7 @@ namespace clientwarden {
         while (pin.size() < static_cast<size_t>(length)) {
             uint8_t value;
 
-            if (RAND_bytes(&value, 1) != 1) {
-                logger->error("RAND_bytes failed");
-                pin.clear();
-                return *this;
-            }
+            m_rng_.randomize(&value, 1);
             
             if (value >= 250) {
                 continue;

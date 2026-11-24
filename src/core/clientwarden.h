@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <botan/secmem.h>
 #include <spdlog/spdlog.h>
 

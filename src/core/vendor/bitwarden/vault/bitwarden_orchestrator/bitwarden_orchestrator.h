@@ -2,6 +2,8 @@
 #include "vault/orchestrator/orchestrator.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+    
     class BitwardenOrchestrator : public Orchestrator {
     public:
         explicit BitwardenOrchestrator(std::shared_ptr<Crypto> crypto, 

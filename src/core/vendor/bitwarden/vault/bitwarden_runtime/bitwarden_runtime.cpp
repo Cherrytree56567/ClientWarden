@@ -1075,9 +1075,9 @@ namespace clientwarden::vendor::bitwarden::vault {
         if (!profile.contains("email") || !profile["email"].is_string() ||
             !profile.contains("name") || !profile["name"].is_string() ||
             !profile.contains("id") || !profile["id"].is_string() ||
-            !profile.contains("premium") || !profile["premium"].is_bool() ||
+            !profile.contains("premium") || !profile["premium"].is_boolean() ||
             !profile.contains("organizations") ||
-            !profile.contains("twoFactorEnabled") || !profile["twoFactorEnabled"].is_bool() ||
+            !profile.contains("twoFactorEnabled") || !profile["twoFactorEnabled"].is_boolean() ||
             !profile.contains("securityStamp") || !profile["securityStamp"].is_string() ||
             !profile.contains("creationDate") || !profile["creationDate"].is_string() ||
             !profile.contains("avatarColor") || !profile["avatarColor"].is_string()) {
@@ -1085,12 +1085,12 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         Profile result;
-        result.email = utils::getSecureVector(profile["email"]);
-        result.name = utils::getSecureVector(profile["name"]);
+        result.email = utils::getSecureVector(profile["email"].get<std::string>());
+        result.name = utils::getSecureVector(profile["name"].get<std::string>());
         result.id = profile["id"];
         result.premium = profile["premium"];
         result.multi_factor_enabled = profile["twoFactorEnabled"];
-        result.security_stamp = utils::getSecureVector(profile["securityStamp"]);
+        result.security_stamp = utils::getSecureVector(profile["securityStamp"].get<std::string>());
         result.creation_date = utils::s_getTime(profile["creationDate"]);
         result.avatar_color = profile["avatarColor"];
         result.raw = profile;
@@ -1100,13 +1100,13 @@ namespace clientwarden::vendor::bitwarden::vault {
                 if (!org.contains("id") || !org["id"].is_string() ||
                     !org.contains("name") || !org["name"].is_string() ||
                     !org.contains("type") || !org["type"].is_number() ||
-                    !org.contains("enabled") || !org["enabled"].is_bool()) {
+                    !org.contains("enabled") || !org["enabled"].is_boolean()) {
                     continue;
                 }
 
                 OrganisationMembership membership;
                 membership.id = org["id"];
-                membership.name = utils::getSecureVector(org["name"]);
+                membership.name = utils::getSecureVector(org["name"].get<std::string>());
                 membership.role = static_cast<OrganisationRole>(org["type"]);
                 membership.enabled = org["enabled"];
 
@@ -1148,7 +1148,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             return std::unexpected(RuntimeError::InvalidVault);
         }
 
-        return utils::getSecureVector(m_vault_data["version"]);
+        return utils::getSecureVector(m_vault_data["version"].get<std::string>());
     }
     
     /**

@@ -21,7 +21,7 @@ namespace clientwarden::vendor::bitwarden {
         std::shared_ptr<GenericItem> getItem(ItemId uuid) override;
         std::shared_ptr<Folder> getFolder(ItemId uuid) override;
         std::shared_ptr<Folder> createFolder() override;
-        std::shared_ptr<CipherQuery> getCipherQuery() override;
+        std::shared_ptr<Query> getQuery() override;
 
         Vendor getVendor() override;
     private:

@@ -1,10 +1,11 @@
 #pragma once
 #include <vector>
-#include <shared>
+#include <memory>
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "../runtime/runtime.h"
 #include "../network/network.h"
+#include "../orchestrator/orchestrator.h"
 #include "thread/thread.h"
 #include "clientwarden.h"
 
@@ -113,6 +114,7 @@ namespace clientwarden::vault {
     enum class SyncError {
         RuntimeError,
         NetworkError,
+        StorageFailure,
         Unknown,
         Success
     };
@@ -120,7 +122,8 @@ namespace clientwarden::vault {
     class Sync {
     public:
         Sync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
-            std::shared_ptr<Settings> settings);
+            std::shared_ptr<Orchestrator> orchestrator, std::shared_ptr<Settings> settings, 
+            std::shared_ptr<Storage> storage);
         virtual ~Sync() = default;
 
         /**
@@ -180,7 +183,9 @@ namespace clientwarden::vault {
 
         std::shared_ptr<Runtime> m_runtime;
         std::shared_ptr<Network> m_network;
+        std::shared_ptr<Orchestrator> m_orchestrator;
         std::shared_ptr<Settings> m_settings;
+        std::shared_ptr<Storage> m_storage;
         Thread m_sync_thread;
     };
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <expected>
+#include <algorithm>
 #include <botan/secmem.h>
 #include "clientwarden.h"
 #include "../crypto/crypto.h"
@@ -8,6 +9,8 @@
 #include "../runtime/runtime.h"
 
 namespace clientwarden::vault {
+    using namespace ::clientwarden::vault;
+    
     enum class OrchestratorError {
         InvalidSession,
         NoPerms,

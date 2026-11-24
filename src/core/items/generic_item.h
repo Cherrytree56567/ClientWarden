@@ -2,8 +2,11 @@
 #include <vector>
 #include <string>
 #include <expected>
+#include <algorithm>
 #include <functional>
+#include <filesystem>
 #include <botan/secmem.h>
+#include <nlohmann/json.hpp>
 #include "clientwarden.h"
 
 namespace clientwarden {

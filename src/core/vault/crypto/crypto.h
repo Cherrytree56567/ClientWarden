@@ -3,8 +3,15 @@
 #include <expected>
 #include <ranges>
 #include <utility>
+#include <algorithm>
+#include <botan/mac.h>
+#include <botan/hash.h>
 #include <botan/secmem.h>
 #include <botan/pwdhash.h>
+#include <botan/mem_ops.h>
+#include <botan/auto_rng.h>
+#include <botan/cipher_mode.h>
+#include "utils/utils.h"
 #include "clientwarden.h"
 
 namespace clientwarden::vault {
@@ -23,6 +30,7 @@ namespace clientwarden::vault {
         InvalidParams,
         InvalidFamily,
         DecryptionError,
+        EncryptionError,
         Unsupported,
         None,
         Success

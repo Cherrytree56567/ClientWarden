@@ -2,7 +2,11 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <algorithm>
 #include <botan/secmem.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include "vault/vault.h"
 
 namespace clientwarden {
@@ -38,7 +42,7 @@ namespace clientwarden {
         /**
          * @brief Returns a list of all the Vault UUIDs
          */
-        Botan::secure_vector<ItemId> getVaultUUIDs();
+        std::vector<ItemId> getVaultUUIDs();
 
         /**
          * @brief Gets the total amount of vaults in m_vault_

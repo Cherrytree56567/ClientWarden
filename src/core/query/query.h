@@ -1,12 +1,13 @@
 #pragma once
 #include <string>
+#include <expected>
 #include "clientwarden.h"
 
 namespace clientwarden {
     /**
      * @brief Represents the result of an operation.
      */
-    enum QueryError {
+    enum class QueryError {
         Uninitialised,
         RuntimeError,
         Success,

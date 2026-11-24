@@ -1,8 +1,11 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include <botan/secmem.h>
 #include "../runtime/runtime.h"
+#include "../orchestrator/orchestrator.h"
+#include "../crypto/crypto.h"
 #include "clientwarden.h"
 
 namespace clientwarden::vault {

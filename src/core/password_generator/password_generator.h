@@ -1,9 +1,15 @@
 #pragma once
 #include <string>
-#include <word_list.h>
-#include "Storage/Storage.h"
+#include <wordlist.h>
+#include <botan/auto_rng.h>
+#include "storage/storage.h"
+#include "crypto/crypto.h"
+#include "clientwarden.h"
 
 namespace clientwarden {
+    using namespace ::clientwarden::vault;
+    using namespace ::clientwarden::platforms;
+
     class PasswordGenerator {
     public:
         PasswordGenerator();
@@ -17,5 +23,6 @@ namespace clientwarden {
     private:
         std::shared_ptr<Storage> m_storage_;
         bool m_init_ = false;
+        static thread_local Botan::AutoSeeded_RNG m_rng_;
     };
 }

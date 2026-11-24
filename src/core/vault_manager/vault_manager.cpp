@@ -12,7 +12,7 @@ namespace clientwarden {
             std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> console_sink = 
                 std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
             std::shared_ptr<spdlog::sinks::basic_file_sink_mt> file_sink = 
-                std::make_shared<spdlog::sinks::basic_file_sink_mt>(m_storage_.path.string() + "/cw.log", true);
+                std::make_shared<spdlog::sinks::basic_file_sink_mt>(m_storage_.getPath().string() + "/cw.log", true);
 
             g_logger = std::make_shared<spdlog::logger>("ClientWarden", spdlog::sinks_init_list{console_sink, file_sink});
             g_logger->set_level(spdlog::level::trace);
@@ -42,8 +42,8 @@ namespace clientwarden {
         return std::unexpected(VaultManagerError::NotFound);
     }
 
-    Botan::secure_vector<ItemId> VaultManager::getVaultUUIDs() {
-        Botan::secure_vector<ItemId> result;
+    std::vector<ItemId> VaultManager::getVaultUUIDs() {
+        std::vector<ItemId> result;
         result.reserve(m_vaults_.size());
 
         for (const auto& [id, vault] : m_vaults_) {
@@ -90,16 +90,16 @@ namespace clientwarden {
             return std::unexpected(VaultManagerError::NotFound);
         }
         
-        std::shared_ptr<Vault> vault = m_pending_vaults_.at(uuid);
+        std::shared_ptr<Vault> vault = m_pending_vaults_.at(id);
 
         LoginResult result = vault->login(cred);
 
         if (std::holds_alternative<AuthResult>(result)) {
             if (std::get<AuthResult>(result) == AuthResult::Success) {
-                m_vaults_[vault_id] = vault;
+                m_vaults_[id] = vault;
                 m_pending_vaults_.erase(id);
 
-                saveVault(vault.getVendor(), id);
+                saveVault(vault->getVendor(), id);
                 
                 return result;
             }

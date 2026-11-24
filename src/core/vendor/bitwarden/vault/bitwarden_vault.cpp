@@ -82,8 +82,8 @@ namespace clientwarden::vendor::bitwarden {
             return AuthResult::NetworkError;
         }
 
-        if (std::holds_alternative<vault::AuthResult>(token.value())) {
-            vault::AuthResult auth_result = std::get<vault::AuthResult>(token.value());
+        if (std::holds_alternative<NetworkAuthResult>(token.value())) {
+            NetworkAuthResult auth_result = std::get<NetworkAuthResult>(token.value());
 
             m_network->setSession(auth_result.session);
 
@@ -163,7 +163,7 @@ namespace clientwarden::vendor::bitwarden {
 
             return AuthResult::Success;
         } else if (std::holds_alternative<MultiFactorChallenge>(token.value())) {
-            m_password_cred_.email = credential.email;
+            m_password_cred_.m_email = credential.m_email;
             m_password_cred_set_ = true;
 
             m_state = AuthState::WaitingFor2FA;
@@ -266,14 +266,14 @@ namespace clientwarden::vendor::bitwarden {
                 }
 
                 kdf_params.memory = vault_info["masterPasswordUnlock"]["kdf"]["memory"];
-                kdf_params.parallelism = vault_info["masterPasswordUnlock"]["kdf"]["parallelism"];
+                kdf_params.parallel = vault_info["masterPasswordUnlock"]["kdf"]["parallelism"];
             }
 
             /**
              * @brief Get AuthKeys.
              */
             std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> internal_key = 
-                m_crypto->makeInternalKey(credential.m_password, salt,
+                m_crypto->makeInternalKey(credential.m_password, utils::getSecureVector(salt),
                 kdf_params);
             
             if (!internal_key.has_value()) {
@@ -498,7 +498,7 @@ namespace clientwarden::vendor::bitwarden {
         
     }
     
-    std::shared_ptr<CipherQuery> BitWardenVault::getCipherQuery() {
+    std::shared_ptr<Query> BitWardenVault::getQuery() {
         
     }
 

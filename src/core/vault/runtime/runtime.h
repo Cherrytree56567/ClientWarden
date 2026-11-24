@@ -1,11 +1,17 @@
 #pragma once
 #include <mutex>
+#include <algorithm>
+#include <expected>
 #include <botan/secmem.h>
 #include <nlohmann/json.hpp>
 #include "clientwarden.h"
-#include "../profiles/profile.h"
+#include "storage/storage.h"
+#include "../profile/profile.h"
+#include "utils/utils.h"
 
 namespace clientwarden::vault {
+    using ::clientwarden::platforms::Storage;
+
     enum class RuntimeError {
         VaultNotFound,
         InvalidVault,
@@ -72,17 +78,16 @@ namespace clientwarden::vault {
     }
 
     constexpr ChangeType getChangeType(std::string_view type) {
-        switch (type) {
-            case "created":
-                return ChangeType::Created;
-            case "createdPartial":
-                return ChangeType::CreatedPartial;
-            case "updated":
-                return ChangeType::Updated;
-            case "deleted":
-                return ChangeType::Deleted;
-            default:
-                return ChangeType::Unknown;
+        if (type == "created") {
+            return ChangeType::Created;
+        } else if (type == "createdPartial") {
+            return ChangeType::CreatedPartial;
+        } else if (type == "updated") {
+            return ChangeType::Updated;
+        } else if (type == "deleted") {
+            return ChangeType::Deleted;
+        } else {
+            return ChangeType::Unknown;
         }
     }
 

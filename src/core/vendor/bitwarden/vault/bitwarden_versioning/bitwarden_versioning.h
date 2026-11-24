@@ -1,8 +1,11 @@
 #pragma once
+#include <algorithm>
 #include "vault/versioning/versioning.h"
 #include <semver.hpp>
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+
     enum class BitwardenFeature : int {
         DataField,
         BankAccount,
@@ -16,7 +19,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             std::shared_ptr<Runtime> runtime);
         ~BitwardenVersioning() override = default;
 
-        bool determineVersion() override;
+        VersioningError determineVersion() override;
 
         std::expected<bool, VersioningError> hasFeature(int feature) override;
         

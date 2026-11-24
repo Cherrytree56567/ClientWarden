@@ -2,6 +2,9 @@
 #include "vault/runtime/runtime.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+    using namespace ::clientwarden::platforms;
+
     class BitwardenRuntime : public Runtime {
     public:
         explicit BitwardenRuntime(std::shared_ptr<Storage> storage);

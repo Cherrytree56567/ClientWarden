@@ -1,4 +1,5 @@
 #include "bitwarden_query.h"
+#include "vault.h"
 
 namespace clientwarden {
     BitwardenQuery::BitwardenQuery(Vault& vault) : Query(vault) {

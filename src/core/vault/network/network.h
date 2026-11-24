@@ -9,7 +9,7 @@
 #include <botan/secmem.h>
 #include <nlohmann/json.hpp>
 #include "../settings/settings.h"
-#include "../profiles/profile.h"
+#include "../profile/profile.h"
 #include "thread/thread.h"
 #include "clientwarden.h"
 
@@ -53,7 +53,7 @@ namespace clientwarden::vault {
     /**
      * @brief Provides the successful result for getToken()
      */
-    struct AuthResult {
+    struct NetworkAuthResult {
         AuthSession session;
         nlohmann::json raw;
     };
@@ -81,7 +81,7 @@ namespace clientwarden::vault {
         nlohmann::json raw;
     };
 
-    using TokenResult = std::variant<AuthResult, MultiFactorChallenge>;
+    using TokenResult = std::variant<NetworkAuthResult, MultiFactorChallenge>;
 
     /**
      * @brief Used to provide getToken() with a 2FA arg to login
@@ -202,7 +202,7 @@ namespace clientwarden::vault {
          */
         virtual std::expected<nlohmann::json, NetworkError> downloadAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, 
-            std::function<void(float)> on_progress = nullptr, 
+            std::function<void(float)> on_progress, 
             Botan::secure_vector<uint8_t>& o_data) = 0;
 
         /**

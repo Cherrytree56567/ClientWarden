@@ -397,15 +397,14 @@ namespace clientwarden::vendor::bitwarden::vault {
         return std::move(enc_err.value());
     }
 
-    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::checksum(const Botan::secure_vector<uint8_t>& value, 
-        const ItemKey& key, ChecksumType type) {
+    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> BitwardenCrypto::checksum(
+        const Botan::secure_vector<uint8_t>& value, const ItemKey& key, ChecksumType type) {
         std::unique_ptr<Botan::HashFunction> sha256 = Botan::HashFunction::create("SHA-256");
         if (!sha256) {
             return std::unexpected(CryptoErrors::InvalidFamily);
         }
 
-        Botan::secure_vector<uint8_t> result = sha256->process(value),
-            value.size());
+        Botan::secure_vector<uint8_t> result = sha256->process(value);
         
         if (type == ChecksumType::Uri) {
             return encrypt(utils::b64Encode(result), key);
@@ -414,7 +413,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         return result;
     }
         
-    CryptoErrors BitwardenCrypto::setKeys(const AuthKeys& keys) {
+    CryptoErrors BitwardenCrypto::setAuthKeys(const AuthKeys& keys) {
         m_auth_keys = keys;
         m_auth_keys_set = true;
 

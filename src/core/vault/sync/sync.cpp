@@ -1,8 +1,11 @@
 #include "sync.h"
 
 namespace clientwarden::vault {
-    Sync::Sync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network) :
-        m_runtime(runtime), m_network(network) {
+    Sync::Sync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
+        std::shared_ptr<Orchestrator> orchestrator, std::shared_ptr<Settings> settings, 
+        std::shared_ptr<Storage> storage) :
+        m_runtime(runtime), m_network(network), m_settings(settings), m_storage(storage),
+        m_orchestrator(orchestrator) {
         
     }
 

@@ -1,11 +1,16 @@
 #pragma once
 #include "vault/sync/sync.h"
+#include "vault/orchestrator/orchestrator.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+    using namespace ::clientwarden::platforms;
+    
     class BitwardenSync : public Sync {
     public:
         explicit BitwardenSync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
-            std::shared_ptr<Settings> settings);
+            std::shared_ptr<Orchestrator> orchestrator, std::shared_ptr<Settings> settings, 
+            std::shared_ptr<Storage> storage);
         ~BitwardenSync() override = default;
         
         std::expected<bool, SyncError> fullSync() override;

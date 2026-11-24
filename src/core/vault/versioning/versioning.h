@@ -10,6 +10,8 @@ namespace clientwarden::vault {
         UnknownFeature,
         InvalidParams,
         Uninitialised,
+        NoVersion,
+        InvalidVersion,
         Unknown,
         Success
     };

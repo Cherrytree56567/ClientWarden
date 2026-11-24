@@ -1,8 +1,9 @@
 #pragma once
 #include "items/generic_item.h"
+#include "../vault/bitwarden_vault.h"
 
 namespace clientwarden::vendor::bitwarden {
-    class BitwardenGenericItem {
+    class BitwardenGenericItem : public GenericItem {
     public:
         BitwardenGenericItem(Vault& vault, ItemId id, bool item_creation);
         ~BitwardenGenericItem() override;

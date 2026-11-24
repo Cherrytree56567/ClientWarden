@@ -1518,7 +1518,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::string access_token = body["access_token"].get<std::string>();
         std::string refresh_token = body["refresh_token"].get<std::string>();
 
-        AuthResult auth_result;
+        NetworkAuthResult auth_result;
         auth_result.session.access_token = 
             Botan::secure_vector<uint8_t>(access_token.begin(), access_token.end());
         auth_result.session.refresh_token = 

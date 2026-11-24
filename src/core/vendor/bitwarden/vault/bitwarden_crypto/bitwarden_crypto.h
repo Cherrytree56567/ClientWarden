@@ -2,6 +2,8 @@
 #include "vault/crypto/crypto.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+
     /**
      * @brief Holds all the BitWarden Encryption Types.
      * Found from BitWarden Clients Repo:
@@ -73,7 +75,7 @@ namespace clientwarden::vendor::bitwarden::vault {
             const Botan::secure_vector<uint8_t>& value, const ItemKey& key, 
             ChecksumType type = ChecksumType::Uri) override;
         
-        CryptoErrors setKeys(const AuthKeys& keys) override;
+        CryptoErrors setAuthKeys(const AuthKeys& keys) override;
         CryptoErrors setVaultKeys(Botan::secure_vector<uint8_t> protected_key) override;
         std::expected<AuthKeys, CryptoErrors> getKeys() override;
         std::expected<ItemKey, CryptoErrors> getItemKeys() override;

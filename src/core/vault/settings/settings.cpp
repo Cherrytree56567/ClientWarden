@@ -10,11 +10,11 @@ namespace clientwarden::vault {
         result = keychainGet("allowScreenshot");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "allowScreenshot", getSecureVector("false"));
+            keychainSet(KeychainSecurity::Secure, "allowScreenshot", utils::getSecureVector("false"));
 
             m_can_screenshot = false;
         } else {
-            if (result.value() == getSecureVector("true")) {
+            if (result.value() == utils::getSecureVector("true")) {
                 m_can_screenshot = true;
             } else {
                 m_can_screenshot = false;
@@ -24,17 +24,17 @@ namespace clientwarden::vault {
         result = keychainGet("autoLock");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "autoLock", getSecureVector("noFocus"));
+            keychainSet(KeychainSecurity::Secure, "autoLock", utils::getSecureVector("noFocus"));
 
             m_autolock = AutoLockType::AppBackgrounded;
         } else {
-            if (result.value() == getSecureVector("timer")) {
+            if (result.value() == utils::getSecureVector("timer")) {
                 m_autolock = AutoLockType::Timer;
-            } else if (result.value() == getSecureVector("noFocus")) {
+            } else if (result.value() == utils::getSecureVector("noFocus")) {
                 m_autolock = AutoLockType::AppBackgrounded;
-            } else if (result.value() == getSecureVector("sleep")) {
+            } else if (result.value() == utils::getSecureVector("sleep")) {
                 m_autolock = AutoLockType::Sleep;
-            } else if (result.value() == getSecureVector("none")) {
+            } else if (result.value() == utils::getSecureVector("none")) {
                 m_autolock = AutoLockType::None;
             } else {
                 m_autolock = AutoLockType::AppBackgrounded;
@@ -44,7 +44,7 @@ namespace clientwarden::vault {
         result = keychainGet("autoLockDelay");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "autoLockDelay", getSecureVector(30));
+            keychainSet(KeychainSecurity::Secure, "autoLockDelay", utils::getSecureVector(30));
 
             m_autolock_delay = 30;
         } else {
@@ -55,7 +55,7 @@ namespace clientwarden::vault {
             );
 
             if (stoi_res.ec != std::errc{}) {
-                keychainSet(KeychainSecurity::Secure, "autoLockDelay", getSecureVector(30));
+                keychainSet(KeychainSecurity::Secure, "autoLockDelay", utils::getSecureVector(30));
 
                 m_autolock_delay = 30;
             }
@@ -64,7 +64,7 @@ namespace clientwarden::vault {
         result = keychainGet("clipboardDelay");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "clipboardDelay", getSecureVector(30));
+            keychainSet(KeychainSecurity::Secure, "clipboardDelay", utils::getSecureVector(30));
 
             m_clipboard_delay = 30;
         } else {
@@ -75,7 +75,7 @@ namespace clientwarden::vault {
             );
 
             if (stoi_res.ec != std::errc{}) {
-                keychainSet(KeychainSecurity::Secure, "clipboardDelay", getSecureVector(30));
+                keychainSet(KeychainSecurity::Secure, "clipboardDelay", utils::getSecureVector(30));
 
                 m_clipboard_delay = 30;
             }
@@ -84,15 +84,15 @@ namespace clientwarden::vault {
         result = keychainGet("theme");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "theme", getSecureVector("auto"));
+            keychainSet(KeychainSecurity::Secure, "theme", utils::getSecureVector("auto"));
 
             m_theme = Theme::Auto;
         } else {
-            if (result.value() == getSecureVector("light")) {
+            if (result.value() == utils::getSecureVector("light")) {
                 m_theme = Theme::Light;
-            } else if (result.value() == getSecureVector("dark")) {
+            } else if (result.value() == utils::getSecureVector("dark")) {
                 m_theme = Theme::Dark;
-            } else if (result.value() == getSecureVector("auto")) {
+            } else if (result.value() == utils::getSecureVector("auto")) {
                 m_theme = Theme::Auto;
             } else {
                 m_theme = Theme::Auto;
@@ -102,15 +102,15 @@ namespace clientwarden::vault {
         result = keychainGet("sync");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "sync", getSecureVector("websocket"));
+            keychainSet(KeychainSecurity::Secure, "sync", utils::getSecureVector("websocket"));
 
             m_sync = SyncMethod::WebSocket;
         } else {
-            if (result.value() == getSecureVector("classic")) {
+            if (result.value() == utils::getSecureVector("classic")) {
                 m_sync = SyncMethod::Classic;
-            } else if (result.value() == getSecureVector("websocket")) {
+            } else if (result.value() == utils::getSecureVector("websocket")) {
                 m_sync = SyncMethod::WebSocket;
-            } else if (result.value() == getSecureVector("none")) {
+            } else if (result.value() == utils::getSecureVector("none")) {
                 m_sync = SyncMethod::None;
             } else {
                 m_sync = SyncMethod::WebSocket;
@@ -120,7 +120,7 @@ namespace clientwarden::vault {
         result = keychainGet("syncDelay");
         
         if (!result) {
-            keychainSet(KeychainSecurity::Secure, "syncDelay", getSecureVector(30));
+            keychainSet(KeychainSecurity::Secure, "syncDelay", utils::getSecureVector(30));
 
             m_sync_delay = 30;
         } else {
@@ -131,7 +131,7 @@ namespace clientwarden::vault {
             );
 
             if (stoi_res.ec != std::errc{}) {
-                keychainSet(KeychainSecurity::Secure, "syncDelay", getSecureVector(30));
+                keychainSet(KeychainSecurity::Secure, "syncDelay", utils::getSecureVector(30));
 
                 m_sync_delay = 30;
             }
@@ -145,7 +145,7 @@ namespace clientwarden::vault {
     void Settings::allowScreenshot(bool value) {
         std::expected<void, SettingsError> result;
         
-        result = keychainSet(KeychainSecurity::Secure, "allowScreenshot", getSecureVector(value ? "true" : "false"));
+        result = keychainSet(KeychainSecurity::Secure, "allowScreenshot", utils::getSecureVector(value ? "true" : "false"));
 
         if (result) {
             m_can_screenshot = value;
@@ -164,13 +164,13 @@ namespace clientwarden::vault {
         std::expected<void, SettingsError> result;
 
         if (type == AutoLockType::Timer) {
-            result = keychainSet(KeychainSecurity::Secure, "autoLock", getSecureVector("timer"));
+            result = keychainSet(KeychainSecurity::Secure, "autoLock", utils::getSecureVector("timer"));
         } else if (type == AutoLockType::AppBackgrounded) {
-            result = keychainSet(KeychainSecurity::Secure, "autoLock", getSecureVector("noFocus"));
+            result = keychainSet(KeychainSecurity::Secure, "autoLock", utils::getSecureVector("noFocus"));
         } else if (type == AutoLockType::Sleep) {
-            result = keychainSet(KeychainSecurity::Secure, "autoLock", getSecureVector("sleep"));
+            result = keychainSet(KeychainSecurity::Secure, "autoLock", utils::getSecureVector("sleep"));
         } else if (type == AutoLockType::None) {
-            result = keychainSet(KeychainSecurity::Secure, "autoLock", getSecureVector("none"));
+            result = keychainSet(KeychainSecurity::Secure, "autoLock", utils::getSecureVector("none"));
         } else {
             return;
         }
@@ -179,7 +179,7 @@ namespace clientwarden::vault {
             m_autolock = type;
         }
 
-        result = keychainSet(KeychainSecurity::Secure, "autoLockDelay", getSecureVector(delay));
+        result = keychainSet(KeychainSecurity::Secure, "autoLockDelay", utils::getSecureVector(delay));
 
         if (result) {
             m_autolock_delay = delay;
@@ -193,7 +193,7 @@ namespace clientwarden::vault {
     void Settings::setClipboardDelay(int delay) {
         std::expected<void, SettingsError> result;
 
-        result = keychainSet(KeychainSecurity::Secure, "clipboardDelay", getSecureVector(delay));
+        result = keychainSet(KeychainSecurity::Secure, "clipboardDelay", utils::getSecureVector(delay));
 
         if (result) {
             m_clipboard_delay = delay;
@@ -208,11 +208,11 @@ namespace clientwarden::vault {
         std::expected<void, SettingsError> result;
 
         if (theme == Theme::Light) {
-            result = keychainSet(KeychainSecurity::Secure, "theme", getSecureVector("light"));
+            result = keychainSet(KeychainSecurity::Secure, "theme", utils::getSecureVector("light"));
         } else if (theme == Theme::Dark) {
-            result = keychainSet(KeychainSecurity::Secure, "theme", getSecureVector("dark"));
+            result = keychainSet(KeychainSecurity::Secure, "theme", utils::getSecureVector("dark"));
         } else if (theme == Theme::Auto) {
-            result = keychainSet(KeychainSecurity::Secure, "theme", getSecureVector("auto"));
+            result = keychainSet(KeychainSecurity::Secure, "theme", utils::getSecureVector("auto"));
         } else {
             return;
         }
@@ -230,11 +230,11 @@ namespace clientwarden::vault {
         std::expected<void, SettingsError> result;
 
         if (method == SyncMethod::Classic) {
-            result = keychainSet(KeychainSecurity::Secure, "sync", getSecureVector("classic"));
+            result = keychainSet(KeychainSecurity::Secure, "sync", utils::getSecureVector("classic"));
         } else if (method == SyncMethod::WebSocket) {
-            result = keychainSet(KeychainSecurity::Secure, "sync", getSecureVector("websocket"));
+            result = keychainSet(KeychainSecurity::Secure, "sync", utils::getSecureVector("websocket"));
         } else if (method == SyncMethod::None) {
-            result = keychainSet(KeychainSecurity::Secure, "sync", getSecureVector("none"));
+            result = keychainSet(KeychainSecurity::Secure, "sync", utils::getSecureVector("none"));
         } else {
             return;
         }
@@ -251,7 +251,7 @@ namespace clientwarden::vault {
     void Settings::setSyncDelay(int sync_delay) {
         std::expected<void, SettingsError> result;
         
-        result = keychainSet(KeychainSecurity::Secure, "syncDelay", getSecureVector(sync_delay));
+        result = keychainSet(KeychainSecurity::Secure, "syncDelay", utils::getSecureVector(sync_delay));
 
         if (result) {
             m_sync_delay = sync_delay;
@@ -342,7 +342,7 @@ namespace clientwarden::vault {
 
         keychain::setPassword(app_id, m_uuid, name, string_value, error, detail);
 
-        OPENSSL_cleanse(string_value.data(), string_value.size());
+        Botan::secure_scrub_memory(string_value.data(), string_value.size());
 
         if (error) {
             if (error.type == keychain::ErrorType::GenericError) {
@@ -394,7 +394,7 @@ namespace clientwarden::vault {
         
         Botan::secure_vector<uint8_t> result(password.begin(), password.end());
 
-        OPENSSL_cleanse(password.data(), password.size());
+        Botan::secure_scrub_memory(password.data(), password.size());
 
         return result;
     }

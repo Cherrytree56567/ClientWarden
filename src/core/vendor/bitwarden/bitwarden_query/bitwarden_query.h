@@ -25,6 +25,6 @@ namespace clientwarden {
 
         Vendor getVendor() override;
     private:
-        std::vector<ItemIds> item_ids;
+        std::vector<ItemId> item_ids;
     };
 }

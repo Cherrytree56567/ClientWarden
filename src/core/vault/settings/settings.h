@@ -2,8 +2,12 @@
 #include <map>
 #include <string>
 #include <expected>
-#include <keychain.h>
+#include <charconv>
+#include <algorithm>
+#include <keychain/keychain.h>
 #include <botan/secmem.h>
+#include <botan/mem_ops.h>
+#include "utils/utils.h"
 #include "clientwarden.h"
 
 namespace clientwarden::vault {

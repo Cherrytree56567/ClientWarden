@@ -1,5 +1,6 @@
 #pragma once
 #include <expected>
+#include <algorithm>
 #include <botan/secmem.h>
 #include "clientwarden.h"
 
@@ -7,7 +8,7 @@ namespace clientwarden {
     /**
      * @brief Represents the result of an operation.
      */
-    enum FolderError {
+    enum class FolderError {
         OrchestratorError,
         Success,
         None

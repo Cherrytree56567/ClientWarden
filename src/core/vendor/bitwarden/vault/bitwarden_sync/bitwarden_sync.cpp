@@ -2,7 +2,9 @@
 
 namespace clientwarden::vendor::bitwarden::vault {
     BitwardenSync::BitwardenSync(std::shared_ptr<Runtime> runtime, std::shared_ptr<Network> network, 
-        std::shared_ptr<Settings> settings) : Sync(runtime, network, settings) {
+        std::shared_ptr<Orchestrator> orchestrator, std::shared_ptr<Settings> settings, 
+        std::shared_ptr<Storage> storage) 
+        : Sync(runtime, network, orchestrator, settings, storage) {
         m_sync_thread.setCallback([this](const std::atomic<bool>& should_thread) {
             return syncCallback(should_thread);
         });
@@ -21,7 +23,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         }
 
         if (m_storage->write("vault.json", vault_err.value().dump(4)) != StorageError::Success) {
-            return std::unexpected(RuntimeError::StorageFailure);
+            return std::unexpected(SyncError::StorageFailure);
         }
 
         return true;
@@ -517,7 +519,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     continue;
                 }
 
-                res = m_network->createFolder(utils::getSecureVector(push_create_json["name"]));
+                res = m_network->createFolder(utils::getSecureVector(
+                    push_create_json["name"].get<std::string>()));
             } else if (record.item_type == SyncItem::Attachment) {
                 if (!push_create_json.contains("fileName") || 
                     !push_create_json["fileName"].is_string() ||
@@ -538,8 +541,10 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 res = m_network->addAttachment(record.parent_id, 
-                    utils::getSecureVector(push_create_json["fileName"]), attachment_err.value(),
-                    utils::getSecureVector(push_create_json["key"]), [](float) {});
+                    utils::getSecureVector(push_create_json["fileName"].get<std::string>()),
+                    attachment_err.value(),
+                    utils::getSecureVector(push_create_json["key"].get<std::string>()), 
+                    [](float) {});
                 
                 Botan::secure_scrub_memory(attachment_err.value().data(), 
                     attachment_err.value().size());
@@ -550,7 +555,6 @@ namespace clientwarden::vendor::bitwarden::vault {
 
             if (!res.has_value()) {
                 switch (res.error()) {
-                    case NetworkError::Unreachable:
                     case NetworkError::Unauthorised:
                     case NetworkError::Forbidden:
                     case NetworkError::RateLimited:
