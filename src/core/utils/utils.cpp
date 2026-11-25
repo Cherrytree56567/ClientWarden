@@ -48,19 +48,67 @@ namespace clientwarden::utils {
     }
     
     Timestamp s_getTime(std::string time) {
+        std::istringstream s_time{ time };
+        date::sys_time<std::chrono::nanoseconds> sys_time;
 
+        s_time >> date::parse("%FT%TZ", sys_time);
+
+        if (s_time.fail()) {
+            return Timestamp{ };
+        }
+        
+        return std::chrono::time_point_cast<Timestamp::duration>(sys_time);
     }
     
     std::string s_getCurrentTime(int additional_time = 0) {
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds> now_seconds = 
+            std::chrono::time_point_cast<std::chrono::seconds>(now);
+        long long ms = 
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - now_seconds).count();
 
+        std::time_t current_time = std::chrono::system_clock::to_time_t(now_seconds) + 
+            additionalTime;
+        std::tm utc_tm = *gmtime(&current_time);
+
+        std::ostringstream result;
+        result << std::put_time(&utc_tm, "%Y-%m-%dT%H:%M:%S");
+        result << "." << std::setfill('0') << std::setw(2) << (ms / 10);
+        result << "Z";
+
+        return result.str();
     }
     
     Timestamp getTime(Botan::secure_vector<uint8_t> time) {
+        std::istringstream s_time{ std::string(time.begin(), time.end()) };
+        date::sys_time<std::chrono::nanoseconds> sys_time;
 
+        s_time >> date::parse("%FT%TZ", sys_time);
+
+        if (s_time.fail()) {
+            return Timestamp{ };
+        }
+        
+        return std::chrono::time_point_cast<Timestamp::duration>(sys_time);
     }
     
     Botan::secure_vector<uint8_t> getCurrentTime(int additional_time = 0) {
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds> now_seconds = 
+            std::chrono::time_point_cast<std::chrono::seconds>(now);
+        long long ms = 
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - now_seconds).count();
 
+        std::time_t current_time = std::chrono::system_clock::to_time_t(now_seconds) + 
+            additionalTime;
+        std::tm utc_tm = *gmtime(&current_time);
+
+        std::ostringstream result;
+        result << std::put_time(&utc_tm, "%Y-%m-%dT%H:%M:%S");
+        result << "." << std::setfill('0') << std::setw(2) << (ms / 10);
+        result << "Z";
+
+        return getSecureVector(result.str());
     }
     
     ItemId getUniqueId() {

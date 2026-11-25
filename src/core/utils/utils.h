@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <sstream>
+#include <date/date.h>
 #include <botan/secmem.h>
 #include "clientwarden.h"
 

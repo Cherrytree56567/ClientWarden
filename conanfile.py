@@ -15,6 +15,7 @@ class ClientWardenConan(ConanFile):
         self.requires("boost/1.91.0")
         self.requires("spdlog/1.17.0")
         self.requires("msgpack-cxx/7.0.0")
+        self.requires("date/3.0.5")
 
     def layout(self):
         cmake_layout(self)
