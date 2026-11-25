@@ -1,15 +1,19 @@
 #include "vault.h"
 
 namespace clientwarden::vault {
-    Vault::Vault(ItemId uuid) : m_uuid(uuid), m_storage_(uuid), m_settings(uuid), 
-        m_network(m_settings), m_runtime(m_storage_), m_versioning(m_runtime), 
-        m_orchestrator(m_crypto, m_network, m_runtime, m_storage_), 
-        m_autofill(m_runtime, m_orchestrator, m_crypto), 
-        m_sync(m_runtime, m_network, m_settings, m_storage_) {
+    Vault::Vault(ItemId uuid) : m_uuid_(uuid), 
+        m_storage_(std::make_shared<Storage>(uuid)), 
+        m_settings(std::make_shared<Settings>(m_storage_)), 
+        m_network(std::make_shared<Network>(m_settings)), 
+        m_runtime(std::make_shared<Runtime>(m_storage_)), 
+        m_versioning(std::make_shared<Versioning>(m_runtime)), 
+        m_orchestrator(std::make_shared<Orchestrator>(m_crypto, m_network, m_runtime, m_storage_)), 
+        m_autofill(std::make_shared<AutoFill>(m_runtime, m_orchestrator, m_crypto)), 
+        m_sync(std::make_shared<Sync>(m_runtime, m_network, m_settings, m_storage_)) {
         
     }
 
-    AuthState getState() {
+    AuthState Vault::getState() {
         return m_state;
     }
 

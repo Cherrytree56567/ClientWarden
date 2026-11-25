@@ -8,6 +8,8 @@ if (APPLE)
     enable_language(Swift)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Mac Specific stuff
 set(TEAM_ID "IDABC16767")
 set(SHARED_BUNDLE_ID "app.ct5.clientwarden")
@@ -146,7 +148,7 @@ generate_wordlist(
 target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain semver::semver)
 target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT MSGPACK_DISABLE_LEGACY_NIL APP_TYPE="${APP_TYPE}" APP_ID="${APP_BUNDLE_ID}" BW_VERSION="${BW_VERSION}")
 
-target_include_directories(clientwarden PRIVATE src/core src/core/vault src/Platforms/ ${CMAKE_CURRENT_BINARY_DIR}/generated/)
+target_include_directories(clientwarden PRIVATE src/core src/core/vault src/platforms/ ${CMAKE_CURRENT_BINARY_DIR}/generated/)
 
 if (ANDROID)
     target_compile_options(clientwarden PRIVATE -fexperimental-library)

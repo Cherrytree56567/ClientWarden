@@ -115,6 +115,7 @@ namespace clientwarden::vault {
         RuntimeError,
         NetworkError,
         StorageFailure,
+        SyncError,
         Unknown,
         Success
     };

@@ -3,20 +3,26 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${vcpkgRoot}/x64-windows/include",
-                "D:/vcpkg/installed/x64-windows/include/botan-3",
-                "."
+                ".",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/src/core",
+                "${workspaceFolder}/src/core/vault"
+            ],
+            "compileCommands": [
+                "${workspaceFolder}/build/compile_commands.json"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "SPDLOG_FMT_EXTERNAL",
+                "CPPHTTPLIB_OPENSSL_SUPPORT",
+                "MSGPACK_DISABLE_LEGACY_NIL"
             ],
             "windowsSdkVersion": "10.0.26100.0",
             "compilerPath": "cl.exe",
             "cStandard": "c17",
-            "cppStandard": "c++20",
+            "cppStandard": "c++23",
             "intelliSenseMode": "macos-gcc-arm64",
             "compilerArgs": [
                 "/std:c++latest"

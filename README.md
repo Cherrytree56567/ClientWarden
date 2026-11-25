@@ -89,7 +89,7 @@ Here are some instructions on how to build Clientwarden, currently only on MacOS
 Before building Clientwarden, install VS 2026 with C++ and WinUI Extensions, CMake, Conan, vcpkg and git.
 ```sh
 mkdir build
-conan install . --output-folder=build --build=missing
+conan install . --output-folder=build --build=missing 
 conan install . --output-folder=build --build=missing -s build_type=Debug
 ```
 You might need to use the `-s compiler.cppstd=20` flag.

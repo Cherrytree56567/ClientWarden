@@ -9,19 +9,36 @@ namespace clientwarden::vault {
         
     }
 
-    bool Sync::syncVault() {
-        std::vector<SyncRecord> local_records = fetchLocalRecords();
-        std::vector<SyncRecord> remote_records = fetchRemoteRecords();
+    std::expected<bool, SyncError> Sync::syncVault() {
+        std::expected<std::vector<SyncRecord>, SyncError> local_records = fetchLocalRecords();
 
-        SyncActions actions = planActions(local_records, remote_records);
-
-        if (!actions.conflicts.empty()) {
-            actions = resolveConflicts(actions);
+        if (!local_records.has_value()) {
+            return std::unexpected(SyncError::StorageFailure);
         }
 
-        PushActions push_actions = pushRemote(actions);
+        std::expected<std::vector<SyncRecord>, SyncError> remote_records = fetchRemoteRecords();
 
-        bool result = pushLocal(push_actions);
+        if (!remote_records.has_value()) {
+            return std::unexpected(SyncError::RuntimeError);
+        }
+
+        std::expected<SyncActions, SyncError> actions = planActions(local_records.value(), remote_records.value());
+
+        if (!actions.has_value()) {
+            return std::unexpected(SyncError::SyncError);
+        }
+
+        if (!actions.value().conflicts.empty()) {
+            actions = resolveConflicts(actions.value());
+        }
+
+        std::expected<PushActions, SyncError> push_actions = pushRemote(actions.value());
+
+        if (!push_actions.has_value()) {
+            return std::unexpected(SyncError::SyncError);
+        }
+
+        std::expected<bool, SyncError> result = pushLocal(push_actions.value());
 
         return result;
     }
