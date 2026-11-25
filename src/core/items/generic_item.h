@@ -6,6 +6,7 @@
 #include <functional>
 #include <filesystem>
 #include <botan/secmem.h>
+#include <botan/mem_ops.h>
 #include <nlohmann/json.hpp>
 #include "clientwarden.h"
 

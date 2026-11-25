@@ -35,7 +35,7 @@ namespace clientwarden {
         while (i < static_cast<size_t>(length)) {
             uint8_t value;
 
-            Botan::system_rng().randomize(&value, 1)
+            Botan::system_rng().randomize(&value, 1);
 
             if (value >= 256 - (256 % chars.size())) {
                 continue;

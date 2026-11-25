@@ -80,6 +80,8 @@ namespace clientwarden {
         Botan::secure_vector<uint8_t> mac_key;
 
         void clear() {
+            Botan::secure_scrub_memory(enc_key.data(), enc_key.size());
+            Botan::secure_scrub_memory(mac_key.data(), mac_key.size());
             enc_key.clear();
             mac_key.clear();
         }

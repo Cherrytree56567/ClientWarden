@@ -2,6 +2,7 @@
 #include <string>
 #include <wordlist.h>
 #include <botan/auto_rng.h>
+#include <botan/system_rng.h>
 #include "storage/storage.h"
 #include "crypto/crypto.h"
 #include "clientwarden.h"
