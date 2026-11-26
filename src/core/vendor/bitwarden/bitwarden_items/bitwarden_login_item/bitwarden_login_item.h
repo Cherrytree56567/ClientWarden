@@ -1,4 +1,7 @@
 #pragma once
+#include <algorithm>
+#include <botan/otp.h>
+#include <boost/url.hpp>
 #include "items/generic_item_impl.h"
 #include "../bitwarden_generic_item.h"
 
@@ -26,7 +29,7 @@ namespace clientwarden::vendor::bitwarden {
         BitwardenLoginItem* addWebsite(Botan::secure_vector<uint8_t>& website);
         BitwardenLoginItem* removeWebsite(Botan::secure_vector<uint8_t>& website);
 
-        BitwardenLoginItem* duplicate(Botan::secure_vector<uint8_t>& id);
+        BitwardenLoginItem* duplicate(ItemId& id);
 
         BitwardenLoginItem* getUsername(Botan::secure_vector<uint8_t>& username);
         BitwardenLoginItem* getPassword(Botan::secure_vector<uint8_t>& password);

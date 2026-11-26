@@ -25,6 +25,13 @@ namespace clientwarden::platforms {
         return std::move(buffer);
     }
 
+    std::expected<Botan::secure_vector<uint8_t>, StorageError> Storage::readSecure(
+        std::filesystem::path file, std::function<void(float)> on_progress, float size) {
+        Botan::secure_vector<uint8_t> buffer;
+        
+        return std::move(buffer);
+    }
+
     StorageError Storage::write(std::filesystem::path file, std::string data) {
         return StorageError::Success;
     }

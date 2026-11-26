@@ -1,7 +1,18 @@
 #pragma once
 #include "vault/vault.h"
+#include "bitwarden_autofill/bitwarden_autofill.h"
+#include "bitwarden_crypto/bitwarden_crypto.h"
+#include "bitwarden_network/bitwarden_network.h"
+#include "bitwarden_orchestrator/bitwarden_orchestrator.h"
+#include "bitwarden_runtime/bitwarden_runtime.h"
+#include "bitwarden_sync/bitwarden_sync.h"
+#include "bitwarden_versioning/bitwarden_versioning.h"
 
 namespace clientwarden::vendor::bitwarden {
+    using namespace ::clientwarden::vault;
+    using namespace ::clientwarden::platforms;
+    using namespace ::clientwarden::vendor::bitwarden::vault;
+    
     class BitWardenVault : public Vault {
     public:
         explicit BitWardenVault(ItemId uuid);
@@ -15,7 +26,7 @@ namespace clientwarden::vendor::bitwarden {
 
         bool setupBiometricUnlock(UnlockType type) override;
 
-        std::unexpected<bool, AuthResult> checkReprompt(
+        std::expected<bool, AuthResult> checkReprompt(
             Botan::secure_vector<uint8_t> password) override;
         
         std::shared_ptr<GenericItem> getItem(ItemId uuid) override;
@@ -25,6 +36,8 @@ namespace clientwarden::vendor::bitwarden {
 
         Vendor getVendor() override;
     private:
+        void onNetworkEvent_(NetworkEvent event);
+
         PasswordCredential m_password_cred_;
         bool m_password_cred_set_ = false;
     };

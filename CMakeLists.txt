@@ -19,6 +19,7 @@ set(CW_IDENTIFIER ${APP_BUNDLE_ID})
 set(CW_VERSION 1.0.0)
 
 set(BW_VERSION "2026.3.0")
+set(BW_CLIENT "Desktop")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -118,17 +119,22 @@ file(GLOB_RECURSE FILES CONFIGURE_DEPENDS
 )
 
 if(CW_PLATFORM STREQUAL "windows")
+    set(BW_DEVICE_TYPE "WindowsDesktop")
     add_executable(clientwarden WIN32 ${FILES})
 elseif(CW_PLATFORM STREQUAL "_android")
+    set(BW_DEVICE_TYPE "Android")
     add_library(clientwarden SHARED ${FILES})
 elseif(CW_PLATFORM STREQUAL "_linux")
+    set(BW_DEVICE_TYPE "LinuxDesktop")
     add_library(clientwarden SHARED ${FILES})
 elseif(CW_PLATFORM STREQUAL "macos")
+    set(BW_DEVICE_TYPE "MacOsDesktop")
     add_executable(clientwarden MACOSX_BUNDLE ${FILES})
     #add_library(clientwarden SHARED ${FILES}) # Remove comment to use Linux Build on MacOS
 elseif(CW_PLATFORM STREQUAL "_library")
     add_library(clientwarden SHARED ${FILES})
 elseif(CW_PLATFORM STREQUAL "_nonuiexec")
+    set(BW_DEVICE_TYPE "MacOsDesktop")
     add_executable(clientwarden ${FILES})
 
     target_sources(clientwarden PRIVATE 
@@ -147,7 +153,7 @@ generate_wordlist(
 )
 
 target_link_libraries(clientwarden PRIVATE OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url httplib::httplib nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain semver::semver date::date)
-target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT MSGPACK_DISABLE_LEGACY_NIL APP_TYPE="${APP_TYPE}" APP_ID="${APP_BUNDLE_ID}" BW_VERSION="${BW_VERSION}")
+target_compile_definitions(clientwarden PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT MSGPACK_DISABLE_LEGACY_NIL APP_TYPE="${APP_TYPE}" APP_ID="${APP_BUNDLE_ID}" BW_VERSION="${BW_VERSION}" BW_CLIENT=ClientType::${BW_CLIENT} BW_DEVICE_TYPE=DeviceType::${BW_DEVICE_TYPE} BW_DEVICE_NAME="desktop")
 
 target_include_directories(clientwarden PRIVATE src/core src/core/vault src/platforms/ ${CMAKE_CURRENT_BINARY_DIR}/generated/)
 

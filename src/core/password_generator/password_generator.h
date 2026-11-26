@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
-#include <wordlist.h>
+#include <algorithm>
 #include <botan/auto_rng.h>
 #include <botan/system_rng.h>
+#include <wordlist.h>
 #include "storage/storage.h"
 #include "crypto/crypto.h"
 #include "clientwarden.h"

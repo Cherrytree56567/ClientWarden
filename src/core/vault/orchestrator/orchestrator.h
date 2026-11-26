@@ -38,7 +38,7 @@ namespace clientwarden::vault {
          * @brief Compares the Security Stamp from the Local and Remote Profiles to determine if
          *  the session was invalidated.
          */
-        virtual bool sessionInvalidated() = 0;
+        virtual std::expected<bool, OrchestratorError> sessionInvalidated() = 0;
 
         /**
          * @brief NewItem pushes the new item to the server and then pushes it to the vault.

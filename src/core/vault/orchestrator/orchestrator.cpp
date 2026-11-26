@@ -7,11 +7,11 @@ namespace clientwarden::vault {
 
     }
 
-    std::shared_ptr<Runtime> getRuntime() {
+    std::shared_ptr<Runtime> Orchestrator::getRuntime() {
         return m_runtime;
     }
 
-    std::shared_ptr<Crypto> getCrypto() {
+    std::shared_ptr<Crypto> Orchestrator::getCrypto() {
         return m_crypto;
     }
 }

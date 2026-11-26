@@ -91,7 +91,7 @@ namespace clientwarden {
     }
 
     GenericItem* GenericItem::addAttachment(const Botan::secure_vector<uint8_t>& name, 
-        const Botan::secure_vector<uint8_t>& content, ItemId& o_id,
+        Botan::secure_vector<uint8_t>& content, ItemId& o_id,
         std::function<void(float)> on_progress) {
         addAttachmentImpl(name, content, o_id, on_progress);
         return this;

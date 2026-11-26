@@ -1,4 +1,5 @@
 #include "bitwarden_folder.h"
+#include "vault/vault.h"
 
 namespace clientwarden::vendor::bitwarden {
     BitwardenFolder::BitwardenFolder(Vault& vault, ItemId id, bool item_creation) : 
@@ -8,7 +9,7 @@ namespace clientwarden::vendor::bitwarden {
             m_object_.revision_date = std::chrono::system_clock::now();
 
             std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> name_err = 
-                m_vault.getOrchestrator->getCrypto()->encrypt(utils::getSecureVector(""));
+                m_vault.getOrchestrator()->getCrypto()->encrypt(utils::getSecureVector(""));
             
             if (!name_err.has_value()) {
                 m_init = false;
@@ -25,18 +26,18 @@ namespace clientwarden::vendor::bitwarden {
                 return;
             }
 
-            m_data_ = folder_err.value();
+            nlohmann::json m_data = folder_err.value();
 
-            if (!m_data_.contains("id") || !m_data_["id"].is_string() ||
-                !m_data_.contains("name") || !m_data_["name"].is_string() ||
-                !m_data_.contains("revisionDate") || !m_data_["revisionDate"].is_string()) {
+            if (!m_data.contains("id") || !m_data["id"].is_string() ||
+                !m_data.contains("name") || !m_data["name"].is_string() ||
+                !m_data.contains("revisionDate") || !m_data["revisionDate"].is_string()) {
                 m_init = false;
                 return;
             }
 
-            m_object_.id = m_data_["id"];
-            m_object_.revision_date = utils::s_getTime(m_data_["revisionDate"]);
-            m_object_.name = utils::getSecureVector(m_data_["name"]);
+            m_object_.id = m_data["id"];
+            m_object_.revision_date = utils::s_getTime(m_data["revisionDate"]);
+            m_object_.name = utils::getSecureVector(m_data["name"].get<std::string>());
         }
 
         m_init = true;

@@ -27,6 +27,7 @@ namespace clientwarden::vault {
      */
     enum class NetworkError {
         OfflineNetwork,
+        Unreachable,
         Indeterminate,
         Unauthorised,
         RateLimited,
@@ -36,6 +37,7 @@ namespace clientwarden::vault {
         Invalid,
         ServerError,
         Unknown,
+        InvalidVault,
         InvalidParams,
         Uninitialised,
         SettingsError,
@@ -107,7 +109,11 @@ namespace clientwarden::vault {
         FolderUpdated,
         CipherBinned,
         AccountSettingsChanged,
-        LogOut
+        AuthRequest,
+        Notification,
+        ConnectivityChanged,
+        LogOut,
+        None
     };
 
     class Network {
@@ -208,7 +214,7 @@ namespace clientwarden::vault {
         /**
          * @brief Download the icon with the provided url from the server.
          */
-        virtual std::expected<std::string, NetworkError> downloadIcon(
+        virtual std::expected<Botan::secure_vector<uint8_t>, NetworkError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) = 0;
         /**
          * @brief Ask the server for the Vault Database.

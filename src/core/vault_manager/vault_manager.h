@@ -8,8 +8,11 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include "vault/vault.h"
+#include "vendor/bitwarden/vault/bitwarden_vault.h"
 
 namespace clientwarden {
+    using namespace ::clientwarden::vendor::bitwarden;
+    
     /**
      * @brief Stores all the possible errors for the VaultManager
      */

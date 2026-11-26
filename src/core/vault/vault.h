@@ -48,6 +48,13 @@ namespace clientwarden {
     struct PasswordCredential {
         Botan::secure_vector<uint8_t> m_email;
         Botan::secure_vector<uint8_t> m_password;
+
+        void clear() {
+            Botan::secure_scrub_memory(m_email.data(), m_email.size());
+            Botan::secure_scrub_memory(m_password.data(), m_password.size());
+            m_email.clear();
+            m_password.clear();
+        }
     };
 
     /**
@@ -129,7 +136,7 @@ namespace clientwarden {
         /**
          * @brief Passes AuthKeys to Settings to setup Biometric Unlock
          */
-        virtual bool setupBiometricUnlock(vault::UnlockType type) = 0;
+        virtual bool setupBiometricUnlock(UnlockType type) = 0;
 
         /**
          * @brief Verifies Master Password for a reprompt check before revealing a

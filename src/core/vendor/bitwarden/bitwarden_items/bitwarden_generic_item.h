@@ -1,8 +1,11 @@
 #pragma once
 #include "items/generic_item.h"
+#include "../vault/bitwarden_versioning/bitwarden_versioning.h"
 #include "../vault/bitwarden_vault.h"
 
 namespace clientwarden::vendor::bitwarden {
+    using namespace ::clientwarden::vendor::bitwarden::vault;
+
     class BitwardenGenericItem : public GenericItem {
     public:
         BitwardenGenericItem(Vault& vault, ItemId id, bool item_creation);
@@ -36,7 +39,7 @@ namespace clientwarden::vendor::bitwarden {
         void getDeletionImpl(std::string& o_time) override;
 
         void addAttachmentImpl(const Botan::secure_vector<uint8_t>& name, 
-            const Botan::secure_vector<uint8_t>& content, ItemId& o_id,
+            Botan::secure_vector<uint8_t>& content, ItemId& o_id,
             std::function<void(float)> on_progress = nullptr) override;
         void downloadAttachmentImpl(const ItemId& id, const std::filesystem::path& path,
             std::function<void(float)> on_progress = nullptr) override;

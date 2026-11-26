@@ -15,7 +15,7 @@ namespace clientwarden::vendor::bitwarden {
         BitwardenCardItem* setExpYear(const Botan::secure_vector<uint8_t>& exp_year);
         BitwardenCardItem* setNumber(const Botan::secure_vector<uint8_t>& number);
 
-        BitwardenCardItem* duplicate(Botan::secure_vector<uint8_t>& id);
+        BitwardenCardItem* duplicate(ItemId& id);
 
         BitwardenCardItem* getBrand(Botan::secure_vector<uint8_t>& brand);
         BitwardenCardItem* getCardholderName(Botan::secure_vector<uint8_t>& cardholder_name);

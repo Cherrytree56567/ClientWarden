@@ -5,10 +5,14 @@
 #define CPPHTTPLIB_EXPECT_100_THRESHOLD 0
 #include <httplib.h>
 #include <msgpack.hpp>
+#include <boost/url.hpp>
 #include <nlohmann/json.hpp>
 #include "vault/network/network.h"
+#include "../../bitwarden.h"
 
 namespace clientwarden::vendor::bitwarden::vault {
+    using namespace ::clientwarden::vault;
+
     class BitwardenNetwork : public Network {
     public:
         explicit BitwardenNetwork(std::shared_ptr<Settings> settings);
@@ -48,7 +52,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<nlohmann::json, NetworkError> downloadAttachment(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& attachment_id, 
             std::function<void(float)> on_progress = nullptr, 
-            Botan::secure_vector<uint8_t>& o_data) override;
+            Botan::secure_vector<uint8_t>& o_data = utils::discardBuffer()) override;
 
         std::expected<Botan::secure_vector<uint8_t>, NetworkError> downloadIcon(
             const Botan::secure_vector<uint8_t>& url) override;
@@ -63,7 +67,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         void setSession(const AuthSession& session);
         void eraseSession();
 
-        NetworkError listen(std::function<void(NetworkEvent)> on_event) override;
+        NetworkError listen() override;
         bool stopListening() override;
 
         NetworkError startTokenRefreshThread() override;
@@ -74,8 +78,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Vendor getVendor() override;
     private:
-        std::expected<TokenResult, NetworkError> getToken_(const Botan::secure_vector<uint8_t>& email, 
-            const Botan::secure_vector<uint8_t>& master_password_hash) override;
+        std::expected<TokenResult, NetworkError> getToken_(const httplib::Params& data);
         std::expected<void, NetworkError> getError_(const httplib::Result& res);
         
         bool m_init_ = false;

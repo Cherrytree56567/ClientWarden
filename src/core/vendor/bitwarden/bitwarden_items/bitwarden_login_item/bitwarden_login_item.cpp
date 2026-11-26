@@ -221,38 +221,50 @@ namespace clientwarden::vendor::bitwarden {
         }
 
         if (m_enable_data_field_) {
-            std::erase_if(m_field_data_["Uris"], [&](nlohmann::json uri) {
-                if (!uri.is_string()) {
-                    return false;
-                }
+            nlohmann::json& uris = m_field_data_["Uris"];
 
-                std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
-                    m_vault.getOrchestrator()->getCrypto()->decrypt(uri.get<std::string>(), 
-                    m_item_keys);
-                
-                if (!value_err.has_value()) {
-                    return false;
-                }
-                
-                return value_err.value() == website;
-            });
+            if (uris.is_array()) {
+                uris.erase(
+                    std::remove_if(uris.begin(), uris.end(), [&](nlohmann::json uri) {
+                        if (!uri.is_string()) {
+                            return false;
+                        }
+
+                        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
+                            m_vault.getOrchestrator()->getCrypto()->decrypt(
+                                utils::getSecureVector(uri.get<std::string>()), m_item_keys);
+                        
+                        if (!value_err.has_value()) {
+                            return false;
+                        }
+                        
+                        return value_err.value() == website;
+                    }),
+                    uris.end());
+            }
         }
 
-        std::erase_if(m_data_["login"]["uris"], [&](nlohmann::json uri) {
-            if (!uri.is_string()) {
-                return false;
-            }
+        nlohmann::json& uris = m_data_["login"]["uris"];
 
-            std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
-                m_vault.getOrchestrator()->getCrypto()->decrypt(uri.get<std::string>(), 
-                m_item_keys);
-            
-            if (!value_err.has_value()) {
-                return false;
-            }
-            
-            return value_err.value() == website;
-        });
+        if (uris.is_array()) {
+            uris.erase(
+                std::remove_if(uris.begin(), uris.end(), [&](nlohmann::json uri) {
+                    if (!uri.is_string()) {
+                        return false;
+                    }
+
+                    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
+                        m_vault.getOrchestrator()->getCrypto()->decrypt(
+                            utils::getSecureVector(uri.get<std::string>()), m_item_keys);
+                        
+                    if (!value_err.has_value()) {
+                        return false;
+                    }
+                        
+                    return value_err.value() == website;
+                }),
+                uris.end());
+        }
 
         return this;
     }
@@ -536,7 +548,7 @@ namespace clientwarden::vendor::bitwarden {
             new_data["data"] = new_field_data.dump();
         }
 
-        OrchestratorError action_err = 
+        std::expected<ItemId, OrchestratorError> action_err = 
             m_vault.getOrchestrator()->newItem(new_data);
             
         o_id = new_data["id"];
@@ -675,7 +687,7 @@ namespace clientwarden::vendor::bitwarden {
          * @note Get Secure Vector should pad the int
          */
         totp.code = utils::getSecureVector(code);
-        totp.remaining = utils::s_getTime(utils::s_getCurrentTime(period));
+        totp.expiry = utils::s_getTime(utils::s_getCurrentTime(period));
         totp.period = period;
 
         return this;

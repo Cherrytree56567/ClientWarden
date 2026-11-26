@@ -391,10 +391,10 @@ namespace clientwarden::vendor::bitwarden {
                 break;
             case CustomFieldType::Linked:
                 data_field_data["Name"] = name;
-                data_field_data["LinkedId"] = std::stoi(field.value);
+                data_field_data["LinkedId"] = utils::getInteger(field.value);
                 data_field_data["Type"] = std::to_underlying(field.type);
                 
-                field_data["linkedId"] = std::stoi(field.value);
+                field_data["linkedId"] = utils::getInteger(field.value);
                 field_data["name"] = std::move(name);
                 field_data["value"] = nullptr;
                 field_data["type"] = std::to_underlying(field.type);
@@ -424,36 +424,51 @@ namespace clientwarden::vendor::bitwarden {
             m_field_data_["fields"] = nlohmann::json::array();
         }
 
-        std::erase_if(m_data_["fields"], [&](nlohmann::json field) {
-            if (!field.contains("name") || !field["name"].is_string()) {
-                return false;
-            }
+        nlohmann::json& fields = m_data_["fields"];
 
-            std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> field_name_err = 
-                m_vault.getOrchestrator()->getCrypto()->decrypt(field["name"], m_item_keys);
-            
-            if (!field_name_err.has_value()) {
-                return false;
-            }
+        if (fields.is_array()) {
+            fields.erase(
+                std::remove_if(fields.begin(), fields.end(), [&](nlohmann::json field) {
+                    if (!field.contains("name") || !field["name"].is_string()) {
+                        return false;
+                    }
 
-            return field_name_err.value() == name;
-        });
+                    std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> field_name_err = 
+                        m_vault.getOrchestrator()->getCrypto()->decrypt(field["name"], 
+                            m_item_keys);
+                    
+                    if (!field_name_err.has_value()) {
+                        return false;
+                    }
+
+                    return field_name_err.value() == name;
+                }),
+                fields.end());
+        }
 
         if (m_enable_data_field_) {
-            std::erase_if(m_field_data_["Fields"], [&](nlohmann::json field) {
-                if (!field.contains("Name") || !field["Name"].is_string()) {
-                    return false;
-                }
+            nlohmann::json& data_fields = m_field_data_["Fields"];
 
-                std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> field_name_err = 
-                    m_vault.getOrchestrator()->getCrypto()->decrypt(field["Name"], m_item_keys);
-                
-                if (!field_name_err.has_value()) {
-                    return false;
-                }
+            if (data_fields.is_array()) {
+                data_fields.erase(
+                    std::remove_if(data_fields.begin(), data_fields.end(), [&](
+                        nlohmann::json field) {
+                        if (!field.contains("Name") || !field["Name"].is_string()) {
+                            return false;
+                        }
 
-                return field_name_err.value() == name;
-            });
+                        std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> field_name_err = 
+                            m_vault.getOrchestrator()->getCrypto()->decrypt(field["Name"], 
+                                m_item_keys);
+                        
+                        if (!field_name_err.has_value()) {
+                            return false;
+                        }
+
+                        return field_name_err.value() == name;
+                    }),
+                    data_fields.end());
+            }
         }
     }
     
@@ -545,10 +560,16 @@ namespace clientwarden::vendor::bitwarden {
             field.name = std::move(name_err.value());
 
             if (field.type == CustomFieldType::Linked) {
-                field.value = utils::getSecureVector(std::to_string(json_field["linkedId"]));
+                if (!json_field.contains("linkedId") || 
+                    !json_field["linkedId"].is_number_integer()) {
+                    continue;
+                }
+
+                field.value = utils::getSecureVector(json_field["linkedId"].get<int>());
             } else {
                 std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> value_err = 
-                    m_vault.getOrchestrator()->getCrypto()->decrypt(json_field["value"], m_item_keys);
+                    m_vault.getOrchestrator()->getCrypto()->decrypt(json_field["value"], 
+                        m_item_keys);
                 
                 if (!value_err.has_value()) {
                     continue;
@@ -618,7 +639,7 @@ namespace clientwarden::vendor::bitwarden {
     }
     
     void BitwardenGenericItem::addAttachmentImpl(const Botan::secure_vector<uint8_t>& name, 
-        const Botan::secure_vector<uint8_t>& content, ItemId& o_id,
+        Botan::secure_vector<uint8_t>& content, ItemId& o_id,
         std::function<void(float)> on_progress) {
         std::expected<Botan::secure_vector<uint8_t>, OrchestratorError> attachment_err = 
             m_vault.getOrchestrator()->addAttachment(m_id, content, name, on_progress);
@@ -702,13 +723,19 @@ namespace clientwarden::vendor::bitwarden {
             return;
         }
 
-        std::erase_if(m_data_["attachments"], [&](nlohmann::json attachment) {
-            if (!attachment.contains("id") || !attachment["id"].is_string()) {
-                return false;
-            }
+        nlohmann::json& attachments = m_data_["attachments"];
 
-            return attachment["id"] == id;
-        });
+        if (attachments.is_array()) {
+            attachments.erase(
+                std::remove_if(attachments.begin(), attachments.end(), [&](nlohmann::json attachment) {
+                    if (!attachment.contains("id") || !attachment["id"].is_string()) {
+                        return false;
+                    }
+
+                    return attachment["id"] == id;
+                }),
+                attachments.end());
+        }
     }
     
     void BitwardenGenericItem::setFavoriteImpl(bool value) {

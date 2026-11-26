@@ -263,7 +263,7 @@ namespace clientwarden {
             }
 
             if (!item_err.value().contains("favorite") || 
-                !item_err.value()["favorite"].is_bool()) {
+                !item_err.value()["favorite"].is_boolean()) {
                 return true;
             }
 
@@ -333,7 +333,7 @@ namespace clientwarden {
                 item_err.value()["key"].is_string()) {
                 std::expected<ItemKey, CryptoErrors> item_key_err = 
                     m_vault.getOrchestrator()->getCrypto()->resolveItemKey(
-                        utils::getSecureVector(item_err.value()["key"])
+                        utils::getSecureVector(item_err.value()["key"].get<std::string>())
                     );
                 
                 if (!item_key_err.has_value()) {
@@ -354,7 +354,7 @@ namespace clientwarden {
 
             std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> name_err = 
                 m_vault.getOrchestrator()->getCrypto()->decrypt(
-                    utils::getSecureVector(item_err.value()["name"]), key
+                    utils::getSecureVector(item_err.value()["name"].get<std::string>()), key
                 );
             
             key.clear();

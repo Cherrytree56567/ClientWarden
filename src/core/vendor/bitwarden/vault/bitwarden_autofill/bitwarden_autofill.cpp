@@ -81,7 +81,7 @@ namespace clientwarden::vendor::bitwarden::vault {
 
     std::expected<PasskeyInfo, AutoFillError> BitwardenAutoFill::getPasskey(ItemId uuid) {
         std::expected<nlohmann::json, RuntimeError> item_err = 
-            m_runtime->getItem(item_id);
+            m_runtime->getItem(uuid);
         
         if (!item_err.has_value()) {
             return std::unexpected(AutoFillError::RuntimeError);

@@ -263,7 +263,7 @@ namespace clientwarden::vendor::bitwarden {
         /**
          * @note We dont need to check this, bc if it fails, it'll be created at the next sync.
          */
-        OrchestratorError action_err = 
+        std::expected<ItemId, OrchestratorError> action_err = 
             m_vault.getOrchestrator()->newItem(new_data);
             
         o_id = new_data["id"];

@@ -533,7 +533,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 }
 
                 std::expected<Botan::secure_vector<uint8_t>, StorageError> attachment_err =
-                    m_storage->readBinary(record.raw["url"], [](float) {});
+                    m_storage->readSecure(record.raw["url"], [](float) {});
                 
                 if (!attachment_err.has_value()) {
                     result.failed.push_back(record);
@@ -644,17 +644,18 @@ namespace clientwarden::vendor::bitwarden::vault {
                     }
                 }
 
-                payload["attachments"] = used_attachments;
+                push_create_json["attachments"] = used_attachments;
             }
 
             /**
              * @brief Use Server's folderid, and if it doesnt exist, fail.
              * @note This requires folder's to be sorted first.
              */
-            if (payload.contains("folderId") && payload["folderId"].is_string()) {
+            if (push_create_json.contains("folderId") && 
+                push_create_json["folderId"].is_string()) {
                 for (std::pair<const std::string, std::string> fold_id : folder_ids) {
-                    if (fold_id.first == payload["folderId"]) {
-                        payload["folderId"] = fold_id.second;
+                    if (fold_id.first == push_create_json["folderId"].get<std::string>()) {
+                        push_create_json["folderId"] = fold_id.second;
                         break;
                     }
                 }
@@ -669,7 +670,8 @@ namespace clientwarden::vendor::bitwarden::vault {
                     continue;
                 }
 
-                res = m_network->renameFolder(record.uuid, utils::getSecureVector(push_create_json["name"]));
+                res = m_network->renameFolder(record.uuid, utils::getSecureVector(
+                    push_create_json["name"].get<std::string>()));
             } else {
                 result.failed.push_back(record);
                 continue;

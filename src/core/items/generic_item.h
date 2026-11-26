@@ -28,7 +28,7 @@ namespace clientwarden {
      * @param value The Field Value.
      */
     struct CustomField {
-        CustomFieldType field;
+        CustomFieldType type;
         Botan::secure_vector<uint8_t> name;
         Botan::secure_vector<uint8_t> value;
     };
@@ -123,7 +123,7 @@ namespace clientwarden {
          *  `o_id` with the attachment's id and executes `on_progress` when upload progresses.
          */
         GenericItem* addAttachment(const Botan::secure_vector<uint8_t>& name, 
-            const Botan::secure_vector<uint8_t>& content, ItemId& o_id,
+            Botan::secure_vector<uint8_t>& content, ItemId& o_id,
             std::function<void(float)> on_progress = nullptr);
         /**
          * @brief Downloads the attachment using the provided Attachment ID to the provided path,
@@ -217,7 +217,7 @@ namespace clientwarden {
         virtual void getDeletionImpl(std::string& o_time) = 0;
 
         virtual void addAttachmentImpl(const Botan::secure_vector<uint8_t>& name, 
-            const Botan::secure_vector<uint8_t>& content, ItemId& o_id,
+            Botan::secure_vector<uint8_t>& content, ItemId& o_id,
             std::function<void(float)> on_progress = nullptr) = 0;
         virtual void downloadAttachmentImpl(const ItemId& id, const std::filesystem::path& path,
             std::function<void(float)> on_progress = nullptr) = 0;

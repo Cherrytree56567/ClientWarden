@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <botan/secmem.h>
+#include <botan/mem_ops.h>
 #include <spdlog/spdlog.h>
 
 namespace clientwarden {
@@ -40,6 +41,13 @@ namespace clientwarden {
         Botan::secure_vector<uint8_t> access_token;
         Botan::secure_vector<uint8_t> refresh_token;
         Timestamp expires_at;
+
+        void clear() {
+            Botan::secure_scrub_memory(access_token.data(), access_token.size());
+            Botan::secure_scrub_memory(refresh_token.data(), refresh_token.size());
+            access_token.clear();
+            refresh_token.clear();
+        }
     };
 
     /**
@@ -50,6 +58,8 @@ namespace clientwarden {
         Botan::secure_vector<uint8_t> master_password_hash;
 
         void clear() {
+            Botan::secure_scrub_memory(internal_key.data(), internal_key.size());
+            Botan::secure_scrub_memory(master_password_hash.data(), master_password_hash.size());
             internal_key.clear();
             master_password_hash.clear();
         }

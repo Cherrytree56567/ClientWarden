@@ -3,6 +3,7 @@
 
 namespace clientwarden::vendor::bitwarden::vault {
     using namespace ::clientwarden::vault;
+    using namespace ::clientwarden::platforms;
     
     class BitwardenOrchestrator : public Orchestrator {
     public:

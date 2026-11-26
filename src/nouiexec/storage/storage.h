@@ -24,6 +24,8 @@ namespace clientwarden::platforms {
             std::function<void(float)> on_progress = nullptr, float size = 1.0f);
         std::expected<std::vector<uint8_t>, StorageError> readBinary(std::filesystem::path file, 
             std::function<void(float)> on_progress = nullptr, float size = 1.0f);
+        std::expected<Botan::secure_vector<uint8_t>, StorageError> readSecure(std::filesystem::path file, 
+            std::function<void(float)> on_progress = nullptr, float size = 1.0f);
         StorageError write(std::filesystem::path file, std::string data);
         StorageError write(std::filesystem::path file, Botan::secure_vector<uint8_t> data);
         StorageError remove(std::filesystem::path file);

@@ -8,7 +8,7 @@ namespace clientwarden::vendor::bitwarden {
     public:
         BitwardenNoteItem(Vault& vault, ItemId id, bool item_creation);
 
-        BitwardenNoteItem* duplicate(Botan::secure_vector<uint8_t>& id);
+        BitwardenNoteItem* duplicate(ItemId& id);
         
         BitwardenNoteItem* getType(ItemType& val);
     };

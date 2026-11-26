@@ -76,7 +76,7 @@ namespace clientwarden {
                 
                 return result;
             }
-        } else if (std::holds_alternative<vault::MultiFactorChallenge>(result)) {
+        } else if (std::holds_alternative<MultiFactorChallenge>(result)) {
             m_pending_vaults_[o_id] = vault;
             
             return result;
@@ -103,7 +103,7 @@ namespace clientwarden {
                 
                 return result;
             }
-        } else if (std::holds_alternative<vault::MultiFactorChallenge>(result)) {
+        } else if (std::holds_alternative<MultiFactorChallenge>(result)) {
             return result;
         }
 
@@ -130,7 +130,7 @@ namespace clientwarden {
 
     bool VaultManager::logout(ItemId uuid) {
         if (m_vaults_.contains(uuid)) {
-            bool result = m_vaults_.at(uuid).logout();
+            bool result = m_vaults_.at(uuid)->logout();
 
             if (result) {
                 removeVault(uuid);
@@ -144,7 +144,7 @@ namespace clientwarden {
 
     bool VaultManager::lock(ItemId uuid) {
         if (m_vaults_.contains(uuid)) {
-            return m_vaults_.at(uuid).lock();
+            return m_vaults_.at(uuid)->lock();
         }
 
         return false;
@@ -175,17 +175,22 @@ namespace clientwarden {
     }
 
     bool VaultManager::loadVaults() {
-        if (!m_storage_.exists()) {
+        if (!m_storage_.exists("clientwarden.json")) {
             return false;
         }
 
-        std::string vault_mgr_string = m_storage_.read("clientwarden.json");
-
-        if (!nlohmann::json::accept(vault_mgr_string)) {
+        std::expected<std::string, StorageError> vault_mgr_string = 
+            m_storage_.read("clientwarden.json");
+        
+        if (!vault_mgr_string.has_value()) {
             return false;
         }
 
-        m_data_ = nlohmann::json::parse(vault_mgr_string);
+        if (!nlohmann::json::accept(vault_mgr_string.value())) {
+            return false;
+        }
+
+        m_data_ = nlohmann::json::parse(vault_mgr_string.value());
 
         if (!m_data_.contains("main_vault") || !m_data_.contains("vaults") || 
             !m_data_["vaults"].is_array()) {
@@ -282,9 +287,9 @@ namespace clientwarden {
             /**
              * TODO: todo
              */
-            return std::make_shared<Vault>(id);
+            return std::make_shared<BitWardenVault>(id);
         }
         
-        return std::make_shared<Vault>(id);
+        return std::make_shared<BitWardenVault>(id);
     }
 }

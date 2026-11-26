@@ -1,8 +1,15 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <iomanip>
+#include <charconv>
 #include <date/date.h>
 #include <botan/secmem.h>
+#include <botan/base64.h>
+#include <botan/base32.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include "clientwarden.h"
 
 namespace clientwarden::utils {
@@ -61,7 +68,7 @@ namespace clientwarden::utils {
     /**
      * @brief Converts a Botan Secure Vector String to an Int.
      */
-    int getInteger(const Botan::secure_vector<uint8_t>& value);
+    int getInteger(const Botan::secure_vector<uint8_t>& value, int fallback = 0);
     /**
      * @brief Converts a Botan Secure Vector String to a String.
      */
@@ -73,5 +80,9 @@ namespace clientwarden::utils {
     /**
      * @brief Safely converts the string to an int.
      */
-    int getInt(std::string& value, int fallback);
+    int getInt(const std::string& value, int fallback = 0);
+    /**
+     * @brief Empty Buffer
+     */
+    Botan::secure_vector<uint8_t>& discardBuffer();
 }

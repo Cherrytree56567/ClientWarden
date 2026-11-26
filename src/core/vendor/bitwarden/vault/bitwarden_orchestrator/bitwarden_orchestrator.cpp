@@ -539,7 +539,8 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         if (item.value().contains("key") && !item.value()["key"].is_null()) {
             std::expected<ItemKey, CryptoErrors> item_key_err = 
-                m_crypto->resolveItemKey(utils::getSecureVector(item.value()["key"]));
+                m_crypto->resolveItemKey(utils::getSecureVector(
+                    item.value()["key"].get<std::string>()));
 
             if (!item_key_err.has_value()) {
                 attachment_key.clear();
@@ -655,7 +656,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 
                 Botan::secure_scrub_memory(file_contents.data(), file_contents.size());
 
-                return utils::getSecureVector(attachment_json["id"]);
+                return utils::getSecureVector(attachment_json["id"].get<std::string>());
             }
         } else {
             Botan::secure_scrub_memory(str_attachment_key.data(), str_attachment_key.size());
@@ -669,13 +670,15 @@ namespace clientwarden::vendor::bitwarden::vault {
                 return std::unexpected(OrchestratorError::NetworkError);
             }
 
-            RuntimeError runtime_attachment = m_runtime->updateItem(uuid, network_attachment.value()["cipherResponse"]);
+            RuntimeError runtime_attachment = m_runtime->updateItem(uuid, 
+                network_attachment.value()["cipherResponse"]);
 
             if (runtime_attachment != RuntimeError::Success) {
                 return std::unexpected(OrchestratorError::RuntimeError);
             }
 
-            return utils::getSecureVector(network_attachment.value()["attachmentId"]);
+            return utils::getSecureVector(
+                network_attachment.value()["attachmentId"].get<std::string>());
         }
     }
     
@@ -800,7 +803,8 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::RuntimeError;
         }
 
-        Botan::secure_vector<uint8_t> botan_item_key = utils::getSecureVector(item.value()["key"]);
+        Botan::secure_vector<uint8_t> botan_item_key = utils::getSecureVector(
+            item.value()["key"].get<std::string>());
 
         std::expected<ItemKey, CryptoErrors> item_key = m_crypto->resolveItemKey(botan_item_key);
 
@@ -832,14 +836,15 @@ namespace clientwarden::vendor::bitwarden::vault {
             attachment_json = attachment_err.value();
 
             if (!attachment_json.contains("url") || !attachment_json["url"].is_string() ||
-                !attachment_json.contains("createdOffline") || !attachment_json["createdOffline"].is_bool() ||
+                !attachment_json.contains("createdOffline") || 
+                !attachment_json["createdOffline"].is_boolean() ||
                 !(attachment_json["createdOffline"].get<bool>())) {
                 item_key.value().clear();
                 return OrchestratorError::RuntimeError;
             }
 
             std::expected<Botan::secure_vector<uint8_t>, StorageError> attachment_storage_err = 
-                m_storage->read("attachments/" + entity.id, on_progress, .9);
+                m_storage->readSecure("attachments/" + entity.id, on_progress, .9);
             
             if (!attachment_storage_err.has_value()) {
                 item_key.value().clear();
@@ -869,10 +874,13 @@ namespace clientwarden::vendor::bitwarden::vault {
             return OrchestratorError::RuntimeError;
         }
 
-        Botan::secure_vector<uint8_t> file_name = utils::getSecureVector(attachment_json["fileName"]);
-        Botan::secure_vector<uint8_t> key = utils::getSecureVector(attachment_json["key"]);
+        Botan::secure_vector<uint8_t> file_name = utils::getSecureVector(
+            attachment_json["fileName"].get<std::string>());
+        Botan::secure_vector<uint8_t> key = utils::getSecureVector(
+            attachment_json["key"].get<std::string>());
 
-        std::expected<ItemKey, CryptoErrors> attachment_key = m_crypto->resolveItemKey(key, item_key.value());
+        std::expected<ItemKey, CryptoErrors> attachment_key = 
+        m_crypto->resolveItemKey(key, item_key.value());
 
         item_key.value().clear();
         

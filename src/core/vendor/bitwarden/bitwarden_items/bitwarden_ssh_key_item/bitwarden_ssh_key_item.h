@@ -12,7 +12,7 @@ namespace clientwarden::vendor::bitwarden {
         BitwardenSSHKeyItem* setPrivateKey(const Botan::secure_vector<uint8_t>& private_key);
         BitwardenSSHKeyItem* setPublicKey(const Botan::secure_vector<uint8_t>& public_key);
 
-        BitwardenSSHKeyItem* duplicate(Botan::secure_vector<uint8_t>& id);
+        BitwardenSSHKeyItem* duplicate(ItemId& id);
 
         BitwardenSSHKeyItem* getFingerprint(Botan::secure_vector<uint8_t>& fingerprint);
         BitwardenSSHKeyItem* getPrivateKey(Botan::secure_vector<uint8_t>& private_key);

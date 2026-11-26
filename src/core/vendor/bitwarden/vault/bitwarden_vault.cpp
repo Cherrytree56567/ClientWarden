@@ -2,8 +2,15 @@
 
 namespace clientwarden::vendor::bitwarden {
     BitWardenVault::BitWardenVault(ItemId uuid) : Vault(uuid) {
+        m_network = std::make_shared<BitwardenNetwork>(m_settings);
+        m_runtime = std::make_shared<BitwardenRuntime>(getStorage());
+        m_versioning = std::make_shared<BitwardenVersioning>(m_runtime);
+        m_orchestrator = std::make_shared<BitwardenOrchestrator>(m_crypto, m_network, m_runtime, getStorage());
+        m_autofill = std::make_shared<BitwardenAutoFill>(m_runtime, m_orchestrator, m_crypto);
+        m_sync = std::make_shared<BitwardenSync>(m_runtime, m_network, m_settings, getStorage());
+
         std::expected<bool, StorageError> exist_err = 
-            m_storage->exists("vault.json");
+            getStorage()->exists("vault.json");
         if (exist_err.has_value() && exist_err.value()) {
             m_state = AuthState::Unlockable;
         } else {
@@ -13,6 +20,12 @@ namespace clientwarden::vendor::bitwarden {
 
     BitWardenVault::~BitWardenVault() {
         lock();
+    }
+
+    void BitWardenVault::onNetworkEvent_(NetworkEvent event) {
+        /**
+         * @todo this
+         */
     }
 
     LoginResult BitWardenVault::login(Credential cred) {
@@ -134,7 +147,8 @@ namespace clientwarden::vendor::bitwarden {
             }
 
             CryptoErrors keys_err =
-                m_crypto->setVaultKeys(utils::getSecureVector(profile_err.value().raw["key"]));
+                m_crypto->setVaultKeys(utils::getSecureVector(
+                    profile_err.value().raw["key"].get<std::string>()));
                 
             if (keys_err != CryptoErrors::Success) {
                 return AuthResult::CryptoError;
@@ -148,8 +162,10 @@ namespace clientwarden::vendor::bitwarden {
              */
             SyncMethod sync_method = m_settings->getSyncMethod();
 
+            m_network->setEventHandler([&](NetworkEvent event) { onNetworkEvent_(event); });
+
             if (sync_method == SyncMethod::Classic) {
-                m_runtime->startSyncThread();
+                m_sync->startSyncThread();
             } else if (sync_method == SyncMethod::WebSocket) {
                 m_network->listen();
             }
@@ -336,7 +352,8 @@ namespace clientwarden::vendor::bitwarden {
         }
 
         CryptoErrors keys_err =
-            m_crypto->setVaultKeys(utils::getSecureVector(profile_err.value().raw["key"]));
+            m_crypto->setVaultKeys(utils::getSecureVector(
+                profile_err.value().raw["key"].get<std::string>()));
                 
         if (keys_err != CryptoErrors::Success) {
             return AuthResult::CryptoError;
@@ -350,8 +367,10 @@ namespace clientwarden::vendor::bitwarden {
          */
         SyncMethod sync_method = m_settings->getSyncMethod();
 
+        m_network->setEventHandler([&](NetworkEvent event) { onNetworkEvent_(event); });
+
         if (sync_method == SyncMethod::Classic) {
-            m_runtime->startSyncThread();
+            m_sync->startSyncThread();
         } else if (sync_method == SyncMethod::WebSocket) {
             m_network->listen();
         }
@@ -402,7 +421,7 @@ namespace clientwarden::vendor::bitwarden {
         return true;
     }
 
-    std::unexpected<bool, AuthResult> BitWardenVault::checkReprompt(
+    std::expected<bool, AuthResult> BitWardenVault::checkReprompt(
         Botan::secure_vector<uint8_t> password) {
         std::expected<AuthKeys, CryptoErrors> auth_keys_err = 
             m_crypto->getKeys();
@@ -451,25 +470,31 @@ namespace clientwarden::vendor::bitwarden {
                 !vault_info["masterPasswordUnlock"]["kdf"]["memory"].is_number_integer() ||
                 !vault_info["masterPasswordUnlock"]["kdf"].contains("parallelism") ||
                 !vault_info["masterPasswordUnlock"]["kdf"]["parallelism"].is_number_integer()) {
-                return std::unexpected(AuthResult::InvalidVault;
+                return std::unexpected(AuthResult::InvalidVault);
             }
 
             kdf_params.memory = vault_info["masterPasswordUnlock"]["kdf"]["memory"];
-            kdf_params.parallelism = vault_info["masterPasswordUnlock"]["kdf"]["parallelism"];
+            kdf_params.parallel = vault_info["masterPasswordUnlock"]["kdf"]["parallelism"];
+        }
+
+        std::expected<Profile, RuntimeError> profile = m_runtime->getProfile();
+
+        if (!profile.has_value()) {
+            return std::unexpected(AuthResult::RuntimeError);
         }
 
         /**
          * @brief Get AuthKeys.
          */
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> internal_key = 
-            m_crypto->makeInternalKey(credential.m_password, salt, kdf_params);
+            m_crypto->makeInternalKey(password, profile.value().email, kdf_params);
             
         if (!internal_key.has_value()) {
             return std::unexpected(AuthResult::InvalidCreds);
         }
 
         std::expected<Botan::secure_vector<uint8_t>, CryptoErrors> hashed_password = 
-            m_crypto->hashedPassword(credential.m_password, internal_key.value());
+            m_crypto->hashedPassword(password, internal_key.value());
             
         if (!hashed_password.has_value()) {
             return std::unexpected(AuthResult::InvalidCreds);

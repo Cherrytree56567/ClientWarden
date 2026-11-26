@@ -25,9 +25,9 @@ namespace clientwarden::vendor::bitwarden {
         BitwardenIdentityItem* setSSN(const Botan::secure_vector<uint8_t>& ssn);
         BitwardenIdentityItem* setState(const Botan::secure_vector<uint8_t>& state);
         BitwardenIdentityItem* setTitle(const Botan::secure_vector<uint8_t>& title);
-        BitwardenIdentityItem* SetUsername(const Botan::secure_vector<uint8_t>& username);
+        BitwardenIdentityItem* setUsername(const Botan::secure_vector<uint8_t>& username);
 
-        BitwardenIdentityItem* duplicate(Botan::secure_vector<uint8_t>& id);
+        BitwardenIdentityItem* duplicate(ItemId& id);
 
         BitwardenIdentityItem* getAddress1(Botan::secure_vector<uint8_t>& address_1);
         BitwardenIdentityItem* getAddress2(Botan::secure_vector<uint8_t>& address_2);
