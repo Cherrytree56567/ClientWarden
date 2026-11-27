@@ -24,7 +24,8 @@ namespace clientwarden::vendor::bitwarden {
         lock();
     }
 
-    void BitWardenVault::onNetworkEvent_(NetworkEvent event) {
+    void BitWardenVault::onNetworkEvent_(NetworkEvent event, std::string context_id, 
+        nlohmann::json payload_json) {
         /**
          * @todo this
          */

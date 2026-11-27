@@ -1151,7 +1151,8 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         if (previous != current) {
             if (m_on_event) {
-                m_on_event(NetworkEvent::ConnectivityChanged);
+                m_on_event(NetworkEvent::ConnectivityChanged, 
+                    current == Connectivity::Online ? "online" : "offline", nlohmann::json{});
             }
 
             m_connectivity.store(current);
@@ -1234,7 +1235,7 @@ namespace clientwarden::vendor::bitwarden::vault {
                 if (body.contains("error") && body["error"].is_string() && 
                     body["error"] == "invalid_grant") {
                     if (m_on_event) {
-                        m_on_event(NetworkEvent::LogOut);
+                        m_on_event(NetworkEvent::LogOut, "", nlohmann::json{});
                     }
 
                     eraseSession();
@@ -1393,29 +1394,48 @@ namespace clientwarden::vendor::bitwarden::vault {
 
                         int notify_type = -1;
                         std::string cipher_id;
+                        std::string context_id;
+                        msgpack::object payload_obj;
+                        nlohmann::json payload_json;
 
                         for (uint32_t i = 0; i < notification.size; i++) {
                             std::string key = notification.ptr[i].key.as<std::string>();
 
                             if (key == "Type") {
                                 notify_type = notification.ptr[i].val.as<int>();
+                            } else if (key == "ContextId") {
+                                if (notification.ptr[i].val.type == msgpack::type::STR) {
+                                    context_id = notification.ptr[i].val.as<std::string>();
+                                }
                             } else if (key == "Payload") {
                                 msgpack::object_map& payload = notification.ptr[i].val.via.map;
+
                                 for (uint32_t j = 0; j < payload.size; j++) {
+                                    if (payload.ptr[j].key.type != msgpack::type::STR) {
+                                        continue;
+                                    }
+
                                     std::string pkey = payload.ptr[j].key.as<std::string>();
-                                    if (pkey == "Id" && payload.ptr[j].val.type == msgpack::type::STR) {
-                                        cipher_id = payload.ptr[j].val.as<std::string>();
+
+                                    if (payload.ptr[j].val.type == msgpack::type::STR) {
+                                        std::string pval = payload.ptr[j].val.as<std::string>();
+                                        payload_json[pkey] = pval;
+                                        if (pkey == "Id") {
+                                            cipher_id = pval;
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        if (notify_type < 0 || notify_type > static_cast<int>(NotificationType::PremiumStatusChanged)) {
+                        if (notify_type < 0 || 
+                            notify_type > static_cast<int>(NotificationType::PremiumStatusChanged)) {
                             continue;
                         }
 
                         if (m_on_event) {
-                            m_on_event(toNetworkEvent(static_cast<NotificationType>(notify_type)));
+                            m_on_event(toNetworkEvent(static_cast<NotificationType>(notify_type)), 
+                                context_id, payload_json);
                         }
                     } catch (...) {
                         continue;

@@ -39,7 +39,7 @@ namespace clientwarden::vendor::bitwarden {
 
         Vendor getVendor() override;
     private:
-        void onNetworkEvent_(NetworkEvent event);
+        void onNetworkEvent_(NetworkEvent event, std::string context_id, nlohmann::json payload_json);
 
         PasswordCredential m_password_cred_;
         bool m_password_cred_set_ = false;

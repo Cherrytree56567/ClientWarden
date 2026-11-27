@@ -290,7 +290,7 @@ namespace clientwarden::vault {
         std::shared_ptr<Settings> m_settings;
         AuthSession m_session;
         Thread m_listening_thread;
-        std::function<void(NetworkEvent)> m_on_event;
+        std::function<void(NetworkEvent, std::string, nlohmann::json)> m_on_event;
         std::atomic<Connectivity> m_connectivity{Connectivity::Online};
         Thread m_token_refresh;
         Thread m_connectivity_thread;
