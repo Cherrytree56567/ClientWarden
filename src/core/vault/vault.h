@@ -186,19 +186,23 @@ namespace clientwarden {
         /**
          * @brief Returns the Vault's Orchestrator
          */
-        std::shared_ptr<vault::Orchestrator> getOrchestrator();
+        std::shared_ptr<Orchestrator> getOrchestrator();
         /**
          * @brief Returns the Vault's Versioning System
          */
-        std::shared_ptr<vault::Versioning> getVersioning();
+        std::shared_ptr<Versioning> getVersioning();
         /**
          * @brief Returns the Vault's Settings
          */
-        std::shared_ptr<vault::Settings> getSettings();
+        std::shared_ptr<Settings> getSettings();
         /**
          * @brief Returns the Vault's AutoFill
          */
-        std::shared_ptr<vault::AutoFill> getAutoFill();
+        std::shared_ptr<AutoFill> getAutoFill();
+        /**
+         * @brief Returns the Vault's AutoFill
+         */
+        std::shared_ptr<Network> getNetwork();
 
         /**
          * @brief Returns the Vendor of the Vault

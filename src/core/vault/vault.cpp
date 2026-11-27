@@ -30,4 +30,8 @@ namespace clientwarden {
     std::shared_ptr<Storage> Vault::getStorage() {
         return m_storage_;
     }
+    
+    std::shared_ptr<Network> Vault::getNetwork() {
+        return m_network;
+    }
 }
