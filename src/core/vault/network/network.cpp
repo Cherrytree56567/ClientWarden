@@ -5,7 +5,8 @@ namespace clientwarden::vault {
         
     }
 
-    void Network::setEventHandler(std::function<void(NetworkEvent)> on_event) {
+    void Network::setEventHandler(
+        std::function<void(NetworkEvent, std::string, nlohmann::json)> on_event) {
         m_on_event = on_event;
     }
 

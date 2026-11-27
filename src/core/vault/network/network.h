@@ -271,7 +271,8 @@ namespace clientwarden::vault {
         /**
          * @brief Set m_on_event.
          */
-        virtual void setEventHandler(std::function<void(NetworkEvent)> on_event);
+        virtual void setEventHandler(
+            std::function<void(NetworkEvent, std::string, nlohmann::json)> on_event);
 
         /**
          * @brief Start the Token Refresh Thread.

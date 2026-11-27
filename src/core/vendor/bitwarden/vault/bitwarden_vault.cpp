@@ -278,7 +278,9 @@ namespace clientwarden::vendor::bitwarden {
              */
             SyncMethod sync_method = m_settings->getSyncMethod();
 
-            m_network->setEventHandler([&](NetworkEvent event) { onNetworkEvent_(event); });
+            m_network->setEventHandler([&](NetworkEvent event, 
+                std::string context_id, nlohmann::json payload) { 
+                    onNetworkEvent_(event, context_id, payload); });
 
             if (sync_method == SyncMethod::Classic) {
                 m_sync->startSyncThread();
@@ -483,7 +485,9 @@ namespace clientwarden::vendor::bitwarden {
          */
         SyncMethod sync_method = m_settings->getSyncMethod();
 
-        m_network->setEventHandler([&](NetworkEvent event) { onNetworkEvent_(event); });
+        m_network->setEventHandler([&](NetworkEvent event, 
+            std::string context_id, nlohmann::json payload) { 
+                onNetworkEvent_(event, context_id, payload); });
 
         if (sync_method == SyncMethod::Classic) {
             m_sync->startSyncThread();
@@ -633,19 +637,19 @@ namespace clientwarden::vendor::bitwarden {
     }
     
     std::shared_ptr<GenericItem> BitWardenVault::getItem(ItemId uuid) {
-        return std::make_shared<BitwardenGenericItem>(this, uuid, false);
+        return std::make_shared<BitwardenGenericItem>(*this, uuid, false);
     }
 
     std::shared_ptr<Folder> BitWardenVault::getFolder(ItemId uuid) {
-        return std::make_shared<BitwardenFolder>(this, uuid, false);
+        return std::make_shared<BitwardenFolder>(*this, uuid, false);
     }
     
     std::shared_ptr<Folder> BitWardenVault::createFolder() {
-        return std::make_shared<BitwardenFolder>(this, "", true);
+        return std::make_shared<BitwardenFolder>(*this, "", true);
     }
     
     std::shared_ptr<Query> BitWardenVault::getQuery() {
-        return std::make_shared<BitwardenQuery>(this);
+        return std::make_shared<BitwardenQuery>(*this);
     }
 
     Vendor BitWardenVault::getVendor() {
