@@ -138,7 +138,8 @@ elseif(CW_PLATFORM STREQUAL "_nonuiexec")
     add_executable(clientwarden ${FILES})
 
     target_sources(clientwarden PRIVATE 
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/nouiexec/storage/storage.cpp")
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/nouiexec/storage/storage.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/nouiexec/main.cpp")
 
     target_include_directories(clientwarden PRIVATE 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/nouiexec/")

@@ -7,6 +7,9 @@
 #include "bitwarden_runtime/bitwarden_runtime.h"
 #include "bitwarden_sync/bitwarden_sync.h"
 #include "bitwarden_versioning/bitwarden_versioning.h"
+#include "../bitwarden_items/bitwarden_generic_item.h"
+#include "../bitwarden_folder/bitwarden_folder.h"
+#include "../bitwarden_query/bitwarden_query.h"
 
 namespace clientwarden::vendor::bitwarden {
     using namespace ::clientwarden::vault;

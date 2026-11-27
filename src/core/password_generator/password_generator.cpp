@@ -1,6 +1,8 @@
 #include "password_generator.h"
 
 namespace clientwarden {
+    thread_local Botan::AutoSeeded_RNG PasswordGenerator::m_rng_;
+    
     PasswordGenerator::PasswordGenerator() {
         
     }

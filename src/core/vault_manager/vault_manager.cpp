@@ -284,12 +284,12 @@ namespace clientwarden {
 
     std::shared_ptr<Vault> VaultManager::createVault(Vendor vendor, ItemId id) {
         if (vendor == Vendor::BitWarden) {
-            /**
-             * TODO: todo
-             */
             return std::make_shared<BitWardenVault>(id);
         }
         
+        /**
+         * @brief We cant give a blank Vault since it hasnt def'd funcs.
+         */
         return std::make_shared<BitWardenVault>(id);
     }
 }

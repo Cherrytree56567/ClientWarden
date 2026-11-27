@@ -41,14 +41,6 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         Vendor getVendor() override;
     private:
-        /**
-         * @brief To verify if the item was created online, we can first get the remote vault,
-         *  and then search for the item with the appropriate name and key. If the key is null
-         *  then we must compare the item fields directly.
-         * @todo move to sync
-         */
-        bool verifyOnlineCreation_(nlohmann::json cipher);
-
         ItemId m_profile_id_;
         bool m_profile_id_set_ = false;
     };

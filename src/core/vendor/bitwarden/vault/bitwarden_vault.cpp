@@ -4,10 +4,12 @@ namespace clientwarden::vendor::bitwarden {
     BitWardenVault::BitWardenVault(ItemId uuid) : Vault(uuid) {
         m_network = std::make_shared<BitwardenNetwork>(m_settings);
         m_runtime = std::make_shared<BitwardenRuntime>(getStorage());
-        m_versioning = std::make_shared<BitwardenVersioning>(m_runtime);
-        m_orchestrator = std::make_shared<BitwardenOrchestrator>(m_crypto, m_network, m_runtime, getStorage());
+        m_versioning = std::make_shared<BitwardenVersioning>(m_network, m_runtime);
+        m_orchestrator = std::make_shared<BitwardenOrchestrator>(m_crypto, m_network, m_runtime, 
+            getStorage());
         m_autofill = std::make_shared<BitwardenAutoFill>(m_runtime, m_orchestrator, m_crypto);
-        m_sync = std::make_shared<BitwardenSync>(m_runtime, m_network, m_settings, getStorage());
+        m_sync = std::make_shared<BitwardenSync>(m_runtime, m_network, m_orchestrator, m_settings, 
+            getStorage());
 
         std::expected<bool, StorageError> exist_err = 
             getStorage()->exists("vault.json");
@@ -508,26 +510,23 @@ namespace clientwarden::vendor::bitwarden {
         return false;
     }
     
-    /**
-     * @todo Impl plz
-     */
     std::shared_ptr<GenericItem> BitWardenVault::getItem(ItemId uuid) {
-        
+        return std::make_shared<BitwardenGenericItem>(this, uuid, false);
     }
 
     std::shared_ptr<Folder> BitWardenVault::getFolder(ItemId uuid) {
-        
+        return std::make_shared<BitwardenFolder>(this, uuid, false);
     }
     
     std::shared_ptr<Folder> BitWardenVault::createFolder() {
-        
+        return std::make_shared<BitwardenFolder>(this, "", true);
     }
     
     std::shared_ptr<Query> BitWardenVault::getQuery() {
-        
+        return std::make_shared<BitwardenQuery>(this);
     }
 
-    Vendor getVendor() {
+    Vendor BitWardenVault::getVendor() {
         return Vendor::BitWarden;
     }
 }

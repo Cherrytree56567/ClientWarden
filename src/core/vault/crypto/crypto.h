@@ -96,12 +96,12 @@ namespace clientwarden::vault {
          * @brief Encrypt the value using the provided Key as Binary in place.
          */
         virtual CryptoErrors encryptBinaryInPlace(Botan::secure_vector<uint8_t>& value, 
-            const ItemKey& key);
+            const ItemKey& key) = 0;
         /**
          * @brief Decrypts the value using the provided key as binary in place.
          */
         virtual CryptoErrors decryptBinaryInPlace(Botan::secure_vector<uint8_t>& value,
-            const ItemKey& key);
+            const ItemKey& key) = 0;
 
         /**
          * @brief Stretches a key using HKDF using the provided info param.
