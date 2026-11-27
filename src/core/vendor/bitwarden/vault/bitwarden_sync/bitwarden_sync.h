@@ -18,6 +18,8 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<bool, SyncError> startSyncThread() override;
         std::expected<bool, SyncError> stopSyncThread() override;
 
+        SyncError syncItem(ItemId id, SyncItem item_type, SyncState item_state) override;
+
         Vendor getVendor() override;
     protected:
         std::expected<std::vector<SyncRecord>, SyncError> fetchLocalRecords() override;

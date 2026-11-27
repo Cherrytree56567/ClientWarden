@@ -40,6 +40,73 @@ namespace clientwarden::vendor::bitwarden::vault {
         
         return true;
     }
+
+    SyncError BitwardenSync::syncItem(ItemId id, SyncItem item_type, SyncState item_state) {
+        if (item_state == SyncState::CreatedOffline ||
+            item_state == SyncState::CreatedOfflinePartially ||
+            item_state == SyncState::Modified) {
+            std::expected<nlohmann::json, NetworkError> net_item;
+
+            if (item_type == SyncItem::Item) {
+                net_item = m_network->getItem(id);
+            } else if (item_type == SyncItem::Folder) {
+                net_item = m_network->getFolder(id);
+            } else {
+                return SyncError::InvalidParams;
+            }
+
+            if (!net_item.has_value()) {
+                /**
+                 * @note If it fails, we'll compare it anyway later so its fine.
+                 */
+                return SyncError::NetworkError;
+            }
+
+            RuntimeError res;
+
+            if (item_type == SyncItem::Item) {
+                if (item_state == SyncState::CreatedOffline ||
+                    item_state == SyncState::CreatedOfflinePartially) {
+                    res = m_runtime->addItem(net_item.value());
+                } else if (item_state == SyncState::Modified) {
+                    res = m_runtime->updateItem(id, net_item.value());
+                } else {
+                    return SyncError::InvalidParams;
+                }
+            } else if (item_type == SyncItem::Folder) {
+                if (item_state == SyncState::CreatedOffline ||
+                    item_state == SyncState::CreatedOfflinePartially) {
+                    res = m_runtime->addFolder(net_item.value());
+                } else if (item_state == SyncState::Modified) {
+                    res = m_runtime->updateFolder(id, net_item.value());
+                } else {
+                    return SyncError::InvalidParams;
+                }
+            }
+
+            if (res != RuntimeError::Success) {
+                return SyncError::RuntimeError;
+            }
+        } else if (item_state == SyncState::PendingDelete) {
+            RuntimeError res;
+
+            if (item_type == SyncItem::Item) {
+                res = m_runtime->removeItem(id);
+            } else if (item_type == SyncItem::Folder) {
+                res = m_runtime->removeFolder(id);
+            } else {
+                return SyncError::InvalidParams;
+            }
+
+            if (res != RuntimeError::Success) {
+                return SyncError::RuntimeError;
+            }
+        } else {
+            return SyncError::InvalidParams;
+        }
+
+        return SyncError::Success;
+    }
     
     Vendor BitwardenSync::getVendor() {
         return Vendor::BitWarden;

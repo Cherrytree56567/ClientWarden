@@ -116,6 +116,7 @@ namespace clientwarden::vault {
         NetworkError,
         StorageFailure,
         SyncError,
+        InvalidParams,
         Unknown,
         Success
     };
@@ -147,6 +148,12 @@ namespace clientwarden::vault {
          * @brief Stops the SyncThread.
          */
         virtual std::expected<bool, SyncError> stopSyncThread() = 0;
+
+        /**
+         * @brief Sync an Individual Item.
+         * @note Usually used w/ websocket.
+         */
+        virtual SyncError syncItem(ItemId id, SyncItem item_type, SyncState item_state) = 0;
 
         /**
          * @brief Gets the Vendor.

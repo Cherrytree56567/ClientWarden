@@ -325,6 +325,42 @@ namespace clientwarden::vendor::bitwarden::vault {
 
         return getToken_(data);
     }
+
+    std::expected<nlohmann::json, NetworkError> BitwardenNetwork::getItem(const ItemId& uuid) {
+        if (!m_init_) {
+            return std::unexpected(NetworkError::Uninitialised);
+        }
+        
+        if (m_connectivity == Connectivity::Offline) {
+            return std::unexpected(NetworkError::OfflineNetwork);
+        }
+
+        std::string access_token = utils::getString(m_session.access_token);
+
+        std::lock_guard<std::mutex> lock(m_vault_client_mutex_);
+        httplib::Headers headers = {
+            { "Authorization", "Bearer " + access_token },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", bitwarden_device_type },
+            { "bitwarden-client-version", bitwarden_version },
+        };
+
+        Botan::secure_scrub_memory(access_token.data(), access_token.size());
+
+        httplib::Result res = m_vault_client_->Get("/api/ciphers/" + uuid + "details", headers);
+
+        std::expected<void, NetworkError> err = getError_(res);
+
+        if (!err.has_value()) {
+            return std::unexpected(err.error());
+        }
+
+        if (!nlohmann::json::accept(res->body)) {
+            return std::unexpected(NetworkError::Unknown);
+        }
+
+        return nlohmann::json::parse(res->body);
+    }
     
     std::expected<nlohmann::json, NetworkError> BitwardenNetwork::newItem(const nlohmann::json& data) {
         if (!m_init_) {
@@ -587,6 +623,42 @@ namespace clientwarden::vendor::bitwarden::vault {
         return nlohmann::json::parse(res->body);
     }
     
+    std::expected<nlohmann::json, NetworkError> BitwardenNetwork::getFolder(const ItemId& uuid) {
+        if (!m_init_) {
+            return std::unexpected(NetworkError::Uninitialised);
+        }
+        
+        if (m_connectivity == Connectivity::Offline) {
+            return std::unexpected(NetworkError::OfflineNetwork);
+        }
+
+        std::string access_token = utils::getString(m_session.access_token);
+
+        std::lock_guard<std::mutex> lock(m_vault_client_mutex_);
+        httplib::Headers headers = {
+            { "Authorization", "Bearer " + access_token },
+            { "Content-Type", "application/json" },
+            { "bitwarden-client-name", bitwarden_device_type },
+            { "bitwarden-client-version", bitwarden_version },
+        };
+
+        Botan::secure_scrub_memory(access_token.data(), access_token.size());
+
+        httplib::Result res = m_vault_client_->Get("/api/folders/" + uuid, headers);
+
+        std::expected<void, NetworkError> err = getError_(res);
+
+        if (!err.has_value()) {
+            return std::unexpected(err.error());
+        }
+
+        if (!nlohmann::json::accept(res->body)) {
+            return std::unexpected(NetworkError::Unknown);
+        }
+
+        return nlohmann::json::parse(res->body);
+    }
+
     std::expected<nlohmann::json, NetworkError> BitwardenNetwork::createFolder(const Botan::secure_vector<uint8_t>& name) {
         if (!m_init_) {
             return std::unexpected(NetworkError::Uninitialised);

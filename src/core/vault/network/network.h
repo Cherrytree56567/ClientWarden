@@ -149,6 +149,10 @@ namespace clientwarden::vault {
             const Botan::secure_vector<uint8_t>& master_password_hash, const MultiFactorProof& proof) = 0;
 
         /**
+         * @brief Asks the server to provide details about an item.
+         */
+        virtual std::expected<nlohmann::json, NetworkError> getItem(const ItemId& uuid) = 0;
+        /**
          * @brief Asks the server to create a new Item.
          */
         virtual std::expected<nlohmann::json, NetworkError> newItem(const nlohmann::json& data) = 0;
@@ -178,6 +182,10 @@ namespace clientwarden::vault {
          */
         virtual std::expected<nlohmann::json, NetworkError> unArchiveItem(const ItemId& uuid) = 0;
 
+        /**
+         * @brief Asks the server for the Folder json.
+         */
+        virtual std::expected<nlohmann::json, NetworkError> getFolder(const ItemId& uuid) = 0;
         /**
          * @brief Asks the server to create a folder with the provided name.
          */

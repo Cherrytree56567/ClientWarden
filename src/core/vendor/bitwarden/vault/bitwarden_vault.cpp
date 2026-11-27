@@ -26,9 +26,56 @@ namespace clientwarden::vendor::bitwarden {
 
     void BitWardenVault::onNetworkEvent_(NetworkEvent event, std::string context_id, 
         nlohmann::json payload_json) {
-        /**
-         * @todo this
-         */
+        switch (event) {
+            case NetworkEvent::CipherUpdated:
+                break;
+                
+            case NetworkEvent::CipherCreated:
+                break;
+                
+            case NetworkEvent::CipherDeleted:
+                break;
+                
+            case NetworkEvent::FolderDeleted:
+                break;
+                
+            case NetworkEvent::AllCiphersChanged:
+                break;
+                
+            case NetworkEvent::WholeVaultChanged:
+                break;
+                
+            case NetworkEvent::OrgKeysChanged:
+                break;
+                
+            case NetworkEvent::FolderCreated:
+                break;
+                
+            case NetworkEvent::FolderUpdated:
+                break;
+                
+            case NetworkEvent::CipherBinned:
+                break;
+                
+            case NetworkEvent::AccountSettingsChanged:
+                break;
+                
+            case NetworkEvent::AuthRequest:
+                break;
+                
+            case NetworkEvent::Notification:
+                break;
+                
+            case NetworkEvent::ConnectivityChanged:
+                break;
+                
+            case NetworkEvent::LogOut:
+                break;
+                
+            case NetworkEvent::None:
+                break;
+                
+        }
     }
 
     LoginResult BitWardenVault::login(Credential cred) {

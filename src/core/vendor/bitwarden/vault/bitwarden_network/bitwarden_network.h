@@ -30,6 +30,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<TokenResult, NetworkError> getToken2FA(const Botan::secure_vector<uint8_t>& email, 
             const Botan::secure_vector<uint8_t>& master_password_hash, const MultiFactorProof& proof) override;
 
+        std::expected<nlohmann::json, NetworkError> getItem(const ItemId& uuid) override;
         std::expected<nlohmann::json, NetworkError> newItem(const nlohmann::json& data) override;
         std::expected<nlohmann::json, NetworkError> updateItem(const ItemId& uuid, 
             const nlohmann::json& data) override;
@@ -39,6 +40,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::expected<nlohmann::json, NetworkError> archiveItem(const ItemId& uuid) override;
         std::expected<nlohmann::json, NetworkError> unArchiveItem(const ItemId& uuid) override;
 
+        std::expected<nlohmann::json, NetworkError> getFolder(const ItemId& uuid) override;
         std::expected<nlohmann::json, NetworkError> createFolder(const Botan::secure_vector<uint8_t>& name) override;
         std::expected<nlohmann::json, NetworkError> renameFolder(const ItemId& uuid, 
             const Botan::secure_vector<uint8_t>& name) override;
