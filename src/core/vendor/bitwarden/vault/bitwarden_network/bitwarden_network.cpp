@@ -267,6 +267,16 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::string str_email(email.begin(), email.end());
         std::string str_master_password_hash(master_password_hash.begin(), master_password_hash.end());
 
+        ItemId device_id = utils::getUniqueId();
+
+        std::expected<void, SettingsError> res_id = 
+            m_settings->keychainSet(KeychainSecurity::Secure, "device_id", 
+                utils::getSecureVector(device_id));
+        
+        if (!res_id.has_value()) {
+            return std::unexpected(NetworkError::SettingsError);
+        }
+
         httplib::Params data;
         data.emplace("grant_type", "password");
         data.emplace("username", str_email);
@@ -274,7 +284,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         data.emplace("scope", "api offline_access");
         data.emplace("client_id", bitwarden_client);
         data.emplace("deviceType", bitwarden_device_type);
-        data.emplace("deviceIdentifier", utils::getUniqueId());
+        data.emplace("deviceIdentifier", device_id);
         data.emplace("deviceName", bitwarden_device_name);
 
         Botan::secure_scrub_memory(str_email.data(), str_email.size());
@@ -297,6 +307,16 @@ namespace clientwarden::vendor::bitwarden::vault {
         std::string str_master_password_hash(master_password_hash.begin(), master_password_hash.end());
         std::string code(proof.code.begin(), proof.code.end());
 
+        ItemId device_id = utils::getUniqueId();
+
+        std::expected<void, SettingsError> res_id = 
+            m_settings->keychainSet(KeychainSecurity::Secure, "device_id", 
+                utils::getSecureVector(device_id));
+        
+        if (!res_id.has_value()) {
+            return std::unexpected(NetworkError::SettingsError);
+        }
+
         httplib::Params data;
         data.emplace("grant_type", "password");
         data.emplace("username", str_email);
@@ -304,7 +324,7 @@ namespace clientwarden::vendor::bitwarden::vault {
         data.emplace("scope", "api offline_access");
         data.emplace("client_id", bitwarden_client);
         data.emplace("deviceType", bitwarden_device_type);
-        data.emplace("deviceIdentifier", utils::getUniqueId());
+        data.emplace("deviceIdentifier", device_id);
         data.emplace("deviceName", bitwarden_device_name);
 
         /**

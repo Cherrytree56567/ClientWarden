@@ -26,55 +26,121 @@ namespace clientwarden::vendor::bitwarden {
 
     void BitWardenVault::onNetworkEvent_(NetworkEvent event, std::string context_id, 
         nlohmann::json payload_json) {
+        std::expected<Botan::secure_vector<uint8_t>, SettingsError> res_device_id = 
+            m_settings->keychainGet("device_id");
+        
+        /**
+         * @brief If we can't find the device Id then proceed to sync anyway.
+         */
+        if (res_device_id.has_value()) {
+            if (utils::getString(res_device_id.value()) == context_id) {
+                return;
+            }
+        }
+
         switch (event) {
             case NetworkEvent::CipherUpdated:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Item, 
+                    SyncState::Modified);
                 break;
                 
             case NetworkEvent::CipherCreated:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Item, 
+                    SyncState::CreatedOffline);
                 break;
                 
             case NetworkEvent::CipherDeleted:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Item, 
+                    SyncState::PendingDelete);
                 break;
                 
             case NetworkEvent::FolderDeleted:
-                break;
-                
-            case NetworkEvent::AllCiphersChanged:
-                break;
-                
-            case NetworkEvent::WholeVaultChanged:
-                break;
-                
-            case NetworkEvent::OrgKeysChanged:
-                break;
-                
-            case NetworkEvent::FolderCreated:
-                break;
-                
-            case NetworkEvent::FolderUpdated:
-                break;
-                
-            case NetworkEvent::CipherBinned:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Folder, 
+                    SyncState::PendingDelete);
                 break;
                 
             case NetworkEvent::AccountSettingsChanged:
+            case NetworkEvent::AllCiphersChanged:
+            case NetworkEvent::WholeVaultChanged:
+            case NetworkEvent::OrgKeysChanged:
+                m_sync->fullSync();
+                break;
+                
+            case NetworkEvent::FolderCreated:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Folder, 
+                    SyncState::CreatedOffline);
+                break;
+                
+            case NetworkEvent::FolderUpdated:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Folder, 
+                    SyncState::Modified);
+                break;
+                
+            case NetworkEvent::CipherBinned:
+                if (!payload_json.is_object() || !payload_json.contains("Id") ||
+                    !payload_json["Id"].is_string()) {
+                    return;
+                }
+
+                m_sync->syncItem(payload_json["Id"], SyncItem::Item, 
+                    SyncState::Modified);
                 break;
                 
             case NetworkEvent::AuthRequest:
+                /**
+                 * @todo Support Device Login Requests.
+                 */
                 break;
                 
             case NetworkEvent::Notification:
+                /**
+                 * @todo Support Notifications.
+                 */
                 break;
                 
             case NetworkEvent::ConnectivityChanged:
+                if (context_id == "online") {
+                    m_sync->syncVault();
+                }
+
                 break;
                 
             case NetworkEvent::LogOut:
+                logout();
                 break;
                 
-            case NetworkEvent::None:
+            default:
                 break;
-                
         }
     }
 
@@ -446,6 +512,14 @@ namespace clientwarden::vendor::bitwarden {
 
     bool BitWardenVault::logout() {
         lock();
+
+        /**
+         * @todo: Logout on UI
+         * @note Even if clearing fails, the tokens will be invalidated.
+         */
+        m_settings->keychainClear("access_token");
+        m_settings->keychainClear("refresh_token");
+        m_settings->keychainClear("expires_at");
 
         m_state = AuthState::LoggedOut;
 
