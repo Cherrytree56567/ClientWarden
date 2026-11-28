@@ -18,7 +18,7 @@ struct TestSetup : Catch::EventListenerBase {
             clientwarden::g_logger = std::make_shared<spdlog::logger>("ClientWarden", spdlog::sinks_init_list{console_sink, file_sink});
             clientwarden::g_logger->set_level(spdlog::level::trace);
             clientwarden::g_logger->flush_on(spdlog::level::trace);
-            spdlog::register_logger(g_logger);
+            spdlog::register_logger(clientwarden::g_logger);
         }
     }
 };
