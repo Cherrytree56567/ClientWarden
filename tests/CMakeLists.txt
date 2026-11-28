@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(ClientWarden.Tests LANGUAGES CXX VERSION 0.0.1)
 
 Include(FetchContent)
+include(../cmake/wordlist.cmake)
 
 # From Catch2 Docs
 # https://github.com/catchorg/Catch2
@@ -18,6 +19,13 @@ FetchContent_Declare(
     GIT_TAG master
 )
 
+FetchContent_Declare(
+    semver
+    GIT_REPOSITORY https://github.com/Neargye/semver
+    GIT_TAG v0.3.1
+)
+
+FetchContent_MakeAvailable(semver)
 FetchContent_MakeAvailable(Catch2)
 FetchContent_MakeAvailable(keychain)
 
@@ -28,32 +36,24 @@ find_package(Boost REQUIRED COMPONENTS url)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Botan CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
+find_package(date CONFIG REQUIRED)
 
-set(FILES
-    ../src/Vault/CardItem/CardItem.cpp
-    ../src/Vault/CipherQuery/CipherQuery.cpp
-    ../src/Vault/CWThread/CWThread.cpp
-    ../src/Vault/Folder/Folder.cpp
-    ../src/Vault/GenericItem/GenericItem.cpp
-    ../src/Vault/IdentityItem/IdentityItem.cpp
-    ../src/Vault/LoginItem/LoginItem.cpp
-    ../src/Vault/NoteItem/NoteItem.cpp
-    ../src/Vault/PasswordGenerator/PasswordGenerator.cpp
-    ../src/Vault/SSHKeyItem/SSHKeyItem.cpp
-    ../src/Vault/VaultCrypto/VaultCrypto.cpp
-    ../src/Vault/VaultNetwork/VaultNetwork.cpp
-    ../src/Vault/VaultProfile/VaultProfile.cpp
-    ../src/Vault/VaultSession/VaultSession.cpp
-    ../src/Vault/VaultUtils/VaultUtils.cpp
-    ../src/Vault/Vault.cpp
-    Storage/Storage.cpp
-    Clipboard/Clipboard.cpp
-    httplib/httplib.cpp
+file(GLOB_RECURSE FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/*.cpp"
 )
 
+target_sources(tests PRIVATE 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../src/nouiexec/storage/storage.cpp")
 
-add_executable(tests test.cpp crypto/crypto.cpp crypto/crypto_fail.cpp network/network.cpp utils/utils.cpp ${FILES})
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain)
+
+add_executable(tests test.cpp crypto/crypto.cpp ${FILES})
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain semver::semver date::date)
+
+generate_wordlist(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../assets/wordlist.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/password_generator/word_list.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
+)
 
 if(APPLE)
     find_library(CFNETWORK_FRAMEWORK CFNetwork REQUIRED)
@@ -66,7 +66,11 @@ if(APPLE)
 endif()
 
 target_include_directories(tests PUBLIC
-    ../src/Vault
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/
+    "${CMAKE_CURRENT_SOURCE_DIR}/../src/nouiexec/"
+    ../src/core 
+    ../src/core/vault 
+    ../src/platforms/
     httplib
     .
 )
