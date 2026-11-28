@@ -279,5 +279,5 @@ TEST_CASE("URI Checksum/DecryptAsStr Test") {
     
     REQUIRE(res_1.has_value());
 
-    REQUIRE(res_1.value() == utils::getSecureVector("EAaArVRs5qV39C9S3zO0z9ynVoWeZkuNfeMpsVDQnOk="));-
+    REQUIRE(res_1.value() == utils::getSecureVector("EAaArVRs5qV39C9S3zO0z9ynVoWeZkuNfeMpsVDQnOk="));
 }
