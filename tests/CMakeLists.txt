@@ -42,12 +42,11 @@ file(GLOB_RECURSE FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/*.cpp"
 )
 
-target_sources(tests PRIVATE 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../src/nouiexec/storage/storage.cpp")
-
-
 add_executable(tests test.cpp crypto/crypto.cpp ${FILES})
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog Boost::boost Boost::url nlohmann_json::nlohmann_json botan::botan msgpack-cxx keychain semver::semver date::date)
+
+target_sources(tests PRIVATE 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../src/nouiexec/storage/storage.cpp")
 
 generate_wordlist(
     ${CMAKE_CURRENT_SOURCE_DIR}/../assets/wordlist.txt
